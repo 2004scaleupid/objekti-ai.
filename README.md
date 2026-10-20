@@ -10,6 +10,9 @@ Veebiäpp Eesti katuse-, fassaadi- ja ehitusfirmadele (ja teistele nišidele mal
 - **Esituspilt**: fotorealistlik AI-pilt objekti 3D-mudelist.
 - **Disain pildist**: oma fotost uus värv, materjal või stiil (maja, tuba, aed, ese, toode, auto, vaba idee).
 - **Mallid**: iga niš (päikesepaneelid, moodulmajad, kinnisvara, haljastus …) saab oma küsimused, mõõdud ja AI rolli. Malle saab lisada admin-vaates.
+- **Toode kliendi hoovis**: firma lisab oma tooted (telgid, saunad, aiamajad), klient laeb üles hoovi foto ja AI paneb toote märgitud kohta.
+- **Kodulehe vidin**: firma kodulehele kast (3 kujundust), päringud (nimi, e-post, aadress) otse firma e-postile.
+- **Müüjaprogramm**: igaüks saab müüjakoodi, toob firmasid ja teenib komisjoni.
 - **Krediidid**: objektivaade 10 kr (5 €), esituspilt 4 kr (2 €), disain pildist 2 kr (1 €). Partneri sooduskoodid ja komisjonid.
 - **Admin**: analüütika, kasutajad, partnerid, väljamaksed, kulud ja ROI, mallid, tagasiside, kust tullakse.
 
