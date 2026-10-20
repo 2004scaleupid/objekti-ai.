@@ -182,6 +182,31 @@ label.fl{display:grid;gap:6px;font-size:13px;font-weight:600}
 .band>.lbl{display:block;margin-bottom:18px}
 .band h2{margin-bottom:22px;max-width:22em}
 .promo{position:relative;margin-top:16px;border-radius:22px;overflow:hidden;border:1px solid var(--line);background:#16130F;aspect-ratio:16/9;box-shadow:0 30px 80px -40px rgba(60,20,10,.45)}.promo video{width:100%;height:100%;display:block;object-fit:cover}
+/* mallid: enne/pärast võrdlus */
+.mwrap{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:22px;align-items:start}
+@media (max-width:860px){.mwrap{grid-template-columns:1fr}}
+.cmp{position:relative;aspect-ratio:4/3;border-radius:12px;overflow:hidden;border:1px solid var(--line);background:#CFDFEA;user-select:none;touch-action:pan-y}
+.cmp img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;pointer-events:none}
+.cmp .aft{clip-path:inset(0 0 0 var(--x,50%))}
+.cmp .bar{position:absolute;top:0;bottom:0;left:var(--x,50%);width:2px;margin-left:-1px;background:#fff;box-shadow:0 0 0 1px rgba(0,0,0,.12);pointer-events:none}
+.cmp .bar::after{content:"↔";position:absolute;top:50%;left:50%;width:36px;height:36px;margin:-18px 0 0 -18px;border-radius:50%;background:#fff;color:#16130F;display:grid;place-items:center;font:600 15px var(--sans);box-shadow:0 6px 18px rgba(0,0,0,.2)}
+.cmp input{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:ew-resize;margin:0}
+.cmp .cl{position:absolute;top:10px;font-family:var(--mono);font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;background:rgba(255,255,255,.9);color:#16130F;border-radius:4px;padding:4px 8px;pointer-events:none}
+.cmp .cl.l{left:10px}.cmp .cl.r{right:10px;background:#E5482D;color:#fff}
+.mtabs{display:grid;gap:4px}
+.mtab{display:grid;gap:2px;text-align:left;background:none;border:1px solid transparent;border-left:2px solid var(--line);border-radius:0 8px 8px 0;padding:10px 14px;cursor:pointer;color:var(--ink);transition:background .25s,border-color .25s}
+.mtab b{font-size:15px}
+.mtab span{font-size:13px;color:var(--muted)}
+.mtab:hover{background:color-mix(in srgb,var(--paper) 60%,transparent)}
+.mtab[aria-pressed="true"]{background:var(--paper);border-color:var(--line);border-left-color:var(--accent)}
+.mlists{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:28px}
+@media (max-width:760px){.mlists{grid-template-columns:1fr}}
+.mlist{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:16px 18px}
+.mlist ul{list-style:none;margin:10px 0 0;padding:0;display:grid;gap:8px;align-content:start}
+.mlist li{display:grid;grid-template-columns:auto 1fr;gap:2px 10px;font-size:13.5px}
+.mlist li b{font-weight:700}
+.mlist li span{grid-column:2;color:var(--muted);font-size:12.5px}
+.mlist li::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--accent);margin-top:7px;grid-row:span 2}
 .cols3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:0;border-top:1px solid var(--ink)}
 .cols3>div{padding:16px 20px 4px 0;display:grid;gap:6px;align-content:start}
 .cols3>div+div{padding-left:20px;border-left:1px solid var(--line)}
@@ -1334,7 +1359,7 @@ function header(){
   return `<div class="hdr" id="hdr"><header class="wrap top">
     <button class="logo" data-go="home">${LOGO}<span>${BRAND}</span></button>
     <nav class="topnav">
-      ${home?`<button class="navl" data-act="scroll" data-to="kuidas">Kuidas töötab</button><button class="navl" data-act="scroll" data-to="voimalused">Võimalused</button><button class="navl" data-act="scroll" data-to="esitlus">3D</button><button class="navl" data-act="scroll" data-to="paketid">Hinnad</button><button class="navl" data-act="scroll" data-to="saast">Sääst</button><button class="navl" data-act="scroll" data-to="kkk">KKK</button>`:''}
+      ${home?`<button class="navl" data-act="scroll" data-to="kuidas">Kuidas töötab</button><button class="navl" data-act="scroll" data-to="voimalused">Võimalused</button><button class="navl" data-act="scroll" data-to="mallid">Mallid</button><button class="navl" data-act="scroll" data-to="esitlus">3D</button><button class="navl" data-act="scroll" data-to="paketid">Hinnad</button><button class="navl" data-act="scroll" data-to="saast">Sääst</button><button class="navl" data-act="scroll" data-to="kkk">KKK</button>`:''}
       ${S.user?`<button class="btn sm" data-go="dash">Töölaud</button>`:`<button class="btn sm" data-go="dash">Logi sisse</button>`}
     </nav></header></div>`;
 }
@@ -1420,7 +1445,22 @@ function homeScreen(){
       <div><span class="lbl" style="color:var(--accent)">05 · Disain pildist</span><h3>Uus välimus fotost</h3><p>Lae üles foto majast, toast, aiast või esemest. AI näitab seda uue värvi, materjali või stiiliga.</p></div>
       <div><span class="lbl" style="color:var(--accent)">06 · Kodulehe vidin</span><h3>Päringud otse sinu lehelt</h3><p>Majaomanik vaatab oma maja 3D-s sinu kodulehel ja saadab päringu koos kontakti ja mõõtudega.</p></div>
     </div>
-    <p class="note" style="margin-top:18px">Mallid igale nišile: päikesepaneelid, moodulmajad, kinnisvara, haljastus ja teised. Iga mall toob oma küsimused, mõõdud ja AI rolli.</p>
+    <p class="note" style="margin-top:18px">Lisaks katusele ja fassaadile on mallid päikesepaneelidele, moodulmajadele, kinnisvarale, haljastusele, sisekujundusele, autodele ja toodetele. Vaata allpool.</p>
+  </section>
+
+  <section class="wrap band" id="mallid">
+    <span class="lbl">Mallid · mitte ainult katused</span>
+    <h2>Vali mall ja vaade häälestub sinu tööle.</h2>
+    <p class="lead">Aadressiga mallid ehitavad maja 3D-s ja annavad õiged mõõdud. Fotoga mallid teevad AI-ga sinu pildist uue versiooni. Allolevad pildid on päris AI tulemused. Lohista, et võrrelda.</p>
+    <div class="mwrap">
+      <div class="cmp" id="cmp" style="--x:50%"><img class="bef" id="cmpA" src="ex/maja.jpg" alt="Enne" loading="lazy"><img class="aft" id="cmpB" src="ex/test-paike.jpg" alt="Pärast, AI tulemus" loading="lazy"><i class="bar"></i><span class="cl l">Enne</span><span class="cl r">Pärast · AI</span><input type="range" min="0" max="100" value="50" aria-label="Võrdle enne ja pärast" id="cmpR"></div>
+      <div class="mtabs" id="mtabs"><button class="mtab" data-mx="0" data-a="ex/maja.jpg" data-b="ex/test-paike.jpg" aria-pressed="true"><b>Päikesepaneelid</b><span>Katusepind, kalle ja päikesepoolne tahk paneelide paigutuseks.</span></button><button class="mtab" data-mx="1" data-a="ex/maja.jpg" data-b="ex/test-saun.jpg" aria-pressed="false"><b>Saun või moodulmaja hoovis</b><span>Krundi suurus, vaba hoovi pind ja kaugused naabritest.</span></button><button class="mtab" data-mx="2" data-a="ex/maja.jpg" data-b="ex/test-aed.jpg" aria-pressed="false"><b>Aiaprojekt</b><span>Uus aed, terrass või piire hoovi peale.</span></button><button class="mtab" data-mx="3" data-a="ex/maja.jpg" data-b="ex/test-varv.jpg" aria-pressed="false"><b>Maja uues värvis</b><span>Klient näeb oma maja kohe uues toonis.</span></button><button class="mtab" data-mx="4" data-a="ex/sisend-auto.jpg" data-b="ex/test-auto.jpg" aria-pressed="false"><b>Auto uus värv või teip</b><span>Auto foto järgi uus värv, matt teip või velgede stiil.</span></button><button class="mtab" data-mx="5" data-a="ex/sisend-tool.jpg" data-b="ex/test-ese.jpg" aria-pressed="false"><b>Mööbel uues kangas</b><span>Pildista mööblit ja vaata seda uues värvis või materjalis.</span></button><button class="mtab" data-mx="6" data-a="ex/sisend-tool.jpg" data-b="ex/test-toode.jpg" aria-pressed="false"><b>Tootepilt e-poodi</b><span>Telefonipildist professionaalne reklaam- või e-poe pilt.</span></button></div>
+    </div>
+    <div class="mlists">
+      <div class="mlist"><span class="lbl">Aadress → 3D · 6 malli</span><ul><li><b>Katusetööd</b><span>Katuse pind, tahud ja räästad materjali tellimiseks.</span></li><li><b>Fassaaditööd</b><span>Seinte pinnad, kõrgused ja perimeeter.</span></li><li><b>Päikesepaneelid</b><span>Katusepind, kalle ja päikesepoolne tahk.</span></li><li><b>Moodulmajad ja saunad</b><span>Krundi suurus, vaba hoovi pind, kaugused naabritest.</span></li><li><b>Kinnisvara kuulutus</b><span>Kõik põhinumbrid ja esituspilt kuulutuse jaoks.</span></li><li><b>Haljastus ja piirded</b><span>Krundi mõõdud, aia pikkus ja hoovi pind.</span></li></ul></div>
+      <div class="mlist"><span class="lbl">Foto → AI · 9 malli</span><ul><li><b>Maja uues värvis</b><span>Klient pildistab maja ja näeb seda uues toonis.</span></li><li><b>Sisekujundus</b><span>Toa foto järgi uus mööbel, värvid ja materjalid.</span></li><li><b>Aiaprojekt pildist</b><span>Hoovi foto järgi uus aed, terrass või piire.</span></li><li><b>Eseme uus disain</b><span>Mööbel, lamp või toode uues värvis või stiilis.</span></li><li><b>Tootepilt reklaamiks</b><span>Telefonipildist professionaalne e-poe pilt.</span></li><li><b>Auto uus värv või teip</b><span>Uus värv, matt teip või velgede stiil.</span></li><li><b>Foto → 3D-mudel</b><span>Ühest fotost pööratav 3D-mudel veebi ja e-poodi.</span></li><li><b>Toode kliendi hoovis</b><span>Sinu telk, saun või aiamaja kliendi hoovi fotol.</span></li><li><b>Vaba idee</b><span>Lae ükskõik milline foto ja kirjelda, mida teha.</span></li></ul></div>
+    </div>
+    <p class="note" style="margin-top:12px">Disain pildist maksab 1 € (2 varianti), esituspilt 2 €. Uusi malle saab lisada ilma koodita.</p>
   </section>
 
   <section class="wrap band" id="esitlus">
@@ -1857,6 +1897,12 @@ const A={
   buy:t=>{S.credits+=+t.dataset.n;save();ui.buy=false;render();toast(`Lisatud ${t.dataset.n} vaadet`);}
 };
 
+/* mallid: enne/pärast */
+document.addEventListener('input',e=>{if(e.target.id==='cmpR'){const c=document.getElementById('cmp');c&&c.style.setProperty('--x',e.target.value+'%');}});
+document.addEventListener('click',e=>{const t=e.target.closest('.mtab');if(!t)return;
+  document.querySelectorAll('.mtab').forEach(b=>b.setAttribute('aria-pressed',b===t?'true':'false'));
+  const A=document.getElementById('cmpA'),B=document.getElementById('cmpB'),R=document.getElementById('cmpR'),C=document.getElementById('cmp');
+  A.src=t.dataset.a;B.src=t.dataset.b;R.value=50;C.style.setProperty('--x','50%');});
 document.addEventListener('click',e=>{
   const t=e.target.closest('[data-go],[data-act]');
   if(!e.target.closest('.addr'))$$('.ac').forEach(l=>l.hidden=true);
