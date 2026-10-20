@@ -1,0 +1,22 @@
+# Vaade3D: Supabase CLI seaded (supabase functions deploy kasutab neid)
+project_id = "vaade3d"
+
+# Avalikud funktsioonid (kodulehe vidin, EHR, Stripe teavitus): sisselogimist ei nõua.
+[functions.widget]
+verify_jwt = false
+[functions.widget-lead]
+verify_jwt = false
+[functions.widget-place]
+verify_jwt = false
+[functions.ehr]
+verify_jwt = false
+[functions.stripe-webhook]
+verify_jwt = false
+
+# Ainult sisselogitud firmale
+[functions.ai-image]
+verify_jwt = true
+[functions.ai-chat]
+verify_jwt = true
+[functions.checkout]
+verify_jwt = true

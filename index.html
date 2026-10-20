@@ -581,8 +581,6 @@ body.cvm .panel>*:not(#cvPanel){display:none!important}
 </style>
 </head>
 <body>
-
-
 <div class="login" id="login">
   <div class="lside">
     <div class="logo" style="color:#F1ECE5"><i></i><span>Vaade<b>3D</b></span></div>
@@ -1995,7 +1993,7 @@ function renderSeller(){const r=R(),code=sellerCode();
   const st=code?partnerStats(code):null,real=st&&st.clients.length;
   const rows=real?st.clients.map(u=>{const c=commissionOf(u);return[u.company||u.name,u.joined,c.n,u.paid,c.comm,0];}):[['FunRent OÜ','2026-09-14',38,95,95*r.comm/100,1],['Katusemeister OÜ','2026-09-28',22,50,50*r.comm/100,1],['Saunamaailm OÜ','2026-10-09',6,15,15*r.comm/100,1]];$('slPct').textContent='Sinu tulu ('+r.comm+'%)';
   $('slRows').innerHTML=rows.map(x=>`<tr><td><b>${String(x[0]).replace(/</g,'&lt;')}</b>${x[5]?' <span class="ltag">NÄIDIS</span>':''}</td><td>${x[1].split('-').reverse().join('.')}</td><td>${x[2]}</td><td>${eur(x[3])}</td><td><b>${eur(x[4])}</b></td></tr>`).join('');
-  $('slTerms').textContent=`Tingimused: komisjon ${r.comm}% sinu toodud firmade kulutustest seni, kuni firma kasutab Vaade3D-d. Komisjoni protsent võib tulevikus muutuda: muudatusest teatame vähemalt 30 päeva ette ja juba teenitud summa jääb sulle. Väljamakse alates ${eur(r.min)}.`;
+  $('slTerms').textContent=`Tingimused: komisjon ${r.comm}% sinu toodud firmade maksetest (ostetud krediidid) seni, kuni firma kasutab Vaade3D-d. Komisjoni protsent võib tulevikus muutuda: muudatusest teatame vähemalt 30 päeva ette ja juba teenitud summa jääb sulle. Väljamakse alates ${eur(r.min)}.`;
   $('slSum').textContent=real?`Teenitud ${eur(st.comm)} · makstud ${eur(st.paidOut)} · maksmata ${eur(st.due)}`:'Näidis: nii näed oma firmasid ja tulu';}
 $('slDemoT').onclick=()=>openPlace({mode:'widget',preview:true,p:{c:'Näidisfirma OÜ',col:''}});
 $('slDemoH').onclick=()=>{const a=findAddr('Tammekännu tee 44')[0];if(a)clientView({v:1,e:a[1],rt:'gable',d:1,r:1,c:'Näidisfirma OÜ',msg:'Tere! Siin on teie maja 3D-vaade koos mõõtudega.'},{preview:true});};
