@@ -3,15 +3,15 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="description" content="Objekti AI: sisesta aadress ja saad maja 3D-mudeli koos katuse, seinte ja krundi mõõtudega Maa- ja Ruumiameti andmetest. Lisaks AI esituspildid ja disain fotost. Katuse-, fassaadi- ja ehitusfirmadele.">
-<meta property="og:title" content="Objekti AI · maja 3D-vaade ja mõõdud aadressi järgi">
+<meta name="description" content="Vaade3D: sisesta aadress ja saad maja 3D-mudeli koos katuse, seinte ja krundi mõõtudega Maa- ja Ruumiameti andmetest. Lisaks AI esituspildid ja disain fotost.">
+<meta property="og:title" content="Vaade3D · maja 3D-vaade ja mõõdud aadressi järgi">
 <meta property="og:description" content="Sisesta aadress ja maja kerkib 3D-s koos mõõtudega. Objektile ei pea sõitma.">
 <meta property="og:type" content="website">
 <meta name="theme-color" content="#16130F">
 <meta name="robots" content="noindex, nofollow">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M4 15 16 5l12 10v13H4z' fill='%23E5482D'/%3E%3C/svg%3E">
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A//www.w3.org/2000/svg%27%20viewBox%3D%270%200%2032%2032%27%3E%3Cpath%20d%3D%27M4%2014%2016%2021v9L4%2023z%27%20fill%3D%27%23C9381F%27/%3E%3Cpath%20d%3D%27M16%2021l6-9.5%206%202.5v9l-12%207z%27%20fill%3D%27%239E2C17%27/%3E%3Cpath%20d%3D%27M10%204.5%2016%207l12%207-6-2.5z%27%20fill%3D%27%23F28468%27/%3E%3Cpath%20d%3D%27M4%2014%2010%204.5l12%207L16%2021z%27%20fill%3D%27%23E5482D%27/%3E%3C/svg%3E">
 <style>[hidden]{display:none!important}</style>
-<title>Objekti AI · maja 3D-vaade ja mõõdud aadressi järgi</title>
+<title>Vaade3D · maja 3D-vaade ja mõõdud aadressi järgi</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap">
 <style>
@@ -39,7 +39,7 @@ button,input{font-family:inherit;color:inherit}
 /* header */
 .hdr{display:flex;align-items:center;gap:14px;padding:10px 16px;border-bottom:1px solid var(--line);flex-wrap:wrap}
 .logo{display:flex;align-items:center;gap:8px;font-weight:800;letter-spacing:-.02em;font-size:16px;white-space:nowrap}
-.logo i{width:22px;height:22px;background:var(--accent);clip-path:polygon(50% 0,100% 42%,100% 100%,0 100%,0 42%);display:block}
+.logo i{width:24px;height:24px;background:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A//www.w3.org/2000/svg%27%20viewBox%3D%270%200%2032%2032%27%3E%3Cpath%20d%3D%27M4%2014%2016%2021v9L4%2023z%27%20fill%3D%27%23C9381F%27/%3E%3Cpath%20d%3D%27M16%2021l6-9.5%206%202.5v9l-12%207z%27%20fill%3D%27%239E2C17%27/%3E%3Cpath%20d%3D%27M10%204.5%2016%207l12%207-6-2.5z%27%20fill%3D%27%23F28468%27/%3E%3Cpath%20d%3D%27M4%2014%2010%204.5l12%207L16%2021z%27%20fill%3D%27%23E5482D%27/%3E%3C/svg%3E") center/contain no-repeat;display:block;flex:none}.logo b{color:var(--accent);font-weight:800}
 .search{flex:1;min-width:220px;display:flex;align-items:center;gap:8px;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:0 10px}
 .search svg{flex:none;color:var(--muted)}
 .search input{flex:1;min-width:0;border:0;background:none;padding:9px 0;font-size:14px}
@@ -485,7 +485,7 @@ input::-webkit-calendar-picker-indicator{display:none!important}
 
 <div class="login" id="login">
   <div class="lside">
-    <div class="logo" style="color:#F1ECE5"><i></i>Objekti AI</div>
+    <div class="logo" style="color:#F1ECE5"><i></i><span>Vaade<b>3D</b></span></div>
     <h1>Vaata maja 3D-s. <em>Ära sõida kohale.</em></h1>
     <ul><li>Maja 3D-mudel riigi andmetest aadressi järgi</li><li>Katuse, seinte ja krundi mõõdud kohe</li><li>AI-abiline arvutab pinnad sinu eest</li><li>Fotorealistlik esituspilt kliendile</li></ul>
     <div style="margin-top:auto;font:500 12px var(--mono);color:#8F877E">Objektivaade 5 € · esituspilt 2 € · disain pildist 1 €</div>
@@ -516,7 +516,7 @@ input::-webkit-calendar-picker-indicator{display:none!important}
 
 <div class="app" id="app" hidden>
   <header class="hdr">
-    <button type="button" class="logo" id="logoBtn" style="border:0;background:none;cursor:pointer;color:var(--ink);padding:0"><i></i>Objekti AI</button>
+    <button type="button" class="logo" id="logoBtn" style="border:0;background:none;cursor:pointer;color:var(--ink);padding:0"><i></i><span>Vaade<b>3D</b></span></button>
     <label class="search" for="q">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
       <input id="q" type="text" value="Tammekännu tee 44, Viimsi vald" aria-label="Aadress" autocomplete="off">
@@ -897,7 +897,7 @@ input::-webkit-calendar-picker-indicator{display:none!important}
 <div class="fbw" id="fbw" hidden role="dialog" aria-labelledby="fbT">
   <button type="button" class="fbx" id="fbX" aria-label="Sulge">×</button>
   <div class="tag">Lühike küsimus · 30 sekundit</div>
-  <h3 id="fbT">Kuidas sulle Objekti AI seni meeldib?</h3>
+  <h3 id="fbT">Kuidas sulle Vaade3D seni meeldib?</h3>
   <div class="stars" id="fbStars" role="radiogroup" aria-label="Hinnang 1–5"></div>
   <div class="fbmore" id="fbMore" hidden>
     <b>Mis meeldib kõige rohkem?</b><div class="qchips" id="fbLike"></div>
@@ -1069,8 +1069,9 @@ $('dlSheet').onclick=()=>{const src=snap(),h=HOUSES[cur],W=1800,H=1100,c=documen
   g.fillStyle='#EEEAE4';g.fillRect(0,0,W,H);
   const vw=1180,vh=H-140,sc=Math.max(vw/src.width,vh/src.height),sw=vw/sc,sh=vh/sc;
   g.fillStyle='#DDE5EA';g.fillRect(40,100,vw,vh);g.drawImage(src,(src.width-sw)/2,(src.height-sh)/2,sw,sh,40,100,vw,vh);
-  g.fillStyle='#E5482D';g.beginPath();g.moveTo(52,40);g.lineTo(68,28);g.lineTo(84,40);g.lineTo(84,62);g.lineTo(52,62);g.fill();
-  g.fillStyle='#16130F';g.font='800 30px "Inter Tight",Arial';g.textBaseline='middle';g.fillText('Objekti AI',96,46);
+  {const L=[['#C9381F',[[4,14],[16,21],[16,30],[4,23]]],['#9E2C17',[[16,21],[22,11.5],[28,14],[28,23],[16,30]]],['#F28468',[[10,4.5],[16,7],[28,14],[22,11.5]]],['#E5482D',[[4,14],[10,4.5],[22,11.5],[16,21]]]];
+   L.forEach(([c,pts])=>{g.fillStyle=c;g.beginPath();pts.forEach(([x,y],i)=>{const X=48+x*1.25,Y=26+y*1.25;i?g.lineTo(X,Y):g.moveTo(X,Y);});g.closePath();g.fill();});}
+  g.font='800 30px "Inter Tight",Arial';g.textBaseline='middle';g.fillStyle='#16130F';g.fillText('Vaade',96,46);g.fillStyle='#E5482D';g.fillText('3D',96+g.measureText('Vaade').width,46);
   g.font='500 16px "JetBrains Mono",monospace';g.fillStyle='#77706A';g.textAlign='right';g.fillText((acct.company||acct.name)+' · '+new Date().toLocaleDateString('et-EE'),W-40,46);g.textAlign='left';
   const x=1260;g.fillStyle='#16130F';g.font='800 34px "Inter Tight",Arial';
   const words=h.short;g.fillText(words,x,130);g.font='500 18px "Inter Tight",Arial';g.fillStyle='#77706A';g.fillText('Viimsi vald',x,168);
@@ -1419,7 +1420,7 @@ async function ask(q){if(chatBusy||!q.trim())return;chatBusy=true;addMsg('user',
   try{const sample=await window.claude?.use?.('sample');
     if(!sample){bub.textContent=localAnswer(q);}
     else{const msgs=[...hist,{role:'user',content:
-      'Oled Objekti AI abiline Eesti '+(tplOf(HOUSES[cur])?tplOf(HOUSES[cur]).role:'katuse- ja fassaadifirmadele')+'. Kui küsitakse kogust või materjali, arvesta ettevõtte materjalide ja tegevusaladega (andmetes "ettevote") ning lisa ettevõtte varu (varu_katus_pct ja varu_fassaad_pct) ja ütle, et varu on soovituslik. Vasta eesti keeles, lühidalt (2–5 lauset), konkreetsete numbritega. Arvuta ainult allolevate andmete põhjal, näita lühidalt arvutuskäiku ja ütle selgelt, mis on hinnang (nt 30° kalle, aknad) ja mis riigi andmetest. Kui andmetest ei piisa, ütle mida on vaja. Hindu ära paku.\n\nOBJEKTI ANDMED (JSON):\n'+JSON.stringify(ctx())+'\n\nKÜSIMUS: '+q}];
+      'Oled Vaade3D abiline Eesti '+(tplOf(HOUSES[cur])?tplOf(HOUSES[cur]).role:'katuse- ja fassaadifirmadele')+'. Kui küsitakse kogust või materjali, arvesta ettevõtte materjalide ja tegevusaladega (andmetes "ettevote") ning lisa ettevõtte varu (varu_katus_pct ja varu_fassaad_pct) ja ütle, et varu on soovituslik. Vasta eesti keeles, lühidalt (2–5 lauset), konkreetsete numbritega. Arvuta ainult allolevate andmete põhjal, näita lühidalt arvutuskäiku ja ütle selgelt, mis on hinnang (nt 30° kalle, aknad) ja mis riigi andmetest. Kui andmetest ei piisa, ütle mida on vaja. Hindu ära paku.\n\nOBJEKTI ANDMED (JSON):\n'+JSON.stringify(ctx())+'\n\nKÜSIMUS: '+q}];
       const r=await sample(msgs,{cache:false,modelTier:'quick',onText:({text})=>{bub.textContent=text;}});bub.textContent=r.text;
       hist.push({role:'user',content:q},{role:'assistant',content:r.text});if(hist.length>8)hist.splice(0,2);}}
   catch(e){bub.textContent=localAnswer(q)+(e&&e.code==='rate_limited'?'\n(AI-abiline on hetkel hõivatud, vastasin kohalike arvutustega.)':'');}
@@ -1862,7 +1863,7 @@ function renderPartners(){$('pCards').innerHTML=acct.partners.map(p=>{const s=pa
   $('pdRows').innerHTML=s.clients.map(u=>{const c=commissionOf(u);return `<tr><td><b>${u.name}</b><small class="td2">${u.company}</small></td><td>${u.joined.split('-').reverse().join('.')}</td><td>${c.n}</td><td>${c.disc} / ${R().discN}</td><td>${c.win} / ${R().commN}</td><td>${eur(c.val)}</td><td><b>${eur(c.comm)}</b></td></tr>`;}).join('')||'<tr><td colspan="7">Selle koodiga pole veel ühtegi klienti.</td></tr>';}
 function renderPayouts(){$('poRows').innerHTML=acct.partners.map(p=>{const s=partnerStats(p.code),can=s.due>=R().min;return `<tr><td><b>${p.owner}</b><small class="td2">${p.email||'e-post lisamata'}</small></td><td><span class="codepill">${p.code}</span></td><td>${p.iban||'—'}</td><td>${eur(s.comm)}</td><td>${eur(s.paidOut)}</td><td><b class="acc">${eur(s.due)}</b></td><td>${can?`<button type="button" class="apply sm" data-pay="${p.code}">Märgi makstuks</button>`:`<span class="fhint">alla ${eur(R().min)}</span>`}</td></tr>`;}).join('');
   document.querySelectorAll('[data-pay]').forEach(b=>b.onclick=async()=>{const p=acct.partners.find(x=>x.code===b.dataset.pay),s=partnerStats(p.code),amt=+s.due.toFixed(2);
-    const ok=await ask2('Kinnita väljamakse',`${p.owner} · ${eur(amt)}. Tee ülekanne pangas ja märgi see siin makstuks.`,'Märgi makstuks',`<label class="fl" for="poIban">Saaja IBAN<input id="poIban" type="text" value="${p.iban||''}" placeholder="EE00 0000 0000 0000 0000"></label><label class="fl" for="poNote" style="margin-top:10px">Selgitus<input id="poNote" type="text" value="Objekti AI partnerikomisjon ${new Date().toLocaleDateString('et-EE',{month:'long',year:'numeric'})}"></label>`);
+    const ok=await ask2('Kinnita väljamakse',`${p.owner} · ${eur(amt)}. Tee ülekanne pangas ja märgi see siin makstuks.`,'Märgi makstuks',`<label class="fl" for="poIban">Saaja IBAN<input id="poIban" type="text" value="${p.iban||''}" placeholder="EE00 0000 0000 0000 0000"></label><label class="fl" for="poNote" style="margin-top:10px">Selgitus<input id="poNote" type="text" value="Vaade3D partnerikomisjon ${new Date().toLocaleDateString('et-EE',{month:'long',year:'numeric'})}"></label>`);
     if(!ok)return;p.iban=$('poIban').value.trim();acct.payouts.push({code:p.code,owner:p.owner,amount:amt,d:today(),note:$('poNote').value.trim()});save();renderPayouts();toast('Väljamakse märgitud · '+eur(amt));});
   $('poHist').innerHTML=acct.payouts.slice().reverse().map(p=>`<tr><td>${p.d.split('-').reverse().join('.')}</td><td>${p.owner} <span class="codepill">${p.code}</span></td><td><b>${eur(p.amount)}</b></td><td>${p.note||''}</td></tr>`).join('')||'<tr><td colspan="4">Väljamakseid pole veel tehtud.</td></tr>';}
 /* sample sources + feedback */
@@ -1983,7 +1984,7 @@ async function editTpl(i){const isNew=i<0,t=isNew?{id:'',on:true,name:'',niche:'
     <div class="qgrp" id="teShowW"><b>Mõõdud paneelis</b><div class="tchk">${SHOWK.map(([k,l])=>`<label><input type="checkbox" data-sk="${k}" ${t.show&&t.show.includes(k)?'checked':''}>${l}</label>`).join('')}</div></div>
     <label class="fl" for="teQ" id="teQW">Küsimused objekti loomisel<textarea id="teQ" rows="3" placeholder="Mis töö?: Rennid, Torud, Kaevud *" style="font:500 13px var(--mono);padding:8px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink)">${qTxt}</textarea><small>Üks rida = üks küsimus. „Küsimus: valik, valik“. Tärn lõpus = mitu valikut korraga.</small></label>
     <label class="fl" for="teSt" id="teStW">Stiilid / toonid<input id="teSt" type="text" value="${(t.styles||[]).join(', ')}" placeholder="Valge, Hall, Must"></label>
-    <label class="fl" for="teRole">AI-abilise roll<input id="teRole" type="text" value="${(t.role||'').replace(/"/g,'&quot;')}" placeholder="vihmaveesüsteemide paigaldajatele"><small>„Oled Objekti AI abiline Eesti …“</small></label>
+    <label class="fl" for="teRole">AI-abilise roll<input id="teRole" type="text" value="${(t.role||'').replace(/"/g,'&quot;')}" placeholder="vihmaveesüsteemide paigaldajatele"><small>„Oled Vaade3D abiline Eesti …“</small></label>
     <label class="fl" for="tePr">Pildimudeli prompt<textarea id="tePr" rows="2" style="font:500 13px var(--display);padding:8px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink)">${t.prompt||''}</textarea><small>{stiil} asendub kasutaja valikuga</small></label></div>`);
   const sync=()=>{const ph=$('teIn')&&$('teIn').value==='photo';if(!$('teShowW'))return;$('teShowW').hidden=ph;$('teQW').hidden=ph;$('teStW').hidden=!ph;};sync();
   const ok=await prT;if(!ok)return;

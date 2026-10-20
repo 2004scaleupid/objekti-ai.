@@ -1,4 +1,4 @@
-# Objekti AI
+# Vaade3D
 
 Sisesta aadress ja maja kerkib 3D-s koos mõõtudega. Objektile ei pea sõitma.
 
