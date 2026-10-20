@@ -1040,7 +1040,8 @@ body.cvm .panel>*:not(#cvPanel){display:none!important}
       <h2>Teeni Vaade3D-ga</h2><p class="lead">Tutvusta Vaade3D-d firmadele: katusefirmad, telkide rendid, saunade müüjad ja kõik, kes müüvad midagi kodu või hoovi jaoks. Iga firma, kes liitub sinu koodiga, toob sulle raha.</p>
       <div class="slrs" id="slSteps"></div>
       <div class="card" id="slBox" style="display:flex;flex-direction:column;gap:12px"></div>
-      <div class="card" style="display:flex;flex-direction:column;gap:10px"><div class="ct"><b>Sinu firmad</b><span class="fhint" id="slSum"></span></div><div class="tbl"><table><thead><tr><th>Firma</th><th>Liitus</th><th>Kasutusi</th><th>Firma kulutas</th><th>Sinu tulu (30%)</th></tr></thead><tbody id="slRows"></tbody></table></div></div>
+      <div class="card" style="display:flex;flex-direction:column;gap:10px"><div class="ct"><b>Sinu firmad</b><span class="fhint" id="slSum"></span></div><div class="tbl"><table><thead><tr><th>Firma</th><th>Liitus</th><th>Kasutusi</th><th>Firma kulutas</th><th id="slPct">Sinu tulu</th></tr></thead><tbody id="slRows"></tbody></table></div></div>
+      <span class="fhint" id="slTerms" style="line-height:1.5"></span>
       <div class="card" style="display:flex;flex-direction:column;gap:10px"><div class="ct"><b>Müügimaterjal</b><span class="fhint">Näita firmale kohtumisel</span></div>
         <div style="display:flex;gap:10px;flex-wrap:wrap"><button type="button" class="ghost" id="slDemoT">Demo: telk kliendi hoovis</button><button type="button" class="ghost" id="slDemoH">Demo: maja 3D-vaade</button><button type="button" class="ghost" id="slPitch">Müügijutt (kopeeri)</button></div></div>
     </div>
@@ -1992,8 +1993,9 @@ function renderSeller(){const r=R(),code=sellerCode();
     <label class="fl" for="slIban">IBAN väljamakseteks<input id="slIban" type="text" placeholder="EE00 0000 0000 0000 0000" value="${(acct.partners.find(x=>x.code===code).iban||'').replace(/"/g,'')}"></label>`;
     const cp=(t,m)=>{try{navigator.clipboard.writeText(t).then(()=>toast(m),()=>toast(m));}catch(_){toast(m);}};$('slCopyC').onclick=()=>cp(code,'Kood kopeeritud');$('slCopyL').onclick=()=>cp(link,'Link kopeeritud');$('slIban').onchange=()=>{acct.partners.find(x=>x.code===code).iban=$('slIban').value.trim();save();toast('IBAN salvestatud');};}
   const st=code?partnerStats(code):null,real=st&&st.clients.length;
-  const rows=real?st.clients.map(u=>{const c=commissionOf(u);return[u.company||u.name,u.joined,c.n,u.paid,c.comm,0];}):[['FunRent OÜ','2026-09-14',38,95,28.5,1],['Katusemeister OÜ','2026-09-28',22,50,15,1],['Saunamaailm OÜ','2026-10-09',6,15,4.5,1]];
+  const rows=real?st.clients.map(u=>{const c=commissionOf(u);return[u.company||u.name,u.joined,c.n,u.paid,c.comm,0];}):[['FunRent OÜ','2026-09-14',38,95,95*r.comm/100,1],['Katusemeister OÜ','2026-09-28',22,50,50*r.comm/100,1],['Saunamaailm OÜ','2026-10-09',6,15,15*r.comm/100,1]];$('slPct').textContent='Sinu tulu ('+r.comm+'%)';
   $('slRows').innerHTML=rows.map(x=>`<tr><td><b>${String(x[0]).replace(/</g,'&lt;')}</b>${x[5]?' <span class="ltag">NÄIDIS</span>':''}</td><td>${x[1].split('-').reverse().join('.')}</td><td>${x[2]}</td><td>${eur(x[3])}</td><td><b>${eur(x[4])}</b></td></tr>`).join('');
+  $('slTerms').textContent=`Tingimused: komisjon ${r.comm}% sinu toodud firmade kulutustest seni, kuni firma kasutab Vaade3D-d. Komisjoni protsent võib tulevikus muutuda: muudatusest teatame vähemalt 30 päeva ette ja juba teenitud summa jääb sulle. Väljamakse alates ${eur(r.min)}.`;
   $('slSum').textContent=real?`Teenitud ${eur(st.comm)} · makstud ${eur(st.paidOut)} · maksmata ${eur(st.due)}`:'Näidis: nii näed oma firmasid ja tulu';}
 $('slDemoT').onclick=()=>openPlace({mode:'widget',preview:true,p:{c:'Näidisfirma OÜ',col:''}});
 $('slDemoH').onclick=()=>{const a=findAddr('Tammekännu tee 44')[0];if(a)clientView({v:1,e:a[1],rt:'gable',d:1,r:1,c:'Näidisfirma OÜ',msg:'Tere! Siin on teie maja 3D-vaade koos mõõtudega.'},{preview:true});};
@@ -2194,7 +2196,7 @@ $('navHome').onclick=()=>show('home');$('logoBtn').onclick=()=>show('home');
 
 /* ---------- ADMIN: analytics, users, partners, payouts ---------- */
 acct.isAdmin=acct.isAdmin!==false;
-acct.admRules=Object.assign({disc:20,discN:20,comm:30,commN:0,eur:.5,min:20},acct.admRules||{});if(!acct.admRules.lifeMig){acct.admRules.commN=0;acct.admRules.lifeMig=1;}
+acct.admRules=Object.assign({disc:20,discN:20,comm:25,commN:0,eur:.5,min:20},acct.admRules||{});if(!acct.admRules.lifeMig){acct.admRules.commN=0;acct.admRules.lifeMig=1;}if(!acct.admRules.c25Mig){acct.admRules.comm=25;acct.admRules.c25Mig=1;}
 const commCap=()=>acct.admRules.commN>0?acct.admRules.commN:Infinity,commTxt=()=>acct.admRules.commN>0?`esimese ${acct.admRules.commN} kasutuse`:'kõigi kasutuste (alatiseks)';
 acct.partners=acct.partners||[{code:'MAXNOULIK',owner:'Max Nõulik',email:'',iban:'',created:'2026-09-01'}];
 acct.payouts=acct.payouts||[];
