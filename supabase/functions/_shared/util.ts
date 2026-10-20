@@ -1,5 +1,6 @@
 // Vaade3D: ühised abifunktsioonid kõigile Edge Functionitele
 import { createClient, SupabaseClient } from "npm:@supabase/supabase-js@2.45.4";
+import { Image } from "npm:imagescript@1.3.0";
 
 export const cors = {
   "Access-Control-Allow-Origin": "*",
@@ -93,10 +94,36 @@ export async function kieImage(prompt: string, imageUrls: string[], size = "auto
   throw new Error("Kie: aeg sai otsa");
 }
 
-/** Salvestab välise pildi meie 'renders' bucketisse ja tagastab avaliku URL-i. */
-export async function storeImage(url: string, path: string): Promise<string> {
+/** Firma logo pildi alla paremale (valge pehme alus, et oleks igal taustal loetav). */
+export async function brand(bytes: Uint8Array, logoUrl: string): Promise<Uint8Array> {
+  try {
+    const base = await Image.decode(bytes);
+    const logo = await Image.decode(new Uint8Array(await (await fetch(logoUrl)).arrayBuffer()));
+    const W = base.width, H = base.height;
+    let lw = Math.round(W * 0.13);
+    if ((logo.height * lw) / logo.width > H * 0.08) lw = Math.round((H * 0.08 * logo.width) / logo.height);
+    logo.resize(lw, Image.RESIZE_AUTO);
+    const pad = Math.max(6, Math.round(W * 0.012)), m = Math.round(W * 0.02);
+    const bw = logo.width + pad * 2, bh = logo.height + pad * 2;
+    const plate = new Image(bw, bh).fill(0xffffffe0);
+    plate.roundCorners(Math.round(Math.min(bw, bh) * 0.22));
+    base.composite(plate, W - bw - m, H - bh - m);
+    base.composite(logo, W - bw - m + pad, H - bh - m + pad);
+    return await base.encodeJPEG(90);
+  } catch (_) { return bytes; } // logo ei tohi kunagi pilti ära rikkuda
+}
+
+/** Salvestab välise pildi meie 'renders' bucketisse (soovi korral firma logoga) ja tagastab avaliku URL-i. */
+export async function storeImage(url: string, path: string, companyId?: string): Promise<string> {
   const db = admin();
-  const bytes = new Uint8Array(await (await fetch(url)).arrayBuffer());
+  let bytes = new Uint8Array(await (await fetch(url)).arrayBuffer());
+  if (companyId) {
+    const { data: c } = await db.from("companies").select("logo_url,logo_on_images").eq("id", companyId).single();
+    if (c?.logo_on_images && c.logo_url) {
+      await db.storage.from("renders").upload(path.replace(/\.jpg$/, "-raw.jpg"), bytes, { contentType: "image/jpeg", upsert: true });
+      bytes = await brand(bytes, c.logo_url);
+    }
+  }
   const { error } = await db.storage.from("renders").upload(path, bytes, { contentType: "image/jpeg", upsert: true });
   if (error) throw new Error("storage: " + error.message);
   return db.storage.from("renders").getPublicUrl(path).data.publicUrl;

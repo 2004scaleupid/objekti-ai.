@@ -23,7 +23,7 @@ Deno.serve(async (req) => {
   try {
     const scene = await uploadDataUrl(String(b.photo || ""), `${w.company_id}/widget/${row.id}`);
     const out = await kieImage(prompt, [scene, ...(p.images || []).slice(0, 3)], "auto");
-    const url = await storeImage(out, `${w.company_id}/w-${row.id}.jpg`);
+    const url = await storeImage(out, `${w.company_id}/w-${row.id}.jpg`, w.company_id);
     await db.from("renders").update({ status: "done", output_url: url, input_urls: [scene] }).eq("id", row.id);
     return json({ url });
   } catch (e) {

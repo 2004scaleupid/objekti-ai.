@@ -6,6 +6,7 @@ create table public.companies (
   id uuid primary key default gen_random_uuid(),
   name text not null,
   reg_code text, phone text, web text, logo_url text,
+  logo_on_images boolean not null default true, -- firma logo AI-piltide alla paremale
   niche text, source text, source_other text,
   services jsonb not null default '[]', areas jsonb not null default '[]',
   roof_mat jsonb not null default '[]', wall_mat jsonb not null default '[]',
@@ -146,6 +147,7 @@ create table public.renders (
   tpl text, prompt text, input_urls text[] not null default '{}',
   output_url text, status text not null default 'pending', error text,
   via_widget boolean not null default false,
+  ehr text,                         -- esituspildi puhul maja EHR-kood
   created_at timestamptz not null default now()
 );
 
@@ -154,6 +156,7 @@ create table public.products (
   id uuid primary key default gen_random_uuid(),
   company_id uuid not null references public.companies(id) on delete cascade,
   name text not null, images text[] not null default '{}',
+  category text,                    -- nt Telgid, Saunad, Aiamajad (vidinas rühmitamiseks)
   w numeric, l numeric, h numeric, capacity text, price text, description text, link text,
   active boolean not null default true,
   created_at timestamptz not null default now()
@@ -216,7 +219,7 @@ create policy co_read on public.companies for select using (id = my_company() or
 create policy co_upd on public.companies for update using (id = my_company()) with check (id = my_company());
 -- partner_code ja promo_left muudab ainult server: kasutaja tohib muuta ainult neid veerge
 revoke update on public.companies from anon, authenticated;
-grant update (name, reg_code, phone, web, logo_url, services, areas, roof_mat, wall_mat) on public.companies to authenticated;
+grant update (name, reg_code, phone, web, logo_url, logo_on_images, services, areas, roof_mat, wall_mat) on public.companies to authenticated;
 
 create policy pr_read on public.profiles for select using (user_id = auth.uid() or is_admin());
 create policy pr_upd on public.profiles for update using (user_id = auth.uid()) with check (user_id = auth.uid());
@@ -228,6 +231,10 @@ create policy st_admin on public.settings for update using (is_admin());
 
 create policy pa_read on public.partners for select using (owner_user = auth.uid() or is_admin());
 create policy pa_admin on public.partners for all using (is_admin()) with check (is_admin());
+-- müüja saab ise muuta ainult oma IBAN-i
+create policy pa_own_upd on public.partners for update using (owner_user = auth.uid()) with check (owner_user = auth.uid());
+revoke update on public.partners from anon, authenticated;
+grant update (iban) on public.partners to authenticated;
 create policy po_read on public.payouts for select using (is_admin() or code in (select code from partners where owner_user = auth.uid()));
 create policy po_admin on public.payouts for insert with check (is_admin());
 
@@ -291,3 +298,10 @@ language sql stable security definer set search_path=public as $$
   from partner_earnings e where e.code in (select code from partners where owner_user = auth.uid())
 $$;
 grant execute on function public.my_partner_earnings() to authenticated;
+
+-- Liitumisvormi jaoks: kas müüja/soodus kood on olemas (ei näita, kelle oma)
+create or replace function public.ref_code_ok(p_code text) returns boolean
+language sql stable security definer set search_path=public as $$
+  select exists(select 1 from partners where code = upper(p_code) and active)
+$$;
+grant execute on function public.ref_code_ok(text) to anon, authenticated;

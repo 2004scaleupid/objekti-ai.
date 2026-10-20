@@ -12,7 +12,7 @@ Deno.serve(async (req) => {
   const history = (Array.isArray(b.messages) ? b.messages : []).slice(-8).map((m: { role: string; content: string }) => ({
     role: m.role === "assistant" ? "assistant" : "user", content: String(m.content).slice(0, 4000) }));
   if (!history.length) return fail("küsimus puudub");
-  const system = `Oled Vaade3D abiline Eesti ${role}. Vasta eesti keeles, lühidalt (2–5 lauset), konkreetsete numbritega. Arvuta ainult allolevate andmete põhjal, näita lühidalt arvutuskäiku ja ütle selgelt, mis on hinnang ja mis riigi andmetest. Kui andmetest ei piisa, ütle mida on vaja. Hindu ära paku.\n\nOBJEKTI ANDMED (JSON):\n${ctx}`;
+  const system = `Oled Vaade3D abiline Eesti ${role}. Kui küsitakse kogust või materjali, arvesta ettevõtte materjalide ja tegevusaladega (andmetes "ettevote") ning lisa ettevõtte varu (varu_katus_pct ja varu_fassaad_pct) ja ütle, et varu on soovituslik. Vasta eesti keeles, lühidalt (2–5 lauset), konkreetsete numbritega. Arvuta ainult allolevate andmete põhjal, näita lühidalt arvutuskäiku ja ütle selgelt, mis on hinnang ja mis riigi andmetest. Kui andmetest ei piisa, ütle mida on vaja. Hindu ära paku.\n\nOBJEKTI ANDMED (JSON):\n${ctx}`;
   const r = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",
     headers: { "x-api-key": env("ANTHROPIC_API_KEY"), "anthropic-version": "2023-06-01", "content-type": "application/json" },

@@ -13,6 +13,8 @@ Brauser ei näe ühtegi salajast võtit ja ei saa hinda ega saldot muuta.
 | `widget` | `functions/widget` | avalik: vidina seaded + firma tooted |
 | `widget-lead` | `functions/widget-lead` | avalik: päring vidinast → andmebaasi, firmalt 7 krediiti, e-kiri firmale, soovi korral webhook |
 | `widget-place` | `functions/widget-place` | avalik: külastaja foto + toode → AI pilt (firmalt 2 krediiti, max 3 pilti päevas ühelt IP-lt) |
+
+Kõik AI-pildid saavad firma logo alla paremale (kui firmal on logo ja seadetes „Logo AI-piltidel“ sees). Originaal ilma logota salvestatakse kõrvale (`…-raw.jpg`).
 | `ehr` | `functions/ehr` | ehitisregistri andmed EHR-koodi järgi |
 | `checkout` | `functions/checkout` | krediidipaketi ost Stripe'iga (50 € / 100 € / 250 €) |
 | `stripe-webhook` | `functions/stripe-webhook` | makse õnnestus → krediidid kontole (sama makse ainult üks kord) |
@@ -48,7 +50,8 @@ Brauser ei näe ühtegi salajast võtit ja ei saa hinda ega saldot muuta.
 5. **Funktsioonid:** `supabase functions deploy` (loeb `config.toml`, avalikud funktsioonid ilma sisselogimiseta).
 6. **Admin:** pärast enda kontoga registreerimist SQL Editoris:
    `update profiles set is_admin = true where email = 'sinu@email.ee';`
-7. **Rakendus:** `index.html` saab projekti URL-i ja avaliku (anon) võtme. Ilma nendeta jääb rakendus demo-režiimi nagu praegu.
+7. **Google'iga sisselogimine (valikuline):** Authentication → Providers → Google.
+8. **Rakendus:** `index.html` saab projekti URL-i ja avaliku (anon) võtme. Ilma nendeta jääb rakendus demo-režiimi nagu praegu.
 
 ## Testitud
 

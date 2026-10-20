@@ -9,7 +9,7 @@ Deno.serve(async (req) => {
   const { data: w } = await db.from("widgets").select("company_id,title,show_dims,color,style,features,active").eq("public_id", id).maybeSingle();
   if (!w || !w.active) return fail("not found", 404);
   const { data: c } = await db.from("companies").select("name,phone,web,logo_url,services").eq("id", w.company_id).single();
-  const { data: p } = await db.from("products").select("id,name,images,w,l,h,capacity,price,description,link").eq("company_id", w.company_id).eq("active", true);
+  const { data: p } = await db.from("products").select("id,name,category,images,w,l,h,capacity,price,description,link").eq("company_id", w.company_id).eq("active", true);
   return new Response(JSON.stringify({
     firm: { name: c?.name, phone: c?.phone, web: c?.web, logo: c?.logo_url, services: (c?.services || []).slice(0, 6) },
     title: w.title, dims: w.show_dims, color: w.color, style: w.style, features: w.features, products: p || [],
