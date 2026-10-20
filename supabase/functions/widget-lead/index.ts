@@ -1,41 +1,68 @@
 // Avalik: päring vidinast. Salvestab nime, e-posti ja aadressi, võtab firmalt krediidid ja saadab e-kirja.
-import { cors, json, fail, admin, rateLimit, clientIp, spend, sendMail, esc } from "../_shared/util.ts";
+import { cors, json, fail, admin, rateLimit, clientIp, spend, sendMail, esc, body, isEmail, isOurImage, tfetch } from "../_shared/util.ts";
+
+const num = (v: unknown) => (typeof v === "number" && isFinite(v) && v >= 0 && v < 1e6 ? Math.round(v * 10) / 10 : null);
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
   if (req.method !== "POST") return fail("POST only", 405);
-  const b = await req.json().catch(() => ({}));
+  let b: Record<string, unknown>;
+  try { b = await body(req, 20_000); } catch { return fail("liiga suur", 413); }
   const id = String(b.id || "");
-  const name = String(b.name || "").trim().slice(0, 120), email = String(b.email || "").trim().slice(0, 200), address = String(b.address || "").trim().slice(0, 300);
-  if (!/^[a-f0-9]{6,32}$/.test(id) || !name || !/^\S+@\S+\.\S+$/.test(email) || !address) return fail("Sisesta nimi, e-post ja aadress");
-  if (!(await rateLimit("lead-ip:" + clientIp(req), 5, 3600))) return fail("Liiga palju päringuid, proovi hiljem", 429);
+  const name = String(b.name || "").replace(/[\r\n\t]+/g, " ").trim().slice(0, 100);
+  const email = String(b.email || "").trim().toLowerCase().slice(0, 200);
+  const address = String(b.address || "").replace(/[\r\n\t]+/g, " ").trim().slice(0, 200);
+  if (!/^[a-f0-9]{6,32}$/.test(id) || name.length < 2 || !isEmail(email) || address.length < 3) return fail("Sisesta nimi, e-post ja aadress");
+  // botid täidavad peidetud välja; inimene ei näe seda
+  if (b.hp) return json({ ok: true });
+  const ip = clientIp(req);
+  if (!(await rateLimit("lead-ip:" + ip, 5, 3600)) || !(await rateLimit("lead-ipd:" + ip, 12, 86400))) return fail("Liiga palju päringuid, proovi hiljem", 429);
   const db = admin();
   const { data: w } = await db.from("widgets").select("*").eq("public_id", id).maybeSingle();
   if (!w || !w.active) return fail("not found", 404);
-  // sama e-post + aadress 24 h jooksul = üks päring (krediit ainult üks kord)
+  const { data: c } = await db.from("companies").select("name,phone").eq("id", w.company_id).single();
+  // sama e-post samale firmale 24 h jooksul = üks päring (krediit ainult üks kord)
   const since = new Date(Date.now() - 864e5).toISOString();
-  const { data: dup } = await db.from("leads").select("id").eq("company_id", w.company_id).eq("email", email).eq("address", address).gte("created_at", since).maybeSingle();
-  if (dup) return json({ ok: true, duplicate: true });
+  const { count: dupN } = await db.from("leads").select("id", { count: "exact", head: true }).eq("company_id", w.company_id).eq("email", email).gte("created_at", since);
+  if ((dupN || 0) >= 1) return json({ ok: true, duplicate: true });
+  // firma päevalimiit: kaitseb krediite, kui keegi saadab massiliselt võltspäringuid
+  const { count: todayN } = await db.from("leads").select("id", { count: "exact", head: true }).eq("company_id", w.company_id).gte("created_at", since);
+  if ((todayN || 0) >= (w.daily_lead_cap ?? 30)) return fail(`Täna on päringuid palju. Võta palun otse ühendust${c?.phone ? ": " + c.phone : "."}`, 429);
+  const ms = (b.measures && typeof b.measures === "object") ? b.measures as Record<string, unknown> : {};
+  const measures = { fp: num(ms.fp), roof: num(ms.roof), wall: num(ms.wall) };
   const lead = {
     company_id: w.company_id, name, email, address,
     product: b.product ? String(b.product).slice(0, 120) : null, date_wish: b.date ? String(b.date).slice(0, 60) : null,
-    services: Array.isArray(b.services) ? b.services.slice(0, 8).map(String) : [],
-    ehr: b.ehr ? String(b.ehr).slice(0, 20) : null, measures: b.measures ?? null,
-    image_url: typeof b.image_url === "string" && b.image_url.startsWith("https://") ? b.image_url : null,
+    services: Array.isArray(b.services) ? b.services.slice(0, 8).map((x) => String(x).slice(0, 60)) : [],
+    ehr: b.ehr ? String(b.ehr).replace(/\D/g, "").slice(0, 12) || null : null, measures: measures.fp ? measures : null,
+    image_url: isOurImage(b.image_url, "renders") ? String(b.image_url) : null,
   };
   const { data: row, error } = await db.from("leads").insert(lead).select().single();
   if (error) return fail("salvestamine ebaõnnestus", 500);
+  // krediidid: kui saldo ei piisa, lubame väikese võla (kuni 3 päringut), et klient ei kaoks; edasi päringuid ei võeta
   let paid = true;
   try { await spend(w.company_id, "lead", "Päring vidinast · " + address.replace(/,.*$/, ""), row.id); }
   catch {
-    // Krediidid otsas: päring jõuab ikka firmani, summa jääb võlaks ja arvestatakse järgmisest ostust maha.
     paid = false;
-    const { data: s } = await db.from("settings").select("price_lead").eq("id", 1).single();
-    await db.from("credit_ledger").insert({ company_id: w.company_id, delta: -(s?.price_lead ?? 7), kind: "lead", label: "Päring vidinast (võlg) · " + address, ref: row.id });
+    const [{ data: s }, { data: bal }] = await Promise.all([db.from("settings").select("price_lead").eq("id", 1).single(), db.from("company_balance").select("credits").eq("company_id", w.company_id).maybeSingle()]);
+    const price = Number(s?.price_lead ?? 7), credits = Number(bal?.credits ?? 0);
+    if (credits - price < -3 * price) {
+      await db.from("leads").delete().eq("id", row.id);
+      return fail(`Seda vormi ei saa hetkel kasutada. Võta palun otse ühendust${c?.phone ? ": " + c.phone : "."}`, 503);
+    }
+    await db.from("credit_ledger").insert({ company_id: w.company_id, delta: -price, kind: "lead", label: "Päring vidinast (võlg) · " + address.replace(/,.*$/, ""), ref: row.id });
   }
-  const { data: c } = await db.from("companies").select("name").eq("id", w.company_id).single();
-  const to = String(w.notify_email || "").split(",").map((s: string) => s.trim()).filter(Boolean);
-  const m = lead.measures || {};
+  // e-kiri ainult firma enda aadressidele: konto e-post või sama firmadomeeni aadress (mitte võõrastele, et vidinat ei saaks spämmiks kasutada)
+  const [{ data: team }, { data: co }] = await Promise.all([db.from("profiles").select("email").eq("company_id", w.company_id), db.from("companies").select("web").eq("id", w.company_id).single()]);
+  const own = (team || []).map((t: { email: string }) => String(t.email || "").toLowerCase()).filter(isEmail);
+  // lubatud: konto e-post või firma kodulehe domeeni aadress (nt info@firma.ee, kui koduleht on firma.ee)
+  let webHost = "";
+  try { webHost = new URL(/^https?:\/\//.test(co?.web || "") ? co!.web : "https://" + (co?.web || "")).hostname.replace(/^www\./, "").toLowerCase(); } catch { /* */ }
+  const domains = new Set(webHost && own.some((e) => e.endsWith("@" + webHost)) ? [webHost] : []);
+  const wanted = String(w.notify_email || "").split(",").map((x: string) => x.trim().toLowerCase()).filter(isEmail);
+  let to = wanted.filter((e) => own.includes(e) || domains.has(e.split("@")[1])).slice(0, 3);
+  if (!to.length) to = own.slice(0, 1);
+  const m = lead.measures;
   const html = `<div style="font:15px/1.5 system-ui,sans-serif;color:#16130F;max-width:560px">
     <h2 style="margin:0 0 8px">Uus päring: ${esc(address.replace(/,.*$/, ""))} · ${esc(name)}</h2>
     <p>Tere! Sinu kodulehe vidinast tuli uus päring${lead.product ? ": klient proovis toodet oma hoovis" : ""}.</p>
@@ -47,14 +74,14 @@ Deno.serve(async (req) => {
       ${lead.product ? `<tr><td style="color:#777;padding:4px 0">Toode</td><td><b>${esc(lead.product)}</b></td></tr>` : ""}
       ${lead.date_wish ? `<tr><td style="color:#777;padding:4px 0">Soovitud aeg</td><td>${esc(lead.date_wish)}</td></tr>` : ""}
       ${lead.services.length ? `<tr><td style="color:#777;padding:4px 0">Soovib</td><td>${esc(lead.services.join(", "))}</td></tr>` : ""}
-      ${m.fp ? `<tr><td style="color:#777;padding:4px 0">Põhiplaan</td><td>${esc(m.fp)} m²</td></tr><tr><td style="color:#777;padding:4px 0">Katus</td><td>~${esc(m.roof)} m²</td></tr><tr><td style="color:#777;padding:4px 0">Seinad</td><td>~${esc(m.wall)} m²</td></tr>` : ""}
+      ${m ? `<tr><td style="color:#777;padding:4px 0">Põhiplaan</td><td>${esc(m.fp)} m²</td></tr><tr><td style="color:#777;padding:4px 0">Katus</td><td>~${esc(m.roof)} m²</td></tr><tr><td style="color:#777;padding:4px 0">Seinad</td><td>~${esc(m.wall)} m²</td></tr>` : ""}
     </table>
-    <p style="font-size:13px;color:#777">Vasta sellele kirjale, vastus läheb otse kliendile. ${paid ? "Päringu eest võeti krediidid." : "<b>Krediidid on otsas</b>, lae krediite juurde."}<br>Kliendi nimi ja e-post on ainult sinu jaoks. Vaade3D neid ei kasuta ega jaga.</p></div>`;
+    <p style="font-size:13px;color:#777">Vasta sellele kirjale, vastus läheb otse kliendile. ${paid ? "Päringu eest võeti krediidid." : "<b>Krediidid on otsas</b>, lae krediite juurde, muidu vidin peatub."}<br>Kliendi nimi ja e-post on ainult sinu jaoks. Vaade3D neid ei kasuta ega jaga.</p></div>`;
   const mail = await sendMail(to, `Uus päring: ${address.replace(/,.*$/, "")} · ${name}`, html, email);
   let hook: unknown = null;
   if (w.webhook_url && /^https:\/\//.test(w.webhook_url)) {
-    try { const r = await fetch(w.webhook_url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...lead, id: row.id, company: c?.name, created_at: row.created_at }) }); hook = r.status; } catch { hook = "error"; }
+    try { const r = await tfetch(w.webhook_url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...lead, id: row.id, company: c?.name, created_at: row.created_at }), redirect: "manual" }, 5000); hook = r.status; } catch { hook = "error"; }
   }
-  await db.from("leads").update({ delivered: { mail, hook } }).eq("id", row.id);
+  await db.from("leads").update({ delivered: { mail, hook, paid } }).eq("id", row.id);
   return json({ ok: true });
 });

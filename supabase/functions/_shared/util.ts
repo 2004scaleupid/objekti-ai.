@@ -11,9 +11,30 @@ export const json = (data: unknown, status = 200) =>
   new Response(JSON.stringify(data), { status, headers: { ...cors, "Content-Type": "application/json" } });
 export const fail = (msg: string, status = 400) => json({ error: msg }, status);
 
-export const env = (k: string, d = "") => Deno.env.get(k) ?? d;
+export const env = (k: string, d = "") => Deno.env.get(k) || d;
 export const admin = (): SupabaseClient =>
   createClient(env("SUPABASE_URL"), env("SUPABASE_SERVICE_ROLE_KEY"), { auth: { persistSession: false } });
+
+/** fetch koos ajapiiranguga, et üks aeglane väline teenus ei jääks funktsiooni kinni hoidma. */
+export const tfetch = (url: string, init: RequestInit = {}, ms = 15000) =>
+  fetch(url, { ...init, signal: AbortSignal.timeout(ms) });
+
+/** Päringu keha JSON-ina, suuruse piiranguga (vaikimisi 8 MB). */
+export async function body(req: Request, max = 8_000_000): Promise<Record<string, unknown>> {
+  const len = Number(req.headers.get("content-length") || 0);
+  if (len > max) throw new Error("too_large");
+  const t = await req.text();
+  if (t.length > max) throw new Error("too_large");
+  try { const j = JSON.parse(t || "{}"); return j && typeof j === "object" ? j : {}; } catch { return {}; }
+}
+
+/** Meie failihoidla avalik aadress (ainult sealt lubame pilte ja logosid). */
+export const publicPrefix = (bucket: string) => `${env("PUBLIC_STORAGE_URL", env("SUPABASE_URL"))}/storage/v1/object/public/${bucket}/`;
+export const isOurImage = (u: unknown, bucket: string) =>
+  typeof u === "string" && u.startsWith(publicPrefix(bucket)) && !/["'<>\s\\]|\.\./.test(u);
+export const isPhoto = (u: unknown) => typeof u === "string" && /^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/.test(u);
+/** Katkenud (ajapiirangu tõttu) piltide krediidid tagasi. */
+export const refundStale = (companyId: string) => admin().rpc("refund_stale_renders", { p_company: companyId }).then(() => {}, () => {});
 
 /** Sisselogitud kasutaja ja tema firma (JWT päisest). */
 export async function userCompany(req: Request): Promise<{ userId: string; companyId: string } | null> {
@@ -27,34 +48,36 @@ export async function userCompany(req: Request): Promise<{ userId: string; compa
   return { userId: data.user.id, companyId: p.company_id };
 }
 
-/** Lihtne piirang: max N päringut aknas (sekundites). */
+/** Piirang: max N päringut aknas (sekundites). Aatomiline andmebaasis. */
 export async function rateLimit(key: string, max: number, windowSec: number): Promise<boolean> {
-  const db = admin();
-  const now = new Date();
-  const { data } = await db.from("rate_limits").select("*").eq("key", key).maybeSingle();
-  if (!data || (now.getTime() - new Date(data.window_start).getTime()) / 1000 > windowSec) {
-    await db.from("rate_limits").upsert({ key, n: 1, window_start: now.toISOString() });
-    return true;
-  }
-  if (data.n >= max) return false;
-  await db.from("rate_limits").update({ n: data.n + 1 }).eq("key", key);
-  return true;
+  const { data, error } = await admin().rpc("rate_hit", { p_key: key, p_max: max, p_window_sec: windowSec });
+  if (error) return false; // kahtluse korral keeldu
+  return data === true;
 }
-export const clientIp = (req: Request) =>
-  (req.headers.get("x-forwarded-for") || "").split(",")[0].trim() || "unknown";
+/** Külastaja IP: Cloudflare'i päis on usaldusväärne, x-forwarded-for esimest väärtust saab võltsida. */
+export const clientIp = (req: Request) => {
+  if (env("LOG_IP")) console.log("ip headers", JSON.stringify({ cf: req.headers.get("cf-connecting-ip"), xff: req.headers.get("x-forwarded-for"), real: req.headers.get("x-real-ip") }));
+  // Cloudflare kirjutab selle päise ise üle, klient seda võltsida ei saa
+  const cf = req.headers.get("cf-connecting-ip");
+  if (cf) return cf.trim();
+  // muidu esimene x-forwarded-for väärtus (võib olla võltsitav, aga põhikaitse on vidina päevalimiit)
+  const xs = (req.headers.get("x-forwarded-for") || "").split(",").map((s) => s.trim()).filter(Boolean);
+  return xs[0] || "unknown";
+};
 
-/** Krediitide kulutamine serveris (hind tuleb andmebaasist). */
-export async function spend(companyId: string, kind: string, label: string, ref?: string) {
-  const { data, error } = await admin().rpc("spend_credits", { p_company: companyId, p_kind: kind, p_label: label, p_ref: ref ?? null });
+/** Krediitide kulutamine serveris (hind tuleb andmebaasist). ref seob kulu tagastusega. */
+export async function spend(companyId: string, kind: string, label: string, ref: string) {
+  const { data, error } = await admin().rpc("spend_credits", { p_company: companyId, p_kind: kind, p_label: label.slice(0, 120), p_ref: ref });
   if (error) throw new Error(error.message.includes("insufficient") ? "insufficient_credits" : error.message);
   return data as number;
 }
-export async function refund(companyId: string, kind: string, label: string) {
-  const db = admin();
-  const { data: s } = await db.from("settings").select("*").eq("id", 1).single();
-  const price = ({ pic: s.price_pic, design: s.price_design, obj: s.price_obj, lead: s.price_lead } as Record<string, number>)[kind] ?? 0;
-  await db.from("credit_ledger").insert({ company_id: companyId, delta: price, kind: "refund", label: "Tagastus: " + label });
+/** Tagastab täpselt selle viitega võetud summa, ainult üks kord. */
+export async function refund(ref: string) {
+  await admin().rpc("refund_credits", { p_ref: ref });
 }
+
+const SIZES = new Set(["auto", "1:1", "2:3", "3:2", "3:4", "4:3", "4:5", "5:4", "9:16", "16:9", "21:9"]);
+export const safeSize = (s: unknown) => (typeof s === "string" && SIZES.has(s) ? s : "auto");
 
 /** Kie.ai pildimudel: loob ülesande, ootab tulemust ja tagastab pildi URL-i. */
 export async function kieImage(prompt: string, imageUrls: string[], size = "auto"): Promise<string> {
@@ -65,28 +88,28 @@ export async function kieImage(prompt: string, imageUrls: string[], size = "auto
   const model = env("KIE_MODEL", "nano-banana-2-1");
   const input: Record<string, unknown> = { prompt };
   if (model.startsWith("google/")) {
-    Object.assign(input, { output_format: "jpeg", image_size: size });
+    Object.assign(input, { output_format: "jpeg", image_size: safeSize(size) });
     if (imageUrls.length) input.image_urls = imageUrls;
   } else {
-    Object.assign(input, { output_format: "jpg", aspect_ratio: size, resolution: env("KIE_RESOLUTION", "1K") });
+    Object.assign(input, { output_format: "jpg", aspect_ratio: safeSize(size), resolution: env("KIE_RESOLUTION", "1K") });
     if (imageUrls.length) input.image_input = imageUrls;
   }
-  const r = await fetch(`${base}/jobs/createTask`, {
+  const r = await tfetch(`${base}/jobs/createTask`, {
     method: "POST", headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
     body: JSON.stringify({ model, input }),
-  });
-  const j = await r.json();
+  }, 20000);
+  const j = await r.json().catch(() => ({}));
   const taskId = j?.data?.taskId;
   if (!taskId) throw new Error("Kie createTask: " + JSON.stringify(j).slice(0, 300));
-  const t0 = Date.now();
+  const t0 = Date.now(), poll = Number(env("KIE_POLL_MS", "3000"));
   while (Date.now() - t0 < 110_000) {
-    await new Promise((res) => setTimeout(res, 3000));
-    const s = await (await fetch(`${base}/jobs/recordInfo?taskId=${encodeURIComponent(taskId)}`, { headers: { Authorization: `Bearer ${key}` } })).json();
+    await new Promise((res) => setTimeout(res, poll));
+    const s = await (await tfetch(`${base}/jobs/recordInfo?taskId=${encodeURIComponent(taskId)}`, { headers: { Authorization: `Bearer ${key}` } }, 10000)).json().catch(() => ({}));
     const st = s?.data?.state;
     if (st === "success") {
       const rj = typeof s.data.resultJson === "string" ? JSON.parse(s.data.resultJson) : s.data.resultJson;
       const url = rj?.resultUrls?.[0];
-      if (!url) throw new Error("Kie: tulemuse URL puudub");
+      if (typeof url !== "string" || !/^https?:\/\//.test(url)) throw new Error("Kie: tulemuse URL puudub");
       return url;
     }
     if (st === "fail") throw new Error("Kie: " + (s.data.failMsg || "genereerimine ebaõnnestus"));
@@ -97,8 +120,12 @@ export async function kieImage(prompt: string, imageUrls: string[], size = "auto
 /** Firma logo pildi alla paremale (valge pehme alus, et oleks igal taustal loetav). */
 export async function brand(bytes: Uint8Array, logoUrl: string): Promise<Uint8Array> {
   try {
+    if (!isOurImage(logoUrl, "products")) return bytes; // ainult meie failihoidlast
+    const lr = await tfetch(logoUrl, {}, 8000);
+    const lb = new Uint8Array(await lr.arrayBuffer());
+    if (lb.length > 3_000_000) return bytes;
     const base = await Image.decode(bytes);
-    const logo = await Image.decode(new Uint8Array(await (await fetch(logoUrl)).arrayBuffer()));
+    const logo = await Image.decode(lb);
     const W = base.width, H = base.height;
     let lw = Math.round(W * 0.13);
     if ((logo.height * lw) / logo.width > H * 0.08) lw = Math.round((H * 0.08 * logo.width) / logo.height);
@@ -113,10 +140,12 @@ export async function brand(bytes: Uint8Array, logoUrl: string): Promise<Uint8Ar
   } catch (_) { return bytes; } // logo ei tohi kunagi pilti ära rikkuda
 }
 
-/** Salvestab välise pildi meie 'renders' bucketisse (soovi korral firma logoga) ja tagastab avaliku URL-i. */
+/** Salvestab Kie tulemuse meie 'renders' bucketisse (soovi korral firma logoga) ja tagastab avaliku URL-i. */
 export async function storeImage(url: string, path: string, companyId?: string): Promise<string> {
   const db = admin();
-  let bytes = new Uint8Array(await (await fetch(url)).arrayBuffer());
+  const r = await tfetch(url, {}, 20000);
+  let bytes = new Uint8Array(await r.arrayBuffer());
+  if (bytes.length > 9_000_000) throw new Error("tulemus liiga suur");
   if (companyId) {
     const { data: c } = await db.from("companies").select("logo_url,logo_on_images").eq("id", companyId).single();
     if (c?.logo_on_images && c.logo_url) {
@@ -126,12 +155,15 @@ export async function storeImage(url: string, path: string, companyId?: string):
   }
   const { error } = await db.storage.from("renders").upload(path, bytes, { contentType: "image/jpeg", upsert: true });
   if (error) throw new Error("storage: " + error.message);
-  return db.storage.from("renders").getPublicUrl(path).data.publicUrl;
+  const pub = db.storage.from("renders").getPublicUrl(path).data.publicUrl;
+  const host = env("PUBLIC_STORAGE_URL");
+  return host ? pub.replace(env("SUPABASE_URL"), host) : pub;
 }
 
 /** data:image/...;base64 -> privaatne fail 'uploads' bucketis + 1h allkirjastatud link (Kie jaoks). */
 export async function uploadDataUrl(dataUrl: string, path: string): Promise<string> {
-  const m = dataUrl.match(/^data:(image\/[a-z+]+);base64,(.+)$/);
+  if (dataUrl.length > 8_200_000) throw new Error("pilt on liiga suur");
+  const m = dataUrl.match(/^data:(image\/(?:jpeg|png|webp));base64,([A-Za-z0-9+/=]+)$/);
   if (!m) throw new Error("vigane pilt");
   const bytes = Uint8Array.from(atob(m[2]), (c) => c.charCodeAt(0));
   if (bytes.length > 6_000_000) throw new Error("pilt on liiga suur");
@@ -139,17 +171,21 @@ export async function uploadDataUrl(dataUrl: string, path: string): Promise<stri
   const { error } = await db.storage.from("uploads").upload(path, bytes, { contentType: m[1], upsert: true });
   if (error) throw new Error("storage: " + error.message);
   const { data } = await db.storage.from("uploads").createSignedUrl(path, 3600);
-  return data!.signedUrl;
+  if (!data?.signedUrl) throw new Error("storage: link puudub");
+  return data.signedUrl;
 }
 
 /** E-kiri Resendi kaudu. */
 export async function sendMail(to: string[], subject: string, html: string, replyTo?: string) {
   const key = env("RESEND_API_KEY");
   if (!key || !to.length) return { skipped: true };
-  const r = await fetch("https://api.resend.com/emails", {
-    method: "POST", headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
-    body: JSON.stringify({ from: env("MAIL_FROM", "Vaade3D <paringud@vaade3d.ee>"), to, subject, html, reply_to: replyTo }),
-  });
-  return { ok: r.ok, status: r.status };
+  try {
+    const r = await tfetch(env("RESEND_API_URL", "https://api.resend.com") + "/emails", {
+      method: "POST", headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ from: env("MAIL_FROM", "Vaade3D <paringud@vaade3d.ee>"), to: to.slice(0, 5), subject: subject.slice(0, 200), html, reply_to: replyTo }),
+    }, 10000);
+    return { ok: r.ok, status: r.status };
+  } catch { return { ok: false, status: 0 }; }
 }
-export const esc = (s: unknown) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]!));
+export const esc = (s: unknown) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]!));
+export const isEmail = (s: string) => /^[^\s@<>"',;]{1,64}@[^\s@<>"',;]{1,190}\.[a-z]{2,24}$/i.test(s);

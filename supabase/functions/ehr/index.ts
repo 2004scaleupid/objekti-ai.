@@ -1,5 +1,5 @@
 // Avalik: ehitisregistri andmed EHR-koodi järgi (server teeb päringu, brauser ei pea).
-import { cors, fail } from "../_shared/util.ts";
+import { cors, fail, tfetch, env, rateLimit, clientIp } from "../_shared/util.ts";
 
 type Out = { otstarve?: string; esmane?: string; korrused?: string; sein: string[]; viimistlus?: string; katus?: string; kute?: string; energia?: string; koetav?: string; alune?: string };
 function parse(j: unknown): Out {
@@ -26,7 +26,9 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
   const code = new URL(req.url).searchParams.get("code") || "";
   if (!/^\d{6,12}$/.test(code)) return fail("bad code");
-  const r = await fetch("https://livekluster.ehr.ee/api/building/v2/buildingData?ehr_code=" + code);
+  if (!(await rateLimit("ehr:" + clientIp(req), 120, 3600))) return fail("Liiga palju päringuid", 429);
+  let r: Response;
+  try { r = await tfetch(env("EHR_API_URL", "https://livekluster.ehr.ee") + "/api/building/v2/buildingData?ehr_code=" + code, {}, 8000); } catch { return fail("EHR ei vastanud", 502); }
   if (!r.ok) return fail("EHR ei vastanud", 502);
   return new Response(JSON.stringify(parse(await r.json())), { headers: { ...cors, "Content-Type": "application/json", "Cache-Control": "public, max-age=86400" } });
 });
