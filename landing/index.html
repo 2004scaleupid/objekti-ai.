@@ -449,11 +449,11 @@ const BRAND='Vaade<span style="color:var(--accent)">3D</span>';
 
 /* ---------- demo buildings (stand-in for Maa- ja Ruumiameti LOD2 import) ---------- */
 const BUILDINGS=[
-  {id:'b1',jv:{fp:150.3,roof:173.5,wall:263.2,height:7.45,perimeter:50.5},ehr:'116049205',addr:'Rukkiräägu tee 9',area:'Viimsi vald',type:'gable',W:15.68,D:9.58,h:4.68,pitch:30,o:0.4,demoOffer:'11 200 €'},
-  {id:'b2',jv:{fp:125.9,roof:145.6,wall:226.3,height:7.32,perimeter:45.1},ehr:'120827145',addr:'Tagakäära tee 4',area:'Viimsi vald',type:'gable',W:12.22,D:10.31,h:4.34,pitch:30,o:0.4,demoOffer:'9 400 €'},
-  {id:'b3',jv:{fp:115.9,roof:133.8,wall:192.1,height:6.1,perimeter:45.3},ehr:'116022372',addr:'Taganõmme tee 21',area:'Viimsi vald',type:'gable',W:14.88,D:7.8,h:3.85,pitch:30,o:0.4,demoOffer:'8 600 €'},
-  {id:'b4',jv:{fp:195.4,roof:227.9,wall:339.2,height:7.7,perimeter:61.8},ehr:'121297301',addr:'Laaneserva tee 7',area:'Viimsi vald',type:'gable',W:22.03,D:8.96,h:5.11,pitch:30,o:0.4,demoOffer:'14 700 €'},
-  {id:'b5',jv:{fp:103.7,roof:119.7,wall:242.4,height:7.99,perimeter:40.9},ehr:'120757562',addr:'Angervaksa tee 4',area:'Viimsi vald',type:'gable',W:11.22,D:9.24,h:5.32,pitch:30,o:0.4,demoOffer:'8 100 €'},
+  {id:'b1',jv:{fp:150.3,roof:173.5,height:7.45,perimeter:50.5},ehr:'116049205',addr:'Rukkiräägu tee 9',area:'Viimsi vald',type:'gable',W:15.68,D:9.58,h:4.68,pitch:30,o:0.4,demoOffer:'11 200 €'},
+  {id:'b2',jv:{fp:125.9,roof:145.6,height:7.32,perimeter:45.1},ehr:'120827145',addr:'Tagakäära tee 4',area:'Viimsi vald',type:'gable',W:12.22,D:10.31,h:4.34,pitch:30,o:0.4,demoOffer:'9 400 €'},
+  {id:'b3',jv:{fp:115.9,roof:133.8,height:6.1,perimeter:45.3},ehr:'116022372',addr:'Taganõmme tee 21',area:'Viimsi vald',type:'gable',W:14.88,D:7.8,h:3.85,pitch:30,o:0.4,demoOffer:'8 600 €'},
+  {id:'b4',jv:{fp:195.4,roof:227.9,height:7.7,perimeter:61.8},ehr:'121297301',addr:'Laaneserva tee 7',area:'Viimsi vald',type:'gable',W:22.03,D:8.96,h:5.11,pitch:30,o:0.4,demoOffer:'14 700 €'},
+  {id:'b5',jv:{fp:103.7,roof:119.7,height:7.99,perimeter:40.9},ehr:'120757562',addr:'Angervaksa tee 4',area:'Viimsi vald',type:'gable',W:11.22,D:9.24,h:5.32,pitch:30,o:0.4,demoOffer:'8 100 €'},
   {id:'x0',addr:'Lilleoru tee 2',area:'Viimsi vald',missing:true}
 ];
 const fullAddr=b=>`${b.addr}, ${b.area}`;
@@ -1389,7 +1389,7 @@ function homeScreen(){
 
   <section class="wrap band" id="video">
     <span class="lbl">30 sekundiga</span>
-    <div class="promo"><video src="vaade3d-promo.mp4" poster="vaade3d-poster.jpg" autoplay muted loop playsinline preload="metadata" aria-label="Vaade3D tutvustusvideo"></video></div>
+    <div class="promo"><video src="vaade3d-promo.mp4?v=2" poster="vaade3d-poster.jpg?v=2" autoplay muted loop playsinline preload="metadata" aria-label="Vaade3D tutvustusvideo"></video></div>
   </section>
 
   <section class="wrap story-head" id="kuidas"><span class="lbl">Kuidas see töötab</span><h2>Aadressist pakkumiseni. <span class="ul">Keri.</span></h2></section>
