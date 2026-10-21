@@ -2069,7 +2069,7 @@ function renderSeller(){const r=R(),code=sellerCode();
 $('slDemoT').onclick=()=>openPlace({mode:'widget',preview:true,p:{c:'Näidisfirma OÜ',col:''}});
 $('slDemoH').onclick=()=>{const a=findAddr('Tammekännu tee 44')[0];if(a)clientView({v:1,e:a[1],rt:'gable',d:1,r:1,c:'Näidisfirma OÜ',msg:'Tere! Siin on teie maja 3D-vaade koos mõõtudega.'},{preview:true});};
 $('slPitch').onclick=()=>{const t='Tere! Vaade3D näitab teie kliendile tema maja 3D-s aadressi järgi ja teie toodet (nt telki või sauna) tema enda hoovi fotol. Teie kodulehele tuleb väike kast, kliendi päring koos pildiga jõuab kohe teie e-postile. Vidin on tasuta, maksate ainult päringute eest (3,50 €). '+(sellerCode()?'Minu koodiga '+sellerCode()+' saate esimesed '+R().discN+' kasutust −'+R().disc+'%.':'');try{navigator.clipboard.writeText(t).then(()=>toast('Müügijutt kopeeritud'),()=>toast('Müügijutt kopeeritud'));}catch(_){toast('Müügijutt kopeeritud');}};
-function startFromHash(){const h=location.hash||'';if(h.startsWith('#ref=')){const c=decodeURIComponent(h.slice(5)).toUpperCase();$('app').hidden=true;$('login').hidden=false;setTab(true);$('lRef').value=c;return true;}if(h.startsWith('#s=')){const p=b64d(h.slice(3));if(p&&p.e)return clientView(p,{});}
+function startFromHash(){const h=location.hash||'';if(h==='#loo-konto'||h==='#signup'){$('app').hidden=true;$('login').hidden=false;setTab(true);return true;}if(h.startsWith('#ref=')){const c=decodeURIComponent(h.slice(5)).toUpperCase();$('app').hidden=true;$('login').hidden=false;setTab(true);$('lRef').value=c;return true;}if(h.startsWith('#s=')){const p=b64d(h.slice(3));if(p&&p.e)return clientView(p,{});}
   if(h.startsWith('#w=')){const W=wHash(h),p=b64d(W.w);if(p){widgetView(p,{addr:W.a||''});if(W.p)openPlace({mode:'widget',p,prod:W.p,locked:true});return true;}}return false;}
 function wHash(h){const o={};h.slice(1).split('&').forEach(kv=>{const i=kv.indexOf('=');if(i>0)o[kv.slice(0,i)]=decodeURIComponent(kv.slice(i+1));});return o;}
 /* out of credits */
@@ -2738,7 +2738,7 @@ window.addEventListener('hashchange',()=>{if(CLOUD&&CL.cid&&location.hash.starts
 async function clBoot(){const h=location.hash||'';
   if(h.startsWith('#w=')){const W=wHash(h),p=b64d(W.w);if(p&&p.id){clWidget(p,W.a||'',W.p);return;}if(startFromHash())return;}
   if(h.startsWith('#s=')&&startFromHash())return;
-  clLoginUi();$('app').hidden=true;$('login').hidden=false;if(h.startsWith('#ref='))startFromHash();
+  clLoginUi();$('app').hidden=true;$('login').hidden=false;if(h.startsWith('#ref=')||h==='#loo-konto'||h==='#signup')startFromHash();
   try{await clInit();const {data}=await CL.sb.auth.getSession();if(data.session){$('lErr').textContent='Laadin kontot…';if(await clLoad()){$('lErr').textContent='';enter();if(h.startsWith('#paid='))clPaid();else if(h.startsWith('#cancel'))history.replaceState(null,'',location.pathname);}else $('lErr').textContent='';}}
   catch(e){$('lErr').textContent=clErr(e);}}
 
