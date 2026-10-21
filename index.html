@@ -697,6 +697,18 @@ body.cvm .panel>*:not(#cvPanel){display:none!important}
 @keyframes stpulse{50%{opacity:.35}}@media (prefers-reduced-motion:reduce){.stresb.wait .dot{animation:none}}
 .sth .cr{font:600 11px var(--mono);color:var(--muted)}
 .stdropv{position:absolute;inset:8px;z-index:6;border:2px dashed var(--accent);border-radius:12px;background:color-mix(in srgb,var(--paper) 88%,var(--accent) 12%);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;pointer-events:none;text-align:center;padding:12px}
+.body>.side{display:none!important}
+.body{grid-template-columns:60px minmax(0,1fr) 340px}
+@media (max-width:1180px){.body{grid-template-columns:60px minmax(0,1fr) 330px}}
+@media (max-width:820px){.body{grid-template-columns:minmax(0,1fr)}}
+body.cvm .body{grid-template-columns:minmax(0,1fr) 360px}body.cvm #obRail,body.cvm .obsel{display:none!important}
+@media (max-width:820px){body.cvm .body{grid-template-columns:minmax(0,1fr)}}
+body:not(.cvm) #mSeg{display:none}
+.obsel{pointer-events:auto;align-self:flex-start;margin-bottom:4px}
+.obpick{display:inline-flex;align-items:center;gap:6px;height:34px;border:1px solid var(--line);background:var(--paper);color:var(--ink);border-radius:10px;padding:0 10px 0 12px;font:600 13.5px var(--display);cursor:pointer;box-shadow:0 2px 8px rgba(22,19,15,.08);max-width:260px}
+.obpick span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.obpick:hover{border-color:var(--ink)}
+.obsel .stmenu{top:calc(100% + 6px)}.obsel .stmenu .cur{background:var(--soft)}.obsel .stmenu hr{border:0;border-top:1px solid var(--line);margin:4px 2px}
+.view[data-tool="hand"] canvas{cursor:grab}
 .stnoimg{flex:1;display:grid;place-items:center;color:var(--muted);font-size:14px}
 @media (max-width:820px){.strail{position:sticky;top:0;z-index:25;box-shadow:0 4px 10px rgba(22,19,15,.06)}.ststage{min-height:62vh;padding:10px 10px 0}.stview{min-height:38vh}.stback{font-size:0;padding:0 6px}.stback svg{width:18px;height:18px}.sttop .ghost.sm{white-space:nowrap}.sttop{padding:6px 10px}.studio:not(.fresh) .stdock{padding-left:10px;padding-right:10px}.stzoomc button{min-width:34px;height:34px}}
 .pwf{position:relative;display:block}.pwf input{width:100%;box-sizing:border-box;padding-right:46px!important}
@@ -926,6 +938,7 @@ body.p3emb{background:transparent;margin:0;padding:0;overflow:hidden}body.p3emb 
   </section>
 
   <div class="body">
+    <nav class="strail obrail" id="obRail" aria-label="Tööriistad"></nav>
     <nav class="side" aria-label="Objektid">
       <div class="tag">Objektid</div>
       <button class="new" type="button">+ Uus objekt</button>
@@ -942,6 +955,7 @@ body.p3emb{background:transparent;margin:0;padding:0;overflow:hidden}body.p3emb 
       <div class="labels"><div class="dim mres" id="selLab" hidden></div></div>
       <div class="rtag" id="rtag" hidden>ESITLUS · AI-visualiseering, mõõdud vaata 3D-vaatest</div>
       <div class="ov tl">
+        <div class="stsel obsel"><button type="button" class="obpick" id="obPick" aria-haspopup="listbox"><span id="obPickT">Objektid</span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button><div class="stmenu" id="obMenu" role="listbox" hidden></div></div>
         <div class="chip"><span class="tag">3D-mudel · Maa- ja Ruumiamet</span></div>
         <div class="chip" id="vchip"></div>
       </div>
@@ -1028,7 +1042,7 @@ body.p3emb{background:transparent;margin:0;padding:0;overflow:hidden}body.p3emb 
   <div class="studio fresh" id="studio" hidden>
     <nav class="strail" id="stRail" aria-label="Tööriistad"></nav>
     <section class="stmain" id="stMain">
-      <div class="sttop" id="stTop"><button type="button" class="stback" id="stHome" aria-label="Tagasi avalehele"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>Avaleht</button><span class="sttn" id="stTn"></span><span class="stsp"></span>
+      <div class="sttop" id="stTop"><button type="button" class="stback" id="stHome" aria-label="Tagasi avalehele"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>Avaleht</button><button type="button" class="stback" id="stTo3d" hidden title="Tagasi maja 3D-vaatesse"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 3 8 4.5v9L12 21l-8-4.5v-9z"/><path d="m4 7.5 8 4.5 8-4.5M12 12v9"/></svg>3D-vaade</button><span class="sttn" id="stTn"></span><span class="stsp"></span>
         <div class="stsel"><button type="button" class="stpick" id="stJobs" aria-haspopup="listbox"><span>Tööd</span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button><div class="stmenu dn" id="stJobsM" role="listbox" hidden></div></div>
         <button type="button" class="ghost sm" id="stNew2">+ Uus töö</button></div>
       <div class="sthero" id="stHero">
@@ -3255,7 +3269,7 @@ function stRender(){const th=stTheme(STU.tpl),s=stSess(),stage=!!(s&&(s.base||s.
   ON.sort((a,b)=>((order.indexOf(a.id)+99)%99)-((order.indexOf(b.id)+99)%99));
   $('stChips').innerHTML=ON.map(t=>`<button type="button" class="stchip" data-t="${t.id}" aria-pressed="${t.id===STU.tpl}">${ticon(t,16)}<span>${stEsc(t.id==='vaba'?'Vaba idee':t.name)}</span></button>`).join('');
   $('stChips').querySelectorAll('.stchip').forEach(b=>b.onclick=()=>{if(b.dataset.t!==STU.tpl)openStudio(b.dataset.t);});
-  $('stStage').hidden=!stage;
+  $('stStage').hidden=!stage;$('stTo3d').hidden=!(s&&s.obj&&HOUSES.some(h=>h.ehr===s.obj));
   stRenderStyle();stRenderProd();stRenderFiles();stRenderFilm();stShowImg();stRenderPanel();stRenderRail();stRenderSugg();stRenderMk();stRenderRes();p3Render();stSync();}
 function stShowImg(){const s=stSess(),im=$('stImg'),src=s&&s.base?stAiImg(s.base):'';$('stBusy').hidden=!STU.busy;
   $('stBusyT').textContent=STU.busy?(STU.busyN>1?'AI teeb 2 varianti…':'AI teeb pilti…'):'';
@@ -3657,7 +3671,51 @@ $('p3Btn').onclick=()=>{const h=HOUSES[cur],T=tplById(h.tpl);openStudio('mudel3d
 const DEV_AUTOLOGIN=true;/* arenduse ajal: avab kohe töölaua; enne käivitamist pane false */
 // avalik 3D-mudel (#m=…, ka kodulehe vidinana): ainult vaatur, ülejäänud äppi ei käivitata
 const P3PUB=location.hash.startsWith('#m=')&&p3Public(location.hash);
-if(!P3PUB){restoreRT();renderList();renderPanel();build();updFotos();chatReset();setTab(false);renderAcct();
+if(!P3PUB){
+/* ---------- 3D-objektivaade: sama tööriistariba nagu stuudios ---------- */
+const OB={tool:'select'};
+const OB_AREA=SI('<path d="M4 18 7 5l11 3 2 10z"/><circle cx="4" cy="18" r="1.6"/><circle cx="7" cy="5" r="1.6"/><circle cx="18" cy="8" r="1.6"/><circle cx="20" cy="18" r="1.6"/>');
+const OB_DRAW={brush:1,rect:1,lasso:1,point:1,arrow:1,text:1,prod:1};
+function obTools(){const T=id=>ST_TOOLS.find(t=>t&&t.id===id);const d3=' Pildistab praeguse 3D-vaate ja avab selle märkimiseks.';
+  return [{...T('select'),n:'Pööra vaadet',d:'Lohista, et maja keerata. Rullik suurendab.'},{...T('hand'),d:'Lohista, et vaadet nihutada.'},0,
+    ...['brush','rect','lasso','point','arrow','text','prod'].map(id=>({...T(id),d:(T(id).d||'')+d3})),0,
+    {...T('ruler'),id:'ruler',n:'Mõõda kaugust',d:'Kliki punkte maja või maapinna peal. Näed iga lõigu ja kogupikkuse.'},
+    {id:'area',k:'G',n:'Mõõda pinda',d:'Kliki pinna nurgad, nt katusetahu 4 nurka. Sulge, klõpsates esimesele punktile.',i:OB_AREA},
+    {...T('erase'),n:'Kustuta mõõdud',d:'Eemaldab kõik mõõtmise punktid.',act:1},0,
+    {...T('eye'),n:'Peida mõõdud',d:'Vaata maja ilma mõõtude ja silditeta.',act:1}];}
+function obRenderRail(){const r=$('obRail');if(!r)return;const cur=typeof mMode!=='undefined'&&mMode?(mMode==='dist'?'ruler':'area'):OB.tool;
+  const hidden=$('dimBtn').getAttribute('aria-pressed')!=='true'&&$('distBtn').getAttribute('aria-pressed')!=='true';
+  r.innerHTML=obTools().map(t=>{if(!t)return '<span class="sep"></span>';const pressed=t.id==='eye'?hidden:!t.act&&cur===t.id;
+    return `<button type="button" class="sttool" data-tool="${t.id}" data-n="${stEsc(t.n)}" data-d="${stEsc(t.d||'')}" data-k="${stEsc(t.k||'')}" aria-pressed="${pressed}" aria-label="${stEsc(t.n)}">${t.i}</button>`;}).join('');
+  r.querySelectorAll('.sttool').forEach(b=>{b.onclick=()=>{stTip(null);obTool(b.dataset.tool);};b.onpointerenter=e=>{if(e.pointerType==='mouse')stTip(b);};b.onpointerleave=()=>stTip(null);b.onfocus=()=>{if(b.matches(':focus-visible'))stTip(b);};b.onblur=()=>stTip(null);});
+  $('view').dataset.tool=cur;}
+function obSetPan(on){try{controls.mouseButtons.LEFT=on?THREE.MOUSE.PAN:THREE.MOUSE.ROTATE;controls.touches.ONE=on?THREE.TOUCH.PAN:THREE.TOUCH.ROTATE;}catch(e){}}
+function obTool(id){if(OB_DRAW[id])return obToStudio(id);
+  if(id==='ruler'||id==='area'){const m=id==='ruler'?'dist':'area';setMode(m);OB.tool='select';obSetPan(false);return obRenderRail();}
+  if(id==='erase'){$('mClr').click();return obRenderRail();}
+  if(id==='eye'){const show=$('dimBtn').getAttribute('aria-pressed')!=='true'&&$('distBtn').getAttribute('aria-pressed')!=='true';
+    ['dimBtn','distBtn'].forEach(k=>{if(($(k).getAttribute('aria-pressed')==='true')!==show)$(k).click();});$('mlabels').style.visibility=show?'':'hidden';return obRenderRail();}
+  if(mMode)setMode(mMode);OB.tool=id;obSetPan(id==='hand');obRenderRail();}
+function obSnap(){const r=$('render');let src=null;
+  if(r&&!r.hidden&&r.src&&stAiImg(r.src))return r.src;
+  renderer.render(scene,camera);const w=canvas.width,h=canvas.height,k=Math.min(1,1600/Math.max(w,h)),cv=document.createElement('canvas');cv.width=Math.round(w*k);cv.height=Math.round(h*k);
+  cv.getContext('2d').drawImage(canvas,0,0,cv.width,cv.height);return cv.toDataURL('image/jpeg',.9);}
+function obToStudio(tool){const h=HOUSES[cur];if(!h)return;let src;try{src=obSnap();}catch(e){toast('3D-vaadet ei õnnestunud pildistada');return;}
+  const prev=acct.activeTpl;openStudio('vaba');acct.activeTpl=prev;stSetBase(src);const s=stSess();s.title=h.short+' · 3D-vaade';s.obj=h.ehr;STU.tool=tool;STU.fit=true;stSave();stRender();
+  toast('Pildistasin 3D-vaate. Märgi, mida muuta, ja kirjuta all, mida teha.');}
+function obBack(){const s=stSess();if(!s||!s.obj)return;const i=HOUSES.findIndex(h=>h.ehr===s.obj);if(i<0){toast('Seda objekti pole enam');return;}show('app');if(i!==cur)select(i);}
+$('stTo3d').onclick=obBack;
+function obRenderPick(){const h=HOUSES[cur];$('obPickT').textContent=h?h.short:'Objektid';
+  $('obMenu').innerHTML=HOUSES.map((x,i)=>`<button type="button" role="option" data-i="${i}" aria-selected="${i===cur}" class="${i===cur?'cur':''}"><span>${stEsc(x.short)}<small>${stEsc(x.vald||'Viimsi vald')}</small></span>${i===cur?'<span class="ok">✓</span>':''}</button>`).join('')+'<hr><button type="button" data-new="1"><span>+ Uus objekt</span></button><button type="button" data-home="1"><span>Avaleht</span></button>';
+  $('obMenu').querySelectorAll('button').forEach(b=>b.onclick=e=>{e.stopPropagation();$('obMenu').hidden=true;if(b.dataset.new)return document.querySelector('.side .new').click();if(b.dataset.home)return show('home');select(+b.dataset.i);});}
+$('obPick').onclick=e=>{e.stopPropagation();obRenderPick();const m=$('obMenu');m.hidden=!m.hidden;$('obPick').setAttribute('aria-expanded',String(!m.hidden));};
+document.addEventListener('click',e=>{if(!e.target.closest||!e.target.closest('.obsel'))$('obMenu').hidden=true;});
+{const _rl=renderList;renderList=function(){_rl.apply(this,arguments);try{obRenderPick();obRenderRail();}catch(e){}};}
+{const _sm=setMode;setMode=function(m){_sm(m);try{obRenderRail();}catch(e){}};}
+document.addEventListener('keydown',e=>{if($('body').hidden||document.body.classList.contains('cvm'))return;const tg=e.target;if(tg&&(tg.tagName==='INPUT'||tg.tagName==='TEXTAREA'||tg.isContentEditable)||e.metaKey||e.ctrlKey||e.altKey)return;
+  if(document.querySelector('.modal:not([hidden]),.dlg:not([hidden])'))return;const t=obTools().find(x=>x&&x.k&&x.k.length===1&&x.k.toLowerCase()===e.key.toLowerCase());if(t){e.preventDefault();obTool(t.id);}});
+
+restoreRT();renderList();renderPanel();build();updFotos();chatReset();setTab(false);renderAcct();
   if(CLOUD)clBoot();else if(!startFromHash()&&(DEV_AUTOLOGIN||store.get('oai_session',null)))enter();tick();}
 </script>
 
