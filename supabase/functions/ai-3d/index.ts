@@ -120,14 +120,17 @@ async function aiCheck(photos: string[], want: Subject | null) {
   const r = await tfetch(env("ANTHROPIC_API_URL", "https://api.anthropic.com") + "/v1/messages", {
     method: "POST",
     headers: { "x-api-key": env("ANTHROPIC_API_KEY"), "anthropic-version": "2023-06-01", "content-type": "application/json" },
-    body: JSON.stringify({ model: env("CHECK3D_MODEL", "claude-haiku-5-5"), max_tokens: 900, system: CHECK_SYSTEM, messages: [{ role: "user", content }] }),
-  }, 45000);
+    // 4 fotot + selgitused vajavad ruumi: 900 tokenist jäi väheks ja JSON jäi poolikuks
+    body: JSON.stringify({ model: env("CHECK3D_MODEL", "claude-haiku-5-5"), max_tokens: Number(env("CHECK3D_MAX_TOKENS", "4000")), system: CHECK_SYSTEM, messages: [{ role: "user", content }] }),
+  }, 60000);
   const j = await r.json().catch(() => ({}));
   if (!r.ok) throw new Error("anthropic " + r.status + " " + JSON.stringify(j).slice(0, 200));
-  const text = String((j.content || []).map((c: { text?: string }) => c.text || "").join(""));
+  const text = String((j.content || []).filter((c: { type?: string }) => c.type === "text").map((c: { text?: string }) => c.text || "").join(""));
   const m = text.match(/\{[\s\S]*\}/);
-  if (!m) throw new Error("kontroll: vastus pole JSON");
-  const a = JSON.parse(m[0]);
+  if (!m) throw new Error(`kontroll: vastus pole JSON (stop=${j.stop_reason}, out=${j?.usage?.output_tokens}, text=${text.slice(0, 160)})`);
+  let a;
+  try { a = JSON.parse(m[0]); }
+  catch { throw new Error(`kontroll: vigane JSON (stop=${j.stop_reason}): ${m[0].slice(0, 160)}`); }
   const inT = Number(j?.usage?.input_tokens) || 0, outT = Number(j?.usage?.output_tokens) || 0;
   return { a, inT, outT, model: String(j.model || "").slice(0, 60) };
 }
@@ -209,7 +212,10 @@ export async function handler(req: Request): Promise<Response> {
     if (!(await rateLimit("3dchk:" + me.companyId, 40, 3600))) return fail("Liiga palju kontrolle lühikese ajaga. Proovi hiljem.", 429);
     let res;
     try {
-      const { a, inT, outT, model } = await aiCheck(photos, want);
+      let r1;
+      try { r1 = await aiCheck(photos, want); }
+      catch (e1) { console.error("ai-3d check, proovin uuesti:", (e1 as Error).message); r1 = await aiCheck(photos, want); }
+      const { a, inT, outT, model } = r1;
       res = normalize(a, photos.length, want);
       const cost = (inT * Number(env("ANTHROPIC_PRICE_IN", "0.10")) + outT * Number(env("ANTHROPIC_PRICE_OUT", "0.50"))) / 1e6;
       await db.from("ai_usage").insert({ company_id: me.companyId, kind: "3d-check", model, input_tokens: inT, output_tokens: outT, cost_usd: cost }).then(() => {}, () => {});
