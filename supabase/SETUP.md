@@ -49,6 +49,8 @@ Uus mall saab 3D lihtsalt seadistusega (nt `photo3d:{subject:'object',from:'imag
 - Krediidid võetakse `start`-is, iga vea korral ja 25 min ajapiirangul tagastatakse. Äpp küsib olekut iga 10 s ka pärast lehe värskendamist (server kopeerib .glb alles olekupäringu ajal).
 - Saladused: `MUAPI_API_KEY` (praegu Supabase'is nimega `Muapi.ai `, kood loeb mõlemat), `ANTHROPIC_API_KEY`, `KIE_API_KEY`. Valikulised: `CHECK3D_SECRET` (tõendi võti; vaikimisi tuletatud service_role võtmest), `CHECK3D_MODEL` (vaikimisi `claude-haiku-5-5`), `TRIPO_TEXTURE` (`detailed` = 4K), `TRIPO_FACES` (vaikimisi 150000; langeta, kui .glb tuleb üle ~20 MB).
 - Hind: `settings.price_3d` (äpp loeb sealt, eraldi hinnatekste pole).
+- Toote 3D-mudel (migratsioon `20261021050000_product_model.sql`): `start` võtab `product_id` (ainult oma firma toode), valmimisel kirjutab server `products.model_url`. Kontroll lubab sinna ainult oma firma .glb-d kaustast `models`.
+- Stuudio fotodest tehtud 3D kasutab algset faili (~2048 px), mitte 1100 px eelvaadet. Pärast lehe värskendamist palub äpp sama foto uuesti lisada. AI-pildid lähevad nii nagu on.
 - Deploy: `supabase functions deploy ai-3d --project-ref twubqebmjuvwypeduqqq`
 - Test: `deno test -A --no-config --node-modules-dir=none supabase/tests/ai3d.test.ts` (kõik välised teenused matkitud).
 

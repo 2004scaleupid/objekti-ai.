@@ -11,7 +11,7 @@ Object.entries({
 // ---------- matkitud maailm ----------
 const W = {
   renders: [] as Record<string, unknown>[], spends: [] as string[], refunds: [] as string[], usage: [] as Record<string, unknown>[],
-  calls: [] as string[], check: {} as Record<string, unknown>, tripo: "processing", kieFail: false, balance: 100,
+  calls: [] as string[], productUpd: [] as Record<string, unknown>[], check: {} as Record<string, unknown>, tripo: "processing", kieFail: false, balance: 100,
 };
 const res = (b: unknown, status = 200) => new Response(typeof b === "string" ? b : JSON.stringify(b), { status, headers: { "content-type": "application/json" } });
 const eqs = (u: URL) => [...u.searchParams].filter(([, v]) => v.startsWith("eq.")).map(([k, v]) => [k, v.slice(3)]);
@@ -27,6 +27,10 @@ globalThis.fetch = async (input: string | URL | Request, init: RequestInit = {})
     if (p === "/auth/v1/user") return req.headers.get("authorization") === "Bearer good" ? res({ id: "u1", aud: "authenticated" }) : res({ msg: "bad" }, 401);
     if (p === "/rest/v1/profiles") return res({ company_id: "c1" });
     if (p === "/rest/v1/objects") return res([]);
+    if (p === "/rest/v1/products") {
+      if (m === "PATCH") { W.productUpd.push({ q: u.search, ...j() }); return res([]); }
+      return res(eqs(u).some(([k, v]) => k === "company_id" && v === "c1") && eqs(u).some(([k, v]) => k === "id" && v === "p1") ? [{ id: "p1" }] : []);
+    }
     if (p === "/rest/v1/ai_usage") { W.usage.push(j()); return res("", 201); }
     if (p === "/rest/v1/rpc/rate_hit") return res(true);
     if (p === "/rest/v1/rpc/refund_stale_renders") return res(0);
@@ -174,4 +178,20 @@ Deno.test("fotode arv subjekti järgi", async () => {
   assertEquals((await call({ subject: "vehicle", photos: P4.slice(0, 1), check: "x" })).status, 400);
   assertEquals((await call({ action: "check", subject: "building", photos: [...P4, photo(5)] })).status, 400);
   assertEquals((await call({ subject: "boat", photos: P4, check: "x" })).status, 400);
+});
+
+Deno.test("toote 3D-mudel salvestub toote juurde, võõra toote id-d ei arvestata", async () => {
+  W.check = good("object", 1); W.tripo = "processing";
+  const c = await call({ action: "check", subject: "object", photos: [photo(1)] });
+  const s = await call({ subject: "object", photos: [photo(1)], check: c.j.token, product_id: "p1" });
+  assertEquals(W.renders.find((r) => r.id === s.j.id)!.product_id, "p1");
+  W.tripo = "completed";
+  const d = await call({ action: "status", id: s.j.id });
+  assertEquals(d.j.product_id, "p1");
+  const up = W.productUpd.at(-1)!;
+  assertEquals(up.model_url, d.j.url);
+  assert(String(up.q).includes("id=eq.p1") && String(up.q).includes("company_id=eq.c1"));
+  const c2 = await call({ action: "check", subject: "object", photos: [photo(2)] });
+  const s2 = await call({ subject: "object", photos: [photo(2)], check: c2.j.token, product_id: "voora-firma-toode" });
+  assertEquals(W.renders.find((r) => r.id === s2.j.id)!.product_id, null);
 });

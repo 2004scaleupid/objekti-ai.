@@ -161,7 +161,7 @@ export async function handler(req: Request): Promise<Response> {
   if (b.action === "status") {
     await refundStale(me.companyId);
     const id = String(b.id || "");
-    const { data: r } = await db.from("renders").select("id,status,stage,ext_id,output_url,error,input_urls")
+    const { data: r } = await db.from("renders").select("id,status,stage,ext_id,output_url,error,input_urls,product_id")
       .eq("id", id).eq("company_id", me.companyId).eq("kind", "3d").maybeSingle();
     if (!r) return fail("not found", 404);
     if (r.status !== "pending" || r.stage !== "modelling" || !r.ext_id) return json(view(r));
@@ -187,7 +187,9 @@ export async function handler(req: Request): Promise<Response> {
       const host = env("PUBLIC_STORAGE_URL");
       if (host) url = url.replace(env("SUPABASE_URL"), host);
       await db.from("renders").update({ status: "done", stage: null, output_url: url }).eq("id", id);
-      return json({ id, status: "done", url, size: bytes.length, cleaned: r.input_urls });
+      // „Tee tootest 3D-mudel“: mudel jääb toote juurde
+      if (r.product_id) await db.from("products").update({ model_url: url }).eq("id", r.product_id).eq("company_id", me.companyId).then(() => {}, () => {});
+      return json({ id, status: "done", url, size: bytes.length, cleaned: r.input_urls, product_id: r.product_id ?? null });
     } catch (e) {
       await refund(id);
       await db.from("renders").update({ status: "failed", stage: null, error: String((e as Error).message).slice(0, 500) }).eq("id", id);
@@ -239,13 +241,18 @@ export async function handler(req: Request): Promise<Response> {
     const { data: o } = await db.from("objects").select("id").eq("id", b.object_id).eq("company_id", me.companyId).maybeSingle();
     objectId = o?.id ?? null;
   }
+  let productId: string | null = null;
+  if (typeof b.product_id === "string") {
+    const { data: p } = await db.from("products").select("id").eq("id", b.product_id).eq("company_id", me.companyId).maybeSingle();
+    productId = p?.id ?? null;
+  }
   const label = String(b.label || "Fotod → 3D-mudel").slice(0, 120);
   const prompt = cleanPrompt(subject);
   const id = crypto.randomUUID();
   let credits: number;
   try { credits = await spend(me.companyId, "3d", label, id); }
   catch (e) { const m = (e as Error).message; return fail(m, m === "insufficient_credits" ? 402 : 400); }
-  await db.from("renders").insert({ id, company_id: me.companyId, object_id: objectId, kind: "3d", tpl: b.tpl ? String(b.tpl).slice(0, 40) : null, prompt: `[${subject}] ${prompt}`, stage: "cleaning" });
+  await db.from("renders").insert({ id, company_id: me.companyId, object_id: objectId, kind: "3d", product_id: productId, tpl: b.tpl ? String(b.tpl).slice(0, 40) : null, prompt: `[${subject}] ${prompt}`, stage: "cleaning" });
   try {
     const ins = await Promise.all(photos.map((u, i) => uploadDataUrl(u, `${me.companyId}/in/${id}-${i}`)));
     // puhastused paralleelselt; tulemus meie kausta ILMA firma logota (logo ei tohi mudeli tekstuuri sattuda)
