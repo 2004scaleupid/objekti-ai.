@@ -734,7 +734,7 @@ body.cvm .panel>*:not(#cvPanel){display:none!important}
           <div class="sw" id="roofSw">Katus</div>
           <div class="sw" id="wallSw">Sein</div>
         </div>
-        <span class="src">Hoonete 3D-mudelid: Maa- ja Ruumiamet 2025</span>
+        <span class="src">Hoonete 3D-mudelid: Maa- ja Ruumiamet 2025–2026</span>
         </div>
       </div>
     </section>
@@ -1119,6 +1119,13 @@ const DS={"o":[540000,6590000],"B":[[[11540.7,7069.9,11539.0,7070.4,11540.1,7073
 const OX=DS.o[0],OY=DS.o[1];
 function bCenter(b){const c=b[0];let x=0,y=0,n=c.length/2;for(let i=0;i<c.length;i+=2){x+=c[i];y+=c[i+1];}return[x/n,y/n];}
 const BC=DS.B.map(bCenter);
+/* more areas (Tallinn): address index + 1 km tiles from data/<area>/, loaded on demand; built by tools/build_tiles.py */
+const EXT_AREAS=[['tallinn','Tallinn']];let EXT=[];const EXT_T={};
+const extReady=Promise.all(EXT_AREAS.map(([d,m])=>fetch('data/'+d+'/idx.json').then(r=>r.ok?r.json():[]).then(L=>{L.forEach(([n,e,t])=>EXT.push([n,e,d+'/'+t,m]));}).catch(()=>{})));
+function extTile(t){return EXT_T[t]=EXT_T[t]||fetch('data/'+t+'.json').then(r=>{if(!r.ok)throw new Error('tile '+t);return r.json();}).then(j=>{const bc=j.B.map(bCenter),got=new Set();
+  j.A.forEach(a=>{if(DS.A.some(x=>x[1]===a[1]))return;a.B=j.B;a.BC=bc;a.m=j.m;DS.A.push(a);got.add(a[1]);});EXT=EXT.filter(x=>!got.has(x[1]));}).catch(e=>{delete EXT_T[t];throw e;});}
+async function extEnsure(e){if(!e||DS.A.some(x=>x[1]===e))return;await extReady;const s=EXT.find(x=>x[1]===e);if(s)await extTile(s[2]);}
+const fullRec=async a=>{if(a.length>4)return a;await extEnsure(a[1]);return DS.A.find(x=>x[1]===a[1])||null;};
 function pip(p,P){let ins=false;for(let i=0,j=P.length-1;i<P.length;j=i++){const a=P[i],b=P[j];if(((a[1]>p[1])!==(b[1]>p[1]))&&(p[0]<(b[0]-a[0])*(p[1]-a[1])/(b[1]-a[1])+a[0]))ins=!ins;}return ins;}
 function segX(a,b,c,d){const o=(p,q,r)=>(q[0]-p[0])*(r[1]-p[1])-(q[1]-p[1])*(r[0]-p[0]);return o(a,b,c)*o(a,b,d)<0&&o(c,d,a)*o(c,d,b)<0;}
 function rectHits(r,P,m){const R=[[r[0]-m,r[1]-m],[r[2]+m,r[1]-m],[r[2]+m,r[3]+m],[r[0]-m,r[3]+m]];
@@ -1128,7 +1135,7 @@ function makeHouse(a){const [addr,ehr,ads,bi,cx,cy,north,flat,wg,eave,height,foo
   const pts=[];for(let i=0;i<flat.length;i+=2)pts.push([flat[i],flat[i+1]]);
   const edges=pts.map((p,i)=>+Math.hypot(pts[(i+1)%pts.length][0]-p[0],pts[(i+1)%pts.length][1]-p[1]).toFixed(2));
   const th=north*Math.PI/180,ct=Math.cos(th),st=Math.sin(th),loc=(x,y)=>{const dx=x-cx,dy=y-cy;return[+(dx*ct-dy*st).toFixed(2),+(dx*st+dy*ct).toFixed(2)];};
-  const nb=[];DS.B.forEach((b,i)=>{if(i===bi)return;const c=BC[i];if(Math.hypot(c[0]-cx,c[1]-cy)>78)return;const p=[];for(let k=0;k<b[0].length;k+=2)p.push(loc(b[0][k],b[0][k+1]));
+  const BB=a.B||DS.B,BCC=a.BC||BC,muni=a.m||'Viimsi vald';const nb=[];BB.forEach((b,i)=>{if(i===bi)return;const c=BCC[i];if(Math.hypot(c[0]-cx,c[1]-cy)>78)return;const p=[];for(let k=0;k<b[0].length;k+=2)p.push(loc(b[0][k],b[0][k+1]));
     const o={p,h:b[1]};if(b[2]){const g=b[2],q=loc(g[0],g[1]);o.g={cx:q[0],cy:q[1],a:g[2]+th,L:g[3],W:g[4],e:g[5]};}nb.push(o);});
   const wings=wg.map(w=>({r:w.slice(0,4),ridge:w[4],axis:w[5]?'x':'y'}));
   // door = longest edge
@@ -1147,10 +1154,13 @@ function makeHouse(a){const [addr,ehr,ads,bi,cx,cy,north,flat,wg,eave,height,foo
   for(let k=0;k<6000&&T.length<38;k++){const x=-60+r()*120,y=-60+r()*120;if(x>lot[0]-1.5&&x<lot[2]+1.5&&y>lot[1]-1.5&&y<lot[3]+1.5)continue;if(ok(x,y,4.5))T.push([+x.toFixed(1),+y.toFixed(1),+(7+r()*6).toFixed(1),['b','b','m','s','s'][k%5]]);}
   const short=addr.replace(/,.*$/,'');
   const sq=wings.length===1&&Math.max(wings[0].r[2]-wings[0].r[0],wings[0].r[3]-wings[0].r[1])/Math.min(wings[0].r[2]-wings[0].r[0],wings[0].r[3]-wings[0].r[1])<1.3;
-  return{roofType:sq?'hip':'gable',eave0:eave,address:short+', Viimsi vald',short,ehr,ads,updated:'2025',height,eave,footprint,perimeter,pts,edges,wings,roof,wall,north,nb,lot,door,trees:T,x:+(cx+OX).toFixed(1),y:+(cy+OY).toFixed(1),status:'Mustand',date:new Date().toLocaleDateString('et-EE')};}
-const norm=s=>s.toLowerCase().replace(/,?\s*viimsi vald.*$/,'').replace(/\s+/g,' ').trim();
-function findAddr(q){q=norm(q);if(!q)return[];const ex=DS.A.filter(a=>norm(a[0])===q);if(ex.length)return ex;
-  const st=DS.A.filter(a=>norm(a[0]).startsWith(q));return st.length?st:DS.A.filter(a=>norm(a[0]).includes(q));}
+  return{roofType:sq?'hip':'gable',eave0:eave,address:short+', '+muni,short,muni,ehr,ads,updated:'2025',height,eave,footprint,perimeter,pts,edges,wings,roof,wall,north,nb,lot,door,trees:T,x:+(cx+OX).toFixed(1),y:+(cy+OY).toFixed(1),status:'Mustand',date:new Date().toLocaleDateString('et-EE')};}
+// fold diacritics + NFC/NFD so 'ü', 'u' and a decomposed 'ü' all match the same address
+const norm=s=>s.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/,?\s*(viimsi vald|tallinn).*$/,'').replace(/\b(tanav|tn\.)(?=\s|$)/g,'tn').replace(/\bmaantee\b|\bmnt\./g,'mnt').replace(/\bpuiestee\b|\bpst\./g,'pst').replace(/\s+/g,' ').trim();
+const NKC=new Map(),nk=s=>{let v=NKC.get(s);if(v===undefined){v=norm(s);NKC.set(s,v);}return v;};
+function findAddr(q){q=norm(q);if(!q)return[];const all=DS.A.concat(EXT);const ex=all.filter(a=>nk(a[0])===q);if(ex.length)return ex;
+  const st=all.filter(a=>nk(a[0]).startsWith(q));return st.length?st:all.filter(a=>nk(a[0]).includes(q));}
+const muniOf=a=>a.m||a[3]&&typeof a[3]==='string'&&a[3]||'Viimsi vald';
 const HOUSES=[];
 /* ---------- templates (mallid) ---------- */
 var NICHES=[['katus','Katusetööd'],['fassaad','Fassaaditööd'],['puhastus','Puhastus ja pesemine'],['paike','Päikesepaneelid'],['moodul','Moodulmajad ja saunad'],['maakler','Kinnisvara'],['haljastus','Haljastus ja aiad'],['varv','Värvid ja viimistlus'],['sisek','Sisekujundus ja mööbel'],['tooted','Tootjad ja e-poed'],['auto','Autod ja sõidukid'],['other','Muu']];
@@ -1214,7 +1224,7 @@ async function delProject(i){const h=HOUSES[i];if(!h)return;
   cur=Math.min(cur>i?cur-1:cur,HOUSES.length-1);if(!$('home').hidden)renderHome();renderList();renderPanel();build();updFotos();chatReset();renderAcct();}
 function renderList(){
   $('objlist').innerHTML=HOUSES.map((h,i)=>`<button type="button" class="obj" data-i="${i}" aria-current="${i===cur}">
-    <span class="t">${h.short}</span><span class="s">Viimsi vald${otag(i)}</span></button>`).join('');
+    <span class="t">${h.short}</span><span class="s">${h.muni||'Viimsi vald'}${otag(i)}</span></button>`).join('');
   document.querySelectorAll('.obj').forEach(b=>b.onclick=()=>select(+b.dataset.i));
 }
 function badge(t){return t==='d'?'<span class="src-b d">Andmed</span>':'<span class="src-b h">Hinnang</span>'}
@@ -1266,7 +1276,7 @@ $('dlSheet').onclick=()=>{const src=snap(),h=HOUSES[cur],W=1800,H=1100,c=documen
   g.font='800 30px "Inter Tight",Arial';g.textBaseline='middle';g.fillStyle='#16130F';g.fillText('Vaade',96,46);g.fillStyle='#E5482D';g.fillText('3D',96+g.measureText('Vaade').width,46);
   g.font='500 16px "JetBrains Mono",monospace';g.fillStyle='#77706A';g.textAlign='right';g.fillText((acct.company||acct.name)+' · '+new Date().toLocaleDateString('et-EE'),W-40,46);g.textAlign='left';
   const x=1260;g.fillStyle='#16130F';g.font='800 34px "Inter Tight",Arial';
-  const words=h.short;g.fillText(words,x,130);g.font='500 18px "Inter Tight",Arial';g.fillStyle='#77706A';g.fillText('Viimsi vald',x,168);
+  const words=h.short;g.fillText(words,x,130);g.font='500 18px "Inter Tight",Arial';g.fillStyle='#77706A';g.fillText(h.muni||'Viimsi vald',x,168);
   g.font='500 13px "JetBrains Mono",monospace';g.fillText('EHR '+h.ehr+' · ADS '+h.ads,x,198);
   const rows=[['Põhiplaani pind',fmt(h.footprint)+' m²'],['Perimeeter',fmt(h.perimeter)+' m'],['Kõrgus harjani',fmt(h.height,2)+' m'],['Räästa kõrgus*',fmt(h.eave)+' m'],['Katuse pind*',fmt(h.roof)+' m²'],['Seinte pind*',fmt(h.wall)+' m²'],['Vihmaveerennid*','~'+fmt(h.perimeter,0)+' jm']];
   rows.forEach((r,i)=>{const y=260+i*62;g.strokeStyle='#DDD7CE';g.lineWidth=1;g.beginPath();g.moveTo(x,y+26);g.lineTo(W-40,y+26);g.stroke();
@@ -1275,7 +1285,7 @@ $('dlSheet').onclick=()=>{const src=snap(),h=HOUSES[cur],W=1800,H=1100,c=documen
   {let y=860;g.fillStyle='#16130F';g.font='600 16px "Inter Tight",Arial';if((acct.services||[]).length){g.fillText('Teenused',x,y);g.font='400 14px "Inter Tight",Arial';g.fillStyle='#4A443E';
     let line='';(acct.services||[]).join(' · ').split(' ').forEach(w=>{if(g.measureText(line+w).width>W-40-x){g.fillText(line,x,y+=22);line='';}line+=w+' ';});g.fillText(line,x,y+=22);y+=34;}
    g.fillStyle='#16130F';g.font='500 14px "Inter Tight",Arial';const ct=[acct.warranty?`Garantii ${acct.warranty} a`:'',acct.cphone,acct.cmail].filter(Boolean).join(' · ');if(ct)g.fillText(ct,x,y);}
-  ['* hinnang (30° viilkatus), aknad maha arvamata.','Mõõdud umbkaudsed, lõplik mõõt enne lepingut.','Hoonete 3D-mudelid: Maa- ja Ruumiamet 2025'].forEach((t,i)=>g.fillText(t,x,740+i*24));
+  ['* hinnang (30° viilkatus), aknad maha arvamata.','Mõõdud umbkaudsed, lõplik mõõt enne lepingut.','Hoonete 3D-mudelid: Maa- ja Ruumiamet 2025–2026'].forEach((t,i)=>g.fillText(t,x,740+i*24));
   g.fillStyle='#E5482D';g.fillRect(x,H-120,W-40-x,3);
   c.toBlob(b=>b&&saveFile(slug()+'-objekti-leht.png',b),'image/png');};
 
@@ -1691,6 +1701,9 @@ if(acct.gen&&acct.gen[0]===true){acct.gen={'120656418':true};}
 function restoreRT(){for(let k=HOUSES.length-1;k>=0;k--)if((acct.deleted||[]).includes(HOUSES[k].ehr))HOUSES.splice(k,1);HOUSES.forEach(h=>{if((acct.jobs||{})[h.ehr])h.job=acct.jobs[h.ehr];if((acct.htpl||{})[h.ehr])h.tpl=acct.htpl[h.ehr];const t=(acct.roofTypes||{})[h.ehr];if(t)h.roofType=t;});}
 Object.entries(acct.roofTypes||{}).forEach(([e,t])=>{});
 (acct.objects||[]).forEach(e=>{if(HOUSES.some(h=>h.ehr===e))return;const a=DS.A.find(x=>x[1]===e);if(a)HOUSES.push(makeHouse(a));});
+function extRestore(){const miss=(acct.objects||[]).filter(e=>!HOUSES.some(h=>h.ehr===e));if(!miss.length)return;
+  Promise.all(miss.map(e=>extEnsure(e).catch(()=>{}))).then(()=>{let n=0;miss.forEach(e=>{if(HOUSES.some(h=>h.ehr===e))return;const a=DS.A.find(x=>x[1]===e);if(a){HOUSES.push(makeHouse(a));n++;}});if(n){renderList();if(!$('home').hidden&&typeof renderHome==='function')renderHome();}});}
+extRestore();
 function toast(t){const el=$('toast');el.textContent=t;el.hidden=false;clearTimeout(toast.t);toast.t=setTimeout(()=>el.hidden=true,2600);}
 function initials(n){return (n||'?').split(/\s+/).filter(Boolean).slice(0,2).map(w=>w[0]).join('').toUpperCase();}
 function today(){return new Date().toISOString().slice(0,10);}
@@ -1820,7 +1833,7 @@ $('shareBtn').onclick=async()=>{const h=HOUSES[cur],hasR=!!(acct.gen&&acct.gen[h
   if(ok)clientView(pl,{preview:true});};
 document.addEventListener('click',e=>{if(e.target&&e.target.id==='shC'){const t=$('shU');t.select();try{navigator.clipboard.writeText(t.value).then(()=>toast('Link kopeeritud'),()=>{document.execCommand('copy');toast('Link kopeeritud');});}catch(_){document.execCommand('copy');toast('Link kopeeritud');}}});
 function cvNums(h){const Y=yard(h);return `<div class="cvnum"><div><small>Põhiplaan</small><b>${fmt(h.footprint)} m²</b></div><div><small>Katuse pind</small><b>~${fmt(h.roof,0)} m²</b></div><div><small>Seinte pind</small><b>~${fmt(h.wall,0)} m²</b></div><div><small>Kõrgus harjani</small><b>${fmt(h.height,1)} m</b></div><div><small>Krunt</small><b>~${fmt(Y.area,0)} m²</b></div><div><small>Lähim naaber</small><b>${fmt(Y.nb.d,1)} m</b></div></div><span class="fhint">Mõõdud: Maa- ja Ruumiameti andmed, katus hinnanguline.</span>`;}
-function clientView(p,opts){opts=opts||{};const a=DS.A.find(x=>x[1]===p.e);if(!a){toast('Objekti ei leitud');return false;}
+function clientView(p,opts){opts=opts||{};const a=DS.A.find(x=>x[1]===p.e);if(!a){if(!opts._x&&p.e){extEnsure(p.e).then(()=>clientView(p,{...opts,_x:1}),()=>toast('Objekti ei leitud'));return true;}toast('Objekti ei leitud');return false;}
   if(opts.preview&&!CVSAVE)CVSAVE={houses:HOUSES.slice(),cur,roofCol,wallCol};cvMode=opts.lead?'widget':'share';
   const h=makeHouse(a);if(p.rt)h.roofType=p.rt;HOUSES.splice(0,HOUSES.length,h);
   document.body.classList.add('cvm');$('wdg').hidden=true;$('login').hidden=true;$('app').hidden=false;$('cvBar').hidden=false;$('cvPanel').hidden=false;show('app');
@@ -1870,7 +1883,7 @@ function renderWidgetPane(){$('wTitle').value=acct.wTitle||'';$('wFeat').value=a
   $('leadList').querySelectorAll('[data-lmail]').forEach(b=>b.onclick=()=>{const l=L[+b.dataset.lmail];l.seen=1;if(!isS)store.set('v3d_leads',L);showLeadMail(l);renderBell();});
   try{renderBell();}catch(e){}
   {const nw=L.filter(l=>(l.st||'new')==='new').length,dn=L.filter(l=>l.st==='done').length;$('leadCount').textContent=L.length?`${L.length} päringut · ${nw} uut · ${dn} tellimust`:'';}
-  $('leadList').querySelectorAll('[data-lead]').forEach(b=>b.onclick=()=>{const l=L[+b.dataset.lead],a=DS.A.find(x=>x[1]===l.e);if(!a)return;let i=HOUSES.findIndex(h=>h.ehr===l.e);if(i<0){const h=makeHouse(a);HOUSES.push(h);acct.objects=[...(acct.objects||[]),a[1]];save();i=HOUSES.length-1;}show('app');select(i);});}
+  $('leadList').querySelectorAll('[data-lead]').forEach(b=>b.onclick=async()=>{const l=L[+b.dataset.lead];await extEnsure(l.e).catch(()=>{});const a=DS.A.find(x=>x[1]===l.e);if(!a)return;let i=HOUSES.findIndex(h=>h.ehr===l.e);if(i<0){const h=makeHouse(a);HOUSES.push(h);acct.objects=[...(acct.objects||[]),a[1]];save();i=HOUSES.length-1;}show('app');select(i);});}
 ['wTitle','wDims','wColor','wFeat'].forEach(id=>$(id).addEventListener('change',()=>{acct.wTitle=$('wTitle').value.trim();acct.wDims=$('wDims').value;acct.wColor=$('wColor').value;acct.wFeat=$('wFeat').value;save();renderWidgetPane();}));
 document.querySelectorAll('#wOpts .wopt').forEach(b=>b.onclick=()=>{acct.wMode=b.dataset.m;save();renderWidgetPane();});
 $('wSave').onclick=()=>{acct.wTitle=$('wTitle').value.trim();acct.wDims=$('wDims').value;acct.wColor=$('wColor').value;save();renderWidgetPane();siteMock();};
@@ -1898,7 +1911,7 @@ const SAMPLE_LEADS=(()=>{const mk=(addr,n,m,sv,st,daysAgo,hh)=>{const a=(findAdd
     mk('Melba tee 17','Liis Saar','liis.saar@mail.ee',['Katuse vahetus'],'done',4,12)].filter(Boolean);})();
 SAMPLE_LEADS.splice(1,0,{sample:1,d:new Date(Date.now()-3*36e5).toISOString(),st:'new',sv:['Peotelk 6×12 m'],prod:'Peotelk 6×12 m',date:'14. juuni',n:'Kertu Lepp',m:'kertu.lepp@gmail.com',a:'Pirita tee 20, Tallinn',img:null});
 function leadMailHtml(l){const esc=t=>String(t||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])),to=(acct.wMail||acct.email||'info@firma.ee'),short=String(l.a).replace(/,.*$/,'');
-  const img=l.img?l.img:!l.e?PLACE.res:(l.e==='120656418'&&THUMBS[0])?THUMBS[0]:'data:image/svg+xml;utf8,'+encodeURIComponent(planSvg(makeHouse(DS.A.find(x=>x[1]===l.e))));
+  const img=l.img?l.img:!l.e?PLACE.res:(l.e==='120656418'&&THUMBS[0])?THUMBS[0]:(DS.A.find(x=>x[1]===l.e)?'data:image/svg+xml;utf8,'+encodeURIComponent(planSvg(makeHouse(DS.A.find(x=>x[1]===l.e)))):PLACE.res);
   return `<div class="mailv"><div class="mh"><b>Uus päring: ${esc(short)} · ${esc(l.n)}</b><span>Kellelt: Vaade3D &lt;paringud@vaade3d.ee&gt;</span><span>Kellele: ${esc(to)}</span><span>Vasta: ${esc(l.m)} (vastates sellele kirjale läheb vastus otse kliendile)</span></div>
     <div class="mb"><div>Tere! Sinu kodulehe vidinast tuli uus päring${l.prod?': klient proovis toodet oma hoovis':''}.</div><img src="${img}" alt="Maja ${esc(short)}">
     <table><tr><td>Nimi</td><td><b>${esc(l.n)}</b></td></tr><tr><td>E-post</td><td><b>${esc(l.m)}</b></td></tr><tr><td>Aadress</td><td>${esc(l.a)}</td></tr>${l.prod?`<tr><td>Toode</td><td><b>${esc(l.prod)}</b></td></tr>${l.date?`<tr><td>Soovitud aeg</td><td>${esc(l.date)}</td></tr>`:''}`:(l.sv||[]).length?`<tr><td>Soovib</td><td>${esc(l.sv.join(', '))}</td></tr>`:''}${l.fp?`<tr><td>Põhiplaan</td><td>${fmt(l.fp)} m²</td></tr><tr><td>Katuse pind</td><td>~${l.roof} m²</td></tr><tr><td>Seinte pind</td><td>~${l.wall} m²</td></tr>`:''}</table>
@@ -2069,16 +2082,17 @@ document.querySelector('.new').onclick=async()=>{const ok=await ask2('Uus objekt
 /* create object from any Viimsi address */
 async function openAddress(q,input){const m=findAddr(q);
   if(!q.trim()){input&&input.focus();return;}
-  if(!m.length){toast('Aadressi ei leitud. Demos on kogu Viimsi valla hooned.');return;}
+  if(!m.length){toast('Aadressi ei leitud. Andmed on Viimsi valla ja Tallinna hoonetele.');return;}
   if(m.length>1&&norm(m[0][0])!==norm(q)){toast(`Leidsin ${m.length} aadressi, vali nimekirjast täpne aadress`);if(input){input.value=m[0][0].replace(/,.*$/,'');}return;}
-  const a=m[0],ex=HOUSES.findIndex(h=>h.ehr===a[1]);if(ex>=0){show('app');select(ex);toast('Objekt on juba olemas, avasin selle');return;}
+  const a=await fullRec(m[0]).catch(()=>null);if(!a){toast('Hoone andmed ei laadinud, proovi uuesti');return;}
+  const ex=HOUSES.findIndex(h=>h.ehr===a[1]);if(ex>=0){show('app');select(ex);toast('Objekt on juba olemas, avasin selle');return;}
   if(acct.credits<price('obj')&&!await needCredits(price('obj'),'Objektivaade'))return;
   const Q={work:[['katus','Katus'],['fassaad','Fassaad'],['molemad','Mõlemad'],['juurde','Juurdeehitus']],
     katus:['Uus katus','Katuse vahetus','Remont','Pesemine','Värvimine','Plekitööd / rennid'],fassaad:['Soojustus','Krohvimine','Värvimine','Pesemine','Voodrilaud','Akende vahetus'],
     roof:[['gable','Viilkatus'],['hip','Kelpkatus'],['flat','Lamekatus'],['auto','Ei tea']]};
   const chips=(k,arr)=>`<div class="qchips" data-q="${k}">`+arr.map(o=>{const [v,l]=Array.isArray(o)?o:[o,o];return `<button type="button" data-v="${v}" aria-pressed="false">${l}</button>`;}).join('')+'</div>';
   const TA=tplById(acct.activeTpl);const P1=price('obj'),PL={std:P1,pres:+(P1+price('pic')).toFixed(2)};let plan='std';
-  const pr=ask2('Uus objekt',`${a[0]}, Viimsi vald. Vali pakett ja vasta paarile küsimusele, et vaade ja AI-abiline oleksid sinu tööks häälestatud.`,'Loo objekt · '+(PL.std?crTxt(PL.std):curPlan().name+' paketis'),
+  const pr=ask2('Uus objekt',`${a[0]}, ${muniOf(a)}. Vali pakett ja vasta paarile küsimusele, et vaade ja AI-abiline oleksid sinu tööks häälestatud.`,'Loo objekt · '+(PL.std?crTxt(PL.std):curPlan().name+' paketis'),
     `<div class="qgrp"><b>Vali pakett</b><div class="plans">
       <button type="button" class="plan" data-plan="std" aria-pressed="true"><b>Tavaline</b><small>3D-mudel, katuse, seinte ja krundi mõõdud, mõõtmine ja AI-abiline</small><span class="pp">${(PL.std?crTxt(PL.std):curPlan().name+' paketis')}</span></button>
       <button type="button" class="plan" data-plan="pres" aria-pressed="false"><span class="pt">Kliendile</span><b>Esitlusega</b><small>Kõik tavalisest + fotorealistlik AI esituspilt majast, mida saad kliendile saata</small><span class="pp">${crTxt(PL.pres)}</span></button>
@@ -2100,7 +2114,7 @@ const sug=document.createElement('div');sug.className='sug';sug.hidden=true;sug.
 let sugIn=null,sugI=-1,sugA=[];
 function sugPlace(){if(!sugIn)return;const r=sugIn.closest('label,.qbox,form')?.getBoundingClientRect()||sugIn.getBoundingClientRect();sug.style.left=r.left+'px';sug.style.top=(r.bottom+6)+'px';sug.style.width=r.width+'px';}
 function sugHide(){sug.hidden=true;sugI=-1;}
-function sugRender(){sug.innerHTML=sugA.map((a,i)=>{const [st,...rest]=a[0].split(',');return `<button type="button" role="option" class="sgi" data-i="${i}" aria-selected="${i===sugI}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 11 12 4l9 7"/><path d="M5 10v10h14V10"/></svg><span><b>${st}</b><small>${rest.join(',').trim()?rest.join(',').trim()+', ':''}Viimsi vald</small></span><kbd>↵</kbd></button>`;}).join('');
+function sugRender(){sug.innerHTML=sugA.map((a,i)=>{const [st,...rest]=a[0].split(',');return `<button type="button" role="option" class="sgi" data-i="${i}" aria-selected="${i===sugI}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 11 12 4l9 7"/><path d="M5 10v10h14V10"/></svg><span><b>${st}</b><small>${rest.join(',').trim()?rest.join(',').trim()+', ':''}${muniOf(a)}</small></span><kbd>↵</kbd></button>`;}).join('');
   sug.querySelectorAll('.sgi').forEach(b=>{b.onmousedown=e=>{e.preventDefault();sugPick(+b.dataset.i);};b.onmousemove=()=>{if(sugI!==+b.dataset.i){sugI=+b.dataset.i;sugRender();}};});}
 function sugShow(t){sugIn=t;const q=norm(t.value);sugA=q.length<2?[]:findAddr(q).slice(0,40).sort((x,y)=>x[0].localeCompare(y[0],'et',{numeric:true})).slice(0,6);if(!sugA.length){sugHide();return;}sugI=0;sugRender();sugPlace();sug.hidden=false;}
 function sugPick(i){const a=sugA[i],t=sugIn;if(!a||!t)return;t.value=a[0]+', Viimsi vald';sugHide();
@@ -2165,7 +2179,7 @@ function renderHome(){const n=acct.name.split(' ')[0]||'';const hr=new Date().ge
   const ym=today().slice(0,7);$('stObj').textContent=HOUSES.length;$('stMonth').textContent=acct.hist.filter(r=>r.d.startsWith(ym)&&/Objektivaade/.test(r.t)).length;
   $('stGen').textContent=Object.values(acct.gen).filter(Boolean).length;$('stCred').textContent=acct.credits;{const pl=curPlan(),p=basePrice('obj'),left=Math.floor(acct.credits/p)+planLeft(),c=$('stCred').closest('.stat');c.classList.toggle('low',left<2);c.querySelector('small').textContent=(pl?pl.name+': '+planLeft()+' objekti sel kuul alles · ':'')+(left<1?'Ei jätku järgmiseks objektiks':left<2?'Jätkub veel 1 objektiks':'Krediiti saldo · '+left+' objekti');c.querySelector('button').textContent=left<2?'Osta krediite':pl?'Pakett':'Osta';}
   document.querySelector('#ncHouse .src2').textContent=priceTxt('obj')+' · Maa- ja Ruumiameti andmed';$('dzPrice').textContent=priceTxt('design')+' · 2 varianti';renderDesigns();renderTpls();renderBell();
-  $('ocards').innerHTML=HOUSES.map((h,i)=>{const im=(isR(i)&&acct.gen[HOUSES[i].ehr])?((acct.genUrl||{})[HOUSES[i].ehr]||RENDER):((h.thumb&&h.thumb!=='pending'?h.thumb:null)||(i<2?THUMBS[i]:'data:image/svg+xml;utf8,'+encodeURIComponent(planSvg(h))));return `<button type="button" class="ocard" data-i="${i}"><img src="${im}" alt="${h.short} 3D-vaade"><div class="ob"><div class="ot"><b>${h.short}</b>${otag(i)}</div><span class="fhint">Viimsi vald · ${h.date}</span><div class="om"><span>${fmt(h.footprint)} m² põhiplaan</span><span>~${fmt(h.roof,0)} m² katus</span></div></div></button>`;}).join('')+'<button type="button" class="ocard add" id="addCard"><span>+</span>Uus objekt</button>';
+  $('ocards').innerHTML=HOUSES.map((h,i)=>{const im=(isR(i)&&acct.gen[HOUSES[i].ehr])?((acct.genUrl||{})[HOUSES[i].ehr]||RENDER):((h.thumb&&h.thumb!=='pending'?h.thumb:null)||(i<2?THUMBS[i]:'data:image/svg+xml;utf8,'+encodeURIComponent(planSvg(h))));return `<button type="button" class="ocard" data-i="${i}"><img src="${im}" alt="${h.short} 3D-vaade"><div class="ob"><div class="ot"><b>${h.short}</b>${otag(i)}</div><span class="fhint">${h.muni||'Viimsi vald'} · ${h.date}</span><div class="om"><span>${fmt(h.footprint)} m² põhiplaan</span><span>~${fmt(h.roof,0)} m² katus</span></div></div></button>`;}).join('')+'<button type="button" class="ocard add" id="addCard"><span>+</span>Uus objekt</button>';
   document.querySelectorAll('.ocard[data-i]').forEach(b=>b.onclick=()=>{show('app');select(+b.dataset.i);});
   addDel('.ocard[data-i]','');
   $('addCard').onclick=()=>$('homeIn').focus();
@@ -2530,7 +2544,7 @@ async function clLoad(){const sb=CL.sb;const {data:{user}}=await sb.auth.getUser
   // objektid: serveri omad; uue konto puhul jäävad näidismajad näha
   if((obj||[]).length){acct.objects=obj.map(o=>o.ehr);acct.jobs={};acct.htpl={};acct.roofTypes={};obj.forEach(o=>{if(o.job)acct.jobs[o.ehr]=o.job;if(o.tpl)acct.htpl[o.ehr]=o.tpl;if(o.roof_type)acct.roofTypes[o.ehr]=o.roof_type;});
     const want=new Set(acct.objects);for(let k=HOUSES.length-1;k>=0;k--)if(!want.has(HOUSES[k].ehr))HOUSES.splice(k,1);
-    acct.objects.forEach(e=>{if(HOUSES.some(h=>h.ehr===e))return;const a=DS.A.find(x=>x[1]===e);if(a)HOUSES.push(makeHouse(a));});acct.deleted=[];
+    acct.objects.forEach(e=>{if(HOUSES.some(h=>h.ehr===e))return;const a=DS.A.find(x=>x[1]===e);if(a)HOUSES.push(makeHouse(a));});acct.deleted=[];extRestore();
     HOUSES.forEach(h=>{if(acct.jobs[h.ehr])h.job=acct.jobs[h.ehr];if(acct.htpl[h.ehr])h.tpl=acct.htpl[h.ehr];if(acct.roofTypes[h.ehr])h.roofType=acct.roofTypes[h.ehr];});}
   else acct.objects=[];
   CL.objs=new Set(acct.objects);

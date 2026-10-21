@@ -21,6 +21,7 @@ Veebiäpp Eesti katuse-, fassaadi- ja ehitusfirmadele (ja teistele nišidele mal
 See on **töötav kasutajaliidese demo** ühes failis (`index.html`).
 
 - 3D-andmed: Viimsi vald (6763 aadressi, 11362 hoonet).
+- 3D-andmed: Tallinn (30 006 aadressi, 51 251 hoonet), failides `data/tallinn/` (aadressiindeks + 1 km ruudud, laetakse otsingul). Ehitatud Maa- ja Ruumiameti LOD1 CityGML-ist: `tools/build_tiles.py <hooned_lod1-Tallinn.gml> data/tallinn Tallinn` (vajab Pythonit + shapely). Katus on sama mudel nagu Viimsis (30° viilkatus), kontroll `tools/validate_viimsi.py`.
 - Kasutajad, krediidid ja maksed on demo (salvestuvad brauserisse).
 - Admin-vaate arvud on näidisandmed.
 - AI-pildid: demo kohatäitjad. Mallide näidispildid on päris AI tulemused (Kie.ai Nano Banana 2.1).
@@ -30,7 +31,7 @@ See on **töötav kasutajaliidese demo** ühes failis (`index.html`).
 1. Server ja andmebaas (Supabase): sisselogimine, objektid, krediidid.
 2. Stripe maksed.
 3. Kie.ai pildimudel ja Claude API serveri kaudu (API võtmed ainult serveris).
-4. LOD1 andmed kogu Eestile.
+4. LOD1 andmed kogu Eestile (Tallinn tehtud; teised omavalitsused sama skriptiga).
 
 ## Käivitamine
 
