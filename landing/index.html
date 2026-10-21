@@ -199,6 +199,71 @@ label.fl{display:grid;gap:6px;font-size:13px;font-weight:600}
 .mtab span{font-size:13px;color:var(--muted)}
 .mtab:hover{background:color-mix(in srgb,var(--paper) 60%,transparent)}
 .mtab[aria-pressed="true"]{background:var(--paper);border-color:var(--line);border-left-color:var(--accent)}
+#mallid .mstage{--wall:#F2EFEA;--wall2:#D9D3C9;--roof:#3A3D41;--roof2:#2C2E31}
+.spot{display:grid;grid-template-columns:minmax(0,.8fr) minmax(0,1.2fr);gap:24px;align-items:stretch}
+@media (max-width:860px){.spot{grid-template-columns:1fr}.mstage{order:-1}}
+.tlist{display:grid;gap:2px;align-content:start;min-width:0}
+.titem{position:relative;display:grid;gap:2px;text-align:left;background:none;border:0;border-radius:8px;padding:12px 14px 14px;cursor:pointer;color:var(--ink);font:inherit;transition:background .3s}
+.titem .k{font-family:var(--mono);font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.titem b{font-size:17px;letter-spacing:-.015em}
+.titem p{margin:0;color:var(--muted);font-size:13.5px;max-height:0;opacity:0;overflow:hidden;transition:max-height .45s cubic-bezier(.2,.8,.2,1),opacity .3s}
+.titem .mbar{position:absolute;left:14px;right:14px;bottom:4px;height:2px;background:var(--line);border-radius:2px;overflow:hidden;opacity:0}
+.titem .mbar i{display:block;height:100%;width:100%;background:var(--accent);transform-origin:0 50%;transform:scaleX(0)}
+.titem:hover{background:color-mix(in srgb,var(--paper) 60%,transparent)}
+.titem.on{background:var(--paper)}
+.titem.on p{max-height:60px;opacity:1}
+.titem.on .mbar{opacity:1}
+.titem.on .mbar i{animation:fill var(--dur,4200ms) linear forwards}
+.spot.paused .titem.on .mbar i{animation-play-state:paused}
+@keyframes fill{to{transform:scaleX(1)}}
+.titem:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+.mstage{position:relative;border-radius:14px;overflow:hidden;border:1px solid var(--line);background:linear-gradient(160deg,#B7D193,#98B873);aspect-ratio:4/3;max-width:100%;min-width:0}
+.mstage svg{position:absolute;inset:0;width:100%;height:100%;display:block}
+.mtag{position:absolute;left:14px;top:14px;display:flex;gap:6px;flex-wrap:wrap}
+.mtag span{font-family:var(--mono);font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;background:rgba(248,246,242,.92);color:#16130F;border-radius:5px;padding:5px 8px}
+.mtag span.t{background:#16130F;color:#fff}
+.mchips{position:absolute;left:14px;right:14px;bottom:14px;display:flex;flex-wrap:wrap;gap:6px}
+.mchip{display:inline-flex;align-items:baseline;gap:8px;background:rgba(248,246,242,.95);color:#16130F;border-radius:8px;padding:8px 11px;font-size:13px;font-weight:600;box-shadow:0 8px 24px rgba(22,19,15,.12);opacity:0;transform:translateY(10px);filter:blur(4px);transition:opacity .5s,transform .5s cubic-bezier(.2,.8,.2,1),filter .5s}
+.mchip b{font-family:var(--mono);font-weight:500;font-variant-numeric:tabular-nums}
+.mchip.acc{background:#E5482D;color:#fff}
+.mchip.in{opacity:1;transform:none;filter:none}
+
+/* scene parts */
+.mroofp{transition:fill .7s}
+.mstage[data-m="katus"] .mroofp.f{fill:#E5482D}.mstage[data-m="katus"] .mroofp.b{fill:#B8371F}
+.mstage[data-m="paike"] .mroofp.f{fill:#4A4D52}
+.meave{stroke:#fff;stroke-width:3;stroke-linecap:round;stroke-dasharray:var(--len);stroke-dashoffset:var(--len);transition:stroke-dashoffset 1s .3s cubic-bezier(.65,0,.35,1)}
+.mstage[data-m="katus"] .meave{stroke-dashoffset:0}
+.mpanel{fill:#1F3047;stroke:#7F9BBF;stroke-width:.6;opacity:0;transition:opacity .35s}
+.mstage[data-m="paike"] .mpanel{opacity:1}
+.mwallp{transition:fill .9s}
+.mstage[data-m="varv"] .mwallp.f{fill:#9DB2A1}.mstage[data-m="varv"] .mwallp.g{fill:#83998A}
+.msauna{opacity:0;transform:translateY(-60px);transition:opacity .4s,transform .7s cubic-bezier(.34,1.4,.64,1)}
+.mstage[data-m="moodul"] .msauna{opacity:1;transform:none}
+.mdist{opacity:0;transition:opacity .4s .6s}
+.mstage[data-m="moodul"] .mdist{opacity:1}
+.mfence{fill:none;stroke:#fff;stroke-width:2.5;stroke-dasharray:var(--len);stroke-dashoffset:var(--len);transition:stroke-dashoffset 1.6s cubic-bezier(.65,0,.35,1)}
+.mstage[data-m="haljastus"] .mfence{stroke-dashoffset:0}
+.mplot{fill:rgba(255,255,255,.12);stroke:rgba(255,255,255,.6);stroke-width:1.2;stroke-dasharray:6 6;transition:fill .6s}
+.mstage[data-m="haljastus"] .mplot,.mstage[data-m="moodul"] .mplot{fill:rgba(255,255,255,.22)}
+.mtent{opacity:0;transform:scale(.6);transform-box:fill-box;transform-origin:50% 100%;transition:opacity .4s,transform .6s cubic-bezier(.34,1.5,.64,1)}
+.mstage[data-m="toode"] .mtent{opacity:1;transform:none}
+.msweep{opacity:0}
+.mstage[data-m="varv"] .msweep,.mstage[data-m="toode"] .msweep{animation:sweep 1.4s ease-out}
+@keyframes sweep{0%{opacity:.0;transform:translateX(-100%)}20%{opacity:.6}100%{opacity:0;transform:translateX(100%)}}
+
+/* marquee */
+.mrows{margin-top:30px;display:grid;gap:10px;-webkit-mask:linear-gradient(90deg,transparent,#000 8%,#000 92%,transparent);mask:linear-gradient(90deg,transparent,#000 8%,#000 92%,transparent);overflow:hidden}
+.mqrow{display:flex;gap:8px;width:max-content;animation:mq 46s linear infinite}
+.mqrow.mr2{animation-direction:reverse;animation-duration:52s}
+.mrows:hover .mqrow{animation-play-state:paused}
+@keyframes mq{to{transform:translateX(-50%)}}
+.mpill{display:inline-flex;align-items:center;gap:8px;white-space:nowrap;border:1px solid var(--line);background:var(--paper);border-radius:999px;padding:8px 14px;font-size:14px;font-weight:600}
+.mpill i{font-style:normal;font-family:var(--mono);font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.mpill svg{width:15px;height:15px;color:var(--accent)}
+.mfoot{margin-top:14px;font-size:12.5px;color:var(--muted)}
+@media (prefers-reduced-motion:reduce){.mqrow{animation:none}.titem.on .mbar i{animation:none;transform:scaleX(1)}#mallid *{transition-duration:0s!important}}
 .tgroups{display:grid;gap:34px}
 .tg-h{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;padding-bottom:10px;border-bottom:1px solid var(--ink)}
 .tg-h .lbl:first-child{color:var(--ink)}
@@ -1462,9 +1527,17 @@ function homeScreen(){
   <section class="wrap band" id="mallid">
     <span class="lbl">Mallid · mitte ainult katused</span>
     <h2>Vali mall ja vaade häälestub sinu tööle.</h2>
-    <p class="lead">Aadressiga mallid ehitavad maja 3D-s ja annavad õiged mõõdud. Fotoga mallid teevad AI-ga sinu pildist uue versiooni.</p>
-    <div class="tgroups"><div class="tgroup"><div class="tg-h"><span class="lbl">Aadress → 3D-mudel ja mõõdud</span><span class="lbl">6 malli · objektivaade 5 €</span></div><div class="tgrid"><div class="tcell"><span class="n">01</span><h3>Katusetööd</h3><p>Katuse pind, tahud ja räästad materjali tellimiseks.</p></div><div class="tcell"><span class="n">02</span><h3>Fassaaditööd</h3><p>Seinte pinnad, kõrgused ja perimeeter.</p></div><div class="tcell"><span class="n">03</span><h3>Päikesepaneelid</h3><p>Katusepind, kalle ja päikesepoolne tahk.</p></div><div class="tcell"><span class="n">04</span><h3>Moodulmajad ja saunad</h3><p>Krundi suurus, vaba hoovi pind ja kaugused naabritest.</p></div><div class="tcell"><span class="n">05</span><h3>Kinnisvara kuulutus</h3><p>Kõik põhinumbrid ja esituspilt kuulutuse jaoks.</p></div><div class="tcell"><span class="n">06</span><h3>Haljastus ja piirded</h3><p>Krundi mõõdud, aia pikkus ja hoovi pind.</p></div></div></div><div class="tgroup"><div class="tg-h"><span class="lbl">Foto → AI uus versioon</span><span class="lbl">9 malli · disain 1 €</span></div><div class="tgrid"><div class="tcell"><span class="n">01</span><h3>Maja uues värvis</h3><p>Klient pildistab maja ja näeb seda uues toonis.</p></div><div class="tcell"><span class="n">02</span><h3>Sisekujundus</h3><p>Toa foto järgi uus mööbel, värvid ja materjalid.</p></div><div class="tcell"><span class="n">03</span><h3>Aiaprojekt pildist</h3><p>Hoovi foto järgi uus aed, terrass või piire.</p></div><div class="tcell"><span class="n">04</span><h3>Eseme uus disain</h3><p>Mööbel, lamp või toode uues värvis või stiilis.</p></div><div class="tcell"><span class="n">05</span><h3>Tootepilt reklaamiks</h3><p>Telefonipildist professionaalne e-poe pilt.</p></div><div class="tcell"><span class="n">06</span><h3>Auto uus värv või teip</h3><p>Uus värv, matt teip või velgede stiil.</p></div><div class="tcell"><span class="n">07</span><h3>Foto → 3D-mudel</h3><p>Ühest fotost pööratav 3D-mudel veebi ja e-poodi.</p></div><div class="tcell"><span class="n">08</span><h3>Toode kliendi hoovis</h3><p>Sinu telk, saun või aiamaja kliendi hoovi fotol.</p></div><div class="tcell"><span class="n">09</span><h3>Vaba idee</h3><p>Lae ükskõik milline foto ja kirjelda, mida teha.</p></div></div></div></div>
-    <p class="note" style="margin-top:14px">Disain pildist annab 2 varianti. Uusi malle saab lisada ilma koodita.</p>
+    <p class="lead">Sama aadress, erinev töö. Mall otsustab, mida 3D-vaade näitab ja mida AI-abiline arvutab.</p>
+    <div class="spot" id="mspot">
+      <div class="tlist" id="mtlist" role="tablist" aria-label="Mallid"></div>
+      <div class="mstage" id="mstage" data-m="katus" role="img" aria-label="Rukkiräägu tee 9 3D-vaade valitud malliga">
+        <svg id="mscene" viewBox="-300 -190 600 450" preserveAspectRatio="xMidYMid slice"></svg>
+        <div class="mtag"><span class="t" id="mtagT">Aadress → 3D</span><span>Rukkiräägu tee 9 · Viimsi</span></div>
+        <div class="mchips" id="mchips"></div>
+      </div>
+    </div>
+    <div class="mrows" aria-label="Kõik 15 malli"><div class="mqrow" id="mr1"></div><div class="mqrow mr2" id="mr2"></div></div>
+    <p class="mfoot">6 aadressiga malli (objektivaade 5 €) ja 9 fotoga malli (disain pildist 1 €). Uusi malle saab lisada ilma koodita.</p>
   </section>
 
   <section class="wrap band" id="esitlus">
@@ -1720,11 +1793,108 @@ function screen(){
 }
 const resetUi=()=>{ui={hl:null,dims:true,top:false,edit:null,ask:false,asked:false,buy:false};};
 let storyV=null,realOff=null;
+let mallidTimer=null;
+function initMallid(){
+  if(!document.getElementById("mstage"))return;
+  clearTimeout(mallidTimer);
+
+const T=[
+  {m:'katus',k:'Aadress → 3D',n:'Katusetööd',d:'Katuse pind, tahud ja räästad materjali tellimiseks.',c:[['Katuse pind','173,5 m²',1],['Kalle','30°'],['Räästad','31,4 m']]},
+  {m:'paike',k:'Aadress → 3D',n:'Päikesepaneelid',d:'Katusepind, kalle ja päikesepoolne tahk paneelide paigutuseks.',c:[['Päikesepoolne tahk','86,8 m²',1],['Kalle','30°'],['Katus kokku','173,5 m²']]},
+  {m:'moodul',k:'Aadress → 3D',n:'Moodulmajad ja saunad',d:'Krundi suurus, vaba hoovi pind ja kaugused naabritest.',c:[['Vaba hoov','837 m²',1],['Krunt','40,2 × 24,6 m'],['Lähim naaber','3,3 m']]},
+  {m:'haljastus',k:'Aadress → 3D',n:'Haljastus ja piirded',d:'Krundi mõõdud, aia pikkus ja hoovi pind.',c:[['Aia pikkus','~130 m',1],['Hoovi pind','837 m²'],['Krunt','~988 m²']]},
+  {m:'varv',k:'Foto → AI',n:'Maja uues värvis',d:'Klient pildistab maja ja näeb seda kohe uues toonis.',c:[['2 varianti','1 €',1],['Sisend','1 foto']]},
+  {m:'toode',k:'Foto → AI',n:'Toode kliendi hoovis',d:'Sinu telk, saun või aiamaja kliendi hoovi fotol õiges kohas.',c:[['Sinu tootepildid + hoovi foto','AI',1],['Tulemus','~30 s']]},
+];
+const ALL_A=['Katusetööd','Fassaaditööd','Päikesepaneelid','Moodulmajad ja saunad','Kinnisvara kuulutus','Haljastus ja piirded'];
+const ALL_F=['Maja uues värvis','Sisekujundus','Aiaprojekt pildist','Eseme uus disain','Tootepilt reklaamiks','Auto uus värv või teip','Foto → 3D-mudel','Toode kliendi hoovis','Vaba idee'];
+
+/* ---- isometric scene (Rukkiräägu tee 9: 15,68 × 9,58 m, räästas 4,68 m, viilkatus 30°) ---- */
+const W=15.68,D=9.58,H=4.68,R=D/2*Math.tan(Math.PI/6),O=.45,s=9.2,k=Math.cos(Math.PI/6);
+const P=(x,y,z)=>[((x-y)*k*s).toFixed(1),((x+y)*.5*s-z*s).toFixed(1)];
+const poly=(pts)=>pts.map(p=>P(...p).join(',')).join(' ');
+const x0=-W/2,x1=W/2,y0=-D/2,y1=D/2,ez=H-O*Math.tan(Math.PI/6),rz=H+R;
+const plot=[[x0-12,y0-7,0],[x1+12,y0-7,0],[x1+12,y1+8,0],[x0-12,y1+8,0]];
+const NS='http://www.w3.org/2000/svg';
+let svg='';
+// ground details
+svg+=`<polygon class="mplot" points="${poly(plot)}"/>`;
+svg+=`<polygon points="${poly([[x1+12,y1+1,0],[x1+40,y1+1,0],[x1+40,y1+5,0],[x1+12,y1+5,0]])}" fill="rgba(80,74,66,.28)"/>`;
+// neighbours
+const box=(cx,cy,w,d,h,c1,c2,c3)=>{const a=cx-w/2,b=cx+w/2,e=cy-d/2,f=cy+d/2;return `<polygon points="${poly([[b,e,0],[b,f,0],[b,f,h],[b,e,h]])}" fill="${c2}"/><polygon points="${poly([[a,f,0],[b,f,0],[b,f,h],[a,f,h]])}" fill="${c1}"/><polygon points="${poly([[a,e,h],[b,e,h],[b,f,h],[a,f,h]])}" fill="${c3}"/>`;};
+svg+=box(-30,-12,9,8,6,'#E9E4DA','#D3CDC2','#C6C8CA');
+svg+=box(26,-26,10,8,6.5,'#E9E4DA','#D3CDC2','#BFC1C3');
+// shadow
+svg+=`<polygon points="${poly([[x0+1,y0+1,0],[x1+3,y0+1,0],[x1+3,y1+2.5,0],[x0+1,y1+2.5,0]])}" fill="rgba(22,19,15,.18)"/>`;
+// house: back roof slope, gable, front wall, front roof slope
+svg+=`<polygon class="mroofp b" points="${poly([[x1+O,y0-O,ez],[x0-O,y0-O,ez],[x0-O,0,rz],[x1+O,0,rz]])}" fill="var(--roof2)"/>`;
+svg+=`<polygon class="mwallp g" points="${poly([[x1,y0,0],[x1,y1,0],[x1,y1,H],[x1,0,rz],[x1,y0,H]])}" fill="var(--wall2)"/>`;
+svg+=`<polygon points="${poly([[x1,y0,0],[x1,y1,0],[x1,y1,.5],[x1,y0,.5]])}" fill="#77736C"/>`;
+svg+=`<polygon class="mwallp f" points="${poly([[x0,y1,0],[x1,y1,0],[x1,y1,H],[x0,y1,H]])}" fill="var(--wall)"/>`;
+svg+=`<polygon points="${poly([[x0,y1,0],[x1,y1,0],[x1,y1,.5],[x0,y1,.5]])}" fill="#8A857D"/>`;
+for(let i=0;i<5;i++){const cx=x0+W*(i+.5)/5;svg+=`<polygon points="${poly([[cx-.6,y1+.02,1.3],[cx+.6,y1+.02,1.3],[cx+.6,y1+.02,2.7],[cx-.6,y1+.02,2.7]])}" fill="#2A2C2F"/>`;}
+svg+=`<polygon points="${poly([[x1+.02,-.7,1.3],[x1+.02,.7,1.3],[x1+.02,.7,2.7],[x1+.02,-.7,2.7]])}" fill="#2A2C2F"/>`;
+svg+=`<polygon class="mroofp f" points="${poly([[x0-O,y1+O,ez],[x1+O,y1+O,ez],[x1+O,0,rz],[x0-O,0,rz]])}" fill="var(--roof)"/>`;
+// solar panels on front slope (in-plane)
+const sl=(u,v)=>[x0-O+u,y1+O-v*Math.cos(Math.PI/6),ez+v*Math.sin(Math.PI/6)];
+const slopeLen=(y1+O)/Math.cos(Math.PI/6);
+let pi=0;for(let r=0;r<3;r++)for(let c=0;c<8;c++){const u=1.2+c*1.75,v=.6+r*1.7;svg+=`<polygon class="mpanel" style="transition-delay:${(pi++)*30}ms" points="${poly([sl(u,v),sl(u+1.6,v),sl(u+1.6,v+1.55),sl(u,v+1.55)])}"/>`;}
+// eaves highlight
+const e1=P(x0-O,y1+O,ez),e2=P(x1+O,y1+O,ez),e3=P(x1+O,y0-O,ez);
+const lenE=Math.hypot(e2[0]-e1[0],e2[1]-e1[1])+Math.hypot(e3[0]-e2[0],e3[1]-e2[1]);
+svg+=`<polyline class="meave" style="--len:${lenE.toFixed(0)}" points="${[e1,e2,e3].map(p=>p.join(',')).join(' ')}" fill="none"/>`;
+// sauna in yard
+const sx=x1-1,sy=y1+8;
+svg+=`<g class="msauna">${box(sx,sy,3.2,3,2.6,'#C9A27A','#A9835E','#5A4336')}</g>`;
+const d1=P(x1-1,y1,0),d2=P(sx,sy-1.5,0);
+svg+=`<g class="mdist"><line x1="${d1[0]}" y1="${d1[1]}" x2="${d2[0]}" y2="${d2[1]}" stroke="#fff" stroke-width="2" stroke-dasharray="4 4"/></g>`;
+// fence
+const fp=plot.map(p=>P(...p));fp.push(fp[0]);
+const lenF=fp.slice(1).reduce((a,p,i)=>a+Math.hypot(p[0]-fp[i][0],p[1]-fp[i][1]),0);
+svg+=`<polyline class="mfence" style="--len:${lenF.toFixed(0)}" points="${fp.map(p=>p.join(',')).join(' ')}"/>`;
+// tent (product)
+const tx=x0+1,ty=y1+9.5;
+svg+=`<g class="mtent">${box(tx,ty,4.2,3.4,2.3,'#E8D7BD','#CDB894','#B8371F')}<polygon points="${poly([[tx-2.4,ty+1.9,2.1],[tx+2.4,ty+1.9,2.1],[tx+2.4,ty,3.5],[tx-2.4,ty,3.5]])}" fill="#E5482D"/><polygon points="${poly([[tx+2.4,ty-1.9,2.1],[tx+2.4,ty+1.9,2.1],[tx+2.4,ty,3.5]])}" fill="#CDB894"/><polygon points="${poly([[tx-.6,ty+1.72,0],[tx+.6,ty+1.72,0],[tx+.6,ty+1.72,1.8],[tx-.6,ty+1.72,1.8]])}" fill="#6B4A33"/></g>`;
+// trees
+const tree=(x,y,r)=>{const [a,b]=P(x,y,0);return `<g transform="translate(${a},${b})"><ellipse cx="3" cy="2" rx="${r*.9}" ry="${r*.35}" fill="rgba(22,19,15,.15)"/><rect x="-1.5" y="${-r*.8}" width="3" height="${r*.8}" fill="#7A5E45"/><circle cy="${-r*1.4}" r="${r}" fill="#86AE72"/><circle cx="${r*.35}" cy="${-r*1.6}" r="${r*.6}" fill="#9CC287"/></g>`;};
+const cone=(x,y,h)=>{const [a,b]=P(x,y,0);return `<g transform="translate(${a},${b})"><ellipse cx="3" cy="2" rx="${h*.3}" ry="${h*.12}" fill="rgba(22,19,15,.15)"/><path d="M0 ${-h} ${h*.32} 0H${-h*.32}Z" fill="#5E8B67"/><path d="M0 ${-h} ${h*.32} 0H0Z" fill="#4F7A58"/></g>`;};
+svg+=cone(x0-14,y0-4,34)+cone(x0-10,y0-9,26)+tree(x1+4,y0-9,12)+cone(x1+15,y0+2,30)+tree(x0-3,y1+12,11)+tree(x1+15,y1+11,13);
+svg+=`<rect class="msweep" x="-300" y="-190" width="600" height="450" fill="url(#sw)"/><defs><linearGradient id="sw" x1="0" x2="1"><stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset=".5" stop-color="#fff" stop-opacity=".9"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient></defs>`;
+document.getElementById('mscene').innerHTML=svg;
+
+/* ---- UI ---- */
+const list=document.getElementById('mtlist'),stage=document.getElementById('mstage'),chips=document.getElementById('mchips'),spot=document.getElementById('mspot');
+list.innerHTML=T.map((t,i)=>`<button class="titem" role="tab" id="mtt${i}" data-i="${i}" aria-selected="false"><span class="k">${t.k}</span><b>${t.n}</b><p>${t.d}</p><span class="mbar"><i></i></span></button>`).join('');
+const RMm=matchMedia('(prefers-reduced-motion: reduce)').matches;
+const DUR=4200;let cur=-1,timer=null,paused=false;
+function show(i){
+  cur=(i+T.length)%T.length;const t=T[cur];
+  list.querySelectorAll('.titem').forEach((b,j)=>{const on=j===cur;b.classList.toggle('on',on);b.setAttribute('aria-selected',on);if(on){const bar=b.querySelector('.mbar i');bar.style.animation='none';bar.offsetWidth;bar.style.animation='';}});
+  stage.dataset.m=t.m;document.getElementById('mtagT').textContent=t.k;
+  const sw=stage.querySelector('.msweep');sw.style.animation='none';sw.getBoundingClientRect();sw.style.animation='';
+  chips.innerHTML=t.c.map(([a,b,acc])=>`<span class="mchip${acc?' acc':''}">${a} <b>${b}</b></span>`).join('');
+  [...chips.children].forEach((c,j)=>setTimeout(()=>c.classList.add('in'),RMm?0:250+j*140));
+  clearTimeout(mallidTimer);if(!paused&&!RMm)mallidTimer=setTimeout(()=>show(cur+1),DUR);
+}
+list.addEventListener('click',e=>{const b=e.target.closest('.titem');if(b)show(+b.dataset.i);});
+list.addEventListener('keydown',e=>{if(e.key==='ArrowDown'||e.key==='ArrowRight'){show(cur+1);document.getElementById('mtt'+cur).focus();e.preventDefault();}if(e.key==='ArrowUp'||e.key==='ArrowLeft'){show(cur-1);document.getElementById('mtt'+cur).focus();e.preventDefault();}});
+spot.addEventListener('mouseenter',()=>{paused=true;spot.classList.add('paused');clearTimeout(mallidTimer);});
+spot.addEventListener('mouseleave',()=>{paused=false;spot.classList.remove('paused');clearTimeout(mallidTimer);if(!RMm)mallidTimer=setTimeout(()=>show(cur+1),1800);});
+show(0);
+
+/* ---- marquee ---- */
+const ic={a:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11 12 4l9 7M6 9.5V20h12V9.5"/></svg>',f:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="14" rx="2"/><circle cx="12" cy="13" r="3.5"/><path d="M8 6l1.5-2h5L16 6"/></svg>'};
+const mpills=(arr,type,lab)=>arr.map(n=>`<span class="mpill">${ic[type]}${n}<i>${lab}</i></span>`).join('');
+const r1=mpills(ALL_A,'a','aadress')+mpills(ALL_F.slice(0,3),'f','foto'),r2=mpills(ALL_F.slice(3),'f','foto')+mpills(ALL_A.slice(0,3),'a','aadress');
+document.getElementById('mr1').innerHTML=r1+r1;document.getElementById('mr2').innerHTML=r2+r2;
+
+}
 function render(){
   viewers.forEach(v=>v.dispose());viewers=[];storyV=null;if(realOff){try{realOff();}catch(e){}realOff=null;}
   const client=route.name==='client';
   $('#app').innerHTML=(client?'':header())+`<main>${screen()}</main>`+(client?'':footer());
   mount();
+  initMallid();
 }
 // Avalehelt viivad kõik nupud (uus objekt, sisselogimine, töölaud) Janni päris äppi
 const APP_URL='../';
