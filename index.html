@@ -1776,7 +1776,7 @@ function ask2(title,text,yes,extra){return new Promise(res=>{$('dT').textContent
   const done=v=>{$('dlg').hidden=true;$('dYes').onclick=$('dNo').onclick=null;res(v);};$('dYes').onclick=()=>done(true);$('dNo').onclick=()=>done(false);});}
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('dlg').hidden)$('dNo').click();});
 /* views */
-function show(view,tab){$('admin').hidden=view!=='admin';if(view==='admin')setTimeout(()=>renderAdmin(),0);$('home').hidden=view!=='home';if(view==='home')renderHome();$('body').hidden=view!=='app';$('settings').hidden=view!=='settings';$('menu').hidden=true;$('avatarBtn').setAttribute('aria-expanded','false');
+function show(view,tab){if(view==='admin'&&typeof CLOUD!=='undefined'&&CLOUD&&!(typeof CL!=='undefined'&&CL.admin))view='home';$('admin').hidden=view!=='admin';if(view==='admin')setTimeout(()=>renderAdmin(),0);$('home').hidden=view!=='home';if(view==='home')renderHome();$('body').hidden=view!=='app';$('settings').hidden=view!=='settings';$('menu').hidden=true;$('avatarBtn').setAttribute('aria-expanded','false');
   if(view==='settings'){fillForms();if(tab==='widget')setTimeout(renderWidgetPane,0);if(tab==='products')setTimeout(renderProducts,0);if(tab==='seller')setTimeout(renderSeller,0);document.querySelectorAll('.stabs [data-tab]').forEach(b=>b.setAttribute('aria-current',b.dataset.tab===tab));document.querySelectorAll('.spane').forEach(p=>p.hidden=p.dataset.pane!==tab);}
   if(view==='app')setTimeout(resize,0);}
 document.querySelector('.body').id='body';
@@ -2619,7 +2619,7 @@ async function clLoad(){const sb=CL.sb;const {data:{user}}=await sb.auth.getUser
   if(pt){acct.partners.push({code:pt.code,owner:pt.name,email:acct.email,iban:pt.iban||'',created:(pt.created_at||'').slice(0,10),seller:true,cloud:1});clEarn();}
   try{syncPromos();}catch(_){}
   await clLeads();
-  if($('admM'))$('admM').hidden=!CL.admin;
+  if($('admM'))$('admM').hidden=!CL.admin;if(CL.admin){const ab=document.querySelector('#admin .abanner');if(ab)ab.textContent='Teenuste saldo (Kie.ai ja Claude) on päris andmed. Ülejäänud graafikud ja tabelid näitavad veel näidisandmeid, päris kasutajate statistika tuleb järgmisena.';}
   CL.snap=clSnap();clRaw('oai_acct',acct);return true;}
 async function clEarn(){const {data}=await CL.sb.rpc('my_partner_earnings');CL.earn=(data&&data[0])||{companies:0,value_eur:0,earned_eur:0,paid_eur:0};if(!$('settings').hidden)try{renderSeller();}catch(_){}}
 
