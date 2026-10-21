@@ -27,32 +27,38 @@ await page.fill('#lEmail','stuudio@firma.ee');await page.fill('#lPass','parool12
 const cid=sql(`select company_id from profiles where email='stuudio@firma.ee'`);const bal=()=>+sql(`select coalesce(sum(delta),0) from credit_ledger where company_id='${cid}'`);
 await page.click('.tcard[data-t="vaba"]');await W(500);ok(await E(()=>!document.getElementById('studio').hidden&&document.getElementById('studio').classList.contains('fresh')),'Vaba idee avab tühja stuudio');
 // 1) foto + tekst -> design, 2 varianti
-await page.click('#stDemo');await W(400);await page.fill('#stIn','Lisa katusele päikesepaneelid');const b0=bal();await page.click('#stSend');
+await page.click('#stDemo');await W(400);await page.fill('#stIn','Lisa katusele päikesepaneelid');const b0=bal();await page.click('#stGenBtn');
 ok(await until(()=>{const s=acct.studio[0];return s&&!s.msgs[s.msgs.length-1].pending;},20000),'pilt valmis');
 const r1=await E(()=>{const m=acct.studio[0].msgs;return {out:m[1].out,err:m[1].err,base:acct.studio[0].base};});
 ok(r1.out&&r1.out.length===2&&/storage\/v1\/object\/public\/renders/.test(r1.out[0])&&!r1.err,'2 varianti serverist',r1);
 ok(bal()===b0-2,'server võttis 2 krediiti',[b0,bal()]);
 const rs1=await E(()=>document.getElementById('stRes').textContent);ok(rs1.includes('−2 krediiti')&&rs1.includes('saldo '+String(bal()).replace('.',',')+' krediiti'),'chatis kulu ja serveri saldo',rs1);
 // 2) jätkamine valitud pildiga (1 tulemus, sisend = eelmine tulemus)
-await page.fill('#stIn','Tee katus punaseks');await page.click('#stSend');
+await page.fill('#stIn','Tee katus punaseks');await page.click('#stGenBtn');
 ok(await until(()=>{const s=acct.studio[0];return !s.msgs[s.msgs.length-1].pending;},20000),'teine muudatus valmis');
 const r2=await E(()=>{const m=acct.studio[0].msgs;return {out:m[3].out,err:m[3].err};});ok(r2.out&&r2.out.length===1,'jätkamine: 1 tulemus',r2);
 const last=sql(`select input_urls[1] from renders where company_id='${cid}' order by created_at desc limit 1`);ok(r1.out.includes(last)||/renders/.test(last),'jätkamisel kasutati eelmist AI-pilti',last);
 // 2b) märgitud ala -> server saab foto + märgitud koopia, prompt kirjeldab ala
-await E(()=>{stSess().marks.push({t:'rect',c:'#E5482D',a:[.2,.2],b:[.6,.4]});stRenderMarks();});await page.fill('#stIn','Pane alale 1 päikesepaneelid');await page.click('#stSend');
+await E(()=>{stSess().marks.push({t:'rect',c:'#E5482D',a:[.2,.2],b:[.6,.4]});stRenderMarks();});await page.fill('#stIn','Pane alale 1 päikesepaneelid');await page.click('#stGenBtn');
 ok(await until(()=>{const s=acct.studio[0];return !s.msgs[s.msgs.length-1].pending;},20000),'märgiga muudatus valmis');
 const mk=sql(`select array_length(input_urls,1)||'|'||prompt from renders where company_id='${cid}' order by created_at desc limit 1`);
 ok(mk.startsWith('2|')&&/Area 1 \("ala 1"\)/.test(mk)&&/x 20–60%/.test(mk)&&/Never draw the markings/.test(mk),'märgid: 2 sisendpilti ja ala kirjeldus promptis',mk.slice(0,300));
-ok(await E(()=>stSess().marks.length===0&&!document.getElementById('stFilm').hidden),'pärast saatmist märgid puhtad, versioonide riba näha');
+ok(await E(()=>{const s=stSess();return s.imgs[s.tray[0]].k==='ai'&&s.imgs[s.tray[0]].marks.length===0;}),'pärast genereerimist on tulemus pilt 1 (märkideta)');
+// 2c) vestlus: tasuta, pildid kaasas, pilti ei tee
+{const b2=bal(),n0=(await kie()).length;await page.fill('#stIn','Mida võiks selle majaga veel teha?');await page.press('#stIn','Enter');
+ok(await until(()=>{const s=acct.studio[0];const m=s.msgs[s.msgs.length-1];return m.chat&&!m.pending;},15000),'vestluse vastus tuli');
+const cl=(await (await fetch(G+'/_log')).json()).filter(x=>x[0]==='claude').pop();ok(cl&&cl[5]==='studio'&&cl[4]>=1,'vestlus: stuudio režiim ja pilt kaasas',cl);
+ok(bal()===b2&&(await kie()).length===n0,'vestlus ei võtnud krediite ega teinud pilti');
+ok(await E(()=>!!document.querySelector('#stThread [data-juh]')),'vastuses on „Kasuta seda“ juhis');}
 // 3) ainult tekst -> pic
-await page.click('#stNew2');await W(300);await page.fill('#stIn','Moodne puitmaja männimetsas');const b1=bal();await page.click('#stSend');
+await page.click('#stNew2');await W(300);await page.fill('#stIn','Moodne puitmaja männimetsas');const b1=bal();await page.click('#stGenBtn');
 ok(await until(()=>{const s=acct.studio[0];return s.msgs.length===2&&!s.msgs[1].pending;},20000),'tekstist pilt valmis');
 ok(bal()===b1-4&&sql(`select kind from renders where company_id='${cid}' order by created_at desc limit 1`)==='pic','tekstist pilt: kind pic, 4 krediiti',[b1,bal()]);
 // 4) teemat hoidev prompt (sisekujundus)
 await page.click('#stNew2');await W(300);await page.click('.stchip[data-t="sisek"]');await W(200);
-ok(await E(()=>document.getElementById('stSend').disabled),'sisekujundus ilma fotota: saatmine keelatud');
+ok(await E(()=>document.getElementById('stGenBtn').disabled),'sisekujundus ilma fotota: Genereeri keelatud');
 await page.setInputFiles('#stFile',{name:'tuba.jpg',mimeType:'image/jpeg',buffer:Buffer.from(fs.readFileSync(D+'tpl.png'))}).catch(()=>{});await W(800);
-await page.fill('#stIn','Skandinaavia stiil');await page.click('#stSend');
+await page.fill('#stIn','Skandinaavia stiil');await page.click('#stGenBtn');
 ok(await until(()=>{const s=acct.studio[0];return s.msgs.length===2&&!s.msgs[1].pending;},20000),'sisekujundus valmis');
 const pr=sql(`select prompt from renders where company_id='${cid}' order by created_at desc limit 1`);ok(/Sisekujundus/.test(pr)&&/Skandinaavia stiil/.test(pr),'prompt sisaldab teemat ja soovi');
 ok(sql(`select tpl from renders where company_id='${cid}' order by created_at desc limit 1`)==='sisek','render märgitud mallile sisek');

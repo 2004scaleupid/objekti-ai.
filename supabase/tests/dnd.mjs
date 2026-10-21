@@ -12,11 +12,11 @@ const drop=async(sel,kind='file')=>p.evaluate(async([sel,b64,kind])=>{const dt=n
   const el=document.querySelector(sel);const ov=[];for(const t of ['dragenter','dragover']){el.dispatchEvent(new DragEvent(t,{bubbles:true,cancelable:true,dataTransfer:dt}));}
   ov.push(!document.getElementById('stDrop').hidden,!document.getElementById('stDropV').hidden);
   el.dispatchEvent(new DragEvent('drop',{bubbles:true,cancelable:true,dataTransfer:dt}));return ov;},[sel,B[(k++)%4],kind]);
-const st=()=>p.evaluate(()=>({imgs:stSess()?stSess().imgs.length:0,refs:STU.files.length,stage:!document.getElementById('stStage').hidden}));
-let o=await drop('#stBox');await p.waitForTimeout(700);let s=await st();ok(o[0]&&s.imgs===1&&s.stage,'fresh: drop -> photo '+JSON.stringify([o,s]));
-o=await drop('#stView');await p.waitForTimeout(700);s=await st();ok(o[1]&&!o[0]&&s.imgs===2,'stage: drop on image -> new photo '+JSON.stringify([o,s]));
-o=await drop('#stBox');await p.waitForTimeout(700);s=await st();ok(o[0]&&!o[1]&&s.refs===1&&s.imgs===2,'stage: drop on chat box -> reference '+JSON.stringify([o,s]));
-o=await drop('#stPanel');await p.waitForTimeout(700);s=await st();ok(s.imgs===3,'drop on side panel works '+JSON.stringify(s));
-o=await drop('#stView','html');await p.waitForTimeout(700);s=await st();ok(s.imgs===4,'image dragged from web page '+JSON.stringify(s));
+const st=()=>p.evaluate(()=>({tray:stSess()?stSess().tray.length:0,edit:STU.edit,stage:!document.getElementById('stStage').hidden}));
+let o=await drop('#stBox');await p.waitForTimeout(800);let s=await st();ok(o[0]&&s.tray===1&&!s.stage,'fresh: drop -> pilt 1, no editor jump '+JSON.stringify([o,s]));
+o=await drop('#stPanel');await p.waitForTimeout(800);s=await st();ok(s.tray===2,'drop on side panel -> pilt 2 '+JSON.stringify(s));
+await p.click('#stFiles [data-ed]');await p.waitForTimeout(400);
+o=await drop('#stView');await p.waitForTimeout(800);s=await st();ok(o[1]&&s.tray===3&&s.edit!=null,'editor: drop on image -> pilt 3, editor stays '+JSON.stringify([o,s]));
+o=await drop('#stView','html');await p.waitForTimeout(800);s=await st();ok(s.tray===4,'image dragged from web page -> pilt 4 '+JSON.stringify(s));
 ok(await p.evaluate(()=>document.getElementById('stDrop').hidden&&document.getElementById('stDropV').hidden),'overlays hidden after drop');
 ok(!errs.length,'no errors '+errs);console.log('fails',F);await b.close();

@@ -459,6 +459,7 @@ body.cvm .panel>*:not(#cvPanel){display:none!important}
 .ocard .ot{display:flex;justify-content:space-between;gap:8px;align-items:center}
 .ocard .ot b{font-size:15px}
 .ocard .om{display:flex;gap:12px;font:500 12px var(--mono);color:var(--muted);flex-wrap:wrap}
+.ocard .stw{background:var(--accent);color:#fff}.ocard .imgph{width:100%;aspect-ratio:16/10;display:grid;place-items:center;background:var(--soft);color:var(--muted);font:600 13px var(--display)}
 .ocard.add{align-items:center;justify-content:center;border-style:dashed;min-height:220px;color:var(--muted);font-weight:600;gap:6px}
 .ocard.add span{font-size:28px;color:var(--accent);line-height:1}
 .check{border:1px solid var(--line);border-radius:12px;padding:16px;background:var(--paper);display:flex;flex-direction:column;gap:10px}
@@ -709,6 +710,42 @@ body:not(.cvm) #mSeg{display:none}
 .obpick span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.obpick:hover{border-color:var(--ink)}
 .obsel .stmenu{top:calc(100% + 6px)}.obsel .stmenu .cur{background:var(--soft)}.obsel .stmenu hr{border:0;border-top:1px solid var(--line);margin:4px 2px}
 .view[data-tool="hand"] canvas{cursor:grab}
+.stthread{flex:1;min-height:0;overflow-y:auto;padding:18px clamp(12px,3vw,40px) 8px;display:flex;flex-direction:column;gap:18px}
+.stthread>*{width:100%;max-width:860px;margin:0 auto}
+.stm.u{display:flex;flex-direction:column;align-items:flex-end;gap:6px}
+.stm.u .bub{background:var(--ink);color:var(--paper);border-radius:16px 16px 4px 16px;padding:10px 14px;max-width:80%;white-space:pre-wrap;word-break:break-word;font-size:14.5px;line-height:1.5}
+.stm .gtag{display:inline-flex;align-items:center;gap:5px;font:600 11px var(--mono);color:var(--accent)}
+.stm .pics{display:flex;gap:6px;justify-content:flex-end;flex-wrap:wrap}
+.stm .pics span{position:relative;width:66px;height:50px;border-radius:9px;overflow:hidden;border:1px solid var(--line);background:var(--soft)}.stm .pics img{width:100%;height:100%;object-fit:cover;display:block}
+.stm .pics i,.stf .no{position:absolute;left:4px;top:4px;min-width:18px;height:18px;border-radius:9px;background:var(--accent);color:#fff;font:700 10.5px/18px var(--mono);font-style:normal;text-align:center;padding:0 4px;box-shadow:0 1px 3px rgba(0,0,0,.3)}
+.stm.a{display:flex;flex-direction:column;gap:8px;align-items:flex-start}
+.stm.a .who{display:flex;align-items:center;gap:7px;font:600 12.5px var(--display);color:var(--muted)}.stm.a .who .stlogo{width:18px;height:18px}
+.stm.a .txt{font-size:14.5px;line-height:1.55;white-space:pre-wrap;word-break:break-word;color:var(--ink);max-width:92%}
+.stjuh{display:flex;gap:10px;align-items:center;flex-wrap:wrap;background:var(--paper);border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:10px;padding:9px 12px;font-size:14px;max-width:92%}
+.stjuh q{flex:1;min-width:180px;quotes:"„" "“"}.stjuh button{border:0;background:var(--ink);color:var(--paper);border-radius:8px;padding:6px 11px;font:600 12.5px var(--display);cursor:pointer;white-space:nowrap}
+.stres{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;width:100%}.stres.one{grid-template-columns:minmax(0,1fr);max-width:640px}
+.stv{border:1px solid var(--line);border-radius:14px;overflow:hidden;background:var(--paper);display:flex;flex-direction:column;position:relative}
+.stv.sel{border-color:var(--accent);box-shadow:0 0 0 2px rgba(229,72,45,.22)}
+.stv>img{width:100%;display:block;cursor:zoom-in}
+.stv .va{display:flex;gap:6px;padding:8px;flex-wrap:wrap;align-items:center}
+.stv .va button,.stv .va a{border:1px solid var(--line);background:var(--bg);border-radius:8px;padding:5px 10px;font:600 12px var(--display);color:var(--ink);cursor:pointer;text-decoration:none;white-space:nowrap}
+.stv .va .pri{background:var(--ink);color:var(--paper);border-color:var(--ink)}.stv .tg{position:absolute;left:8px;top:8px;font:600 10px var(--mono);background:rgba(22,19,15,.72);color:#fff;border-radius:999px;padding:2px 7px}
+.stph{aspect-ratio:4/3;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;background:var(--soft);color:var(--muted);font:600 13px var(--display)}
+.stph .bar{width:min(220px,60%);height:5px;border-radius:9px;background:var(--line);overflow:hidden}.stph .bar i{display:block;height:100%;width:30%;background:var(--accent);border-radius:9px;animation:stload 1.4s ease-in-out infinite}
+.sterr{color:var(--accent);font-size:13.5px}.stm .crl{font:600 11px var(--mono);color:var(--muted)}
+.sttyping{display:inline-flex;gap:4px;padding:6px 2px}.sttyping i{width:7px;height:7px;border-radius:50%;background:var(--muted);animation:stpulse 1s ease-in-out infinite}.sttyping i:nth-child(2){animation-delay:.15s}.sttyping i:nth-child(3){animation-delay:.3s}
+.stzoom{position:fixed;inset:0;z-index:140;background:rgba(15,12,10,.86);display:flex;align-items:center;justify-content:center;padding:24px;cursor:zoom-out}.stzoom img{max-width:100%;max-height:100%;border-radius:12px}
+.stedbar{display:flex;align-items:center;gap:10px;font-size:13.5px;flex-wrap:wrap}.stedbar b{font:700 14px var(--display)}.stedbar span{color:var(--muted)}
+.stdone{border:0;background:var(--ink);color:var(--paper);border-radius:10px;height:34px;padding:0 14px;font:700 13px var(--display);cursor:pointer}
+.stf .op{display:block;width:100%;height:100%;border:0;padding:0;background:none;cursor:pointer;position:relative}
+.stf .bl.ed{background:rgba(229,72,45,.9)}.stf.on{border-color:var(--accent);box-shadow:0 0 0 2px rgba(229,72,45,.3)}
+.stf.add{display:grid;place-items:center;border:1.5px dashed var(--line);background:var(--bg);color:var(--muted);font:400 28px var(--display);cursor:pointer}.stf.add:hover{border-color:var(--accent);color:var(--accent)}
+.stgen{display:inline-flex;align-items:center;gap:7px;height:36px;border:0;border-radius:12px;background:var(--ink);color:var(--paper);padding:0 12px 0 10px;font:700 13.5px var(--display);cursor:pointer;white-space:nowrap}
+.stgen .stcost{color:inherit;opacity:.65;padding:0;font-size:11px}.stgen[disabled]{opacity:.32;cursor:default}.stgen:not([disabled]):hover{filter:brightness(1.15)}
+.stgen[hidden]{display:none}
+.studio.editing .stdock .stsugg{display:none}
+@media (max-width:640px){.stgen .stcost{display:none}}
+.hdr>.search{display:none!important}.hdr>.logo{margin-right:auto}
 .stnoimg{flex:1;display:grid;place-items:center;color:var(--muted);font-size:14px}
 @media (max-width:820px){.strail{position:sticky;top:0;z-index:25;box-shadow:0 4px 10px rgba(22,19,15,.06)}.ststage{min-height:62vh;padding:10px 10px 0}.stview{min-height:38vh}.stback{font-size:0;padding:0 6px}.stback svg{width:18px;height:18px}.sttop .ghost.sm{white-space:nowrap}.sttop{padding:6px 10px}.studio:not(.fresh) .stdock{padding-left:10px;padding-right:10px}.stzoomc button{min-width:34px;height:34px}}
 .pwf{position:relative;display:block}.pwf input{width:100%;box-sizing:border-box;padding-right:46px!important}
@@ -893,7 +930,7 @@ body.p3emb{background:transparent;margin:0;padding:0;overflow:hidden}body.p3emb 
   <div class="cvbar" id="cvBar" hidden><div class="cvl" id="cvLogo">FT</div><div class="cvt"><b id="cvFirm">Ettevõte</b><small id="cvSub">Teie maja 3D-s</small></div><span class="cvby"><i></i>Tehtud Vaade3D-ga</span></div>
   <header class="hdr">
     <button type="button" class="logo" id="logoBtn" style="border:0;background:none;cursor:pointer;color:var(--ink);padding:0"><i></i><span>Vaade<b>3D</b></span></button>
-    <label class="search" for="q">
+    <label class="search" for="q" hidden aria-hidden="true">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
       <input id="q" type="text" value="Tammekännu tee 44, Viimsi vald" aria-label="Aadress" autocomplete="off">
     </label>
@@ -1050,7 +1087,9 @@ body.p3emb{background:transparent;margin:0;padding:0;overflow:hidden}body.p3emb 
         <h1 id="stTitle">Mida täna loome?</h1>
         <p id="stSub">Lae üles foto ja kirjelda, mida muuta.</p>
       </div>
+      <div class="stthread" id="stThread" hidden aria-live="polite"></div>
       <div class="ststage" id="stStage" hidden>
+        <div class="stedbar" id="stEdBar"><b id="stEdT">Pilt 1</b><span id="stEdS">Märgi vasakult tööriistaga, mida muuta. Siis kirjuta all, mida teha.</span><span class="stsp"></span><button type="button" class="stdone" id="stEdDone">✓ Valmis</button></div>
         <div class="stview" id="stView">
           <div class="stcanvas" id="stCanvas"><img id="stImg" alt="Töö pilt" draggable="false"><svg id="stSvg" class="stsvg" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"></svg>
             </div>
@@ -1075,7 +1114,7 @@ body.p3emb{background:transparent;margin:0;padding:0;overflow:hidden}body.p3emb 
             <div class="stsel" id="stProdW" hidden><button type="button" class="stpick" id="stProd" aria-haspopup="listbox"><span id="stProdT">Vali toode</span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button><div class="stmenu" id="stProdM" role="listbox" hidden></div></div>
             <span class="stsp"></span>
             <div class="stsel" id="stStyleW"><button type="button" class="stpick" id="stStyle" aria-haspopup="listbox"><span id="stStyleT">Fotorealistlik</span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button><div class="stmenu up" id="stStyleM" role="listbox" hidden></div></div>
-            <span class="stcost" id="stCost"></span>
+            <button type="button" class="stgen" id="stGenBtn" title="Tee pilt"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2l1.8 5.6L19.5 9l-5.7 1.6L12 16l-1.8-5.4L4.5 9l5.7-1.4z"/><path d="M19 14l.9 2.6 2.6.9-2.6.9L19 21l-.9-2.6-2.6-.9 2.6-.9z" opacity=".7"/></svg><span>Genereeri</span><span class="stcost" id="stCost"></span></button>
             <button type="button" class="stsend" id="stSend" aria-label="Saada" disabled><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button>
           </div>
         </div>
@@ -2506,8 +2545,8 @@ function renderHome(){const n=acct.name.split(' ')[0]||'';const hr=new Date().ge
   const ym=today().slice(0,7);$('stObj').textContent=HOUSES.length;$('stMonth').textContent=acct.hist.filter(r=>r.d.startsWith(ym)&&/Objektivaade/.test(r.t)).length;
   $('stGen').textContent=Object.values(acct.gen).filter(Boolean).length;$('stCred').textContent=acct.credits;{const pl=curPlan(),p=basePrice('obj'),left=Math.floor(acct.credits/p)+planLeft(),c=$('stCred').closest('.stat');c.classList.toggle('low',left<2);c.querySelector('small').textContent=(pl?pl.name+': '+planLeft()+' objekti sel kuul alles · ':'')+(left<1?'Ei jätku järgmiseks objektiks':left<2?'Jätkub veel 1 objektiks':'Krediiti saldo · '+left+' objekti');c.querySelector('button').textContent=left<2?'Osta krediite':pl?'Pakett':'Osta';}
   document.querySelector('#ncHouse .src2').textContent=priceTxt('obj')+' · Maa- ja Ruumiameti andmed';$('dzPrice').textContent=priceTxt('design')+' · 2 varianti';renderDesigns();renderTpls();renderBell();
-  $('ocards').innerHTML=HOUSES.map((h,i)=>{const im=(isR(i)&&acct.gen[HOUSES[i].ehr])?((acct.genUrl||{})[HOUSES[i].ehr]||RENDER):((h.thumb&&h.thumb!=='pending'?h.thumb:null)||(i<2?THUMBS[i]:'data:image/svg+xml;utf8,'+encodeURIComponent(planSvg(h))));return `<button type="button" class="ocard" data-i="${i}"><img src="${im}" alt="${h.short} 3D-vaade"><div class="ob"><div class="ot"><b>${h.short}</b>${otag(i)}</div><span class="fhint">Viimsi vald · ${h.date}</span><div class="om"><span>${fmt(h.footprint)} m² põhiplaan</span><span>~${fmt(h.roof,0)} m² katus</span></div></div></button>`;}).join('')+'<button type="button" class="ocard add" id="addCard"><span>+</span>Uus objekt</button>';
-  document.querySelectorAll('.ocard[data-i]').forEach(b=>b.onclick=()=>{show('app');select(+b.dataset.i);});
+  $('ocards').innerHTML=stHomeCards()+HOUSES.map((h,i)=>{const im=(isR(i)&&acct.gen[HOUSES[i].ehr])?((acct.genUrl||{})[HOUSES[i].ehr]||RENDER):((h.thumb&&h.thumb!=='pending'?h.thumb:null)||(i<2?THUMBS[i]:'data:image/svg+xml;utf8,'+encodeURIComponent(planSvg(h))));return `<button type="button" class="ocard" data-i="${i}"><img src="${im}" alt="${h.short} 3D-vaade"><div class="ob"><div class="ot"><b>${h.short}</b>${otag(i)}</div><span class="fhint">Viimsi vald · ${h.date}</span><div class="om"><span>${fmt(h.footprint)} m² põhiplaan</span><span>~${fmt(h.roof,0)} m² katus</span></div></div></button>`;}).join('')+'<button type="button" class="ocard add" id="addCard"><span>+</span>Uus objekt</button>';
+  document.querySelectorAll('.ocard[data-i]').forEach(b=>b.onclick=()=>{show('app');select(+b.dataset.i);});document.querySelectorAll('.ocard[data-st]').forEach(b=>b.onclick=()=>stOpenSession(b.dataset.st));
   addDel('.ocard[data-i]','');
   $('addCard').onclick=()=>$('homeIn').focus();
   $('oSrchW').hidden=HOUSES.length<=6;oFilter();
@@ -3074,8 +3113,8 @@ async function clBoot(){const h=location.hash||'';
 
 /* ---------- STUUDIO: vali töö -> töölaud tööriistade ja chatiga ---------- */
 acct.studio=acct.studio||[];
-acct.studio.forEach(s=>{s.marks=s.marks||[];if(!s.imgs){s.imgs=[];(s.msgs||[]).forEach(m=>{(m.imgs||[]).forEach(u=>s.imgs.push({src:u,k:'up'}));(m.out||[]).forEach(u=>s.imgs.push({src:u,k:'ai'}));});}});
-const STU={sid:null,tpl:'vaba',files:[],style:null,prod:null,busy:false,tool:'brush',color:'#E5482D',size:'M',z:1,tx:0,ty:0,fit:true,undo:[],redo:[],cmp:false,cmpX:.5,hide:false,sel:-1,nat:null};
+acct.studio.forEach(s=>{if(!s.tray){s.tray=[];}s.marks=s.marks||[];if(!s.imgs){s.imgs=[];(s.msgs||[]).forEach(m=>{(m.imgs||[]).forEach(u=>s.imgs.push({src:u,k:'up'}));(m.out||[]).forEach(u=>s.imgs.push({src:u,k:'ai'}));});}if(!s.tray.length&&s.base){const i=s.imgs.findIndex(x=>x.src===s.base);if(i>=0)s.tray=[i];}});
+const STU={edit:null,chatting:false,sid:null,tpl:'vaba',files:[],style:null,prod:null,busy:false,tool:'hand',color:'#E5482D',size:'M',z:1,tx:0,ty:0,fit:true,undo:[],redo:[],cmp:false,cmpX:.5,hide:false,sel:-1,nat:null};
 const ST_GEN_STYLES=['Fotorealistlik','Arhitektuurne eskiis','3D-render','Akvarell'];
 const ST_THEMES={
   vaba:{t:'Mida täna loome?',s:'Lae üles foto, märgi tööriistadega ala ja kirjelda, mida teha. Või kirjelda pilt, mida tahad näha.',need:'opt',ph:'Nt lisa maja katusele päikesepaneelid',
@@ -3097,17 +3136,26 @@ function stTheme(id){const T=tplById(id)||tplById('vaba')||{};const th=ST_THEMES
 const stSess=()=>acct.studio.find(s=>s.id===STU.sid)||null;
 const stEsc=t=>String(t==null?'':t).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function stAiImg(u){return safeUrl(u)||(/^data:image\/(jpeg|png|webp);base64,/.test(String(u))?u:'');}
-function stSave(){for(let i=0;i<8;i++){try{save();return;}catch(e){if(acct.studio.length>1)acct.studio.pop();else acct.studio.forEach(s=>{s.msgs.forEach(m=>{m.imgs=[];});s.imgs=(s.imgs||[]).filter(x=>!/^data:/.test(x.src)||x.src===s.base);});}}}
-function stNewSession(){const s={id:'s'+Date.now(),tpl:STU.tpl,title:'Uus töö',date:new Date().toLocaleDateString('et-EE'),msgs:[],imgs:[],base:null,marks:[],scale:null,style:STU.style,prod:STU.prod};acct.studio.unshift(s);acct.studio=acct.studio.slice(0,12);STU.sid=s.id;return s;}
+function stWB(){const s=stSess();if(s){const i=document.getElementById('stIn');if(i&&!i.dataset.addr)s.draft=i.value;s.upd=Date.now();}if(s&&s.base&&s.imgs){const im=s.imgs.find(x=>x.src===s.base);if(im){im.marks=s.marks||[];im.scale=s.scale||null;}}}
+function stSave(){stWB();for(let i=0;i<8;i++){try{save();return;}catch(e){if(acct.studio.length>1)acct.studio.pop();else acct.studio.forEach(s=>{s.msgs.forEach(m=>{m.imgs=[];});const keep=(s.tray||[]).map(i=>s.imgs[i]&&s.imgs[i].src).filter(Boolean);s.imgs=(s.imgs||[]).filter(x=>!/^data:/.test(x.src)||keep.includes(x.src));s.tray=keep.map(u=>s.imgs.findIndex(x=>x.src===u)).filter(i=>i>=0);STU.edit=null;});}}}
+const ST_MAXP=4;
+const stTrayImgs=s=>s?(s.tray||[]).map(i=>s.imgs&&s.imgs[i]).filter(Boolean):[];
+function stPoint(s,i){const im=s.imgs[i];if(!im)return;stWB();s.base=im.src;im.marks=im.marks||[];s.marks=im.marks;s.scale=im.scale||null;}
+function stPointMain(s){if(!s)return;const i=STU.edit!=null&&s.imgs[STU.edit]?STU.edit:(s.tray||[])[0];if(i!=null&&s.imgs[i]){if(s.base!==s.imgs[i].src)stPoint(s,i);}else{stWB();s.base=null;s.marks=[];s.scale=null;}}
+function stAddPic(src,k,demo){let s=stSess();if(!s)s=stNewSession();s.imgs=s.imgs||[];s.tray=s.tray||[];let i=s.imgs.findIndex(x=>x.src===src);if(i<0){s.imgs.push({src,k:k||'up',demo:demo?1:0,marks:[]});i=s.imgs.length-1;}
+  if(!s.tray.includes(i)){if(s.tray.length>=ST_MAXP){toast('Kuni '+ST_MAXP+' pilti korraga. Eemalda mõni, et lisada uus.');return -1;}s.tray.push(i);}if(!s.thumb)s.thumb=src;stSave();return i;}
+function stEdit(i,tool){const s=stSess();if(!s||!s.imgs[i])return;STU.edit=i;stPoint(s,i);STU.tool=tool&&tool!=='color'?tool:'hand';STU.undo=[];STU.redo=[];STU.sel=-1;STU.cmp=false;STU.fit=true;stRender();stToStage();}
+function stEditDone(){STU.edit=null;STU.sel=-1;stSave();stRender();}
+function stNewSession(){const s={id:'s'+Date.now(),tpl:STU.tpl,title:'Uus töö',date:new Date().toLocaleDateString('et-EE'),msgs:[],imgs:[],tray:[],base:null,marks:[],scale:null,style:STU.style,prod:STU.prod};acct.studio.unshift(s);acct.studio=acct.studio.slice(0,12);STU.sid=s.id;return s;}
 function openStudio(tpl,files,o){const th=stTheme(tpl);if(th.need==='addr'&&!tplById(tpl))tpl='vaba';
-  STU.tpl=tplById(tpl)?tpl:'vaba';STU.sid=null;STU.p3=p3New(o);acct.activeTpl=STU.tpl;STU.files=[];STU.style=null;STU.prod=null;STU.undo=[];STU.redo=[];STU.sel=-1;STU.cmp=false;STU.fit=true;
+  STU.tpl=tplById(tpl)?tpl:'vaba';STU.sid=null;STU.edit=null;STU.p3=p3New(o);acct.activeTpl=STU.tpl;STU.files=[];STU.style=null;STU.prod=null;STU.undo=[];STU.redo=[];STU.sel=-1;STU.cmp=false;STU.fit=true;
   show('studio');stRender();if(files&&files.length)stAddFiles(files);if(STU.p3.photos.some(Boolean)){p3Sess();p3Changed();}setTimeout(()=>$('stIn').focus(),60);}
-function stOpenSession(id){const s=acct.studio.find(x=>x.id===id);if(!s)return;STU.sid=id;STU.tpl=s.tpl;STU.p3=p3New({subject:s.p3sub,lock:s.p3lock,ehr:s.p3ehr,label:s.p3label,product:s.p3product});STU.files=[];STU.style=s.style||null;STU.prod=s.prod||null;STU.undo=[];STU.redo=[];STU.sel=-1;STU.cmp=false;STU.fit=true;show('studio');stRender();}
+function stOpenSession(id){const s=acct.studio.find(x=>x.id===id);if(!s)return;$('stIn').value=s.draft||'';setTimeout(stAuto,0);STU.sid=id;STU.edit=null;STU.tpl=s.tpl;STU.p3=p3New({subject:s.p3sub,lock:s.p3lock,ehr:s.p3ehr,label:s.p3label,product:s.p3product});STU.files=[];STU.style=s.style||null;STU.prod=s.prod||null;STU.undo=[];STU.redo=[];STU.sel=-1;STU.cmp=false;STU.fit=true;show('studio');stRender();}
 function stStyles(){const T=stTheme(STU.tpl).T;return (T&&T.styles&&T.styles.length)?T.styles:ST_GEN_STYLES;}
-function stProdRefs(text,s){const P=prodList(),ids=new Set();(s&&s.marks||[]).forEach(m=>{if(m.t==='prod'&&m.pid)ids.add(m.pid);});
+function stProdRefs(text,s){const P=prodList(),ids=new Set();[...stTrayImgs(s).flatMap(im=>im.marks||[]),...((s&&s.marks)||[])].forEach(m=>{if(m.t==='prod'&&m.pid)ids.add(m.pid);});
   String(text||'').replace(/(?:toode|toote|tootele|tootega)\s*(?:nr\.?\s*)?(\d{1,2})|#(\d{1,2})\b/gi,(_,a,b)=>{const p=P[(+(a||b))-1];if(p)ids.add(p.id);return _;});
   if(!ids.size&&stTheme(STU.tpl).prod&&STU.prod)ids.add(STU.prod);return P.filter(p=>ids.has(p.id));}
-function stKind(){const th=stTheme(STU.tpl),s=stSess();if(th.need==='addr')return 'addr';if(th.p3)return '3d';const hasImg=s&&s.base;if(!hasImg)return th.need==='opt'?'pic':'design';return stProdRefs($('stIn').value,s).length?'place':'design';}
+function stKind(){const th=stTheme(STU.tpl),s=stSess();if(th.need==='addr')return 'addr';if(th.p3)return '3d';if(!stTrayImgs(s).length)return th.need==='opt'?'pic':'design';return stProdRefs($('stIn').value,s).length?'place':'design';}
 function stPriceKind(){const k=stKind();return k==='3d'?'3d':k==='pic'?'pic':'design';}
 /* tööriistad */
 const SI=p=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
@@ -3136,11 +3184,11 @@ const ST_COLORS=[['#E5482D','punane'],['#F2B705','kollane'],['#2A7FBF','sinine']
 const ST_SIZES={S:.012,M:.026,L:.055};
 const isArea=m=>m.t==='brush'||m.t==='rect'||m.t==='lasso';
 function stLabels(marks){let a=0,p=0;return marks.map(m=>isArea(m)?String(++a):m.t==='point'?String.fromCharCode(65+(p++)%26):'');}
-function stRenderRail(){const s=stSess(),on=!!(s&&s.base)&&!STU.busy;
+function stRenderRail(){const s=stSess(),on=!!(s&&s.base)&&!STU.busy,ed=STU.edit!=null;
   $('stRail').innerHTML=ST_TOOLS.map(t=>{if(!t)return '<span class="sep"></span>';
     if(t.id==='color')return `<button type="button" class="sttool" data-tool="color" data-n="${stEsc(t.n)}" ${on?'':'disabled'} aria-label="${stEsc(t.n)}"><span class="sw" style="background:${STU.color}"></span></button>`;
-    const pressed=t.act?(t.id==='eye'?STU.hide:false):STU.tool===t.id;
-    const dis=!on||(t.id==='undo'&&!STU.undo.length)||(t.id==='redo'&&!STU.redo.length)||(t.id==='clear'&&!(s&&s.marks&&s.marks.length));
+    const pressed=t.act?(t.id==='eye'?STU.hide:false):ed&&STU.tool===t.id;
+    const dis=!on||(!ed&&t.act)||(t.id==='undo'&&!STU.undo.length)||(t.id==='redo'&&!STU.redo.length)||(t.id==='clear'&&!(s&&s.marks&&s.marks.length));
     return `<button type="button" class="sttool" data-tool="${t.id}" data-n="${stEsc(t.n)}" data-d="${stEsc(t.d||'')}" data-k="${stEsc(t.k||'')}" aria-pressed="${pressed}" ${dis?'disabled':''} aria-label="${stEsc(t.n)}">${t.i}</button>`;}).join('');
   $('stRail').querySelectorAll('.sttool').forEach(b=>{b.onclick=e=>stToolClick(b.dataset.tool,b);b.onpointerenter=e=>{if(e.pointerType==='mouse')stTip(b);};b.onpointerleave=()=>stTip(null);b.onfocus=()=>{if(b.matches(':focus-visible'))stTip(b);};b.onblur=()=>stTip(null);});
   $('stView').dataset.tool=STU.cmp?'select':STU.tool;}
@@ -3148,6 +3196,7 @@ let stTipEl=null;function stTip(b){if(stTipEl){stTipEl.remove();stTipEl=null;}if
   stTipEl.innerHTML=`${stEsc(b.dataset.n)}${b.dataset.k?` <span style="opacity:.6">${stEsc(b.dataset.k)}</span>`:''}${b.dataset.d?`<small>${stEsc(b.dataset.d)}</small>`:''}`;document.body.appendChild(stTipEl);
   const narrow=innerWidth<=820;stTipEl.style.left=(narrow?Math.min(r.left,innerWidth-240):r.right+10)+'px';stTipEl.style.top=(narrow?r.bottom+8:r.top+r.height/2-stTipEl.offsetHeight/2)+'px';}
 function stToolClick(id,btn){stTip(null);const s=stSess();
+  if(STU.edit==null&&id!=='color'){if(s&&s.tray&&s.tray.length&&!['undo','redo','eye','clear'].includes(id))stEdit(s.tray[0],id);return;}
   if(id==='undo')return stUndo();if(id==='redo')return stRedo();
   if(id==='eye'){STU.hide=!STU.hide;$('stCanvas').classList.toggle('hidemk',STU.hide);return stRenderRail();}
   if(id==='clear'){if(s&&s.marks.length){stPush();s.marks=[];STU.sel=-1;stSave();stRenderMarks();}return;}
@@ -3180,13 +3229,14 @@ function stRenderCmp(){const c=$('stCanvas');c.querySelectorAll('.stcmp,.stcmpba
   const prev=stAiImg(stPrevImg());if(!prev){STU.cmp=false;return;}const pct=STU.cmpX*100;
   c.insertAdjacentHTML('beforeend',`<div class="stcmp" style="width:${pct}%"><img src="${stEsc(prev)}" alt="Eelmine versioon" style="width:${STU.nat.w}px;height:${STU.nat.h}px"></div><div class="stcmpbar" style="left:${pct}%"></div><span class="stcmplb" style="left:8px">Enne</span><span class="stcmplb r" style="right:8px">Pärast</span>`);}
 /* märkide joonistamine */
-function stRenderMarks(){const s=stSess(),svg=$('stSvg'),n=STU.nat;if(!s||!n){svg.innerHTML='';return;}const W=n.w,H=n.h,L=stLabels(s.marks),u=Math.max(W,H),R=Math.max(11,u*.017),sw=Math.max(2,u*.0028),fs=Math.max(12,u*.019);
-  svg.setAttribute('viewBox',`0 0 ${W} ${H}`);
+function stRenderMarks(){const s=stSess(),svg=$('stSvg'),n=STU.nat;if(!s||!n){svg.innerHTML='';return;}svg.setAttribute('viewBox',`0 0 ${n.w} ${n.h}`);svg.innerHTML=stSvgMarks(s.marks,s.scale,n.w,n.h,STU.sel);
+  if(stDraw&&stDraw.t!=='pan')return;stRenderMk();stRenderLegend();stRenderRail();stSync();stRenderSugg();stHint();}
+function stSvgMarks(marks,scale,W,H,selI){const L=stLabels(marks),u=Math.max(W,H),R=Math.max(11,u*.017),sw=Math.max(2,u*.0028),fs=Math.max(12,u*.019);
   const badge=(x,y,txt,c)=>`<circle cx="${x}" cy="${y}" r="${R}" fill="${c}" stroke="#fff" stroke-width="${sw*.9}"/><text x="${x}" y="${y+fs*.36}" text-anchor="middle" font-size="${fs}" font-family="Inter Tight,Arial,sans-serif" font-weight="700" fill="${c==='#FFFFFF'||c==='#F2B705'?'#16130F':'#fff'}">${stEsc(txt)}</text>`;
   const tag=(x,y,txt,c)=>{const w=txt.length*fs*.58+fs*.9;return `<rect x="${x}" y="${y-fs*1.35}" width="${w}" height="${fs*1.55}" rx="${fs*.4}" fill="${c}"/><text x="${x+fs*.45}" y="${y-fs*.15}" font-size="${fs*.92}" font-family="Inter Tight,Arial,sans-serif" font-weight="700" fill="${c==='#FFFFFF'||c==='#F2B705'?'#16130F':'#fff'}">${stEsc(txt)}</text>`;};
   const P=(p)=>[p[0]*W,p[1]*H];const box=pts=>{const xs=pts.map(p=>p[0]),ys=pts.map(p=>p[1]);return [Math.min(...xs),Math.min(...ys),Math.max(...xs),Math.max(...ys)];};
   const prods=prodList();
-  svg.innerHTML=s.marks.map((m,i)=>{const c=m.c||'#E5482D',sel=i===STU.sel?' sel':'';let g='';
+  return marks.map((m,i)=>{const c=m.c||'#E5482D',sel=i===selI?' sel':'';let g='';
     if(m.t==='brush'){const d=m.pts.map((p,k)=>(k?'L':'M')+P(p).join(' ')).join(' ');const b=box(m.pts);g=`<path d="${d}" fill="none" stroke="${c}" stroke-opacity=".5" stroke-width="${m.w*W}" stroke-linecap="round" stroke-linejoin="round"/>`+badge(b[0]*W,b[1]*H,L[i],c);}
     else if(m.t==='rect'||m.t==='prod'){const x=Math.min(m.a[0],m.b[0])*W,y=Math.min(m.a[1],m.b[1])*H,w=Math.abs(m.b[0]-m.a[0])*W,h=Math.abs(m.b[1]-m.a[1])*H;
       if(m.t==='rect')g=`<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="${c}" fill-opacity=".28" stroke="${c}" stroke-width="${sw}"/>`+badge(x,y,L[i],c);
@@ -3196,15 +3246,14 @@ function stRenderMarks(){const s=stSess(),svg=$('stSvg'),n=STU.nat;if(!s||!n){sv
     else if(m.t==='arrow'||m.t==='ruler'){const [x1,y1]=P(m.a),[x2,y2]=P(m.b),an=Math.atan2(y2-y1,x2-x1),hl=Math.max(10,u*.022);
       g=`<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${c}" stroke-width="${sw*1.3}" stroke-linecap="round"/>`;
       if(m.t==='arrow')g+=`<path d="M${x2} ${y2} L${x2-hl*Math.cos(an-.45)} ${y2-hl*Math.sin(an-.45)} L${x2-hl*Math.cos(an+.45)} ${y2-hl*Math.sin(an+.45)}Z" fill="${c}"/>`;
-      else{const tk=hl*.55,nx=-Math.sin(an)*tk,ny=Math.cos(an)*tk;g+=`<line x1="${x1-nx}" y1="${y1-ny}" x2="${x1+nx}" y2="${y1+ny}" stroke="${c}" stroke-width="${sw*1.3}"/><line x1="${x2-nx}" y1="${y2-ny}" x2="${x2+nx}" y2="${y2+ny}" stroke="${c}" stroke-width="${sw*1.3}"/>`+tag((x1+x2)/2+nx*1.2,(y1+y2)/2+ny*1.2,stRulerTxt(m,s),c);}}
+      else{const tk=hl*.55,nx=-Math.sin(an)*tk,ny=Math.cos(an)*tk;g+=`<line x1="${x1-nx}" y1="${y1-ny}" x2="${x1+nx}" y2="${y1+ny}" stroke="${c}" stroke-width="${sw*1.3}"/><line x1="${x2-nx}" y1="${y2-ny}" x2="${x2+nx}" y2="${y2+ny}" stroke="${c}" stroke-width="${sw*1.3}"/>`+tag((x1+x2)/2+nx*1.2,(y1+y2)/2+ny*1.2,scale?(stRulerLen(m,{w:W,h:H})*scale).toFixed(2).replace('.',',')+' m':'? m',c);}}
     else if(m.t==='text'){const [x,y]=P(m.p);g=`<text x="${x}" y="${y}" font-size="${fs*1.15}" font-family="Inter Tight,Arial,sans-serif" font-weight="700" fill="${c}" stroke="${c==='#FFFFFF'?'#16130F':'#fff'}" stroke-width="${fs*.22}" paint-order="stroke">${stEsc(m.s)}</text>`;}
-    return `<g class="mk${sel}" data-mi="${i}">${g}</g>`;}).join('');
-  if(stDraw&&stDraw.t!=='pan')return;stRenderMk();stRenderLegend();stRenderRail();stSync();stRenderSugg();stHint();}
-function stRulerLen(m){const n=STU.nat;if(!n)return 0;return Math.hypot((m.b[0]-m.a[0])*n.w,(m.b[1]-m.a[1])*n.h);}
+    return `<g class="mk${sel}" data-mi="${i}">${g}</g>`;}).join('');}
+function stRulerLen(m,n){n=n||STU.nat;if(!n)return 0;return Math.hypot((m.b[0]-m.a[0])*n.w,(m.b[1]-m.a[1])*n.h);}
 function stRulerTxt(m,s){return s&&s.scale?(stRulerLen(m)*s.scale).toFixed(2).replace('.',',')+' m':'? m';}
 function stHint(){const s=stSess(),h=$('stHint');if(!s||!s.base||STU.busy){h.hidden=true;return;}
-  const t={brush:'Värvi üle ala, mida muuta',rect:'Tõmba ristkülik ümber ala',lasso:'Tõmba joon ümber ala',point:'Klõpsa, kuhu panna punkt',arrow:'Tõmba nool',ruler:'Tõmba joon üle asja, mida mõõta',text:'Klõpsa, kuhu kirjutada',prod:'Tõmba ristkülik sinna, kuhu toode tuleb',erase:'Klõpsa märgil, mida kustutada',select:'Klõpsa märgil, et seda liigutada',hand:'Lohista pilti'}[STU.tool];
-  h.hidden=!!s.marks.length||STU.cmp||!t;h.textContent=(t||'')+' · siis kirjuta all, mida teha';}
+  const t={brush:'Värvi üle ala, mida muuta',rect:'Tõmba ristkülik ümber ala',lasso:'Tõmba joon ümber ala',point:'Klõpsa, kuhu panna punkt',arrow:'Tõmba nool',ruler:'Tõmba joon üle asja, mida mõõta',text:'Klõpsa, kuhu kirjutada',prod:'Tõmba ristkülik sinna, kuhu toode tuleb',erase:'Klõpsa märgil, mida kustutada',select:'Klõpsa märgil, et seda liigutada',hand:'Vali vasakult tööriist, et märkida. Praegu saad pilti liigutada ja suumida'}[STU.tool];
+  h.hidden=!!s.marks.length||STU.cmp||!t;h.textContent=STU.tool==='hand'?t:(t||'')+' · siis kirjuta all, mida teha';}
 /* hiir ja puude */
 let stDraw=null;
 function stNorm(e){const r=$('stImg').getBoundingClientRect();return [Math.max(0,Math.min(1,(e.clientX-r.left)/r.width)),Math.max(0,Math.min(1,(e.clientY-r.top)/r.height))];}
@@ -3248,50 +3297,53 @@ function stAskProd(e,mi){const P=prodList(),s=stSess();
 function stAskScale(e,mi){const s=stSess();const pop=stPop(`<b>Kui pikk see on päriselt?</b><span class="fhint" style="max-width:220px">Mõõda üle asi, mille pikkust tead (uks ~2,1 m, auto ~4,5 m). Edasi näitab mõõtmine meetreid.</span><div class="row"><input id="stScIn" type="text" inputmode="decimal" placeholder="Nt 2,1" style="min-width:110px"><button type="button" class="sz" id="stScOk" aria-pressed="true">OK</button></div>`,null,{x:e.clientX,y:e.clientY});
   const i=$('stScIn');i.focus();const ok=()=>{const v=parseFloat(String(i.value).replace(',','.'));stPopClose();if(v>0&&s.marks[mi]){s.scale=v/stRulerLen(s.marks[mi]);stSave();stRenderMarks();}};
   $('stScOk').onclick=ok;i.onkeydown=k=>{if(k.key==='Enter')ok();if(k.key==='Escape')stPopClose();};}
-document.addEventListener('keydown',e=>{if($('studio').hidden)return;const tg=e.target,typing=tg&&(tg.tagName==='INPUT'||tg.tagName==='TEXTAREA'||tg.isContentEditable);
+document.addEventListener('keydown',e=>{if($('studio').hidden)return;if(STU.edit==null&&!((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==='z'))return;const tg=e.target,typing=tg&&(tg.tagName==='INPUT'||tg.tagName==='TEXTAREA'||tg.isContentEditable);
   if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==='z'&&!typing){e.preventDefault();e.shiftKey?stRedo():stUndo();return;}
   if(typing||e.metaKey||e.ctrlKey||e.altKey)return;const s=stSess();if(!s||!s.base)return;
   if((e.key==='Delete'||e.key==='Backspace')&&STU.sel>=0){e.preventDefault();stPush();s.marks.splice(STU.sel,1);STU.sel=-1;stSave();stRenderMarks();return;}
   if(e.key==='Escape'){STU.sel=-1;stPopClose();stRenderMarks();return;}
   const t=ST_TOOLS.find(x=>x&&x.k&&x.k.length===1&&x.k.toLowerCase()===e.key.toLowerCase());if(t){e.preventDefault();stToolClick(t.id);}});
 /* põhivaade */
-function stRender(){const th=stTheme(STU.tpl),s=stSess(),stage=!!(s&&(s.base||s.msgs.length));
-  $('studio').classList.toggle('p3',!!th.p3);$('studio').classList.toggle('fresh',!!th.p3||!stage);$('studio').classList.toggle('has',acct.studio.length>0);
+function stRender(){const th=stTheme(STU.tpl),s=stSess();if(STU.edit!=null&&!(s&&s.imgs&&s.imgs[STU.edit]))STU.edit=null;if(s)stPointMain(s);
+  const editing=STU.edit!=null,hasMsgs=!!(s&&s.msgs.length),tray=stTrayImgs(s),fresh=!!th.p3||(!editing&&!hasMsgs);
+  $('studio').classList.toggle('p3',!!th.p3);$('studio').classList.toggle('fresh',fresh);$('studio').classList.toggle('editing',editing);$('studio').classList.toggle('has',acct.studio.length>0);
   $('stTn').innerHTML=(th.T&&th.T.icon?ticon(th.T,16):'')+stEsc(th.T&&th.T.id==='vaba'?'Vaba idee':th.t)+(s&&s.title&&s.title!=='Uus töö'?` <span style="color:var(--muted);font-weight:500">· ${stEsc(s.title)}</span>`:'');
   $('stJobsM').innerHTML=acct.studio.map(x=>{const T=tplById(x.tpl),tb=x.thumb&&stAiImg(x.thumb);return `<button type="button" role="option" data-s="${stEsc(x.id)}" aria-selected="${x.id===STU.sid}">${tb?`<img src="${stEsc(tb)}" alt="">`:''}<span>${stEsc(x.title||'Uus töö')}<small>${stEsc(T?(T.id==='vaba'?'Vaba idee':T.name):'')} · ${stEsc(x.date||'')}</small></span></button>`;}).join('')||'<button type="button" disabled><span>Töid pole veel</span></button>';
   $('stJobsM').querySelectorAll('[data-s]').forEach(b=>b.onclick=()=>{$('stJobsM').hidden=true;stOpenSession(b.dataset.s);});
-  $('stTitle').textContent=th.t;$('stSub').textContent=th.s;
-  const inp=$('stIn');inp.placeholder=th.need==='addr'?th.ph:!stage?(th.ph||'Kirjelda, mida soovid…'):(s&&s.base?'Kirjuta, mida teha. Viita märkidele: „ala 1“, „punkt A“, „toode 2“':'Kirjuta, mida veel muuta…');
+  $('stTitle').textContent=th.t;$('stSub').textContent=th.p3?th.s:(th.need==='addr'?th.s:'Lisa pildid ja kirjuta, mida soovid. Pildil klõpsates saad märkida, mida muuta. Kui oled valmis, vajuta Genereeri.');
+  const inp=$('stIn');inp.placeholder=th.need==='addr'?th.ph:tray.length>1?'Kirjuta, mida teha. Viita piltidele: „pilt 1“, „pilt 2“…':tray.length?'Kirjuta, mida pildiga teha…':(th.ph||'Kirjelda, mida soovid…');
   if(th.need==='addr')inp.dataset.addr='1';else delete inp.dataset.addr;
-  $('stUpT').textContent=th.prod?'Lisa kliendi hoovi foto':th.need==='photo'?'Lisa foto':'Lisa foto (valikuline)';
-  $('stUp').hidden=th.need==='addr'||!!(s&&s.base);$('stAdd').hidden=th.need==='addr';$('stAdd').title=s&&s.base?'Lisa viitepilt (nt materjal või näide)':'Lisa pilt';
+  $('stUpT').textContent=th.prod?'Lisa kliendi hoovi foto':th.need==='photo'?'Lisa foto':'Lisa foto (valikuline)';$('stUpS').textContent='Lohista siia, kleebi või vali failist. Võid lisada mitu pilti.';
+  $('stUp').hidden=th.need==='addr'||tray.length>0;$('stAdd').hidden=th.need==='addr';$('stAdd').title='Lisa pilt';
   const ON=TPLS().filter(t=>t.on),order=['vaba','sisek','toodehoov','maakler','katus','fassaad','mudel3d'];
   ON.sort((a,b)=>((order.indexOf(a.id)+99)%99)-((order.indexOf(b.id)+99)%99));
   $('stChips').innerHTML=ON.map(t=>`<button type="button" class="stchip" data-t="${t.id}" aria-pressed="${t.id===STU.tpl}">${ticon(t,16)}<span>${stEsc(t.id==='vaba'?'Vaba idee':t.name)}</span></button>`).join('');
   $('stChips').querySelectorAll('.stchip').forEach(b=>b.onclick=()=>{if(b.dataset.t!==STU.tpl)openStudio(b.dataset.t);});
-  $('stStage').hidden=!stage;$('stTo3d').hidden=!(s&&s.obj&&HOUSES.some(h=>h.ehr===s.obj));
-  stRenderStyle();stRenderProd();stRenderFiles();stRenderFilm();stShowImg();stRenderPanel();stRenderRail();stRenderSugg();stRenderMk();stRenderRes();p3Render();stSync();}
+  $('stStage').hidden=!editing;$('stThread').hidden=editing||!hasMsgs||!!th.p3;$('stTo3d').hidden=!(s&&s.obj&&HOUSES.some(h=>h.ehr===s.obj));
+  if(editing){const n=(s.tray||[]).indexOf(STU.edit);$('stEdT').textContent=n>=0?'Pilt '+(n+1):'Pilt';}
+  stRenderStyle();stRenderProd();stRenderFiles();stRenderFilm();stShowImg();stRenderThread();stRenderPanel();stRenderRail();stRenderSugg();stRenderMk();stRenderRes();p3Render();stSync();}
 function stShowImg(){const s=stSess(),im=$('stImg'),src=s&&s.base?stAiImg(s.base):'';$('stBusy').hidden=!STU.busy;
   $('stBusyT').textContent=STU.busy?(STU.busyN>1?'AI teeb 2 varianti…':'AI teeb pilti…'):'';
   if(!src){im.removeAttribute('src');STU.cur='';STU.nat=null;$('stSvg').innerHTML='';$('stCanvas').style.visibility='hidden';stHint();return;}
   $('stCanvas').style.visibility='';
   if(STU.cur===src&&STU.nat){stRenderMarks();stRenderCmp();if(STU.fit)stFit();return;}
-  STU.cur=src;STU.nat=null;im.onload=()=>{if(STU.cur!==src)return;STU.nat={w:im.naturalWidth||1000,h:im.naturalHeight||750};const c=$('stCanvas');c.style.width=STU.nat.w+'px';c.style.height=STU.nat.h+'px';im.style.width=STU.nat.w+'px';im.style.height=STU.nat.h+'px';
+  STU.cur=src;STU.nat=null;im.onload=()=>{if(STU.cur!==src)return;STU.nat={w:im.naturalWidth||1000,h:im.naturalHeight||750};{const s2=stSess(),r=s2&&s2.imgs&&s2.imgs.find(x=>stAiImg(x.src)===src);if(r)r.nat=STU.nat;}const c=$('stCanvas');c.style.width=STU.nat.w+'px';c.style.height=STU.nat.h+'px';im.style.width=STU.nat.w+'px';im.style.height=STU.nat.h+'px';
     requestAnimationFrame(()=>{stFit();stRenderMarks();stRenderCmp();});};
   im.onerror=()=>{if(STU.cur===src)toast('Pilti ei õnnestunud laadida');};im.src=src;if(im.complete&&im.naturalWidth)im.onload();}
-function stRenderFilm(){const s=stSess(),L=s?(s.imgs||[]):[],f=$('stFilm');f.hidden=L.length<2;let v=0;
-  f.innerHTML=L.map((x,i)=>{const u=stAiImg(x.src);if(!u)return '';const lb=x.k==='up'?'Foto':'V'+(++v);return `<button type="button" data-f="${i}" aria-pressed="${s.base===x.src}" title="${x.k==='up'?'Sinu foto':'AI versioon '+v}"><img src="${stEsc(u)}" alt=""><span>${lb}</span></button>`;}).join('');
-  f.querySelectorAll('[data-f]').forEach(b=>b.onclick=()=>{if(STU.busy)return;s.base=L[+b.dataset.f].src;STU.cmp=false;stSave();stRender();});}
+function stRenderFilm(){const s=stSess(),T=s?(s.tray||[]):[],f=$('stFilm');f.hidden=STU.edit==null||T.length<2;
+  f.innerHTML=T.map((ix,n)=>{const x=s.imgs[ix],u=x&&stAiImg(x.src);if(!u)return '';return `<button type="button" data-f="${ix}" aria-pressed="${STU.edit===ix}" title="Märgi pilti ${n+1}"><img src="${stEsc(u)}" alt=""><span>${n+1}</span></button>`;}).join('');
+  f.querySelectorAll('[data-f]').forEach(b=>b.onclick=()=>{if(STU.busy)return;stEdit(+b.dataset.f);});}
+$('stEdDone').onclick=()=>stEditDone();
 const stKr=x=>{const v=Math.round(Number(x||0)*100)/100;return String(v).replace('.',',')+' '+(v===1?'krediit':'krediiti');};
 function stCrTxt(m){if(!m||m.cr==null)return '';if(m.err)return m.ref?'krediidid tagastati'+(m.bal!=null?' · saldo '+stKr(m.bal):''):'';return (m.cr>0?'−'+stKr(m.cr):'paketis, krediite ei võetud')+(m.bal!=null?' · saldo '+stKr(m.bal):'');}
 function stSpent(s){return (s&&s.msgs||[]).reduce((a,m)=>a+(m.role==='a'&&!m.err&&!m.pending&&m.cr>0?m.cr:0),0);}
 function stRenderRes(){const el=$('stRes'),s=stSess();if(!el)return;const m=s&&s.msgs.length?s.msgs[s.msgs.length-1]:null;
-  if(!m||m.role!=='a'||$('stStage').hidden){el.hidden=true;el.innerHTML='';return;}el.hidden=false;
+  if(!m||m.role!=='a'||!m.gen||$('stThread').hidden&&$('stStage').hidden){el.hidden=true;el.innerHTML='';return;}el.hidden=false;
   if(m.pending){el.className='stresb wait';el.innerHTML=`<span class="dot"></span><b>AI teeb ${m.n>1?'2 varianti':'pilti'}…</b>${m.cr!=null?`<span class="cr">${m.cr>0?stEsc(stKr(m.cr)):'paketis'}</span>`:''}`;return;}
   if(m.err){el.className='stresb err';el.innerHTML=`<span class="dot"></span><b>Ei õnnestunud.</b><span>${stEsc(m.err)}</span>${m.ref?`<span class="cr">${stEsc(stCrTxt(m))}</span>`:''}`;return;}
-  const n=(m.out||[]).length;el.className='stresb';el.innerHTML=`<span class="dot"></span><b>Valmis${n>1?': '+n+' varianti':''}.</b>${m.cr!=null?`<span class="cr m">${stEsc(m.cr>0?'−'+stKr(m.cr):'paketis')}</span>${m.bal!=null?`<span class="cr">saldo ${stEsc(stKr(m.bal))}</span>`:''}`:''}<span>Kirjuta, mida veel muuta.</span>`;}
-function stMkName(m,lb,i,s){const P=prodList();if(isArea(m))return 'ala '+lb;if(m.t==='point')return 'punkt '+lb;if(m.t==='prod'){const k=P.findIndex(p=>p.id===m.pid);return k>=0?'toode '+(k+1):'';}return '';}
-function stRenderMk(){const s=stSess(),box=$('stMk');if(!s||!s.base||!s.marks.length){box.hidden=true;box.innerHTML='';return;}const L=stLabels(s.marks);
+  const n=(m.out||[]).length;el.className='stresb';el.innerHTML=`<span class="dot"></span><b>Valmis${n>1?': '+n+' varianti':''}.</b>${m.cr!=null?`<span class="cr m">${stEsc(m.cr>0?'−'+stKr(m.cr):'paketis')}</span>${m.bal!=null?`<span class="cr">saldo ${stEsc(stKr(m.bal))}</span>`:''}`:''}<span>Tulemus on nüüd pilt 1. Kirjuta, mida veel muuta.</span>`;}
+function stMkName(m,lb,i,s){const P=prodList(),T=(s&&s.tray)||[],n=T.indexOf(STU.edit),pre=T.length>1&&n>=0?`pildil ${n+1} `:'';if(isArea(m))return pre+'ala '+lb;if(m.t==='point')return pre+'punkt '+lb;if(m.t==='prod'){const k=P.findIndex(p=>p.id===m.pid);return k>=0?'toode '+(k+1):'';}return '';}
+function stRenderMk(){const s=stSess(),box=$('stMk');if(!s||!s.base||!s.marks.length||STU.edit==null){box.hidden=true;box.innerHTML='';return;}const L=stLabels(s.marks);
   const items=s.marks.map((m,i)=>({m,n:stMkName(m,L[i],i,s),lb:m.t==='prod'?'T':L[i]})).filter(x=>x.n);box.hidden=!items.length;
   box.innerHTML='<span class="lb">Viita:</span>'+items.map(x=>`<button type="button" data-ins="${stEsc(x.n)}"><i style="background:${stEsc(x.m.c)};${x.m.c==='#FFFFFF'||x.m.c==='#F2B705'?'color:#16130F':''}">${stEsc(x.lb)}</i>${stEsc(x.n)}</button>`).join('');
   box.querySelectorAll('[data-ins]').forEach(b=>b.onclick=()=>stInsert(b.dataset.ins));}
@@ -3299,7 +3351,7 @@ function stInsert(t){const i=$('stIn'),a=i.selectionStart??i.value.length,b=i.se
   const ins=(pre&&!/\s$/.test(pre)?' ':'')+t+(post&&!/^\s/.test(post)?' ':'');i.value=pre+ins+post;const p=(pre+ins).length;i.focus();i.setSelectionRange(p,p);stAuto();stSync();}
 function stRenderLegend(){stRenderPanel();}
 function stSuggList(){const th=stTheme(STU.tpl),s=stSess();if(!s||(!s.base&&!s.msgs.length))return th.sugg||[];if(STU.busy)return [];
-  if(!s.base)return th.follow||[];const L=stLabels(s.marks),P=prodList(),out=[];
+  if(!s.base||!s.marks.length)return s.msgs.length?(th.follow||[]):(th.sugg||[]);const L=stLabels(s.marks),P=prodList(),out=[];
   const areas=s.marks.map((m,i)=>isArea(m)?L[i]:null).filter(Boolean),pts=s.marks.map((m,i)=>m.t==='point'?L[i]:null).filter(Boolean),pr=s.marks.filter(m=>m.t==='prod'&&m.pid);
   if(pr.length){const k=P.findIndex(p=>p.id===pr[0].pid);if(k>=0)out.push(`Pane toode ${k+1} märgitud kohta`,`Pane toode ${k+1} märgitud kohta, õhtune valgus`);}
   if(areas.length){const a=areas[0];if(STU.tpl==='sisek')out.push(`Vaheta alal ${a} mööbel moodsama vastu`,`Värvi ala ${a} salveiroheliseks`,`Eemalda alalt ${a} kõik esemed`);
@@ -3314,7 +3366,7 @@ function stRenderSugg(){const th=stTheme(STU.tpl),s=stSess(),fresh=!s||(!s.base&
   if(fresh&&STU.tpl==='vaba'&&typeof EXIMG!=='undefined'&&EXIMG.maja)html=`<button type="button" class="stsug demo" id="stDemo"><img src="${EXIMG.maja}" alt=""><span><b>Proovi näidisega</b><br>Maja foto · märgi katus ja ütle „päikesepaneelid“</span></button>`+html;
   $('stSugg').innerHTML=html;
   $('stSugg').querySelectorAll('[data-s]').forEach(b=>b.onclick=()=>{const v=b.dataset.s,i=$('stIn');if(th.need==='addr'){i.value=v;stSync();stSend();return;}i.value=v;stAuto();stSync();i.focus();});
-  const d=$('stDemo');if(d)d.onclick=()=>{stSetBase(EXIMG.maja,true);STU.tool='rect';stRender();stToStage();toast('Märgi ristkülikuga katus, siis kirjuta „Pane alale 1 päikesepaneelid“');};}
+  const d=$('stDemo');if(d)d.onclick=()=>{stAddPic(EXIMG.maja,'up',true);$('stIn').value='Lisa maja katusele päikesepaneelid';stAuto();stRender();toast('Näidisfoto on pilt 1. Klõpsa pildil, et katus märkida, või vajuta kohe Genereeri.');};}
 function stRenderStyle(){const L=stStyles(),th=stTheme(STU.tpl);if(!STU.style||!L.includes(STU.style))STU.style=L[0];
   $('stStyleW').hidden=th.need==='addr'||!!th.soon;$('stStyleT').textContent=STU.style;
   $('stStyleM').innerHTML=L.map(x=>`<button type="button" role="option" data-v="${stEsc(x)}" aria-selected="${x===STU.style}">${stEsc(x)}${x===STU.style?'<span class="ok">✓</span>':''}</button>`).join('');
@@ -3327,31 +3379,38 @@ function stMenu(which){[['stStyle','stStyleM'],['stProd','stProdM']].forEach(([b
 $('stStyle').onclick=e=>{e.stopPropagation();stMenu('stStyle');};$('stProd').onclick=e=>{e.stopPropagation();stMenu('stProd');};
 document.addEventListener('click',e=>{if(!e.target.closest||!e.target.closest('.stsel')){stMenu(null);if($('stJobsM'))$('stJobsM').hidden=true;}});
 /* pildid: esimene on alus, ülejäänud viitepildid */
-function stSetBase(src,demo){let s=stSess();if(!s)s=stNewSession();s.imgs=s.imgs||[];if(!s.imgs.some(x=>x.src===src))s.imgs.push({src,k:'up',demo:demo?1:0});s.base=src;if(!s.thumb)s.thumb=src;s.marks=s.marks||[];STU.fit=true;stSave();}
-function stRenderFiles(){const box=$('stFiles');box.hidden=!STU.files.length;
-  box.innerHTML=STU.files.map(f=>`<div class="stf"><img src="${stEsc(f.src)}" alt="${stEsc(f.name||'pilt')}"><span class="bl">viide</span><button type="button" class="x" data-x="${stEsc(f.id)}" aria-label="Eemalda pilt">×</button></div>`).join('');
-  box.querySelectorAll('[data-x]').forEach(b=>b.onclick=()=>{STU.files=STU.files.filter(f=>f.id!==b.dataset.x);stRenderFiles();stSync();});}
-async function stAddFiles(list,mode){const th=stTheme(STU.tpl);if(th.need==='addr'){toast('Selle töö jaoks sisesta aadress');return;}if(th.p3)return p3AddFiles(list);
+function stSetBase(src,demo){return stAddPic(src,'up',demo);}
+function stRenderFiles(){const s=stSess(),box=$('stFiles'),T=s?(s.tray||[]):[],th=stTheme(STU.tpl);box.hidden=!T.length||th.need==='addr'||!!th.p3;if(box.hidden){box.innerHTML='';return;}
+  box.innerHTML=T.map((ix,n)=>{const im=s.imgs[ix],u=im&&stAiImg(im.src);if(!u)return '';const mk=(im.marks||[]).length;
+    return `<div class="stf ${STU.edit===ix?'on':''}"><button type="button" class="op" data-ed="${ix}" title="Klõpsa, et pilti ${n+1} märkida"><img src="${stEsc(u)}" alt="Pilt ${n+1}"><span class="no">${n+1}</span>${mk?`<span class="bl">${mk} ${mk===1?'märk':'märki'}</span>`:`<span class="bl ed">Märgi</span>`}</button><button type="button" class="x" data-x="${n}" aria-label="Eemalda pilt ${n+1}">×</button></div>`;}).join('')+(T.length<ST_MAXP?'<button type="button" class="stf add" id="stAdd2" aria-label="Lisa veel pilt" title="Lisa veel pilt">+</button>':'');
+  box.querySelectorAll('[data-ed]').forEach(b=>b.onclick=()=>{if(STU.busy)return;stEdit(+b.dataset.ed);});
+  box.querySelectorAll('[data-x]').forEach(b=>b.onclick=()=>{const n=+b.dataset.x,ix=s.tray[n];s.tray.splice(n,1);if(STU.edit===ix)STU.edit=null;stSave();stRender();});
+  const a=$('stAdd2');if(a)a.onclick=()=>$('stFile').click();}
+async function stAddFiles(list){const th=stTheme(STU.tpl);if(th.need==='addr'){toast('Selle töö jaoks sisesta aadress');return;}if(th.p3)return p3AddFiles(list);
   const arr=[...list].filter(f=>/^image\//.test(f.type)||/\.(jpe?g|png|webp|heic|heif)$/i.test(f.name||''));if(!arr.length){toast('Vali pildifail (JPG, PNG, WebP või HEIC)');return;}
-  let based=false;for(const f of arr){let src;try{src=await shrink(f);}catch(e){toast('Pilti ei õnnestunud avada');continue;}P3ORIG.set(src,f);
-    const s=stSess();if(!s||!s.base||(mode==='base'&&!based)){if(s&&s.base){if(s.marks&&s.marks.length){stPush();s.marks=[];}toast('Uus foto lisatud. Eelmine on alles all ribal.');}stSetBase(src);based=true;continue;}
-    if(STU.files.length>=2){toast('Kuni 2 viitepilti korraga');break;}STU.files.push({id:'f'+Date.now()+Math.random().toString(36).slice(2,6),src,name:f.name||'pilt'});}
-  if(based){STU.undo=[];STU.redo=[];STU.sel=-1;STU.cmp=false;stRender();stToStage();if(!acct.stTipSeen){acct.stTipSeen=1;save();toast(innerWidth<=820?'Märgi ülevalt tööriistaga, mida muuta, ja kirjuta all, mida teha':'Märgi vasakult tööriistaga, mida muuta, ja kirjuta all, mida teha');}}else{stRenderFiles();stSync();}if(innerWidth>820)$('stIn').focus();}
+  let added=0;for(const f of arr){let src;try{src=await shrink(f);}catch(e){toast('Pilti ei õnnestunud avada');continue;}P3ORIG.set(src,f);if(stAddPic(src,'up')<0)break;added++;}
+  if(!added)return;stRender();const n=(stSess().tray||[]).length;
+  if(!acct.stTipSeen){acct.stTipSeen=1;save();toast('Pilt lisatud. Klõpsa pildil, et märkida, mida muuta, või kirjuta kohe ja vajuta Genereeri.');}else toast(added>1?added+' pilti lisatud':'Lisatud: pilt '+n);
+  if(innerWidth>820)$('stIn').focus();}
 function stToStage(){if(innerWidth<=820)setTimeout(()=>{const r=$('studio').getBoundingClientRect();scrollBy({top:r.top-8,behavior:'smooth'});},60);}
 function stAuto(){const i=$('stIn');i.style.height='auto';i.style.height=Math.min(i.scrollHeight,200)+'px';}
-function stSync(){if(!$('stSend'))return;const th=stTheme(STU.tpl),s=stSess(),txt=$('stIn').value.trim(),k=stKind(),hasProdMk=!!(s&&s.marks&&s.marks.some(m=>m.t==='prod'&&m.pid));
-  if(th.p3){$('stSend').disabled=!p3CanSend();$('stCost').textContent=priceTxt('3d');$('stSend').title='Tee 3D-mudel';$('stSend').setAttribute('aria-label','Tee 3D-mudel');return;}
-  $('stSend').setAttribute('aria-label','Saada');
-  let ok=!STU.busy;
-  if(k==='addr'||k==='pic')ok=ok&&txt.length>2;else if(k==='place')ok=ok&&!!(s&&s.base)&&(txt.length>1||hasProdMk||!!th.prod);else ok=ok&&!!(s&&s.base)&&(txt.length>1||!!th.soon);
-  $('stSend').disabled=!ok;$('stCost').textContent=k==='addr'?priceTxt('obj'):th.soon?'peagi':priceTxt(stPriceKind());$('stSend').title=k==='addr'?'Ava maja 3D-s':'Tee pilt';}
-const stIn=$('stIn');stIn.addEventListener('input',()=>{stAuto();stSync();});
-stIn.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey&&!e.isComposing){if(typeof sug!=='undefined'&&!sug.hidden&&sugIn===stIn)return;e.preventDefault();if(!$('stSend').disabled)stSend();}});
+function stSync(){if(!$('stSend'))return;const th=stTheme(STU.tpl),s=stSess(),txt=$('stIn').value.trim(),k=stKind(),T=stTrayImgs(s),hasProdMk=T.some(im=>(im.marks||[]).some(m=>m.t==='prod'&&m.pid)),gen=$('stGenBtn');
+  if(th.p3){gen.hidden=true;$('stSend').disabled=!p3CanSend();$('stSend').title='Tee 3D-mudel';$('stSend').setAttribute('aria-label','Tee 3D-mudel');return;}
+  if(k==='addr'){gen.hidden=true;$('stSend').disabled=STU.busy||txt.length<3;$('stSend').title='Ava maja 3D-s · '+priceTxt('obj');$('stSend').setAttribute('aria-label','Ava maja 3D-s');return;}
+  gen.hidden=false;let ok=!STU.busy&&!th.soon;
+  if(k==='pic')ok=ok&&txt.length>2;else if(k==='place')ok=ok&&T.length>0&&(txt.length>1||hasProdMk||!!th.prod);else ok=ok&&T.length>0&&txt.length>1;
+  gen.disabled=!ok;$('stCost').textContent=th.soon?'peagi':priceTxt(stPriceKind());
+  gen.title=!T.length&&k==='design'?'Lisa enne pilt':k==='pic'?'Tee pilt kirjelduse järgi (Ctrl+Enter)':'Tee pilt: muudab pilti 1 (Ctrl+Enter)';
+  $('stSend').disabled=STU.busy||STU.chatting||!txt;$('stSend').title='Saada sõnum AI-abilisele. Tasuta, pilti ei tee.';$('stSend').setAttribute('aria-label','Saada sõnum');}
+const stIn=$('stIn');let stDraftT=0;stIn.addEventListener('input',()=>{stAuto();stSync();clearTimeout(stDraftT);stDraftT=setTimeout(()=>{const th=stTheme(STU.tpl);if(th.need==='addr'||th.p3)return;let s=stSess();if(!s){if(stIn.value.trim().length<3)return;s=stNewSession();}stSave();},900);});
+stIn.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey&&!e.isComposing){if(typeof sug!=='undefined'&&!sug.hidden&&sugIn===stIn)return;e.preventDefault();if((e.metaKey||e.ctrlKey)&&!$('stGenBtn').hidden){if(!$('stGenBtn').disabled)stGenerate();return;}if(!$('stSend').disabled)stSend();}});
+$('stGenBtn').onclick=()=>stGenerate();
 stIn.addEventListener('paste',e=>{const fs=[...((e.clipboardData||{}).items||[])].filter(i=>i.kind==='file').map(i=>i.getAsFile()).filter(Boolean);if(fs.length){e.preventDefault();stAddFiles(fs);}});
 $('stAdd').onclick=()=>$('stFile').click();$('stUp').onclick=()=>$('stFile').click();
 $('stFile').onchange=e=>{const f=[...e.target.files];e.target.value='';stAddFiles(f);};
 $('stSend').onclick=()=>stSend();
-$('stNew2').onclick=()=>openStudio(STU.tpl);$('stHome').onclick=()=>show('home');
+$('stNew2').onclick=()=>{stSave();$('stIn').value='';openStudio(STU.tpl);};$('stHome').onclick=()=>{stSave();show('home');};
+window.addEventListener('pagehide',()=>{try{if(!$('studio').hidden&&stSess())stSave();}catch(e){}});
 $('stJobs').onclick=e=>{e.stopPropagation();const m=$('stJobsM');stMenu(null);m.hidden=!m.hidden;$('stJobs').setAttribute('aria-expanded',String(!m.hidden));};
 /* lohistamine: kogu stuudio. Pildile lastud fail = uus foto, kirjutuskasti = viitepilt. Töötab ka teiselt veebilehelt lohistatud pildiga. */
 function stDragOk(e){const t=[...((e.dataTransfer||{}).types||[])];return t.includes('Files')||t.includes('text/uri-list')||t.includes('text/html');}
@@ -3360,20 +3419,20 @@ async function stDropUrl(dt){let u=String(dt.getData('text/uri-list')||'').split
   u=u.trim();if(/^data:image\/(png|jpe?g|webp);base64,/.test(u))return stAiImg(u)?{src:u}:null;if(!/^https:\/\//.test(u))return null;
   try{const r=await fetch(u,{mode:'cors'});if(!r.ok)throw 0;const bl=await r.blob();if(!/^image\//.test(bl.type))throw 0;return {file:new File([bl],'pilt.'+(bl.type.split('/')[1]||'jpg'),{type:bl.type})};}
   catch(_){return safeUrl(u)&&/\.(jpe?g|png|webp)(\?|$)/i.test(u)?{src:u}:null;}}
-(()=>{const st=$('studio');let dc=0;const zones=on=>{const addr=stTheme(STU.tpl).need==='addr',s=stSess(),stage=!!(s&&s.base);
-    $('stDrop').hidden=!on||addr||(stage&&on!=='ref');$('stDropV').hidden=!on||addr||!stage||on!=='base';
-    $('stDrop').innerHTML=stage?'<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 15V4M7 9l5-5 5 5"/><path d="M4 15v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"/></svg><b>Lase lahti: viitepilt</b><span>Materjal, värv või stiil, mida AI kasutab</span>':'<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 15V4M7 9l5-5 5 5"/><path d="M4 15v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"/></svg><b>Lase lahti, et lisada foto</b><span>JPG, PNG, WebP või iPhone\'i HEIC</span>';};
+(()=>{const st=$('studio');let dc=0;const zones=on=>{const th=stTheme(STU.tpl),addr=th.need==='addr'||!!th.p3,s=stSess(),ed=STU.edit!=null,n=((s&&s.tray)||[]).length+1;
+    $('stDrop').hidden=!on||addr||(ed&&on==='base');$('stDropV').hidden=!on||addr||!ed||on!=='base';
+    const t=n>ST_MAXP?['Pilte on juba '+ST_MAXP,'Eemalda mõni, et lisada uus']:['Lase lahti: pilt '+n,'JPG, PNG, WebP või iPhone\'i HEIC. Võid lisada mitu.'];
+    $('stDrop').innerHTML='<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 15V4M7 9l5-5 5 5"/><path d="M4 15v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"/></svg><b>'+t[0]+'</b><span>'+t[1]+'</span>';$('stDropV').innerHTML='<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 15V4M7 9l5-5 5 5"/><path d="M4 15v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"/></svg><b>'+t[0]+'</b><span>Lisandub pildiks, märgid jäävad alles</span>';};
   const where=e=>e.target&&e.target.closest&&e.target.closest('#stDock')?'ref':'base';
   st.addEventListener('dragenter',e=>{if(!stDragOk(e))return;e.preventDefault();dc++;zones(where(e));});
   st.addEventListener('dragover',e=>{if(!stDragOk(e))return;e.preventDefault();try{e.dataTransfer.dropEffect='copy';}catch(_){}zones(where(e));});
   st.addEventListener('dragleave',()=>{dc=Math.max(0,dc-1);if(!dc)zones(null);});
-  st.addEventListener('drop',async e=>{if(!stDragOk(e))return;e.preventDefault();e.stopPropagation();dc=0;const mode=where(e);zones(null);const dt=e.dataTransfer;
+  st.addEventListener('drop',async e=>{if(!stDragOk(e))return;e.preventDefault();e.stopPropagation();dc=0;zones(null);const dt=e.dataTransfer;
     if(stTheme(STU.tpl).need==='addr'){toast('Selle töö jaoks sisesta aadress');return;}
-    if(dt.files&&dt.files.length)return stAddFiles(dt.files,mode);
+    if(dt.files&&dt.files.length)return stAddFiles(dt.files);
     const r=await stDropUrl(dt);if(!r){toast('Seda pilti ei saanud kasutada. Salvesta see arvutisse ja lohista fail siia.');return;}
-    if(r.file)return stAddFiles([r.file],mode);
-    const s=stSess();if(mode==='ref'&&s&&s.base){if(STU.files.length>=2){toast('Kuni 2 viitepilti korraga');return;}STU.files.push({id:'f'+Date.now(),src:r.src,name:'pilt'});stRenderFiles();stSync();return;}
-    if(s&&s.base&&s.marks&&s.marks.length){stPush();s.marks=[];}stSetBase(r.src);STU.undo=[];STU.redo=[];STU.sel=-1;STU.cmp=false;stRender();stToStage();});
+    if(r.file)return stAddFiles([r.file]);
+    if(stAddPic(r.src,'up')>=0){stRender();toast('Lisatud: pilt '+stSess().tray.length);}});
   window.addEventListener('dragend',()=>{dc=0;zones(null);});
   ['dragover','drop'].forEach(t=>window.addEventListener(t,e=>{if(!st.hidden&&stDragOk(e)&&!st.contains(e.target))e.preventDefault();}));})();
 /* parem paneel */
@@ -3385,24 +3444,25 @@ function stRenderPanel(){if(!$('stPanel'))return;if(stTheme(STU.tpl).p3)return p
   html+=k==='addr'?`<span class="pr">3D-objektivaade · ${stEsc(priceTxt('obj'))}</span>`:th.soon?`<span class="pr">Tuleb peagi</span>`:`<span class="pr">Pildi muutmine · ${stEsc(priceTxt('design'))}${th.need==='opt'&&!hasImg?` · pilt tekstist · ${stEsc(priceTxt('pic'))}`:''}</span>`;
   const spent=stSpent(s);html+=`<span class="fhint">Saldo: ${stEsc(stKr(acct.credits))}${spent?` · selles töös kulunud ${stEsc(stKr(spent))}`:''}</span></div>`;
   if(k!=='addr')html+=p3EntryHtml(T,s,hasImg);
-  if(hasImg){const L=stLabels(s.marks);
-    html+=`<div class="stcard"><h3>Märgid</h3>${s.marks.length?`<div class="stleg">${s.marks.map((m,i)=>{const [a,b]=stMkDesc(m,L[i],s),lb=m.t==='prod'?'T':m.t==='arrow'?'↗':m.t==='text'?'T':m.t==='ruler'?'↔':L[i];return `<div class="li"><i style="background:${stEsc(m.c)};${m.c==='#FFFFFF'||m.c==='#F2B705'?'color:#16130F':''}">${stEsc(lb)}</i><span>${stEsc(a)} <small>${stEsc(b)}</small></span><button type="button" data-del="${i}" aria-label="Kustuta ${stEsc(a)}">×</button></div>`;}).join('')}</div><p>Kirjuta all näiteks „Pane alale 1 päikesepaneelid“ või „Tee punktist A punkti B kõnnitee“. Märgid ise pildile ei jää.</p>`
+  if(hasImg&&STU.edit!=null){const L=stLabels(s.marks),pn=(s.tray||[]).indexOf(STU.edit)+1;
+    html+=`<div class="stcard"><h3>Märgid${pn>0?' · pilt '+pn:''}</h3>${s.marks.length?`<div class="stleg">${s.marks.map((m,i)=>{const [a,b]=stMkDesc(m,L[i],s),lb=m.t==='prod'?'T':m.t==='arrow'?'↗':m.t==='text'?'T':m.t==='ruler'?'↔':L[i];return `<div class="li"><i style="background:${stEsc(m.c)};${m.c==='#FFFFFF'||m.c==='#F2B705'?'color:#16130F':''}">${stEsc(lb)}</i><span>${stEsc(a)} <small>${stEsc(b)}</small></span><button type="button" data-del="${i}" aria-label="Kustuta ${stEsc(a)}">×</button></div>`;}).join('')}</div><p>Kirjuta all näiteks „Pane alale 1 päikesepaneelid“ või „Tee punktist A punkti B kõnnitee“. Märgid ise pildile ei jää.</p>`
       :`<p>Vali vasakult tööriist ja märgi pildil, mida muuta: pintsliga sein, ristkülikuga katus, punktid A ja B tee jaoks, Toode-tööriistaga koht sinu tootele.</p>`}${s.scale?`<span class="fhint">Mõõtkava seatud. <button type="button" class="linkbtn" id="stScRe">Muuda</button></span>`:''}</div>`;}
-  if(th.prod||(hasImg&&P.length)){const real=P.some(x=>!x.sample);
+  if(th.prod||(hasImg&&STU.edit!=null&&P.length)){const real=P.some(x=>!x.sample);
     html+=`<div class="stcard"><h3>Sinu tooted</h3><p>Klõpsa tootel, et lisada tekstile „toode N“, või märgi koht Toode-tööriistaga.</p><div class="stprods">${P.map((p,i)=>`<button type="button" class="pp" data-pn="${i+1}"><i>${i+1}</i>${p.imgs&&p.imgs[0]?`<img src="${stEsc(p.imgs[0])}" alt="">`:''}<span>${stEsc(p.name)}<small>${stEsc([p.W&&p.L?p.W+' × '+p.L+' m':'',p.sample?'näidis':''].filter(Boolean).join(' · '))}</small></span></button>`).join('')}</div><button type="button" class="ghost sm" id="stProdSet">${real?'Halda tooteid':'Lisa oma toode'}</button></div>`;}
-  if(s&&s.msgs.length){html+=`<div class="stcard"><h3>Ajalugu</h3><div class="sthist">${s.msgs.map(m=>{if(m.role==='u')return `<div class="sth"><div class="q">${stEsc(m.text||'(ilma tekstita)')}${m.marks?` <small style="opacity:.7">· ${m.marks} märki</small>`:''}</div></div>`;
-      if(m.pending)return `<div class="sth"><span class="p">AI teeb pilti…</span></div>`;if(m.err)return `<div class="sth"><span class="e">${stEsc(m.err)}</span>${m.ref?`<span class="cr">${stEsc(stCrTxt(m))}</span>`:''}</div>`;
-      const out=(m.out||[]).filter(u=>stAiImg(u));return `<div class="sth"><div class="r">${out.map(u=>`<button type="button" data-g="${stEsc(u)}" aria-pressed="${s.base===u}" title="Jätka selle pildiga"><img src="${stEsc(stAiImg(u))}" alt=""></button>`).join('')}${m.demo?'<small style="color:var(--muted);align-self:center">demo</small>':''}</div>${m.cr!=null?`<span class="cr">${stEsc(stCrTxt(m))}</span>`:''}</div>`;}).join('')}</div></div>`;}
-  html+=`<div class="stcard"><h3>Nii saad parima tulemuse</h3><ul class="sttips">${k==='addr'?'<li>Vali aadress soovituste hulgast, siis on maja kindlasti õige.</li><li>3D-vaates saad katuse ja seinte mõõdud ning esituspildi.</li>':'<li>Märgi täpselt ala, mida muuta: AI muudab ainult seda.</li><li>Üks muudatus korraga annab parima tulemuse.</li><li>Mõõtmiseks tõmba joon üle ukse ja ütle selle pikkus, siis näed teisi mõõte meetrites.</li><li>Võrdle-nupuga näed enne ja pärast kõrvuti.</li>'}</ul></div>`;
+  html+=`<div class="stcard"><h3>Nii saad parima tulemuse</h3><ul class="sttips">${k==='addr'?'<li>Vali aadress soovituste hulgast, siis on maja kindlasti õige.</li><li>3D-vaates saad katuse ja seinte mõõdud ning esituspildi.</li>':'<li>Pildid on nummerdatud. Kirjuta näiteks „pane pildil 2 olev telk pildile 1“.</li><li>Klõpsa pildil, et märkida täpne ala. AI muudab ainult seda.</li><li>Noolega saad AI-abilisega vestelda tasuta. Pildi teeb nupp Genereeri.</li><li>Üks muudatus korraga annab parima tulemuse.</li>'}</ul></div>`;
   $('stPanel').innerHTML=html;
   $('stPanel').querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>{stPush();s.marks.splice(+b.dataset.del,1);STU.sel=-1;stSave();stRenderMarks();});
-  $('stPanel').querySelectorAll('[data-g]').forEach(b=>b.onclick=()=>{if(!s||STU.busy)return;s.base=b.dataset.g;STU.cmp=false;stSave();stRender();});
-  $('stPanel').querySelectorAll('[data-pn]').forEach(b=>b.onclick=()=>stInsert('toode '+b.dataset.pn));
+    $('stPanel').querySelectorAll('[data-pn]').forEach(b=>b.onclick=()=>stInsert('toode '+b.dataset.pn));
   p3EntryWire(T,s);
   const ps=$('stProdSet');if(ps)ps.onclick=()=>show('settings','products');const sr=$('stScRe');if(sr)sr.onclick=()=>{s.scale=null;stSave();STU.tool='ruler';stRenderMarks();stRenderPanel();toast('Tõmba joon üle asja, mille pikkust tead');};}
+function stHomeCards(){try{const e=t=>String(t==null?'':t).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const L=(acct.studio||[]).filter(s=>(s.imgs&&s.imgs.length)||(s.msgs&&s.msgs.length)||(s.draft&&s.draft.trim())||s.p3job).slice().sort((a,b)=>(b.upd||0)-(a.upd||0)).slice(0,8);
+  return L.map(s=>{const T=tplById(s.tpl),t1=s.imgs&&s.tray&&s.imgs[s.tray[0]],u=stAiImg((t1&&t1.src)||s.thumb||''),gens=(s.msgs||[]).filter(m=>m.gen&&m.out&&m.out.length).length,done=gens>0||(s.p3job&&s.p3job.status==='done');
+    const d=s.upd?new Date(s.upd).toLocaleDateString('et-EE'):(s.date||'');
+    return `<button type="button" class="ocard" data-st="${e(s.id)}">${u?`<img src="${e(u)}" alt="">`:'<span class="imgph">Pilte pole veel</span>'}<div class="ob"><div class="ot"><b>${e(s.title&&s.title!=='Uus töö'?s.title:(T?(T.id==='vaba'?'Vaba idee':T.name):'Töö'))}</b><span class="st ${done?'':'stw'}">${done?gens+' AI-pilti':'Pooleli'}</span></div><span class="fhint">${e(T?(T.id==='vaba'?'Vaba idee':T.name):'Stuudio')} · ${e(d)}</span><div class="om"><span>${(s.tray||[]).length} pilti</span>${s.draft&&s.draft.trim()?`<span>${e(s.draft.trim().slice(0,40))}</span>`:''}</div></div></button>`;}).join('');}catch(_){return '';}}
 /* AI juhis koos märkidega */
 const ST_CN={'#E5482D':'red','#F2B705':'yellow','#2A7FBF':'blue','#2F9E5B':'green','#FFFFFF':'white','#16130F':'black'};
-function stMarksText(s){const L=stLabels(s.marks),P=prodList(),pc=v=>Math.round(Math.max(0,Math.min(1,v))*100),pt=p=>`(x ${pc(p[0])}%, y ${pc(p[1])}%)`;
+function stMarksText(s){const NAT=s.nat||STU.nat;const L=stLabels(s.marks),P=prodList(),pc=v=>Math.round(Math.max(0,Math.min(1,v))*100),pt=p=>`(x ${pc(p[0])}%, y ${pc(p[1])}%)`;
   const bb=pts=>{const xs=pts.map(p=>p[0]),ys=pts.map(p=>p[1]);return `x ${pc(Math.min(...xs))}–${pc(Math.max(...xs))}%, y ${pc(Math.min(...ys))}–${pc(Math.max(...ys))}%`;};
   return s.marks.map((m,i)=>{const c=ST_CN[m.c]||'coloured';
     if(m.t==='brush')return `- Area ${L[i]} ("ala ${L[i]}"): ${c} brush strokes covering ${bb(m.pts)} of the image. Only the surface painted over is meant.`;
@@ -3411,57 +3471,99 @@ function stMarksText(s){const L=stLabels(s.marks),P=prodList(),pc=v=>Math.round(
     if(m.t==='point')return `- Point ${L[i]} ("punkt ${L[i]}"): ${pt(m.p)}.`;
     if(m.t==='arrow')return `- Arrow from ${pt(m.a)} pointing to ${pt(m.b)}: the spot it points at matters.`;
     if(m.t==='text')return `- Note written by the user at ${pt(m.p)}: "${String(m.s).replace(/["\\]/g,'')}" (an instruction for that spot, in Estonian).`;
-    if(m.t==='ruler'){const len=s.scale?(stRulerLen(m)*s.scale).toFixed(2)+' m':null;return `- Measuring line from ${pt(m.a)} to ${pt(m.b)}${len?`: this distance is ${len} in reality. Use it as the scale for real-world sizes`:''}.`;}
+    if(m.t==='ruler'){const len=s.scale?(stRulerLen(m,NAT)*s.scale).toFixed(2)+' m':null;return `- Measuring line from ${pt(m.a)} to ${pt(m.b)}${len?`: this distance is ${len} in reality. Use it as the scale for real-world sizes`:''}.`;}
     if(m.t==='prod'){const k=P.findIndex(p=>p.id===m.pid),p=P[k];return p?`- Product box for product ${k+1} ("toode ${k+1}", ${stClean(p.name)}): place that product inside ${bb([m.a,m.b])}, standing naturally on the ground there.`:'';}
     return '';}).filter(Boolean).join('\n');}
 function stClean(t){return String(t||'').replace(/[^\p{L}\p{N} ,.×x\-]/gu,'').slice(0,80);}
-function stPrompt2(o){const {kind,T,text,style,roles,s,prods}=o,st=style||'Fotorealistlik',real=/fotoreal/i.test(st);
+function stPrompt2(o){const {kind,T,text,style,roles,legend,prods,npics}=o,st=style||'Fotorealistlik',real=/fotoreal/i.test(st);
   if(kind==='pic')return `${text}. Style: ${st}.${real?' Photorealistic, natural light.':''} High quality, no text, no watermark.`;
-  const lines=[`Image 1 is the photo to edit.`];roles.forEach(r=>lines.push(r));
-  const mk=s.marks.length?stMarksText(s):'';if(mk)lines.push('The user marked these places (coordinates are % from the top-left corner of image 1):',mk);
+  const lines=[];roles.forEach(r=>lines.push(r));
+  if(npics>1)lines.push('The user numbers the pictures: "pilt 1", "1. pilt", "esimene pilt" or just "1." means picture 1, and so on. Edit picture 1 unless the request clearly asks to edit another picture. The other pictures are references (a product, material, colour, style or object to copy) used as the request describes.');
+  else lines.push('Edit picture 1.');
+  (legend||[]).forEach(l=>lines.push(l));
   lines.push(`The user's request (Estonian): "${String(text||'').replace(/"/g,"'")||(prods.length?'Place the product in the marked spot':'Make it look better')}".`);
-  if(mk)lines.push('The user refers to markings as "ala 1" (area 1), "punkt A" (point A), "toode 2" (product 2). Apply each change exactly at its marked place and keep it inside the marked area. The colour of a marking is only a highlight, not a colour to use, unless the user asks for that colour.');
+  if(legend&&legend.length)lines.push('The user refers to markings as "ala 1" (area 1), "punkt A" (point A), "toode 2" (product 2), possibly with the picture number ("pildil 2 ala 1"). Apply each change exactly at its marked place and keep it inside the marked area. The colour of a marking is only a highlight, not a colour to use, unless the user asks for that colour.');
   if(prods.length)lines.push(`Keep each product's exact design, colours and proportions from its product images.${prods.map(p=>p.W&&p.L?` ${stClean(p.name)} is about ${p.W} m × ${p.L} m${p.H?`, ${p.H} m high`:''}.`:'').join('')} Real-world size relative to people, doors, cars and trees. Match the scene's light and add realistic shadows.`);
   const ctx=T&&T.id&&T.id!=='vaba'?` Context: ${T.name}${T.role?` for ${T.role}`:''}.`:'';
-  lines.push(`Do not change anything else. Keep the same camera angle, framing, perspective and lighting as image 1.${ctx} Style: ${st}.${real?' Photorealistic.':''} Never draw the markings, letters, numbers, outlines or labels in the result. No text, no watermark.`);
+  lines.push(`Do not change anything else. Keep the same camera angle, framing, perspective and lighting as the picture being edited.${ctx} Style: ${st}.${real?' Photorealistic.':''} Never draw the markings, letters, numbers, outlines or labels in the result. No text, no watermark.`);
   return lines.join('\n');}
-async function stComposite(s){if(!s.marks.length||!STU.nat)return null;
-  const img=await new Promise((res,rej)=>{const i=new Image();if(!/^data:/.test(s.base))i.crossOrigin='anonymous';i.onload=()=>res(i);i.onerror=rej;i.src=stAiImg(s.base);});
-  const k=Math.min(1,1400/Math.max(img.naturalWidth,img.naturalHeight)),w=Math.round(img.naturalWidth*k),h=Math.round(img.naturalHeight*k);
-  const cv=document.createElement('canvas');cv.width=w;cv.height=h;const g=cv.getContext('2d');g.drawImage(img,0,0,w,h);
-  const svg=$('stSvg').cloneNode(true);svg.querySelectorAll('.sel').forEach(x=>x.classList.remove('sel'));svg.setAttribute('xmlns','http://www.w3.org/2000/svg');svg.setAttribute('width',String(STU.nat.w));svg.setAttribute('height',String(STU.nat.h));svg.removeAttribute('class');
-  const url='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(new XMLSerializer().serializeToString(svg));
-  const si=await new Promise((res,rej)=>{const i=new Image();i.onload=()=>res(i);i.onerror=rej;i.src=url;});g.drawImage(si,0,0,w,h);
-  return cv.toDataURL('image/jpeg',.86);}
+function stLoadImg(src,cors){return new Promise((res,rej)=>{const i=new Image();if(cors&&!/^data:/.test(src))i.crossOrigin='anonymous';i.onload=()=>res(i);i.onerror=rej;i.src=stAiImg(src)||src;});}
+async function stComposite2(im){if(!im||!(im.marks||[]).length)return null;const img=await stLoadImg(im.src,1),W=img.naturalWidth,H=img.naturalHeight;
+  const k=Math.min(1,1400/Math.max(W,H)),w=Math.round(W*k),h=Math.round(H*k),cv=document.createElement('canvas');cv.width=w;cv.height=h;const g=cv.getContext('2d');g.drawImage(img,0,0,w,h);
+  const svg=`<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">${stSvgMarks(im.marks,im.scale,W,H,-1)}</svg>`;
+  const si=await stLoadImg('data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svg));g.drawImage(si,0,0,w,h);return cv.toDataURL('image/jpeg',.86);}
+async function stComposite(s){const im=(s.imgs||[]).find(x=>x.src===s.base);return im?stComposite2({...im,marks:s.marks,scale:s.scale}):null;}
+async function stThumb(src,max){const img=await stLoadImg(src,1),k=Math.min(1,max/Math.max(img.naturalWidth,img.naturalHeight)),cv=document.createElement('canvas');cv.width=Math.round(img.naturalWidth*k);cv.height=Math.round(img.naturalHeight*k);cv.getContext('2d').drawImage(img,0,0,cv.width,cv.height);return cv.toDataURL('image/jpeg',.8);}
 function stDemoOut(text,base){const t=String(text||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');const pick=/paike|paikese/.test(t)?'test-paike':/saun/.test(t)?'test-saun':/aed|haljast|hekk|muru|lill/.test(t)?'test-aed':/varv|hall|must|valge|puna/.test(t)?'test-varv':null;
   if(pick&&EXIMG[pick])return [EXIMG[pick]];return base?[base]:[];}
-async function stSend(){if($('stSend').disabled)return;const th=stTheme(STU.tpl),T=th.T,text=$('stIn').value.trim(),kind=stKind();
+async function stSend(){if($('stSend').disabled)return;const th=stTheme(STU.tpl),text=$('stIn').value.trim(),kind=stKind();
   if(kind==='addr'){acct.activeTpl=STU.tpl;save();$('stIn').value='';stAuto();openAddress(text,null);return;}
   if(th.p3)return p3Start();
+  return stChat(text);}
+/* vestlus: AI-abiline aitab sõnastada, pilti ei tee ega võta krediite */
+function stDemoChat(text,n){return (n?`Hea mõte. ${n>1?'Viita piltidele numbriga, nt „pilt 1“ ja „pilt 2“. ':''}Kui tahad muuta ainult osa pildist, klõpsa pildil ja märgi see ala.`:'Kirjelda võimalikult täpselt: mis, kus, mis materjal ja mis värv.')+`\nJuhis: „${text.replace(/[„“"]/g,'')}“\nKui oled valmis, vajuta Genereeri.`;}
+function stHist(s){const out=[];for(const m of s.msgs){let role=m.role==='a'?'assistant':'user',t='';
+    if(m.role==='u')t=(m.text||'')+(m.gen?' [vajutas Genereeri]':'')+(m.pics&&m.pics.length?` [pilte: ${m.pics.length}]`:'');else if(m.pending)continue;else if(m.chat)t=m.text||'';else if(m.note)t=m.note;else if(m.gen)t=m.err?'(Pilti ei tulnud: '+m.err+')':'(Tegin pildi, see on nüüd pilt 1.)';
+    if(!t)continue;if(out.length&&out[out.length-1].role===role)out[out.length-1].content+='\n'+t;else out.push({role,content:t});}
+  while(out.length&&out[0].role!=='user')out.shift();return out.slice(-8);}
+async function stChat(text){if(!text)return;let s=stSess();if(!s)s=stNewSession();const th=stTheme(STU.tpl),T=stTrayImgs(s),P=prodList();
+  if((!s.title||s.title==='Uus töö'))s.title=text.slice(0,48);
+  s.msgs.push({role:'u',text,pics:T.map(im=>im.src),d:Date.now()});const am={role:'a',chat:1,pending:1,d:Date.now()};s.msgs.push(am);
+  $('stIn').value='';stAuto();STU.chatting=true;STU.edit=null;stSave();stRender();stScrollEnd();
+  try{if(CLOUD&&CL.cid){const imgs=[];for(const im of T.slice(0,3)){try{imgs.push(await stThumb(im.src,640));}catch(e){}}
+      const ctx={too:th.T&&th.T.id!=='vaba'?th.T.name:'Vaba idee',stiil:STU.style,pildid:T.map((im,n)=>({nr:n+1,allikas:im.k==='ai'?'AI tulemus':'kasutaja foto',margid:(im.marks||[]).length?stMarksText({marks:im.marks,scale:im.scale,nat:im.nat}):'pole'})),
+        tooted:P.slice(0,12).map((p,i)=>({nr:i+1,nimi:p.name,moodud:p.W&&p.L?p.W+' × '+p.L+' m':''})),hind:{pilt:priceTxt('design'),pilt_tekstist:priceTxt('pic')}};
+      const r=await clFn('ai-chat',{mode:'studio',role:'ettevõtja',messages:stHist(s),images:imgs,context:ctx});am.text=String(r.text||'').trim()||'…';}
+    else{await new Promise(r=>setTimeout(r,700));am.text=stDemoChat(text,T.length);am.demo=1;}}
+  catch(e){am.err=clErr(e);}
+  finally{delete am.pending;STU.chatting=false;stSave();if(!$('studio').hidden&&STU.sid===s.id){stRender();stScrollEnd();}}}
+function stScrollEnd(){const t=$('stThread');setTimeout(()=>{t.scrollTop=t.scrollHeight;},40);}
+function stZoomImg(u){const z=document.createElement('div');z.className='stzoom';z.innerHTML=`<img src="${stEsc(u)}" alt="Suur pilt">`;z.onclick=()=>z.remove();document.body.appendChild(z);const k=e=>{if(e.key==='Escape'){z.remove();document.removeEventListener('keydown',k);}};document.addEventListener('keydown',k);}
+function stUseAs1(u){const s=stSess();if(!s)return;let i=s.imgs.findIndex(x=>x.src===u);if(i<0){s.imgs.push({src:u,k:'ai',marks:[]});i=s.imgs.length-1;}s.tray=s.tray||[];const j=s.tray.indexOf(i);if(j>0)s.tray.splice(j,1);if(j!==0){if(s.tray.length)s.tray[0]=i;else s.tray=[i];}STU.edit=null;stSave();stRender();}
+function stRenderThread(){const s=stSess(),box=$('stThread');if(!s||box.hidden){box.innerHTML='';return;}const t1=s.imgs[(s.tray||[])[0]];
+  box.innerHTML=s.msgs.map((m,mi)=>{
+    if(m.role==='u')return `<div class="stm u">${m.gen?'<span class="gtag">✦ Genereeri</span>':''}${m.pics&&m.pics.length?`<div class="pics">${m.pics.map((u,k)=>`<span><img src="${stEsc(stAiImg(u))}" alt="Pilt ${k+1}"><i>${k+1}</i></span>`).join('')}</div>`:''}${m.text?`<div class="bub">${stEsc(m.text)}</div>`:''}</div>`;
+    const head='<div class="who"><span class="stlogo"></span>Vaade3D</div>';
+    if(m.note)return `<div class="stm a">${head}<div class="txt">${stEsc(m.note)}</div></div>`;
+    if(m.chat){if(m.pending)return `<div class="stm a">${head}<div class="sttyping" aria-label="AI kirjutab"><i></i><i></i><i></i></div></div>`;if(m.err)return `<div class="stm a">${head}<div class="sterr">${stEsc(m.err)}</div></div>`;
+      const jm=String(m.text||'').match(/Juhis:\s*[„"«]([^“"»\n]{3,400})[“"»]/),body=String(m.text||'').replace(/Juhis:\s*[„"«][^“"»\n]{3,400}[“"»]\s*/,'').trim();
+      return `<div class="stm a">${head}${body?`<div class="txt">${stEsc(body)}</div>`:''}${jm?`<div class="stjuh"><q>${stEsc(jm[1])}</q><button type="button" data-juh="${stEsc(jm[1])}">Kasuta seda</button></div>`:''}</div>`;}
+    if(m.pending)return `<div class="stm a">${head}<div class="stres ${m.n>1?'':'one'}">${Array.from({length:m.n||1},(_,k)=>`<div class="stv"><div class="stph"><span>AI teeb ${m.n>1?'varianti '+(k+1):'pilti'}…</span><div class="bar"><i></i></div><small style="font-weight:500">umbes 20 sekundit</small></div></div>`).join('')}</div></div>`;
+    if(m.err)return `<div class="stm a">${head}<div class="sterr">${stEsc(m.err)}</div>${m.ref?`<span class="crl">${stEsc(stCrTxt(m))}</span>`:''}</div>`;
+    const out=(m.out||[]).map(stAiImg).filter(Boolean),trayU=stTrayImgs(s).map(x=>stAiImg(x.src));
+    return `<div class="stm a">${head}<div class="stres ${out.length>1?'':'one'}">${out.map((u,k)=>{const is1=t1&&stAiImg(t1.src)===u,tn=trayU.indexOf(u);return `<div class="stv ${is1?'sel':''}">${m.demo?'<span class="tg">demo</span>':''}<img src="${stEsc(u)}" alt="AI tulemus ${k+1}" data-z="${stEsc(u)}"><div class="va">${is1?'<button type="button" class="pri" disabled>✓ See on pilt 1</button>':`<button type="button" class="pri" data-u1="${stEsc(u)}">Jätka sellega</button>`}<button type="button" data-mk="${stEsc(u)}">Märgi</button>${tn>0?`<button type="button" disabled>Pilt ${tn+1}</button>`:tn<0?`<button type="button" data-add="${stEsc(u)}">+ Lisa pildiks</button>`:''}<a href="${stEsc(u)}" download="vaade3d-${mi}-${k+1}.jpg" target="_blank" rel="noopener">Laadi alla</a></div></div>`;}).join('')}</div>${m.cr!=null?`<span class="crl">${stEsc(stCrTxt(m))}</span>`:''}</div>`;}).join('');
+  box.querySelectorAll('[data-juh]').forEach(b=>b.onclick=()=>{$('stIn').value=b.dataset.juh;stAuto();stSync();$('stIn').focus();toast('Juhis on kirjutuskastis. Vajuta Genereeri, kui oled valmis.');});
+  box.querySelectorAll('[data-z]').forEach(im=>im.onclick=()=>stZoomImg(im.dataset.z));
+  box.querySelectorAll('[data-u1]').forEach(b=>b.onclick=()=>{stUseAs1(b.dataset.u1);toast('See pilt on nüüd pilt 1');});
+  box.querySelectorAll('[data-mk]').forEach(b=>b.onclick=()=>{stUseAs1(b.dataset.mk);const s2=stSess();stEdit(s2.tray[0]);});
+  box.querySelectorAll('[data-add]').forEach(b=>b.onclick=()=>{const i=stAddPic(b.dataset.add,'ai');if(i>=0){stRender();toast('Lisatud: pilt '+stSess().tray.length);}});}
+/* Genereeri: teeb pildi nummerdatud piltidest, märkidest ja tekstist */
+async function stGenerate(){const gen=$('stGenBtn');if(gen.disabled||gen.hidden)return;const th=stTheme(STU.tpl),T=th.T,text=$('stIn').value.trim(),kind=stKind();
+  if(th.soon){toast('See töö tuleb peagi. Krediite ei võetud.');return;}
   const pk=stPriceKind();if(acct.credits<price(pk)&&!await needCredits(price(pk),T&&T.id!=='vaba'?T.name:'Vaba idee'))return;
-  let s=stSess();if(!s)s=stNewSession();
-  const prods=kind==='place'?stProdRefs(text,s):[],refs=STU.files.map(f=>f.src),roles=[],images=kind==='pic'?[]:[s.base];
-  const first=!(s.imgs||[]).some(x=>x.k==='ai'),n=kind==='design'&&first?2:1;
+  let s=stSess();if(!s)s=stNewSession();stWB();
+  const pics=kind==='pic'?[]:stTrayImgs(s),prods=kind==='place'?stProdRefs(text,s):[],roles=[],legend=[],images=[];
+  const first=!(s.imgs||[]).some(x=>x.k==='ai'),n=kind==='design'&&first?2:1,nm=pics.reduce((a,im)=>a+(im.marks||[]).length,0);
   if((!s.title||s.title==='Uus töö')&&text)s.title=text.slice(0,48);
-  s.msgs.push({role:'u',text,marks:s.marks.length,d:Date.now()});const am={role:'a',pending:1,n,cr:price(pk),d:Date.now()};s.msgs.push(am);
-  $('stIn').value='';stAuto();STU.busy=true;STU.busyN=n;STU.cmp=false;stSave();stRender();
-  let comp=null;if(kind!=='pic'&&s.marks.length){try{comp=await stComposite(s);}catch(e){comp=null;}}
-  if(comp){images.push(comp);roles.push(`Image ${images.length} is the SAME photo with the user's markings drawn on top. Use it only to see where the changes go.`);}
-  const per=prods.length>1?1:3;prods.forEach((p,i)=>{const im=(p.imgs||[]).slice(0,per).filter(Boolean);if(!im.length)return;const a=images.length+1;im.forEach(u=>{if(images.length<5)images.push(u);});const b=images.length;if(b>=a)roles.push(`Image${b>a?'s':''} ${a}${b>a?'–'+b:''} show product ${prodList().findIndex(x=>x.id===p.id)+1} (${stClean(p.name)}).`);});
-  refs.forEach(u=>{if(images.length<5){images.push(u);roles.push(`Image ${images.length} is a reference the user added (use it for materials, colours or style).`);}});
-  const prompt=stPrompt2({kind,T,text,style:STU.style,roles,s,prods});
+  s.msgs.push({role:'u',text,gen:1,pics:pics.map(p=>p.src),marks:nm,d:Date.now()});const am={role:'a',gen:1,pending:1,n,cr:price(pk),d:Date.now()};s.msgs.push(am);
+  $('stIn').value='';stAuto();STU.busy=true;STU.busyN=n;STU.cmp=false;STU.edit=null;stSave();stRender();stScrollEnd();
+  for(let k=0;k<pics.length;k++){const im=pics[k],N=k+1;if(images.length>=5){toast('Korraga saab AI-le anda kuni 5 pilti, osa jäi välja');break;}
+    images.push(im.src);roles.push(`Image ${images.length} is the user's picture ${N} ("pilt ${N}").`);
+    if((im.marks||[]).length){let comp=null;try{comp=await stComposite2(im);}catch(e){comp=null;}
+      if(comp&&images.length<5){images.push(comp);roles.push(`Image ${images.length} is picture ${N} with the user's markings drawn on top. Use it only to see where the changes go.`);}
+      legend.push(`Markings on picture ${N} (coordinates are % from the top-left corner of picture ${N}):\n`+stMarksText({marks:im.marks,scale:im.scale,nat:im.nat}));}}
+  const per=prods.length>1?1:3;prods.forEach(p=>{const L=(p.imgs||[]).slice(0,per).filter(Boolean);if(!L.length)return;const a=images.length+1;L.forEach(u=>{if(images.length<5)images.push(u);});const b=images.length;if(b>=a)roles.push(`Image${b>a?'s':''} ${a}${b>a?'–'+b:''} show product ${prodList().findIndex(x=>x.id===p.id)+1} (${stClean(p.name)}).`);});
+  const prompt=stPrompt2({kind,T,text,style:STU.style,roles,legend,prods,npics:pics.length});
   const label=(T&&T.id!=='vaba'?T.name:'Vaba idee')+(prods.length?' · '+prods.map(p=>p.name).join(', '):'');
   try{charge(label,pk);renderAcct();
     if(CLOUD&&CL.cid){const r=await clFn('ai-image',{kind,prompt,images:images.filter(Boolean),label,tpl:STU.tpl,n,size:'auto'});am.out=(r.urls&&r.urls.length?r.urls:[r.url]).filter(Boolean);if(typeof r.credits==='number'){acct.credits=r.credits;am.bal=r.credits;}}
-    else{await new Promise(r=>setTimeout(r,1600));am.out=stDemoOut(text,s.base);am.demo=1;}
+    else{await new Promise(r=>setTimeout(r,1600));am.out=stDemoOut(text,pics[0]&&pics[0].src);am.demo=1;}
     if(!am.out.length)throw new Error('AI ei tagastanud pilti');
-    s.imgs=s.imgs||[];am.out.forEach(u=>s.imgs.push({src:u,k:'ai'}));s.imgs=s.imgs.slice(-16);s.base=am.out[0];s.thumb=s.base;
-    if(s.marks.length){stPush();s.marks=[];}STU.sel=-1;STU.files=[];
-    am.text=am.out.length>1?'2 varianti':'Valmis';acct.tplUse=acct.tplUse||[];acct.tplUse.push({d:today(),t:STU.tpl});}
+    s.imgs=s.imgs||[];const i0=s.imgs.length;am.out.forEach(u=>s.imgs.push({src:u,k:'ai',marks:[]}));s.tray=s.tray||[];if(s.tray.length&&kind!=='pic')s.tray[0]=i0;else s.tray=[i0,...s.tray].slice(0,ST_MAXP);
+    s.thumb=am.out[0];STU.sel=-1;am.text=am.out.length>1?'2 varianti':'Valmis';acct.tplUse=acct.tplUse||[];acct.tplUse.push({d:today(),t:STU.tpl});}
   catch(e){am.err=clErr(e);if(CLOUD&&CL.cid)am.ref=1;else if(am.cr>0){acct.credits=+(acct.credits+am.cr).toFixed(2);am.ref=1;}if(!$('stIn').value)$('stIn').value=text;toast(am.err+(am.ref?' Krediidid tagastati.':''));}
-  finally{delete am.pending;STU.busy=false;const cl=CLOUD&&CL.cid;if(!cl&&am.bal==null)am.bal=acct.credits;stSave();renderAcct();const here=()=>!$('studio').hidden&&STU.sid===s.id;if(here())stRender();
-    if(cl){try{await clRefresh();}catch(_){}if(am.bal==null||am.err){am.bal=acct.credits;stSave();}if(here()){stRenderRes();stRenderPanel();}}}}
-
+  finally{delete am.pending;STU.busy=false;const cl=CLOUD&&CL.cid;if(!cl&&am.bal==null)am.bal=acct.credits;stSave();renderAcct();const here=()=>!$('studio').hidden&&STU.sid===s.id;if(here()){stRender();stScrollEnd();}
+    if(cl){try{await clRefresh();}catch(_){}if(am.bal==null||am.err){am.bal=acct.credits;stSave();}if(here()){stRenderRes();stRenderPanel();stRenderThread();}}}}
 /* ---------- Fotod → 3D-mudel (sama subjektide tabel on serveris: supabase/functions/ai-3d) ---------- */
 const P3D={
   building:{n:'Maja/hoone',min:4,max:4,slots:['Esikülg','Vasak külg','Tagakülg','Parem külg'],tips:['Tee igast küljest eraldi foto, otse külje keskelt.','Astu nii kaugele, et kogu maja koos katuse ja nurkadega on kaadris.','Ära pildista vastu päikest: päike olgu sinu selja taga või pilvine ilm.','Puud ja autod ees on okei, kui need ei peida üle kolmandiku seinast.']},
@@ -3701,7 +3803,7 @@ function obSnap(){const r=$('render');let src=null;
   renderer.render(scene,camera);const w=canvas.width,h=canvas.height,k=Math.min(1,1600/Math.max(w,h)),cv=document.createElement('canvas');cv.width=Math.round(w*k);cv.height=Math.round(h*k);
   cv.getContext('2d').drawImage(canvas,0,0,cv.width,cv.height);return cv.toDataURL('image/jpeg',.9);}
 function obToStudio(tool){const h=HOUSES[cur];if(!h)return;let src;try{src=obSnap();}catch(e){toast('3D-vaadet ei õnnestunud pildistada');return;}
-  const prev=acct.activeTpl;openStudio('vaba');acct.activeTpl=prev;stSetBase(src);const s=stSess();s.title=h.short+' · 3D-vaade';s.obj=h.ehr;STU.tool=tool;STU.fit=true;stSave();stRender();
+  const prev=acct.activeTpl;openStudio('vaba');acct.activeTpl=prev;const ix=stAddPic(src,'up');const s=stSess();s.title=h.short+' · 3D-vaade';s.obj=h.ehr;stSave();stEdit(ix,tool);
   toast('Pildistasin 3D-vaate. Märgi, mida muuta, ja kirjuta all, mida teha.');}
 function obBack(){const s=stSess();if(!s||!s.obj)return;const i=HOUSES.findIndex(h=>h.ehr===s.obj);if(i<0){toast('Seda objekti pole enam');return;}show('app');if(i!==cur)select(i);}
 $('stTo3d').onclick=obBack;
