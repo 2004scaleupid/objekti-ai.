@@ -8,7 +8,7 @@
 <meta property="og:description" content="Sisesta aadress ja maja kerkib 3D-s koos mõõtudega. Objektile ei pea sõitma.">
 <meta property="og:type" content="website">
 <meta name="theme-color" content="#16130F">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; connect-src 'self' https://*.supabase.co https://livekluster.ehr.ee data: blob:; frame-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; connect-src 'self' https://*.supabase.co https://livekluster.ehr.ee data: blob:; worker-src 'self' blob:; frame-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'">
 <meta name="robots" content="noindex, nofollow">
 <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A//www.w3.org/2000/svg%27%20viewBox%3D%270%200%2032%2032%27%3E%3Cpath%20d%3D%27M4%2014%2016%2021v9L4%2023z%27%20fill%3D%27%23C9381F%27/%3E%3Cpath%20d%3D%27M16%2021l6-9.5%206%202.5v9l-12%207z%27%20fill%3D%27%239E2C17%27/%3E%3Cpath%20d%3D%27M10%204.5%2016%207l12%207-6-2.5z%27%20fill%3D%27%23F28468%27/%3E%3Cpath%20d%3D%27M4%2014%2010%204.5l12%207L16%2021z%27%20fill%3D%27%23E5482D%27/%3E%3C/svg%3E">
 <style>[hidden]{display:none!important}</style>
@@ -580,8 +580,8 @@ body.cvm .panel>*:not(#cvPanel){display:none!important}
 .stcost{font:500 11.5px var(--mono);color:var(--muted);white-space:nowrap;padding:0 4px}
 .stsend{width:36px;height:36px;border-radius:12px;border:0;background:var(--accent);color:#fff;display:grid;place-items:center;cursor:pointer;box-shadow:0 4px 12px rgba(229,72,45,.28)}
 .stsend:hover{filter:brightness(1.06)}.stsend[disabled]{opacity:.35;cursor:default;box-shadow:none}
-.stdrop{position:absolute;inset:0 clamp(16px,4vw,48px);z-index:20;border:2px dashed var(--accent);border-radius:18px;background:rgba(248,246,242,.92);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;color:var(--accent);pointer-events:none;backdrop-filter:blur(2px)}
-.stdrop b{font-size:16px}.stdrop span{font-size:12.5px;color:var(--muted)}
+.stdrop{position:absolute;inset:-1px;z-index:20;border:2px dashed var(--accent);border-radius:18px;background:color-mix(in srgb,var(--paper) 90%,var(--accent) 10%);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;color:var(--ink);pointer-events:none;text-align:center;padding:12px}
+.stdrop b,.stdropv b{font:700 16px var(--display);color:var(--ink)}.stdrop span,.stdropv span{font-size:13px;color:var(--muted)}.stdrop svg,.stdropv svg{color:var(--accent)}
 .stchips{display:flex;flex-wrap:wrap;justify-content:center;gap:8px}
 .studio:not(.fresh) .stchips{display:none}
 .stchip{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--line);background:var(--paper);color:var(--ink);border-radius:10px;padding:8px 12px;font:500 13.5px var(--display);cursor:pointer}
@@ -696,7 +696,7 @@ body.cvm .panel>*:not(#cvPanel){display:none!important}
 .stresb .dot{width:8px;height:8px;border-radius:50%;background:#2F9E5B;flex:none}.stresb.err .dot{background:var(--accent)}.stresb.wait .dot{background:#F2B705;animation:stpulse 1s ease-in-out infinite}
 @keyframes stpulse{50%{opacity:.35}}@media (prefers-reduced-motion:reduce){.stresb.wait .dot{animation:none}}
 .sth .cr{font:600 11px var(--mono);color:var(--muted)}
-.stdropv{position:absolute;inset:8px;z-index:6;border:2px dashed var(--accent);border-radius:12px;background:rgba(248,246,242,.9);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;color:var(--accent);pointer-events:none}.stdropv b{font-size:16px}.stdropv span{font-size:12.5px;color:var(--muted)}
+.stdropv{position:absolute;inset:8px;z-index:6;border:2px dashed var(--accent);border-radius:12px;background:color-mix(in srgb,var(--paper) 88%,var(--accent) 12%);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;pointer-events:none;text-align:center;padding:12px}
 .stnoimg{flex:1;display:grid;place-items:center;color:var(--muted);font-size:14px}
 @media (max-width:820px){.strail{position:sticky;top:0;z-index:25;box-shadow:0 4px 10px rgba(22,19,15,.06)}.ststage{min-height:62vh;padding:10px 10px 0}.stview{min-height:38vh}.stback{font-size:0;padding:0 6px}.stback svg{width:18px;height:18px}.sttop .ghost.sm{white-space:nowrap}.sttop{padding:6px 10px}.studio:not(.fresh) .stdock{padding-left:10px;padding-right:10px}.stzoomc button{min-width:34px;height:34px}}
 .pwf{position:relative;display:block}.pwf input{width:100%;box-sizing:border-box;padding-right:46px!important}
@@ -1042,16 +1042,16 @@ body.p3emb{background:transparent;margin:0;padding:0;overflow:hidden}body.p3emb 
             </div>
           <div class="stbusy" id="stBusy" hidden><span id="stBusyT">AI teeb pilti…</span><div class="bar"><i></i></div><small>umbes 20 sekundit</small></div>
           <div class="sthint" id="stHint" hidden></div>
-          <div class="stdropv" id="stDropV" hidden><b>Lase lahti: uus foto</b><span>Eelmine jääb alles all ribale</span></div>
+          <div class="stdropv" id="stDropV" hidden><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 15V4M7 9l5-5 5 5"/><path d="M4 15v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"/></svg><b>Lase lahti: uus foto</b><span>Eelmine jääb alles all ribale</span></div>
           <div class="stzoomc"><button type="button" id="stZo" aria-label="Vähenda" title="Vähenda">−</button><button type="button" id="stZf" title="Mahuta ekraanile">Mahuta</button><button type="button" id="stZi" aria-label="Suurenda" title="Suurenda">+</button><button type="button" id="stCmp" title="Võrdle eelmisega" aria-pressed="false">Võrdle</button></div>
         </div>
         <div class="stfilm" id="stFilm"></div>
       </div>
       <div class="st3d" id="st3d" hidden></div>
       <div class="stdock" id="stDock">
-        <div class="stdrop" id="stDrop" hidden><b>Lohista pilt siia</b><span>JPG, PNG või WebP</span></div>
         <div class="stresb" id="stRes" role="status" hidden></div>
         <div class="stbox" id="stBox">
+          <div class="stdrop" id="stDrop" hidden></div>
           <div class="stfiles" id="stFiles" hidden></div>
           <button type="button" class="stup" id="stUp"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="15" rx="2"/><circle cx="9" cy="11" r="2"/><path d="m21 17-5-5-8 8"/></svg><span><b id="stUpT">Lisa pilt</b><small id="stUpS">Lohista siia, kleebi või vali failist</small></span></button>
           <div class="stmk" id="stMk" hidden></div>
@@ -1067,7 +1067,7 @@ body.p3emb{background:transparent;margin:0;padding:0;overflow:hidden}body.p3emb 
         </div>
         <div class="stchips" id="stChips" role="group" aria-label="Vali töö"></div>
         <div class="stsugg" id="stSugg"></div>
-        <input type="file" id="stFile" accept="image/*" multiple hidden>
+        <input type="file" id="stFile" accept="image/*,.heic,.heif" multiple hidden>
         <input type="file" id="p3File" accept="image/*" hidden>
       </div>
     </section>
@@ -2508,7 +2508,16 @@ acct.designs=acct.designs||[];
 const DTYPES=[['fassaad','Maja fassaad'],['katus','Katus'],['tuba','Tuba / sisekujundus'],['aed','Aed / hoov'],['ese','Ese / toode']];
 const DSTYLES=['Moodne','Skandinaavia','Klassikaline','Tume ja kontrastne','Hele ja soe','Looduslik'];
 const DTN=Object.fromEntries(DTYPES);
-function shrink(file,m=1100,q=.78){return new Promise((res,rej)=>{const fr=new FileReader();fr.onload=()=>{const im=new Image();im.onload=()=>{const k=Math.min(1,m/Math.max(im.width,im.height)),c=document.createElement('canvas');c.width=Math.round(im.width*k);c.height=Math.round(im.height*k);c.getContext('2d').drawImage(im,0,0,c.width,c.height);res(c.toDataURL('image/jpeg',q));};im.onerror=rej;im.src=fr.result;};fr.onerror=rej;fr.readAsDataURL(file);});}
+/* iPhone'i HEIC-fotod: Safari oskab ise, Chrome ei oska. Siis teisendame JPEG-iks (teek laetakse alles siis, kui vaja). */
+const HEIC_LIB='vendor/heic-to.js';let heicP=null;const heicDone=new WeakMap();
+const isHeic=f=>!!f&&(/^image\/hei[cf]/i.test(f.type||'')||/\.(heic|heif)$/i.test(f.name||''));
+function heicLib(){return heicP||(heicP=import(new URL(HEIC_LIB,location.href).href).then(m=>{if(!m.heicTo)throw new Error('heic');return m.heicTo;}).catch(e=>{heicP=null;throw e;}));}
+function canDecode(f){return new Promise(res=>{const u=URL.createObjectURL(f),im=new Image();im.onload=()=>{URL.revokeObjectURL(u);res(im.naturalWidth>0);};im.onerror=()=>{URL.revokeObjectURL(u);res(false);};im.src=u;});}
+async function heicToJpeg(f){if(!isHeic(f))return f;if(heicDone.has(f))return heicDone.get(f);if(await canDecode(f))return f;
+  if(typeof toast==='function')toast('Teisendan iPhone\'i foto (HEIC)…');const h=await heicLib();const b=await Promise.race([h({blob:f,type:'image/jpeg',quality:.9}),new Promise((_,r)=>setTimeout(()=>r(new Error('heic aeg')),60000))]);
+  const j=new File([b],String(f.name||'foto').replace(/\.(heic|heif)$/i,'')+'.jpg',{type:'image/jpeg'});heicDone.set(f,j);return j;}
+async function shrink(file,m,q){return shrink0(await heicToJpeg(file),m,q);}
+function shrink0(file,m=1100,q=.78){return new Promise((res,rej)=>{const fr=new FileReader();fr.onload=()=>{const im=new Image();im.onload=()=>{const k=Math.min(1,m/Math.max(im.width,im.height)),c=document.createElement('canvas');c.width=Math.round(im.width*k);c.height=Math.round(im.height*k);c.getContext('2d').drawImage(im,0,0,c.width,c.height);res(c.toDataURL('image/jpeg',q));};im.onerror=rej;im.src=fr.result;};fr.onerror=rej;fr.readAsDataURL(file);});}
 async function startDesign(file){if(!file||!/^image\//.test(file.type)){toast('Vali pildifail (JPG, PNG, HEIC)');return;}
   {const T3=tplById(acct.activeTpl);if(T3&&T3.photo3d&&T3.input!=='addr'){openStudio(T3.id,[file]);return;}}
   let img;try{img=await shrink(file);}catch(e){toast('Pilti ei õnnestunud avada');return;}
@@ -3309,7 +3318,7 @@ function stRenderFiles(){const box=$('stFiles');box.hidden=!STU.files.length;
   box.innerHTML=STU.files.map(f=>`<div class="stf"><img src="${stEsc(f.src)}" alt="${stEsc(f.name||'pilt')}"><span class="bl">viide</span><button type="button" class="x" data-x="${stEsc(f.id)}" aria-label="Eemalda pilt">×</button></div>`).join('');
   box.querySelectorAll('[data-x]').forEach(b=>b.onclick=()=>{STU.files=STU.files.filter(f=>f.id!==b.dataset.x);stRenderFiles();stSync();});}
 async function stAddFiles(list,mode){const th=stTheme(STU.tpl);if(th.need==='addr'){toast('Selle töö jaoks sisesta aadress');return;}if(th.p3)return p3AddFiles(list);
-  const arr=[...list].filter(f=>/^image\//.test(f.type)||/\.(jpe?g|png|webp|heic)$/i.test(f.name||''));if(!arr.length){toast('Vali pildifail (JPG, PNG, WebP)');return;}
+  const arr=[...list].filter(f=>/^image\//.test(f.type)||/\.(jpe?g|png|webp|heic|heif)$/i.test(f.name||''));if(!arr.length){toast('Vali pildifail (JPG, PNG, WebP või HEIC)');return;}
   let based=false;for(const f of arr){let src;try{src=await shrink(f);}catch(e){toast('Pilti ei õnnestunud avada');continue;}P3ORIG.set(src,f);
     const s=stSess();if(!s||!s.base||(mode==='base'&&!based)){if(s&&s.base){if(s.marks&&s.marks.length){stPush();s.marks=[];}toast('Uus foto lisatud. Eelmine on alles all ribal.');}stSetBase(src);based=true;continue;}
     if(STU.files.length>=2){toast('Kuni 2 viitepilti korraga');break;}STU.files.push({id:'f'+Date.now()+Math.random().toString(36).slice(2,6),src,name:f.name||'pilt'});}
@@ -3339,7 +3348,7 @@ async function stDropUrl(dt){let u=String(dt.getData('text/uri-list')||'').split
   catch(_){return safeUrl(u)&&/\.(jpe?g|png|webp)(\?|$)/i.test(u)?{src:u}:null;}}
 (()=>{const st=$('studio');let dc=0;const zones=on=>{const addr=stTheme(STU.tpl).need==='addr',s=stSess(),stage=!!(s&&s.base);
     $('stDrop').hidden=!on||addr||(stage&&on!=='ref');$('stDropV').hidden=!on||addr||!stage||on!=='base';
-    $('stDrop').innerHTML=stage?'<b>Lase lahti: viitepilt</b><span>Materjal, värv või stiil, mida AI kasutab</span>':'<b>Lohista pilt siia</b><span>JPG, PNG või WebP</span>';};
+    $('stDrop').innerHTML=stage?'<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 15V4M7 9l5-5 5 5"/><path d="M4 15v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"/></svg><b>Lase lahti: viitepilt</b><span>Materjal, värv või stiil, mida AI kasutab</span>':'<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 15V4M7 9l5-5 5 5"/><path d="M4 15v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"/></svg><b>Lase lahti, et lisada foto</b><span>JPG, PNG, WebP või iPhone\'i HEIC</span>';};
   const where=e=>e.target&&e.target.closest&&e.target.closest('#stDock')?'ref':'base';
   st.addEventListener('dragenter',e=>{if(!stDragOk(e))return;e.preventDefault();dc++;zones(where(e));});
   st.addEventListener('dragover',e=>{if(!stDragOk(e))return;e.preventDefault();try{e.dataTransfer.dropEffect='copy';}catch(_){}zones(where(e));});
@@ -3456,8 +3465,8 @@ function p3Note(s,t){if(!s||!t||(s.msgs.at(-1)||{}).note===String(t).slice(0,300
 function p3CanSend(){const P=STU.p3,s=stSess(),D=P&&P3D[P.subject];if(!p3Cloud()||!D||P.checking||P.starting||(s&&s.p3job))return false;
   const n=p3List().length,c=p3ChkFor();return n>=D.min&&n<=D.max&&!!c&&!!c.token&&(c.ok||(c.soft&&P.force));}
 async function p3AddFiles(list,slot){if(!STU.p3)STU.p3=p3New();const P=STU.p3,s0=stSess();if(s0&&s0.p3job){toast('See 3D-mudel on juba tehtud. Alusta uut.');return;}
-  const max=P.subject?P3D[P.subject].max:4,arr=[...list].filter(f=>/^image\//.test(f.type)||/\.(jpe?g|png|webp|heic)$/i.test(f.name||''));
-  if(!arr.length){toast('Vali pildifail (JPG, PNG, WebP)');return;}
+  const max=P.subject?P3D[P.subject].max:4,arr=[...list].filter(f=>/^image\//.test(f.type)||/\.(jpe?g|png|webp|heic|heif)$/i.test(f.name||''));
+  if(!arr.length){toast('Vali pildifail (JPG, PNG, WebP või HEIC)');return;}
   for(const f of arr){let i=slot!=null?slot:P.photos.findIndex((x,k)=>k<max&&!x);slot=null;if(i<0){toast(`Kuni ${max} fotot`);break;}
     try{P.photos[i]=await shrink(f,2048,.85);}catch(e){toast('Pilti ei õnnestunud avada');}}
   p3Sess();stSave();p3Changed();}
