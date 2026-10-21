@@ -22,3 +22,6 @@ verify_jwt = true
 verify_jwt = true
 [functions.ai-3d]
 verify_jwt = true
+
+[functions.widget-send]
+verify_jwt = true

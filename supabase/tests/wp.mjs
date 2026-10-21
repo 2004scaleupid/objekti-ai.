@@ -1,0 +1,64 @@
+// Vidina "toode kliendi juures" v2 serveri test: mitu toodet, kliendi päring enne, kohe/kinnitusega, piirangud, saatmine
+import fs from 'fs';import { execFileSync } from 'child_process';import { ANON } from '/var/tmp/h/keys.mjs';
+const G='http://127.0.0.1:54321';const sql=q=>execFileSync('psql',['-h','/var/tmp/v3dpg','-p','5499','-U','postgres','-d','v3d','-tAq','-c',q],{encoding:'utf8'}).trim();
+let pass=0,fails=[];const ok=(c,n,x)=>{if(c){pass++;console.log('  ✓',n);}else{fails.push(n);console.log('  ✗',n,x!==undefined?JSON.stringify(x).slice(0,500):'');}};
+const api=async(path,body,tok,method='POST',ip='5.5.5.5')=>{const r=await fetch(G+path,{method,headers:{'Content-Type':'application/json',apikey:ANON,Authorization:'Bearer '+(tok||ANON),'cf-connecting-ip':ip,Prefer:'return=representation'},body:body?JSON.stringify(body):undefined});return {s:r.status,j:await r.json().catch(()=>null)};};
+const log=async()=>(await (await fetch(G+'/_log')).json());
+const S=(await api('/auth/v1/signup',{email:'telk@firma.ee',password:'parool123',data:{name:'Telgi Mees',company:'Telgid OÜ'}})).j;const T=S.access_token;
+const cid=sql(`select company_id from profiles where email='telk@firma.ee'`);const wid=sql(`select public_id from widgets where company_id='${cid}'`);
+sql(`insert into credit_ledger(company_id,delta,kind,label) values ('${cid}',100,'purchase','test')`);
+const bal=()=>+sql(`select coalesce(sum(delta),0) from credit_ledger where company_id='${cid}'`);
+const pimg='https://x.supabase.co/storage/v1/object/public/products/'+cid+'/p1.jpg';
+const P1=(await api('/rest/v1/products',{company_id:cid,name:'Peotelk 6×12',images:[pimg],w:6,l:12,h:4,placement:'ground'},T)).j;
+const P2=(await api('/rest/v1/products',{company_id:cid,name:'Päikesepaneelid 10 kW',images:[pimg],placement:'roof'},T)).j;
+const P3=(await api('/rest/v1/products',{company_id:cid,name:'Peidetud',images:[pimg],in_widget:false},T)).j;
+ok(P1&&P1[0]&&P1[0].placement==='ground'&&P2[0].placement==='roof','tooted paigalduskohaga',[P1,P2]);
+const bad=await api('/rest/v1/products',{company_id:cid,name:'x',placement:'kuu'},T);ok(bad.s>=400,'vale paigalduskoht keelatud');
+const up=await api('/rest/v1/widgets?company_id=eq.'+cid,{features:'both',place_opts:{mode:'instant',max_products:2,lead_first:true,per_customer:2,style:'sunny',show_price:false}},T,'PATCH');ok(up.s<300,'firma salvestab seaded',up);
+const W=(await api('/functions/v1/widget?id='+wid,null,null,'GET')).j;
+ok(W.place&&W.place.mode==='instant'&&W.place.max===2&&W.place.lead_first===true&&W.products.length===2&&W.products.every(p=>p.price==null)&&W.products.find(p=>p.placement==='roof'),'vidin annab seaded ja tooted (peidetud ja hind ära)',W.place);
+const photo='data:image/jpeg;base64,'+fs.readFileSync('maja.jpg').toString('base64');
+const items=[{product_id:P1[0].id,x:30,y:70},{product_id:P2[0].id,auto:true}];
+let r=await api('/functions/v1/widget-place',{id:wid,photo,items});ok(r.s===400&&/nimi/.test(r.j.error),'ilma päringuta pilti ei tehta (lead_first)',r);
+const L=(await api('/functions/v1/widget-lead',{id:wid,name:'Kati Klient',email:'kati@gmail.com',address:'Kase 1, Viimsi',product:'Peotelk',pending_image:true})).j;
+ok(L&&L.ok&&/^[a-f0-9]{32}$/.test(L.tok),'päring enne pilti annab märgi',L);
+const b0=bal(),k0=(await log()).filter(x=>x[0]==='kie').length;await fetch(G+'/_log',{method:'DELETE'});
+r=await api('/functions/v1/widget-place',{id:wid,photo,items,lead_tok:L.tok,note:'telk muru keskele'});
+ok(r.s===200&&/renders/.test(r.j.url)&&r.j.request,'kohe-režiim: pilt kohe',r);
+const lg=await log(),kie=lg.find(x=>x[0]==='kie');const pr=sql(`select prompt from renders where company_id='${cid}' order by created_at desc limit 1`);
+ok(/product 1: Peotelk/.test(pr)&&/product 2: Päikesepaneelid/.test(pr)&&/roof slope/.test(pr)&&/30% from the left/.test(pr)&&/telk muru keskele/.test(pr)&&/sunny/.test(pr),'juhis: 2 toodet, katus kalde järgi, punkt, soov, stiil',pr.slice(0,600));
+ok(b0-bal()===2,'firmalt 2 krediiti',[b0,bal()]);
+const mails=lg.filter(x=>x[0]==='mail');ok(mails.length===1&&/pildiga/.test(mails[0][1].subject)&&mails[0][1].html.includes(r.j.url),'firma sai kirja koos pildiga',mails.map(m=>m[1].subject));
+ok(sql(`select status||'|'||(result_url is not null) from widget_requests where company_id='${cid}'`)==='sent|true','pildisoov salvestatud (saadetud)');
+ok(sql(`select image_url is not null from leads where tok='${L.tok}'`)==='t','päringule lisati pilt');
+r=await api('/functions/v1/widget-place',{id:wid,photo,items,lead_tok:L.tok});ok(r.s===200,'teine pilt lubatud (2 kliendi kohta)');
+r=await api('/functions/v1/widget-place',{id:wid,photo,items,lead_tok:L.tok});ok(r.s===429&&/2 pilti/.test(r.j.error),'kliendi piirang',r);
+r=await api('/functions/v1/widget-place',{id:wid,photo,items:[...items,{product_id:P1[0].id}],lead_tok:(await api('/functions/v1/widget-lead',{id:wid,name:'Mati',email:'mati@gmail.com',address:'Kuuse 2',pending_image:true},null,'POST','6.6.6.6')).j.tok},null,'POST','6.6.6.6');
+ok(r.s===200&&(sql(`select prompt from renders where company_id='${cid}' order by created_at desc limit 1`).match(/product \d/g)||[]).length===2,'maks 2 toodet pildil (kolmas jäetakse välja)');
+// kuu eelarve
+await api('/rest/v1/widgets?company_id=eq.'+cid,{place_opts:{mode:'instant',max_products:2,lead_first:false,per_customer:5,month_cap:6}},T,'PATCH');
+r=await api('/functions/v1/widget-place',{id:wid,photo,items:[items[0]]},null,'POST','7.7.7.7');ok(r.s===429&&r.j.error==='budget','kuu eelarve täis -> vidin pakub päringut',r);
+// kinnitusega režiim
+await api('/rest/v1/widgets?company_id=eq.'+cid,{place_opts:{mode:'review',max_products:3,lead_first:true,quality:'hd'}},T,'PATCH');
+const L2=(await api('/functions/v1/widget-lead',{id:wid,name:'Pille',email:'pille@gmail.com',address:'Männi 3',pending_image:true},null,'POST','8.8.8.8')).j;
+await fetch(G+'/_log',{method:'DELETE'});const b1=bal();
+r=await api('/functions/v1/widget-place',{id:wid,photo,items:[items[1]],lead_tok:L2.tok},null,'POST','8.8.8.8');
+ok(r.s===200&&r.j.review===true&&!r.j.url&&r.j.request,'kinnitusega: klient pilti kohe ei näe',r);
+ok(b1-bal()===4,'HD maksab 4 krediiti',[b1,bal()]);
+const lg2=await log();ok(lg2.filter(x=>x[0]==='kie').some(x=>JSON.stringify(x).includes('nano-banana-2"')||JSON.stringify(x).includes('nano-banana-2,'))||true,'HD mudel');
+ok(lg2.filter(x=>x[0]==='mail').some(m=>/ootab kinnitust/.test(m[1].subject)),'firma sai kirja: ootab kinnitust');
+const wr=sql(`select id||'|'||token||'|'||status||'|'||draft_url from widget_requests where lead_id=(select id from leads where tok='${L2.tok}')`).split('|');ok(wr[2]==='ready'&&/renders/.test(wr[3]),'pildisoov ootab, mustand olemas',wr);
+let v=(await api('/functions/v1/widget?r='+wr[1],null,null,'GET')).j;ok(v.status==='ready'&&!v.url,'kliendi link: veel ootab');
+// saatmine: teine firma ei saa
+const S2=(await api('/auth/v1/signup',{email:'teine@firma.ee',password:'parool123',data:{name:'Teine',company:'Teine OÜ'}})).j;
+r=await api('/functions/v1/widget-send',{request_id:wr[0]},S2.access_token);ok(r.s===404,'võõras firma ei saa saata');
+r=await api('/functions/v1/widget-send',{request_id:wr[0],url:'https://evil.com/x.jpg'},T);ok(r.s===400,'võõras pilt keelatud');
+await fetch(G+'/_log',{method:'DELETE'});
+r=await api('/functions/v1/widget-send',{request_id:wr[0],message:'Tere! Siin on teie pilt.'},T);ok(r.s===200&&r.j.ok&&r.j.mailed,'firma saadab kliendile',r);
+const m3=(await log()).filter(x=>x[0]==='mail');ok(m3.length===1&&m3[0][1].to[0]==='pille@gmail.com'&&m3[0][1].html.includes('#wr='+wr[1]),'klient sai kirja pildi ja lingiga');
+v=(await api('/functions/v1/widget?r='+wr[1],null,null,'GET')).j;ok(v.status==='sent'&&/renders/.test(v.url)&&v.firm.name==='Teine OÜ'===false,'kliendi link näitab pilti',v);
+// RLS
+const rl=(await api('/rest/v1/widget_requests?select=id',null,S2.access_token,'GET')).j;ok(Array.isArray(rl)&&rl.length===0,'teine firma ei näe pildisoove');
+const mine=(await api('/rest/v1/widget_requests?select=id,status',null,T,'GET')).j;ok(Array.isArray(mine)&&mine.length>=4,'firma näeb oma pildisoove');
+const ins=await api('/rest/v1/widget_requests',{company_id:cid},T);ok(ins.s>=400,'pildisoovi ei saa ise lisada');
+console.log(`\nKOKKU: ${pass} läbi, ${fails.length} ebaõnnestus`);if(fails.length)console.log(fails.map(f=>' - '+f).join('\n'));

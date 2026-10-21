@@ -1,5 +1,5 @@
 // Avalik: päring vidinast. Salvestab nime, e-posti ja aadressi, võtab firmalt krediidid ja saadab e-kirja.
-import { cors, json, fail, admin, rateLimit, clientIp, spend, sendMail, esc, body, isEmail, isOurImage, tfetch } from "../_shared/util.ts";
+import { cors, json, fail, admin, rateLimit, clientIp, spend, sendMail, esc, body, isEmail, isOurImage, tfetch, ownerEmails } from "../_shared/util.ts";
 
 const num = (v: unknown) => (typeof v === "number" && isFinite(v) && v >= 0 && v < 1e6 ? Math.round(v * 10) / 10 : null);
 
@@ -23,8 +23,8 @@ Deno.serve(async (req) => {
   const { data: c } = await db.from("companies").select("name,phone").eq("id", w.company_id).single();
   // sama e-post samale firmale 24 h jooksul = üks päring (krediit ainult üks kord)
   const since = new Date(Date.now() - 864e5).toISOString();
-  const { count: dupN } = await db.from("leads").select("id", { count: "exact", head: true }).eq("company_id", w.company_id).eq("email", email).gte("created_at", since);
-  if ((dupN || 0) >= 1) return json({ ok: true, duplicate: true });
+  const { data: dup } = await db.from("leads").select("id,tok").eq("company_id", w.company_id).eq("email", email).gte("created_at", since).order("created_at", { ascending: false }).limit(1);
+  if (dup && dup.length) return json({ ok: true, duplicate: true, tok: dup[0].tok });
   // firma päevalimiit: kaitseb krediite, kui keegi saadab massiliselt võltspäringuid
   const { count: todayN } = await db.from("leads").select("id", { count: "exact", head: true }).eq("company_id", w.company_id).gte("created_at", since);
   if ((todayN || 0) >= (w.daily_lead_cap ?? 30)) return fail(`Täna on päringuid palju. Võta palun otse ühendust${c?.phone ? ": " + c.phone : "."}`, 429);
@@ -52,16 +52,9 @@ Deno.serve(async (req) => {
     }
     await db.from("credit_ledger").insert({ company_id: w.company_id, delta: -price, kind: "lead", label: "Päring vidinast (võlg) · " + address.replace(/,.*$/, ""), ref: row.id });
   }
-  // e-kiri ainult firma enda aadressidele: konto e-post või sama firmadomeeni aadress (mitte võõrastele, et vidinat ei saaks spämmiks kasutada)
-  const [{ data: team }, { data: co }] = await Promise.all([db.from("profiles").select("email").eq("company_id", w.company_id), db.from("companies").select("web").eq("id", w.company_id).single()]);
-  const own = (team || []).map((t: { email: string }) => String(t.email || "").toLowerCase()).filter(isEmail);
-  // lubatud: konto e-post või firma kodulehe domeeni aadress (nt info@firma.ee, kui koduleht on firma.ee)
-  let webHost = "";
-  try { webHost = new URL(/^https?:\/\//.test(co?.web || "") ? co!.web : "https://" + (co?.web || "")).hostname.replace(/^www\./, "").toLowerCase(); } catch { /* */ }
-  const domains = new Set(webHost && own.some((e) => e.endsWith("@" + webHost)) ? [webHost] : []);
-  const wanted = String(w.notify_email || "").split(",").map((x: string) => x.trim().toLowerCase()).filter(isEmail);
-  let to = wanted.filter((e) => own.includes(e) || domains.has(e.split("@")[1])).slice(0, 3);
-  if (!to.length) to = own.slice(0, 1);
+  // vidina pildisoov: firma saab kirja alles koos pildiga (widget-place saadab selle)
+  if (b.pending_image) { await db.from("leads").update({ delivered: { paid, pending_image: true } }).eq("id", row.id); return json({ ok: true, tok: row.tok }); }
+  const to = await ownerEmails(w.company_id, w.notify_email);
   const m = lead.measures;
   const html = `<div style="font:15px/1.5 system-ui,sans-serif;color:#16130F;max-width:560px">
     <h2 style="margin:0 0 8px">Uus päring: ${esc(address.replace(/,.*$/, ""))} · ${esc(name)}</h2>
@@ -83,5 +76,5 @@ Deno.serve(async (req) => {
     try { const r = await tfetch(w.webhook_url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...lead, id: row.id, company: c?.name, created_at: row.created_at }), redirect: "manual" }, 5000); hook = r.status; } catch { hook = "error"; }
   }
   await db.from("leads").update({ delivered: { mail, hook, paid } }).eq("id", row.id);
-  return json({ ok: true });
+  return json({ ok: true, tok: row.tok });
 });

@@ -91,12 +91,12 @@ const SIZES = new Set(["auto", "1:1", "2:3", "3:2", "3:4", "4:3", "4:5", "5:4", 
 export const safeSize = (s: unknown) => (typeof s === "string" && SIZES.has(s) ? s : "auto");
 
 /** Kie.ai pildimudel: loob ülesande, ootab tulemust ja tagastab pildi URL-i. */
-export async function kieImage(prompt: string, imageUrls: string[], size = "auto"): Promise<string> {
+export async function kieImage(prompt: string, imageUrls: string[], size = "auto", modelOverride?: string): Promise<string> {
   const key = env("KIE_API_KEY");
   if (!key) throw new Error("KIE_API_KEY puudub");
   const base = env("KIE_API_BASE", "https://api.kie.ai/api/v1");
   // Testitud: nano-banana-2-1 (4 Kie krediiti ≈ 0,02 €, ~15 s). Mudeli saab vahetada ilma koodi muutmata.
-  const model = env("KIE_MODEL", "nano-banana-2-1");
+  const model = modelOverride || env("KIE_MODEL", "nano-banana-2-1");
   const input: Record<string, unknown> = { prompt };
   if (model.startsWith("google/")) {
     Object.assign(input, { output_format: "jpeg", image_size: safeSize(size) });
@@ -201,6 +201,18 @@ export async function sendMail(to: string[], subject: string, html: string, repl
     }, 10000);
     return { ok: r.ok, status: r.status };
   } catch { return { ok: false, status: 0 }; }
+}
+/** Firma e-posti aadressid teavitusteks: konto e-post või firma domeeni aadress (mitte võõrastele). */
+export async function ownerEmails(companyId: string, notify: string | null | undefined): Promise<string[]> {
+  const db = admin();
+  const [{ data: team }, { data: co }] = await Promise.all([db.from("profiles").select("email").eq("company_id", companyId), db.from("companies").select("web").eq("id", companyId).single()]);
+  const own = (team || []).map((t: { email: string }) => String(t.email || "").toLowerCase()).filter(isEmail);
+  let webHost = "";
+  try { webHost = new URL(/^https?:\/\//.test(co?.web || "") ? co!.web : "https://" + (co?.web || "")).hostname.replace(/^www\./, "").toLowerCase(); } catch { /* */ }
+  const domains = new Set(webHost && own.some((e) => e.endsWith("@" + webHost)) ? [webHost] : []);
+  const wanted = String(notify || "").split(",").map((x) => x.trim().toLowerCase()).filter(isEmail);
+  const to = wanted.filter((e) => own.includes(e) || domains.has(e.split("@")[1])).slice(0, 3);
+  return to.length ? to : own.slice(0, 1);
 }
 export const esc = (s: unknown) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]!));
 export const isEmail = (s: string) => /^[^\s@<>"',;]{1,64}@[^\s@<>"',;]{1,190}\.[a-z]{2,24}$/i.test(s);
