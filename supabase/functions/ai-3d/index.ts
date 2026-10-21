@@ -43,6 +43,38 @@ async function muKey() {
   return k;
 }
 
+/** Sama Nano Banana 2.1 puhastus MuAPI kaudu (varuvariant, kui Kie-l pole raha või see ei vasta). */
+async function muClean(prompt: string, url: string): Promise<string> {
+  const key = await muKey();
+  // nano-banana-edit: testitud 21.10 (~20 s, 0,03 $). MuAPI nano-banana-2-1-edit jäi samal päeval ajapiirangusse.
+  const model = env("MUAPI_CLEAN_MODEL", "nano-banana-edit");
+  const r = await tfetch(`${MUAPI()}/${model}`, {
+    method: "POST", headers: { "x-api-key": key, "Content-Type": "application/json" },
+    body: JSON.stringify({ prompt, images_list: [url] }),
+  }, 30000);
+  const j = await r.json().catch(() => ({}));
+  if (!j?.request_id) throw new Error("MuAPI puhastus: " + JSON.stringify(j).slice(0, 200));
+  const t0 = Date.now();
+  while (Date.now() - t0 < 110_000) {
+    await new Promise((res) => setTimeout(res, 3000));
+    const pr = await tfetch(`${MUAPI()}/predictions/${encodeURIComponent(j.request_id)}/result`, { headers: { "x-api-key": key } }, 15000);
+    const raw = await pr.json().catch(() => ({}));
+    const p = raw?.detail && typeof raw.detail === "object" ? raw.detail : raw; // vea korral tuleb vastus "detail" sees
+    if (p?.status === "failed") throw new Error("MuAPI puhastus: " + String(p?.error || "failed").slice(0, 200));
+    if (p?.status === "completed" && p.outputs?.[0]) return String(p.outputs[0]);
+  }
+  throw new Error("MuAPI puhastus: ajapiirang");
+}
+
+/** Puhastus: CLEAN_PROVIDER=kie (vaikimisi) proovib Kie't ja vea korral MuAPI-t; =muapi kasutab kohe MuAPI-t. */
+async function cleanOne(prompt: string, url: string): Promise<{ url: string; via: string }> {
+  if (env("CLEAN_PROVIDER", "kie") !== "muapi") {
+    try { return { url: await kieImage(prompt, [url], "auto"), via: "kie" }; }
+    catch (e) { console.warn("ai-3d: Kie puhastus ebaõnnestus, kasutan MuAPI-t:", (e as Error).message.slice(0, 160)); }
+  }
+  return { url: await muClean(prompt, url), via: "muapi" };
+}
+
 async function startTripo(images: string[]): Promise<{ id: string; cost: number; model: string }> {
   const common = {
     pbr: true,
@@ -172,7 +204,8 @@ export async function handler(req: Request): Promise<Response> {
     if (r.status !== "pending" || r.stage !== "modelling" || !r.ext_id) return json(view(r));
     try {
       const pr = await tfetch(`${MUAPI()}/predictions/${encodeURIComponent(r.ext_id)}/result`, { headers: { "x-api-key": await muKey() } }, 15000);
-      const p = await pr.json().catch(() => ({}));
+      const raw = await pr.json().catch(() => ({}));
+      const p = raw?.detail && typeof raw.detail === "object" ? raw.detail : raw; // MuAPI vea vastus on "detail" sees
       if (p?.status === "failed") throw new Error("Tripo: " + String(p?.error || "failed").slice(0, 200));
       if (p?.status !== "completed") return json(view(r));
       const glb = (p.outputs || []).find((u: string) => /\.glb(\?|$)/i.test(u));
@@ -264,14 +297,16 @@ export async function handler(req: Request): Promise<Response> {
   try {
     const ins = await Promise.all(photos.map((u, i) => uploadDataUrl(u, `${me.companyId}/in/${id}-${i}`)));
     // puhastused paralleelselt; tulemus meie kausta ILMA firma logota (logo ei tohi mudeli tekstuuri sattuda)
+    const vias: string[] = [];
     const cleaned = await Promise.all(ins.map(async (u, i) => {
-      const k = await kieImage(prompt, [u], "auto");
-      return await storeImage(k, `${me.companyId}/3d/${id}-${i}.jpg`);
+      const k = await cleanOne(prompt, u);
+      vias[i] = k.via;
+      return await storeImage(k.url, `${me.companyId}/3d/${id}-${i}.jpg`);
     }));
     const tr = await startTripo(cleaned);
     await db.from("renders").update({ stage: "modelling", ext_id: tr.id, input_urls: cleaned }).eq("id", id);
     // kulu admini ülevaatesse: Kie n × ~0,02 $ + Tripo
-    await db.from("ai_usage").insert({ company_id: me.companyId, kind: "3d", model: "nano-banana-2-1+" + tr.model, cost_usd: 0.02 * cleaned.length + tr.cost }).then(() => {}, () => {});
+    await db.from("ai_usage").insert({ company_id: me.companyId, kind: "3d", model: "nano-banana-2-1(" + [...new Set(vias)].join("/") + ")+" + tr.model, cost_usd: vias.reduce((a, v) => a + (v === "muapi" ? 0.03 : 0.02), 0) + tr.cost }).then(() => {}, () => {});
     return json({ id, status: "pending", stage: "modelling", cleaned, credits, subject, sides: S.slots });
   } catch (e) {
     await refund(id);
