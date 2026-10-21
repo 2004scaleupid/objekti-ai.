@@ -23,7 +23,7 @@ Deno.serve(async (req) => {
       body: JSON.stringify({ model: env("ANTHROPIC_MODEL", "claude-haiku-5-5"), max_tokens: 600, system, messages: history }),
     }, 45000);
     const j = await r.json().catch(() => ({}));
-    if (!r.ok) return fail("AI-abiline ei vastanud, proovi uuesti", 502);
+    if (!r.ok) { console.error("anthropic", r.status, JSON.stringify(j).slice(0, 300)); return fail("AI-abiline ei vastanud, proovi uuesti", 502); }
     return json({ text: (j.content || []).map((c: { text?: string }) => c.text || "").join("") });
   } catch { return fail("AI-abiline ei vastanud, proovi uuesti", 502); }
 });

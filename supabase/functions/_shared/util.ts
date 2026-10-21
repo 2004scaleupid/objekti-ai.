@@ -1,6 +1,5 @@
 // Vaade3D: ühised abifunktsioonid kõigile Edge Functionitele
 import { createClient, SupabaseClient } from "npm:@supabase/supabase-js@2.45.4";
-import { Image } from "npm:imagescript@1.3.0";
 
 export const cors = {
   "Access-Control-Allow-Origin": "*",
@@ -124,6 +123,10 @@ export async function brand(bytes: Uint8Array, logoUrl: string): Promise<Uint8Ar
     const lr = await tfetch(logoUrl, {}, 8000);
     const lb = new Uint8Array(await lr.arrayBuffer());
     if (lb.length > 3_000_000) return bytes;
+    // pildikogu laetakse alles siin, et see ei saaks ühtegi teist funktsiooni katki teha
+    // NB: aadress peab olema kirjas otse (mitte muutujas), muidu Supabase ei pane seda funktsiooni kaasa
+    // deno-lint-ignore no-explicit-any
+    const { Image } = await import("https://deno.land/x/imagescript@1.3.0/mod.ts") as any;
     const base = await Image.decode(bytes);
     const logo = await Image.decode(lb);
     const W = base.width, H = base.height;

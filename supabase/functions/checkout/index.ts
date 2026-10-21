@@ -21,6 +21,7 @@ Deno.serve(async (req) => {
   const b = await body(req, 10_000).catch(() => ({} as Record<string, unknown>));
   const pk = PACKS[String(b.pack)];
   if (!pk) return fail("bad pack");
+  if (!env("STRIPE_SECRET_KEY")) return fail("Maksed on veel seadistamata. Kirjuta info@vaade3d.ee", 503);
   const back = safeReturn(b.return_url);
   const f = new URLSearchParams({
     mode: "payment", "success_url": back + "#paid={CHECKOUT_SESSION_ID}", "cancel_url": back + "#cancel",

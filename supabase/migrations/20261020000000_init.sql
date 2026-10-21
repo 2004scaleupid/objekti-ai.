@@ -431,3 +431,12 @@ begin
   return -d;
 end $$;
 revoke all on function public.apply_chargeback(text,int,text,text) from public, anon, authenticated;
+
+-- karmistus (rakendatud ka päris projektis)
+create index if not exists renders_company_ix on public.renders(company_id, created_at desc);
+revoke all on function public.handle_new_user() from public, anon, authenticated;
+alter function public.storage_urls_ok(text[]) set search_path = public, pg_temp;
+revoke all on function public.my_company() from public, anon;
+revoke all on function public.is_admin() from public, anon;
+grant execute on function public.my_company() to authenticated, service_role;
+grant execute on function public.is_admin() to authenticated, service_role;
