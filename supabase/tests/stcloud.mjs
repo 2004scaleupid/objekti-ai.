@@ -32,6 +32,7 @@ ok(await until(()=>{const s=acct.studio[0];return s&&!s.msgs[s.msgs.length-1].pe
 const r1=await E(()=>{const m=acct.studio[0].msgs;return {out:m[1].out,err:m[1].err,base:acct.studio[0].base};});
 ok(r1.out&&r1.out.length===2&&/storage\/v1\/object\/public\/renders/.test(r1.out[0])&&!r1.err,'2 varianti serverist',r1);
 ok(bal()===b0-2,'server võttis 2 krediiti',[b0,bal()]);
+const rs1=await E(()=>document.getElementById('stRes').textContent);ok(rs1.includes('−2 krediiti')&&rs1.includes('saldo '+String(bal()).replace('.',',')+' krediiti'),'chatis kulu ja serveri saldo',rs1);
 // 2) jätkamine valitud pildiga (1 tulemus, sisend = eelmine tulemus)
 await page.fill('#stIn','Tee katus punaseks');await page.click('#stSend');
 ok(await until(()=>{const s=acct.studio[0];return !s.msgs[s.msgs.length-1].pending;},20000),'teine muudatus valmis');

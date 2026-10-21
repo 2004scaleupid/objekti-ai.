@@ -690,6 +690,12 @@ body.cvm .panel>*:not(#cvPanel){display:none!important}
 .stcmpbar{width:calc(3px*var(--iz,1));margin-left:calc(-1.5px*var(--iz,1))}.stcmpbar::after{transform:translate(-50%,-50%) scale(var(--iz,1))}
 .stview .stbusy{border-radius:14px;z-index:5}
 .stmk .lb{font:600 11px var(--mono);color:var(--muted);align-self:center;margin-right:2px}
+.stresb{width:100%;max-width:860px;margin:0 auto;display:flex;align-items:center;flex-wrap:wrap;gap:6px 8px;font:500 13px var(--display);color:var(--muted)}
+.stresb b{color:var(--ink);font-weight:600}.stresb .cr{font:600 11.5px var(--mono);background:var(--paper);border:1px solid var(--line);border-radius:999px;padding:3px 9px;color:var(--ink);white-space:nowrap}
+.stresb .cr.m{color:var(--accent);border-color:rgba(229,72,45,.35)}.stresb.err b{color:var(--accent)}
+.stresb .dot{width:8px;height:8px;border-radius:50%;background:#2F9E5B;flex:none}.stresb.err .dot{background:var(--accent)}.stresb.wait .dot{background:#F2B705;animation:stpulse 1s ease-in-out infinite}
+@keyframes stpulse{50%{opacity:.35}}@media (prefers-reduced-motion:reduce){.stresb.wait .dot{animation:none}}
+.sth .cr{font:600 11px var(--mono);color:var(--muted)}
 .stnoimg{flex:1;display:grid;place-items:center;color:var(--muted);font-size:14px}
 @media (max-width:820px){.strail{position:sticky;top:0;z-index:25;box-shadow:0 4px 10px rgba(22,19,15,.06)}.ststage{min-height:62vh;padding:10px 10px 0}.stview{min-height:38vh}.stback{font-size:0;padding:0 6px}.stback svg{width:18px;height:18px}.sttop .ghost.sm{white-space:nowrap}.sttop{padding:6px 10px}.studio:not(.fresh) .stdock{padding-left:10px;padding-right:10px}.stzoomc button{min-width:34px;height:34px}}
 .pwf{position:relative;display:block}.pwf input{width:100%;box-sizing:border-box;padding-right:46px!important}
@@ -1029,6 +1035,7 @@ body.cvm .panel>*:not(#cvPanel){display:none!important}
       <div class="st3d" id="st3d" hidden></div>
       <div class="stdock" id="stDock">
         <div class="stdrop" id="stDrop" hidden><b>Lohista pilt siia</b><span>JPG, PNG või WebP</span></div>
+        <div class="stresb" id="stRes" role="status" hidden></div>
         <div class="stbox" id="stBox">
           <div class="stfiles" id="stFiles" hidden></div>
           <button type="button" class="stup" id="stUp"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="15" rx="2"/><circle cx="9" cy="11" r="2"/><path d="m21 17-5-5-8 8"/></svg><span><b id="stUpT">Lisa pilt</b><small id="stUpS">Lohista siia, kleebi või vali failist</small></span></button>
@@ -3225,7 +3232,7 @@ function stRender(){const th=stTheme(STU.tpl),s=stSess(),stage=!!(s&&(s.base||s.
   $('stChips').innerHTML=ON.map(t=>`<button type="button" class="stchip" data-t="${t.id}" aria-pressed="${t.id===STU.tpl}">${ticon(t,16)}<span>${stEsc(t.id==='vaba'?'Vaba idee':t.name)}</span></button>`).join('');
   $('stChips').querySelectorAll('.stchip').forEach(b=>b.onclick=()=>{if(b.dataset.t!==STU.tpl)openStudio(b.dataset.t);});
   $('stStage').hidden=!stage;
-  stRenderStyle();stRenderProd();stRenderFiles();stRenderFilm();stShowImg();stRenderPanel();stRenderRail();stRenderSugg();stRenderMk();p3Render();stSync();}
+  stRenderStyle();stRenderProd();stRenderFiles();stRenderFilm();stShowImg();stRenderPanel();stRenderRail();stRenderSugg();stRenderMk();stRenderRes();p3Render();stSync();}
 function stShowImg(){const s=stSess(),im=$('stImg'),src=s&&s.base?stAiImg(s.base):'';$('stBusy').hidden=!STU.busy;
   $('stBusyT').textContent=STU.busy?(STU.busyN>1?'AI teeb 2 varianti…':'AI teeb pilti…'):'';
   if(!src){im.removeAttribute('src');STU.cur='';STU.nat=null;$('stSvg').innerHTML='';$('stCanvas').style.visibility='hidden';stHint();return;}
@@ -3237,6 +3244,14 @@ function stShowImg(){const s=stSess(),im=$('stImg'),src=s&&s.base?stAiImg(s.base
 function stRenderFilm(){const s=stSess(),L=s?(s.imgs||[]):[],f=$('stFilm');f.hidden=L.length<2;let v=0;
   f.innerHTML=L.map((x,i)=>{const u=stAiImg(x.src);if(!u)return '';const lb=x.k==='up'?'Foto':'V'+(++v);return `<button type="button" data-f="${i}" aria-pressed="${s.base===x.src}" title="${x.k==='up'?'Sinu foto':'AI versioon '+v}"><img src="${stEsc(u)}" alt=""><span>${lb}</span></button>`;}).join('');
   f.querySelectorAll('[data-f]').forEach(b=>b.onclick=()=>{if(STU.busy)return;s.base=L[+b.dataset.f].src;STU.cmp=false;stSave();stRender();});}
+const stKr=x=>{const v=Math.round(Number(x||0)*100)/100;return String(v).replace('.',',')+' '+(v===1?'krediit':'krediiti');};
+function stCrTxt(m){if(!m||m.cr==null)return '';if(m.err)return m.ref?'krediidid tagastati'+(m.bal!=null?' · saldo '+stKr(m.bal):''):'';return (m.cr>0?'−'+stKr(m.cr):'paketis, krediite ei võetud')+(m.bal!=null?' · saldo '+stKr(m.bal):'');}
+function stSpent(s){return (s&&s.msgs||[]).reduce((a,m)=>a+(m.role==='a'&&!m.err&&!m.pending&&m.cr>0?m.cr:0),0);}
+function stRenderRes(){const el=$('stRes'),s=stSess();if(!el)return;const m=s&&s.msgs.length?s.msgs[s.msgs.length-1]:null;
+  if(!m||m.role!=='a'||$('stStage').hidden){el.hidden=true;el.innerHTML='';return;}el.hidden=false;
+  if(m.pending){el.className='stresb wait';el.innerHTML=`<span class="dot"></span><b>AI teeb ${m.n>1?'2 varianti':'pilti'}…</b>${m.cr!=null?`<span class="cr">${m.cr>0?stEsc(stKr(m.cr)):'paketis'}</span>`:''}`;return;}
+  if(m.err){el.className='stresb err';el.innerHTML=`<span class="dot"></span><b>Ei õnnestunud.</b><span>${stEsc(m.err)}</span>${m.ref?`<span class="cr">${stEsc(stCrTxt(m))}</span>`:''}`;return;}
+  const n=(m.out||[]).length;el.className='stresb';el.innerHTML=`<span class="dot"></span><b>Valmis${n>1?': '+n+' varianti':''}.</b>${m.cr!=null?`<span class="cr m">${stEsc(m.cr>0?'−'+stKr(m.cr):'paketis')}</span>${m.bal!=null?`<span class="cr">saldo ${stEsc(stKr(m.bal))}</span>`:''}`:''}<span>Kirjuta, mida veel muuta.</span>`;}
 function stMkName(m,lb,i,s){const P=prodList();if(isArea(m))return 'ala '+lb;if(m.t==='point')return 'punkt '+lb;if(m.t==='prod'){const k=P.findIndex(p=>p.id===m.pid);return k>=0?'toode '+(k+1):'';}return '';}
 function stRenderMk(){const s=stSess(),box=$('stMk');if(!s||!s.base||!s.marks.length){box.hidden=true;box.innerHTML='';return;}const L=stLabels(s.marks);
   const items=s.marks.map((m,i)=>({m,n:stMkName(m,L[i],i,s),lb:m.t==='prod'?'T':L[i]})).filter(x=>x.n);box.hidden=!items.length;
@@ -3311,7 +3326,7 @@ function stMkDesc(m,lb,s){const P=prodList();if(m.t==='brush')return ['Ala '+lb,
 function stRenderPanel(){if(!$('stPanel'))return;if(stTheme(STU.tpl).p3)return p3Panel();const th=stTheme(STU.tpl),T=th.T||{},s=stSess(),k=stKind(),P=prodList(),hasImg=!!(s&&s.base);
   let html=`<div class="stcard"><h3>${T.icon?ticon(T,18):''}${stEsc(T.id==='vaba'?'Vaba idee':T.name||'Töö')}</h3>`;
   html+=k==='addr'?`<span class="pr">3D-objektivaade · ${stEsc(priceTxt('obj'))}</span>`:th.soon?`<span class="pr">Tuleb peagi</span>`:`<span class="pr">Pildi muutmine · ${stEsc(priceTxt('design'))}${th.need==='opt'&&!hasImg?` · pilt tekstist · ${stEsc(priceTxt('pic'))}`:''}</span>`;
-  html+=`<span class="fhint">Saldo: ${String(acct.credits).replace('.',',')} krediiti</span></div>`;
+  const spent=stSpent(s);html+=`<span class="fhint">Saldo: ${stEsc(stKr(acct.credits))}${spent?` · selles töös kulunud ${stEsc(stKr(spent))}`:''}</span></div>`;
   if(k!=='addr')html+=p3EntryHtml(T,s,hasImg);
   if(hasImg){const L=stLabels(s.marks);
     html+=`<div class="stcard"><h3>Märgid</h3>${s.marks.length?`<div class="stleg">${s.marks.map((m,i)=>{const [a,b]=stMkDesc(m,L[i],s),lb=m.t==='prod'?'T':m.t==='arrow'?'↗':m.t==='text'?'T':m.t==='ruler'?'↔':L[i];return `<div class="li"><i style="background:${stEsc(m.c)};${m.c==='#FFFFFF'||m.c==='#F2B705'?'color:#16130F':''}">${stEsc(lb)}</i><span>${stEsc(a)} <small>${stEsc(b)}</small></span><button type="button" data-del="${i}" aria-label="Kustuta ${stEsc(a)}">×</button></div>`;}).join('')}</div><p>Kirjuta all näiteks „Pane alale 1 päikesepaneelid“ või „Tee punktist A punkti B kõnnitee“. Märgid ise pildile ei jää.</p>`
@@ -3319,8 +3334,8 @@ function stRenderPanel(){if(!$('stPanel'))return;if(stTheme(STU.tpl).p3)return p
   if(th.prod||(hasImg&&P.length)){const real=P.some(x=>!x.sample);
     html+=`<div class="stcard"><h3>Sinu tooted</h3><p>Klõpsa tootel, et lisada tekstile „toode N“, või märgi koht Toode-tööriistaga.</p><div class="stprods">${P.map((p,i)=>`<button type="button" class="pp" data-pn="${i+1}"><i>${i+1}</i>${p.imgs&&p.imgs[0]?`<img src="${stEsc(p.imgs[0])}" alt="">`:''}<span>${stEsc(p.name)}<small>${stEsc([p.W&&p.L?p.W+' × '+p.L+' m':'',p.sample?'näidis':''].filter(Boolean).join(' · '))}</small></span></button>`).join('')}</div><button type="button" class="ghost sm" id="stProdSet">${real?'Halda tooteid':'Lisa oma toode'}</button></div>`;}
   if(s&&s.msgs.length){html+=`<div class="stcard"><h3>Ajalugu</h3><div class="sthist">${s.msgs.map(m=>{if(m.role==='u')return `<div class="sth"><div class="q">${stEsc(m.text||'(ilma tekstita)')}${m.marks?` <small style="opacity:.7">· ${m.marks} märki</small>`:''}</div></div>`;
-      if(m.pending)return `<div class="sth"><span class="p">AI teeb pilti…</span></div>`;if(m.err)return `<div class="sth"><span class="e">${stEsc(m.err)}</span></div>`;
-      const out=(m.out||[]).filter(u=>stAiImg(u));return `<div class="sth"><div class="r">${out.map(u=>`<button type="button" data-g="${stEsc(u)}" aria-pressed="${s.base===u}" title="Jätka selle pildiga"><img src="${stEsc(stAiImg(u))}" alt=""></button>`).join('')}${m.demo?'<small style="color:var(--muted);align-self:center">demo</small>':''}</div></div>`;}).join('')}</div></div>`;}
+      if(m.pending)return `<div class="sth"><span class="p">AI teeb pilti…</span></div>`;if(m.err)return `<div class="sth"><span class="e">${stEsc(m.err)}</span>${m.ref?`<span class="cr">${stEsc(stCrTxt(m))}</span>`:''}</div>`;
+      const out=(m.out||[]).filter(u=>stAiImg(u));return `<div class="sth"><div class="r">${out.map(u=>`<button type="button" data-g="${stEsc(u)}" aria-pressed="${s.base===u}" title="Jätka selle pildiga"><img src="${stEsc(stAiImg(u))}" alt=""></button>`).join('')}${m.demo?'<small style="color:var(--muted);align-self:center">demo</small>':''}</div>${m.cr!=null?`<span class="cr">${stEsc(stCrTxt(m))}</span>`:''}</div>`;}).join('')}</div></div>`;}
   html+=`<div class="stcard"><h3>Nii saad parima tulemuse</h3><ul class="sttips">${k==='addr'?'<li>Vali aadress soovituste hulgast, siis on maja kindlasti õige.</li><li>3D-vaates saad katuse ja seinte mõõdud ning esituspildi.</li>':'<li>Märgi täpselt ala, mida muuta: AI muudab ainult seda.</li><li>Üks muudatus korraga annab parima tulemuse.</li><li>Mõõtmiseks tõmba joon üle ukse ja ütle selle pikkus, siis näed teisi mõõte meetrites.</li><li>Võrdle-nupuga näed enne ja pärast kõrvuti.</li>'}</ul></div>`;
   $('stPanel').innerHTML=html;
   $('stPanel').querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>{stPush();s.marks.splice(+b.dataset.del,1);STU.sel=-1;stSave();stRenderMarks();});
@@ -3369,25 +3384,26 @@ async function stSend(){if($('stSend').disabled)return;const th=stTheme(STU.tpl)
   const pk=stPriceKind();if(acct.credits<price(pk)&&!await needCredits(price(pk),T&&T.id!=='vaba'?T.name:'Vaba idee'))return;
   let s=stSess();if(!s)s=stNewSession();
   const prods=kind==='place'?stProdRefs(text,s):[],refs=STU.files.map(f=>f.src),roles=[],images=kind==='pic'?[]:[s.base];
+  const first=!(s.imgs||[]).some(x=>x.k==='ai'),n=kind==='design'&&first?2:1;
+  if((!s.title||s.title==='Uus töö')&&text)s.title=text.slice(0,48);
+  s.msgs.push({role:'u',text,marks:s.marks.length,d:Date.now()});const am={role:'a',pending:1,n,cr:price(pk),d:Date.now()};s.msgs.push(am);
+  $('stIn').value='';stAuto();STU.busy=true;STU.busyN=n;STU.cmp=false;stSave();stRender();
   let comp=null;if(kind!=='pic'&&s.marks.length){try{comp=await stComposite(s);}catch(e){comp=null;}}
   if(comp){images.push(comp);roles.push(`Image ${images.length} is the SAME photo with the user's markings drawn on top. Use it only to see where the changes go.`);}
   const per=prods.length>1?1:3;prods.forEach((p,i)=>{const im=(p.imgs||[]).slice(0,per).filter(Boolean);if(!im.length)return;const a=images.length+1;im.forEach(u=>{if(images.length<5)images.push(u);});const b=images.length;if(b>=a)roles.push(`Image${b>a?'s':''} ${a}${b>a?'–'+b:''} show product ${prodList().findIndex(x=>x.id===p.id)+1} (${stClean(p.name)}).`);});
   refs.forEach(u=>{if(images.length<5){images.push(u);roles.push(`Image ${images.length} is a reference the user added (use it for materials, colours or style).`);}});
-  const first=!(s.imgs||[]).some(x=>x.k==='ai'),n=kind==='design'&&first?2:1;
   const prompt=stPrompt2({kind,T,text,style:STU.style,roles,s,prods});
-  if((!s.title||s.title==='Uus töö')&&text)s.title=text.slice(0,48);
-  s.msgs.push({role:'u',text,marks:s.marks.length,d:Date.now()});const am={role:'a',pending:1,n,d:Date.now()};s.msgs.push(am);
-  $('stIn').value='';stAuto();STU.busy=true;STU.busyN=n;STU.cmp=false;stSave();stRender();
   const label=(T&&T.id!=='vaba'?T.name:'Vaba idee')+(prods.length?' · '+prods.map(p=>p.name).join(', '):'');
   try{charge(label,pk);renderAcct();
-    if(CLOUD&&CL.cid){const r=await clFn('ai-image',{kind,prompt,images:images.filter(Boolean),label,tpl:STU.tpl,n,size:'auto'});am.out=(r.urls&&r.urls.length?r.urls:[r.url]).filter(Boolean);}
+    if(CLOUD&&CL.cid){const r=await clFn('ai-image',{kind,prompt,images:images.filter(Boolean),label,tpl:STU.tpl,n,size:'auto'});am.out=(r.urls&&r.urls.length?r.urls:[r.url]).filter(Boolean);if(typeof r.credits==='number'){acct.credits=r.credits;am.bal=r.credits;}}
     else{await new Promise(r=>setTimeout(r,1600));am.out=stDemoOut(text,s.base);am.demo=1;}
     if(!am.out.length)throw new Error('AI ei tagastanud pilti');
     s.imgs=s.imgs||[];am.out.forEach(u=>s.imgs.push({src:u,k:'ai'}));s.imgs=s.imgs.slice(-16);s.base=am.out[0];s.thumb=s.base;
     if(s.marks.length){stPush();s.marks=[];}STU.sel=-1;STU.files=[];
     am.text=am.out.length>1?'2 varianti':'Valmis';acct.tplUse=acct.tplUse||[];acct.tplUse.push({d:today(),t:STU.tpl});}
-  catch(e){am.err=clErr(e)+(CLOUD&&CL.cid?' Krediidid tagastati.':'');if(!$('stIn').value)$('stIn').value=text;toast(am.err);}
-  finally{delete am.pending;STU.busy=false;stSave();if(CLOUD&&CL.cid)clRefresh();if(!$('studio').hidden&&STU.sid===s.id)stRender();}}
+  catch(e){am.err=clErr(e);if(CLOUD&&CL.cid)am.ref=1;else if(am.cr>0){acct.credits=+(acct.credits+am.cr).toFixed(2);am.ref=1;}if(!$('stIn').value)$('stIn').value=text;toast(am.err+(am.ref?' Krediidid tagastati.':''));}
+  finally{delete am.pending;STU.busy=false;const cl=CLOUD&&CL.cid;if(!cl&&am.bal==null)am.bal=acct.credits;stSave();renderAcct();const here=()=>!$('studio').hidden&&STU.sid===s.id;if(here())stRender();
+    if(cl){try{await clRefresh();}catch(_){}if(am.bal==null||am.err){am.bal=acct.credits;stSave();}if(here()){stRenderRes();stRenderPanel();}}}}
 
 /* ---------- Fotod → 3D-mudel (sama subjektide tabel on serveris: supabase/functions/ai-3d) ---------- */
 const P3D={
