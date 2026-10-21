@@ -735,6 +735,8 @@ body:not(.cvm) #mSeg{display:none}
 .sterr{color:var(--accent);font-size:13.5px}.stm .crl{font:600 11px var(--mono);color:var(--muted)}
 .sttyping{display:inline-flex;gap:4px;padding:6px 2px}.sttyping i{width:7px;height:7px;border-radius:50%;background:var(--muted);animation:stpulse 1s ease-in-out infinite}.sttyping i:nth-child(2){animation-delay:.15s}.sttyping i:nth-child(3){animation-delay:.3s}
 .stzoom{position:fixed;inset:0;z-index:140;background:rgba(15,12,10,.86);display:flex;align-items:center;justify-content:center;padding:24px;cursor:zoom-out}.stzoom img{max-width:100%;max-height:100%;border-radius:12px}
+.stedback{border:1px solid var(--line);background:var(--paper);color:var(--ink);font-size:13px;height:34px;padding:0 12px 0 8px}.stedback:hover{border-color:var(--ink)}
+.studio.editing .sttn{cursor:pointer}.studio.editing .sttn:hover{color:var(--accent)}
 .stedbar{display:flex;align-items:center;gap:10px;font-size:13.5px;flex-wrap:wrap}.stedbar b{font:700 14px var(--display)}.stedbar span{color:var(--muted)}
 .stdone{border:0;background:var(--ink);color:var(--paper);border-radius:10px;height:34px;padding:0 14px;font:700 13px var(--display);cursor:pointer}
 .stf .op{display:block;width:100%;height:100%;border:0;padding:0;background:none;cursor:pointer;position:relative}
@@ -1089,7 +1091,7 @@ body.p3emb{background:transparent;margin:0;padding:0;overflow:hidden}body.p3emb 
       </div>
       <div class="stthread" id="stThread" hidden aria-live="polite"></div>
       <div class="ststage" id="stStage" hidden>
-        <div class="stedbar" id="stEdBar"><b id="stEdT">Pilt 1</b><span id="stEdS">Märgi vasakult tööriistaga, mida muuta. Siis kirjuta all, mida teha.</span><span class="stsp"></span><button type="button" class="stdone" id="stEdDone">✓ Valmis</button></div>
+        <div class="stedbar" id="stEdBar"><button type="button" class="stback stedback" id="stEdBack" title="Tagasi töölauale (Esc)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>Töölaud</button><b id="stEdT">Pilt 1</b><span id="stEdS">Märgi vasakult tööriistaga, mida muuta. Siis kirjuta all, mida teha.</span><span class="stsp"></span><button type="button" class="stdone" id="stEdDone">✓ Valmis</button></div>
         <div class="stview" id="stView">
           <div class="stcanvas" id="stCanvas"><img id="stImg" alt="Töö pilt" draggable="false"><svg id="stSvg" class="stsvg" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"></svg>
             </div>
@@ -3301,7 +3303,7 @@ document.addEventListener('keydown',e=>{if($('studio').hidden)return;if(STU.edit
   if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==='z'&&!typing){e.preventDefault();e.shiftKey?stRedo():stUndo();return;}
   if(typing||e.metaKey||e.ctrlKey||e.altKey)return;const s=stSess();if(!s||!s.base)return;
   if((e.key==='Delete'||e.key==='Backspace')&&STU.sel>=0){e.preventDefault();stPush();s.marks.splice(STU.sel,1);STU.sel=-1;stSave();stRenderMarks();return;}
-  if(e.key==='Escape'){STU.sel=-1;stPopClose();stRenderMarks();return;}
+  if(e.key==='Escape'){if(STU.sel<0&&!$('stPopEl')&&STU.edit!=null){stEditDone();return;}STU.sel=-1;stPopClose();stRenderMarks();return;}
   const t=ST_TOOLS.find(x=>x&&x.k&&x.k.length===1&&x.k.toLowerCase()===e.key.toLowerCase());if(t){e.preventDefault();stToolClick(t.id);}});
 /* põhivaade */
 function stRender(){const th=stTheme(STU.tpl),s=stSess();if(STU.edit!=null&&!(s&&s.imgs&&s.imgs[STU.edit]))STU.edit=null;if(s)stPointMain(s);
@@ -3333,7 +3335,7 @@ function stShowImg(){const s=stSess(),im=$('stImg'),src=s&&s.base?stAiImg(s.base
 function stRenderFilm(){const s=stSess(),T=s?(s.tray||[]):[],f=$('stFilm');f.hidden=STU.edit==null||T.length<2;
   f.innerHTML=T.map((ix,n)=>{const x=s.imgs[ix],u=x&&stAiImg(x.src);if(!u)return '';return `<button type="button" data-f="${ix}" aria-pressed="${STU.edit===ix}" title="Märgi pilti ${n+1}"><img src="${stEsc(u)}" alt=""><span>${n+1}</span></button>`;}).join('');
   f.querySelectorAll('[data-f]').forEach(b=>b.onclick=()=>{if(STU.busy)return;stEdit(+b.dataset.f);});}
-$('stEdDone').onclick=()=>stEditDone();
+$('stEdDone').onclick=()=>stEditDone();$('stEdBack').onclick=()=>stEditDone();$('stTn').onclick=()=>{if(STU.edit!=null)stEditDone();};
 const stKr=x=>{const v=Math.round(Number(x||0)*100)/100;return String(v).replace('.',',')+' '+(v===1?'krediit':'krediiti');};
 function stCrTxt(m){if(!m||m.cr==null)return '';if(m.err)return m.ref?'krediidid tagastati'+(m.bal!=null?' · saldo '+stKr(m.bal):''):'';return (m.cr>0?'−'+stKr(m.cr):'paketis, krediite ei võetud')+(m.bal!=null?' · saldo '+stKr(m.bal):'');}
 function stSpent(s){return (s&&s.msgs||[]).reduce((a,m)=>a+(m.role==='a'&&!m.err&&!m.pending&&m.cr>0?m.cr:0),0);}
