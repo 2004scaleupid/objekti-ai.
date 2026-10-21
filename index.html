@@ -3426,7 +3426,7 @@ async function stAddFiles(list){const th=stTheme(STU.tpl);if(th.need==='addr'){t
     const q=await stQuality(src),s1=stSess();if(q&&s1&&s1.imgs[ix]){s1.imgs[ix].q=q;if(q.lvl!=='ok'&&(!warn||(q.lvl==='bad'&&warn.q.lvl!=='bad')))warn={n:s1.tray.indexOf(ix)+1,q};}}
   if(added)stSave();
   if(!added)return;stRender();const n=(stSess().tray||[]).length;
-  if(warn){const i=warn.q.iss.find(x=>x[0]==='bad')||warn.q.iss[0];toast(`Pilt ${warn.n}: ${i[1]}. ${i[2]}`);}else if(!acct.stTipSeen){acct.stTipSeen=1;save();toast('Pilt lisatud. Klõpsa pildil, et märkida, mida muuta, või kirjuta kohe ja vajuta Genereeri.');}else toast(added>1?added+' pilti lisatud':'Lisatud: pilt '+n);
+  if(warn){const i=warn.q.iss[0];toast(`Pilt ${warn.n}: ${i[1].toLowerCase()}, see võib tulemust nõrgendada. ${i[2]} Genereerida saad ikka.`);}else if(!acct.stTipSeen){acct.stTipSeen=1;save();toast('Pilt lisatud. Klõpsa pildil, et märkida, mida muuta, või kirjuta kohe ja vajuta Genereeri.');}else toast(added>1?added+' pilti lisatud':'Lisatud: pilt '+n);
   if(innerWidth>820)$('stIn').focus();}
 function stToStage(){if(innerWidth<=820)setTimeout(()=>{const r=$('studio').getBoundingClientRect();scrollBy({top:r.top-8,behavior:'smooth'});},60);}
 function stAuto(){const i=$('stIn');i.style.height='auto';i.style.height=Math.min(i.scrollHeight,200)+'px';}
@@ -3509,10 +3509,11 @@ async function stQuality(src){try{const img=await stLoadImg(src),k=Math.min(1,51
   const cv=document.createElement('canvas');cv.width=w;cv.height=h;const g=cv.getContext('2d',{willReadFrequently:true});g.drawImage(img,0,0,w,h);const d=g.getImageData(0,0,w,h).data,n=w*h,a=new Float32Array(n);
   let sum=0,clip=0;for(let i=0;i<n;i++){const v=.299*d[i*4]+.587*d[i*4+1]+.114*d[i*4+2];a[i]=v;sum+=v;if(v>250)clip++;}const mean=sum/n;let vs=0;for(let i=0;i<n;i++)vs+=(a[i]-mean)**2;const va=vs/n;
   let ls=0,ls2=0,c=0;for(let y=1;y<h-1;y++)for(let x=1;x<w-1;x++){const i=y*w+x,L=a[i-1]+a[i+1]+a[i-w]+a[i+w]-4*a[i];ls+=L;ls2+=L*L;c++;}const lv=ls2/c-(ls/c)**2,sharp=lv/(va+1);
-  const iss=[];if(sharp<.06)iss.push(['bad','Foto on udune','Hoia telefon paigal ja puuduta ekraanil objekti, et fookus oleks õige.']);else if(sharp<.15)iss.push(['warn','Foto on veidi udune','Teravam foto annab detailsema tulemuse.']);
-  if(mean<55)iss.push(['bad','Foto on liiga tume','Pildista päevavalges või lülita toas tuled põlema.']);else if(clip/n>.25||mean>220)iss.push(['warn','Foto on üle valgustatud','Ära pildista vastu päikest, pilves päev on parim.']);
-  if(mean>=55&&Math.sqrt(va)<22)iss.push(['warn','Foto on hägune või udune ilm','Selge ilmaga tuleb parem tulemus.']);
-  if(Math.max(img.naturalWidth,img.naturalHeight)<900)iss.push(['warn','Pilt on väike','Kasuta originaalfotot, mitte ekraanipilti ega väikest pilti.']);
+  // leebe: hoiatame ainult siis, kui pilt on tõesti halb
+  const iss=[];if(sharp<.03)iss.push(['warn','Foto on väga udune','Teravam foto annab parema tulemuse. Hoia telefon paigal ja puuduta ekraanil objekti.']);
+  if(mean<35)iss.push(['warn','Foto on väga tume','Päevavalges tehtud foto annab parema tulemuse.']);else if(clip/n>.5||mean>240)iss.push(['warn','Foto on väga ülevalgustatud','Ära pildista otse vastu päikest.']);
+  if(mean>=35&&Math.sqrt(va)<12)iss.push(['warn','Fotol on väga vähe detaile','Pildista selge ilmaga ja lähemalt.']);
+  if(Math.max(img.naturalWidth,img.naturalHeight)<400)iss.push(['warn','Pilt on väga väike','Kasuta originaalfotot, mitte väikest pilti.']);
   return {lvl:iss.some(x=>x[0]==='bad')?'bad':iss.length?'warn':'ok',iss};}catch(e){return null;}}
 const ST_GOOD=[['Terav','Hoia telefon paigal ja puuduta objekti, et fookus oleks õige.'],['Päevavalgus','Pilves päev on parim. Ära pildista vastu päikest ega pimedas.'],['Kogu objekt pildil','Jäta servadesse veidi ruumi, ära lõika katust ega nurki ära.'],['Midagi pole ees','Autod, inimesed, oksad ega aed ei tohi muudetavat kohta varjata.'],['Hea nurk','Otse või kergelt nurga alt, umbes silmade kõrguselt. Ära kasuta 0,5× lainurka.'],['Originaalfoto','Mitte ekraanipilt, filter ega tugevalt suumitud pilt.']];
 function stGoodTips(){const t=STU.tpl;return t==='sisek'?[...ST_GOOD.slice(0,1),['Tuled põlema','Lülita toas tuled põlema ja ava kardinad.'],['Pildista nurgast','Nii on näha kaks seina ja põrand.'],['Korista ees olev','Juhtmed, kotid ja väikesed asjad eemalda enne pildistamist.']]:t==='toodehoov'?[...ST_GOOD.slice(0,2),['Maapind näha','Pildista kohast, kust toodet hiljem vaadataks. Koht, kuhu toode tuleb, peab olema vaba ja näha.'],ST_GOOD[4]]:ST_GOOD;}
