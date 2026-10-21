@@ -2,15 +2,21 @@
 
 -- Toote paigalduskoht: määrab kliendi juhendi ja AI juhise (maapind, katus, fassaad, aed/piire, siseruum, ükskõik).
 alter table public.products add column if not exists placement text not null default 'ground';
-alter table public.products drop constraint if exists products_placement_ok;
-alter table public.products add constraint products_placement_ok check (placement in ('ground','roof','facade','fence','indoor','any'));
+do $$ begin
+  if not exists (select 1 from pg_constraint where conname='products_placement_ok') then
+    alter table public.products add constraint products_placement_ok check (placement in ('ground','roof','facade','fence','indoor','any'));
+  end if;
+end $$;
 alter table public.products add column if not exists in_widget boolean not null default true;
 alter table public.products add column if not exists sort int not null default 0;
 
 -- Vidina "toode kliendi juures" seaded (server kontrollib ja piirab iga väärtuse).
 alter table public.widgets add column if not exists place_opts jsonb not null default '{}';
-alter table public.widgets drop constraint if exists widgets_place_opts_ok;
-alter table public.widgets add constraint widgets_place_opts_ok check (jsonb_typeof(place_opts) = 'object' and length(place_opts::text) < 4000);
+do $$ begin
+  if not exists (select 1 from pg_constraint where conname='widgets_place_opts_ok') then
+    alter table public.widgets add constraint widgets_place_opts_ok check (jsonb_typeof(place_opts) = 'object' and length(place_opts::text) < 4000);
+  end if;
+end $$;
 grant update (place_opts) on public.widgets to authenticated;
 
 -- Päringu märk: seob kliendi päringu ja tema pildid (ilma, et klient peaks sisse logima).
@@ -36,10 +42,9 @@ create table if not exists public.widget_requests (
 );
 create index if not exists widget_requests_company_ix on public.widget_requests(company_id, created_at desc);
 alter table public.widget_requests enable row level security;
-drop policy if exists wr_read on public.widget_requests;
-create policy wr_read on public.widget_requests for select using (company_id = my_company());
-drop policy if exists wr_upd on public.widget_requests;
-create policy wr_upd on public.widget_requests for update using (company_id = my_company()) with check (company_id = my_company());
-revoke insert, update, delete on public.widget_requests from anon, authenticated;
-grant select on public.widget_requests to authenticated;
-grant update (seen) on public.widget_requests to authenticated;
+-- firma näeb ainult oma pildisoove; lisab ja muudab ainult server (pole insert/update/delete poliitikat)
+do $$ begin
+  if not exists (select 1 from pg_policies where tablename='widget_requests' and policyname='wr_read') then
+    create policy wr_read on public.widget_requests for select using (company_id = my_company());
+  end if;
+end $$;
