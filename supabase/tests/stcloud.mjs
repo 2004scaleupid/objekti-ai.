@@ -27,7 +27,7 @@ await page.fill('#lEmail','stuudio@firma.ee');await page.fill('#lPass','parool12
 const cid=sql(`select company_id from profiles where email='stuudio@firma.ee'`);const bal=()=>+sql(`select coalesce(sum(delta),0) from credit_ledger where company_id='${cid}'`);
 await page.click('.tcard[data-t="vaba"]');await W(500);ok(await E(()=>!document.getElementById('studio').hidden&&document.getElementById('studio').classList.contains('fresh')),'Vaba idee avab tühja stuudio');
 // 1) foto + tekst -> design, 2 varianti
-await page.click('#stDemo');await W(200);const b0=bal();await page.click('#stSend');
+await page.click('#stDemo');await W(400);await page.fill('#stIn','Lisa katusele päikesepaneelid');const b0=bal();await page.click('#stSend');
 ok(await until(()=>{const s=acct.studio[0];return s&&!s.msgs[s.msgs.length-1].pending;},20000),'pilt valmis');
 const r1=await E(()=>{const m=acct.studio[0].msgs;return {out:m[1].out,err:m[1].err,base:acct.studio[0].base};});
 ok(r1.out&&r1.out.length===2&&/storage\/v1\/object\/public\/renders/.test(r1.out[0])&&!r1.err,'2 varianti serverist',r1);
@@ -37,12 +37,18 @@ await page.fill('#stIn','Tee katus punaseks');await page.click('#stSend');
 ok(await until(()=>{const s=acct.studio[0];return !s.msgs[s.msgs.length-1].pending;},20000),'teine muudatus valmis');
 const r2=await E(()=>{const m=acct.studio[0].msgs;return {out:m[3].out,err:m[3].err};});ok(r2.out&&r2.out.length===1,'jätkamine: 1 tulemus',r2);
 const last=sql(`select input_urls[1] from renders where company_id='${cid}' order by created_at desc limit 1`);ok(r1.out.includes(last)||/renders/.test(last),'jätkamisel kasutati eelmist AI-pilti',last);
+// 2b) märgitud ala -> server saab foto + märgitud koopia, prompt kirjeldab ala
+await E(()=>{stSess().marks.push({t:'rect',c:'#E5482D',a:[.2,.2],b:[.6,.4]});stRenderMarks();});await page.fill('#stIn','Pane alale 1 päikesepaneelid');await page.click('#stSend');
+ok(await until(()=>{const s=acct.studio[0];return !s.msgs[s.msgs.length-1].pending;},20000),'märgiga muudatus valmis');
+const mk=sql(`select array_length(input_urls,1)||'|'||prompt from renders where company_id='${cid}' order by created_at desc limit 1`);
+ok(mk.startsWith('2|')&&/Area 1 \("ala 1"\)/.test(mk)&&/x 20–60%/.test(mk)&&/Never draw the markings/.test(mk),'märgid: 2 sisendpilti ja ala kirjeldus promptis',mk.slice(0,300));
+ok(await E(()=>stSess().marks.length===0&&!document.getElementById('stFilm').hidden),'pärast saatmist märgid puhtad, versioonide riba näha');
 // 3) ainult tekst -> pic
-await page.click(await E(()=>innerWidth>1180)?'#stNew':'#stNew2');await W(300);await page.fill('#stIn','Moodne puitmaja männimetsas');const b1=bal();await page.click('#stSend');
+await page.click('#stNew2');await W(300);await page.fill('#stIn','Moodne puitmaja männimetsas');const b1=bal();await page.click('#stSend');
 ok(await until(()=>{const s=acct.studio[0];return s.msgs.length===2&&!s.msgs[1].pending;},20000),'tekstist pilt valmis');
 ok(bal()===b1-4&&sql(`select kind from renders where company_id='${cid}' order by created_at desc limit 1`)==='pic','tekstist pilt: kind pic, 4 krediiti',[b1,bal()]);
 // 4) teemat hoidev prompt (sisekujundus)
-await page.click(await E(()=>innerWidth>1180)?'#stNew':'#stNew2');await W(300);await page.click('.stchip[data-t="sisek"]');await W(200);
+await page.click('#stNew2');await W(300);await page.click('.stchip[data-t="sisek"]');await W(200);
 ok(await E(()=>document.getElementById('stSend').disabled),'sisekujundus ilma fotota: saatmine keelatud');
 await page.setInputFiles('#stFile',{name:'tuba.jpg',mimeType:'image/jpeg',buffer:Buffer.from(fs.readFileSync(D+'tpl.png'))}).catch(()=>{});await W(800);
 await page.fill('#stIn','Skandinaavia stiil');await page.click('#stSend');
@@ -50,7 +56,7 @@ ok(await until(()=>{const s=acct.studio[0];return s.msgs.length===2&&!s.msgs[1].
 const pr=sql(`select prompt from renders where company_id='${cid}' order by created_at desc limit 1`);ok(/Sisekujundus/.test(pr)&&/Skandinaavia stiil/.test(pr),'prompt sisaldab teemat ja soovi');
 ok(sql(`select tpl from renders where company_id='${cid}' order by created_at desc limit 1`)==='sisek','render märgitud mallile sisek');
 // 5) aadressitöö -> 3D-vaade
-await page.click(await E(()=>innerWidth>1180)?'#stNew':'#stNew2');await W(300);await page.click('.stchip[data-t="katus"]');await W(200);await page.fill('#stIn','Kibuvitsa tee 9');await W(300);await page.keyboard.press('Enter');await W(1200);
+await page.click('#stNew2');await W(300);await page.click('.stchip[data-t="katus"]');await W(200);await page.fill('#stIn','Kibuvitsa tee 9');await W(300);await page.keyboard.press('Enter');await W(1200);
 ok(await E(()=>!document.getElementById('dlg').hidden||!document.getElementById('body').hidden),'aadress avab objekti loomise');
 ok(!errs.length,'JS vigu pole',errs);
 console.log(`\nKOKKU: ${pass} läbi, ${fails.length} ebaõnnestus`);if(fails.length)console.log(fails.map(f=>' - '+f).join('\n'));await b.close();
