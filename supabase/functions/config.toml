@@ -1,3 +1,6 @@
 
 [functions.admin-stats]
 verify_jwt = true
+
+[functions.admin-data]
+verify_jwt = true

@@ -282,7 +282,7 @@ body.cvm .panel>*:not(#cvPanel){display:none!important}
 .feed{display:flex;flex-direction:column;gap:0;padding:6px 16px}
 .fi{display:grid;grid-template-columns:12px minmax(0,1fr) auto;gap:10px;align-items:start;padding:10px 0;border-bottom:1px solid var(--line);font-size:13.5px}
 .fi:last-child{border-bottom:0}.fi time{font:500 11.5px var(--mono);color:var(--muted)}
-.dot{width:9px;height:9px;border-radius:50%;margin-top:5px;background:var(--muted)}.dot.purchase{background:var(--ok)}.dot.obj{background:#E5482D}.dot.pic{background:#2A7FBF}.dot.promo{background:#16130F}
+.dot{width:9px;height:9px;border-radius:50%;margin-top:5px;background:var(--muted)}.dot.d-purchase{background:var(--ok)}.dot.d-obj{background:#E5482D}.dot.d-pic{background:#2A7FBF}.dot.d-lead{background:#E5A82D}.dot.d-promo{background:#16130F}
 .fbw{position:fixed;right:max(20px,env(safe-area-inset-right,0px));bottom:max(20px,env(safe-area-inset-bottom,0px));z-index:70;width:min(380px,calc(100vw - 32px));max-height:calc(100vh - 40px);overflow:auto;background:var(--paper);border:1px solid var(--line);border-radius:14px;box-shadow:0 18px 50px rgba(0,0,0,.22);padding:18px;display:flex;flex-direction:column;gap:10px}
 .fbw h3{margin:0;font-size:17px;letter-spacing:-.01em;padding-right:24px}
 .fbx{position:absolute;top:10px;right:12px;border:0;background:none;font-size:20px;cursor:pointer;color:var(--muted)}
@@ -849,7 +849,7 @@ body.cvm .panel>*:not(#cvPanel){display:none!important}
       </section>
 
       <section class="apane" data-apane="activity" hidden>
-        <div class="ahead"><h2>Tegevuste logi</h2><select id="aF" aria-label="Tegevuse tüüp"><option value="all">Kõik tegevused</option><option value="signup">Registreerimised</option><option value="purchase">Ostud</option><option value="obj">Objektivaated</option><option value="pic">Esituspildid</option><option value="promo">Koodid</option></select></div>
+        <div class="ahead"><h2>Tegevuste logi</h2><select id="aF" aria-label="Tegevuse tüüp"><option value="all">Kõik tegevused</option><option value="signup">Registreerimised</option><option value="purchase">Ostud</option><option value="obj">Objektivaated</option><option value="pic">Esituspildid</option><option value="lead">Päringud</option><option value="promo">Koodid</option></select></div>
         <div class="feed card" id="feed"></div>
       </section>
 
@@ -2312,11 +2312,18 @@ const SAMPLE=(()=>{const r=rnd(4242),now=Date.now(),first=['Andres','Kadri','Mar
 function meUser(){const ev=[{t:'signup',d:(acct.hist[0]||{d:today()}).d}];if(acct.promo)ev.push({t:'promo',d:today(),code:acct.promo.code});
   acct.hist.forEach(h=>{if((h.c>0&&/Ostetud/.test(h.t))||/^Pakett /.test(h.t))ev.push({t:'purchase',d:h.d,cr:h.c,eur:parseFloat(String(h.e).replace(',','.'))||0});else if(h.c<0)ev.push({t:/Esituspilt|Disain/.test(h.t)?'pic':'obj',d:h.d,cr:-h.c});});
   return{niche:acct.niche||'',source:acct.source||'',fb:(acct.feedback||[]).map(f=>({...f})),id:'me',name:(acct.name||'Sina')+' (sina)',company:acct.company||'',email:acct.email,joined:ev[0].d,code:acct.promo?acct.promo.code:'',ev,bal:acct.credits,paid:ev.filter(e=>e.t==='purchase').reduce((a,e)=>a+e.eur,0)};}
-function allUsers(){return[meUser(),...SAMPLE];}
+function allUsers(){return ADM?ADM.users:[meUser(),...SAMPLE];}
+/* admini päris andmed (ainult päris rakenduses admin-kontol); demo kasutab näidiseid */
+let ADM=null,admAt=0,admBusy=false;
+const AP=()=>ADM?ADM.partners:acct.partners,APO=()=>ADM?ADM.payouts:acct.payouts;
+function admEsc(v){return typeof v==='string'?v.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])):Array.isArray(v)?v.map(admEsc):(v&&typeof v==='object')?Object.fromEntries(Object.entries(v).map(([k,x])=>[k,admEsc(x)])):v;}
+async function loadAdm(force){if(!(typeof CLOUD!=='undefined'&&CLOUD&&CL.admin)||admBusy)return;if(!force&&ADM&&Date.now()-admAt<60000)return;
+  admBusy=true;try{const d=await clFn('admin-data');ADM=admEsc(d);admAt=Date.now();if(ADM.partners[0]&&!ADM.partners.some(p=>p.code===admPartner))admPartner=ADM.partners[0].code;}catch(e){toast('Admini andmed: '+clErr(e));}finally{admBusy=false;}
+  if(!$('admin').hidden)renderAdmin();}
 function usesOf(u){return u.ev.filter(e=>e.t==='obj'||e.t==='pic');}
-function commissionOf(u){if(!u.code)return{n:0,disc:0,win:0,val:0,comm:0};const us=usesOf(u),Rr=R();let val=0;
+function commissionOf(u){if(!u.code)return{n:0,disc:0,win:0,val:0,comm:0};const us=usesOf(u),Rr=R();let val=0;if(ADM){val=u.commBase||0;return{n:us.length,disc:Math.min(us.length,Rr.discN),win:us.length,val,comm:val*Rr.comm/100};}
   us.slice(0,commCap()).forEach(e=>val+=e.cr*Rr.eur);return{n:us.length,disc:Math.min(us.length,Rr.discN),win:Math.min(us.length,commCap()),val,comm:val*Rr.comm/100};}
-function partnerStats(code){const cl=allUsers().filter(u=>u.code===code);let comm=0,val=0,rev=0;cl.forEach(u=>{const c=commissionOf(u);comm+=c.comm;val+=c.val;rev+=u.paid;});
+function partnerStats(code){if(ADM){const p=ADM.partners.find(x=>x.code===code)||{},cl=ADM.users.filter(u=>u.code===code);return{clients:cl,comm:p.earned||0,val:p.value||0,rev:cl.reduce((a,u)=>a+u.paid,0),paidOut:p.paidOut||0,due:p.due||0};}const cl=allUsers().filter(u=>u.code===code);let comm=0,val=0,rev=0;cl.forEach(u=>{const c=commissionOf(u);comm+=c.comm;val+=c.val;rev+=u.paid;});
   const paidOut=acct.payouts.filter(p=>p.code===code).reduce((a,p)=>a+p.amount,0);return{clients:cl,comm,val,rev,paidOut,due:Math.max(0,comm-paidOut)};}
 /* ---------- small SVG charts ---------- */
 const tip=document.createElement('div');tip.className='ctip';tip.hidden=true;document.body.appendChild(tip);
@@ -2364,7 +2371,7 @@ async function loadSvc(force){if(svcBusy)return;if(!force&&svcData&&Date.now()-s
 function renderOverview(){loadSvc();const U=allUsers(),D=days(admRange),from=D[0],inR=e=>e.d>=from;
   const ev=U.flatMap(u=>u.ev.map(e=>({...e,u})));const R_=ev.filter(inR);
   const rev=R_.filter(e=>e.t==='purchase').reduce((a,e)=>a+e.eur,0),sign=R_.filter(e=>e.t==='signup').length,obj=R_.filter(e=>e.t==='obj').length,pic=R_.filter(e=>e.t==='pic').length;
-  const act=new Set(R_.filter(e=>e.t==='obj'||e.t==='pic').map(e=>e.u.id)).size,promoU=U.filter(u=>u.code).length,due=acct.partners.reduce((a,p)=>a+partnerStats(p.code).due,0);
+  const act=new Set(R_.filter(e=>e.t==='obj'||e.t==='pic').map(e=>e.u.id)).size,promoU=U.filter(u=>u.code).length,due=AP().reduce((a,p)=>a+partnerStats(p.code).due,0);
   const K=[['Tulu',eur(rev)],['Uued kasutajad',sign],['Aktiivsed kasutajad',act],['Objektivaated',obj],['Esituspildid',pic],['Partneritele maksmata',eur(due)],['Sooduskoodiga kasutajaid',promoU+' / '+U.length]];
   $('kpis').innerHTML=K.map(k=>`<div class="kpi"><small>${k[0]}</small><b>${k[1]}</b></div>`).join('');
   const by=t=>D.map(d=>R_.filter(e=>e.t===t&&e.d===d).reduce((a,e)=>a+(t==='purchase'?e.eur:1),0));
@@ -2379,18 +2386,20 @@ function renderOverview(){loadSvc();const U=allUsers(),D=days(admRange),from=D[0
 function userRows(){const q=($('uQ').value||'').toLowerCase(),f=$('uF').value;return allUsers().filter(u=>(!q||(u.name+u.company+u.email).toLowerCase().includes(q))&&(f==='all'||(f==='promo'&&u.code)||(f==='nopromo'&&!u.code)||(f==='paid'&&u.paid>0)));}
 function renderUsers(){const rows=userRows();$('uRows').innerHTML=rows.map(u=>{const us=usesOf(u),last=u.ev[u.ev.length-1].d;return `<tr><td><b>${u.name}</b><small class="td2">${u.email}</small></td><td>${u.company}</td><td>${u.joined.split('-').reverse().join('.')}</td><td>${SRCN[u.source]||'—'}</td><td>${u.code?`<span class="codepill">${u.code}</span>`:'—'}</td><td>${us.length}</td><td>${eur(u.paid)}</td><td>${u.bal}</td><td>${last.split('-').reverse().join('.')}</td></tr>`;}).join('');
   $('uCount').textContent=rows.length+' kasutajat';}
-function renderPartners(){$('pCards').innerHTML=acct.partners.map(p=>{const s=partnerStats(p.code),active=s.clients.filter(u=>usesOf(u).length>0).length;return `<button type="button" class="pcard2" data-code="${p.code}" aria-pressed="${p.code===admPartner}">
+function renderPartners(){$('pCards').innerHTML=AP().map(p=>{const s=partnerStats(p.code),active=s.clients.filter(u=>usesOf(u).length>0).length;return `<button type="button" class="pcard2" data-code="${p.code}" aria-pressed="${p.code===admPartner}">
     <div class="pc-top"><span class="codepill big">${p.code}</span><span class="fhint">${p.owner}</span></div>
     <div class="pc-grid"><div><small>Kliente</small><b>${s.clients.length}</b></div><div><small>Aktiivseid</small><b>${active}</b></div><div><small>Klientide ostud</small><b>${eur(s.rev)}</b></div><div><small>Teenitud komisjon</small><b>${eur(s.comm)}</b></div><div><small>Maksmata</small><b class="acc">${eur(s.due)}</b></div></div></button>`;}).join('');
   document.querySelectorAll('.pcard2').forEach(b=>b.onclick=()=>{admPartner=b.dataset.code;renderPartners();});
-  const p=acct.partners.find(x=>x.code===admPartner)||acct.partners[0];if(!p){$('pdRows').innerHTML='';return;}admPartner=p.code;
+  const p=AP().find(x=>x.code===admPartner)||AP()[0];if(!p){$('pdRows').innerHTML='';return;}admPartner=p.code;
   const s=partnerStats(p.code);$('pdTitle').textContent=`${p.code} · ${p.owner} · ${s.clients.length} klienti`;
   $('pdRows').innerHTML=s.clients.map(u=>{const c=commissionOf(u);return `<tr><td><b>${u.name}</b><small class="td2">${u.company}</small></td><td>${u.joined.split('-').reverse().join('.')}</td><td>${c.n}</td><td>${c.disc} / ${R().discN}</td><td>${R().commN>0?c.win+' / '+R().commN:c.win+' · alatiseks'}</td><td>${eur(c.val)}</td><td><b>${eur(c.comm)}</b></td></tr>`;}).join('')||'<tr><td colspan="7">Selle koodiga pole veel ühtegi klienti.</td></tr>';}
-function renderPayouts(){$('poRows').innerHTML=acct.partners.map(p=>{const s=partnerStats(p.code),can=s.due>=R().min;return `<tr><td><b>${p.owner}</b><small class="td2">${p.email||'e-post lisamata'}</small></td><td><span class="codepill">${p.code}</span></td><td>${p.iban||'—'}</td><td>${eur(s.comm)}</td><td>${eur(s.paidOut)}</td><td><b class="acc">${eur(s.due)}</b></td><td>${can?`<button type="button" class="apply sm" data-pay="${p.code}">Märgi makstuks</button>`:`<span class="fhint">alla ${eur(R().min)}</span>`}</td></tr>`;}).join('');
-  document.querySelectorAll('[data-pay]').forEach(b=>b.onclick=async()=>{const p=acct.partners.find(x=>x.code===b.dataset.pay),s=partnerStats(p.code),amt=+s.due.toFixed(2);
+function renderPayouts(){$('poRows').innerHTML=AP().map(p=>{const s=partnerStats(p.code),can=s.due>=R().min;return `<tr><td><b>${p.owner}</b><small class="td2">${p.email||'e-post lisamata'}</small></td><td><span class="codepill">${p.code}</span></td><td>${p.iban||'—'}</td><td>${eur(s.comm)}</td><td>${eur(s.paidOut)}</td><td><b class="acc">${eur(s.due)}</b></td><td>${can?`<button type="button" class="apply sm" data-pay="${p.code}">Märgi makstuks</button>`:`<span class="fhint">alla ${eur(R().min)}</span>`}</td></tr>`;}).join('');
+  document.querySelectorAll('[data-pay]').forEach(b=>b.onclick=async()=>{const p=AP().find(x=>x.code===b.dataset.pay),s=partnerStats(p.code),amt=+s.due.toFixed(2);
     const ok=await ask2('Kinnita väljamakse',`${p.owner} · ${eur(amt)}. Tee ülekanne pangas ja märgi see siin makstuks.`,'Märgi makstuks',`<label class="fl" for="poIban">Saaja IBAN<input id="poIban" type="text" value="${p.iban||''}" placeholder="EE00 0000 0000 0000 0000"></label><label class="fl" for="poNote" style="margin-top:10px">Selgitus<input id="poNote" type="text" value="Vaade3D partnerikomisjon ${new Date().toLocaleDateString('et-EE',{month:'long',year:'numeric'})}"></label>`);
-    if(!ok)return;p.iban=$('poIban').value.trim();acct.payouts.push({code:p.code,owner:p.owner,amount:amt,d:today(),note:$('poNote').value.trim()});save();renderPayouts();toast('Väljamakse märgitud · '+eur(amt));});
-  $('poHist').innerHTML=acct.payouts.slice().reverse().map(p=>`<tr><td>${p.d.split('-').reverse().join('.')}</td><td>${p.owner} <span class="codepill">${p.code}</span></td><td><b>${eur(p.amount)}</b></td><td>${p.note||''}</td></tr>`).join('')||'<tr><td colspan="4">Väljamakseid pole veel tehtud.</td></tr>';}
+    if(!ok)return;const iban=$('poIban').value.trim(),note=$('poNote').value.trim();
+    if(ADM){try{if(iban!==p.iban){const {error:e1}=await CL.sb.from('partners').update({iban}).eq('code',p.code);if(e1)throw e1;}const {error}=await CL.sb.from('payouts').insert({code:p.code,amount:amt,note});if(error)throw error;toast('Väljamakse märgitud · '+eur(amt));await loadAdm(true);}catch(e){toast(clErr(e));}return;}
+    p.iban=iban;APO().push({code:p.code,owner:p.owner,amount:amt,d:today(),note});save();renderPayouts();toast('Väljamakse märgitud · '+eur(amt));});
+  $('poHist').innerHTML=APO().slice().reverse().map(p=>`<tr><td>${p.d.split('-').reverse().join('.')}</td><td>${p.owner} <span class="codepill">${p.code}</span></td><td><b>${eur(p.amount)}</b></td><td>${p.note||''}</td></tr>`).join('')||'<tr><td colspan="4">Väljamakseid pole veel tehtud.</td></tr>';}
 /* sample sources + feedback */
 const LIKES=['3D-vaade','Mõõdud ja pinnad','AI-abiline','Esituspilt','Kiirus','Hind','Ei pea objektile sõitma'],FIXES=['Mõõtude täpsus','Katuse kuju','Hind','Kasutamise lihtsus','Rohkem piirkondi','Mobiilivaade','Eksport / PDF'];
 (()=>{const r=rnd(777),SW=[['facebook',24],['google',18],['friend',16],['partner',0],['instagram',9],['tiktok',8],['email',7],['event',5],['other',3]],tot=SW.reduce((a,x)=>a+x[1],0);
@@ -2398,9 +2407,9 @@ const LIKES=['3D-vaade','Mõõdud ja pinnad','AI-abiline','Esituspilt','Kiirus',
   SAMPLE.forEach((u,i)=>{if(u.code)u.source='partner';else{let x=r()*tot;u.source=SW.find(s=>(x-=s[1])<0)[0];}
     u.fb=[];if(usesOf(u).length>=3&&r()<.62){const st=Math.max(1,Math.min(5,Math.round(3.9+(r()-.4)*2.6))),nps=Math.max(0,Math.min(10,Math.round(st*2+(r()-.5)*3)));
       const pick=(a,n)=>a.filter(()=>r()<n);u.fb.push({d:u.ev[Math.min(u.ev.length-1,4)].d,stars:st,nps,like:pick(LIKES,.28),fix:pick(FIXES,st<4?.35:.15),txt:r()<.45?COM[Math.floor(r()*COM.length)]:''});}});})();
-const EVN={signup:'registreerus',purchase:'ostis krediite',obj:'lõi objektivaate',pic:'genereeris esituspildi',promo:'lisas sooduskoodi'};
+const EVN={signup:'registreerus',purchase:'ostis krediite',obj:'lõi objektivaate',pic:'genereeris esituspildi',promo:'lisas sooduskoodi',lead:'sai päringu kodulehelt'};
 function renderActivity(){const f=$('aF').value,ev=allUsers().flatMap(u=>u.ev.map(e=>({...e,u}))).filter(e=>f==='all'||e.t===f).sort((a,b)=>a.d<b.d?1:-1).slice(0,150);
-  $('feed').innerHTML=ev.map(e=>`<div class="fi"><span class="dot ${e.t}"></span><div><b>${e.u.name}</b> ${EVN[e.t]}${e.t==='purchase'?` · ${e.cr} krediiti · ${eur(e.eur)}`:''}${e.t==='promo'?` · <span class="codepill">${e.code}</span>`:''}${(e.t==='obj'||e.t==='pic')?` · ${String(e.cr).replace('.',',')} krediiti`:''}<small class="td2">${e.u.company}</small></div><time>${e.d.split('-').reverse().join('.')}</time></div>`).join('');}
+  $('feed').innerHTML=ev.map(e=>`<div class="fi"><span class="dot d-${e.t}"></span><div><b>${e.u.name}</b> ${e.t==='purchase'&&e.eur<0?'raha tagastati':(EVN[e.t]||e.t)}${e.t==='purchase'?` · ${e.cr} krediiti · ${eur(e.eur)}`:''}${e.t==='lead'?` · ${String(e.cr).replace('.',',')} krediiti`:''}${e.t==='promo'?` · <span class="codepill">${e.code}</span>`:''}${(e.t==='obj'||e.t==='pic')?` · ${String(e.cr).replace('.',',')} krediiti`:''}<small class="td2">${e.u.company}</small></div><time>${e.d.split('-').reverse().join('.')}</time></div>`).join('');}
 function renderRules(){const r=R();$('rDisc').value=r.disc;$('rDiscN').value=r.discN;$('rComm').value=r.comm;$('rCommN').value=r.commN;$('rEur').value=r.eur;$('rMin').value=r.min;
   const d=10*(1-r.disc/100);$('rulesEx').innerHTML=`<b>Näide ühe kliendi kohta</b><ul><li>Esimesed ${r.discN} kasutust maksavad kliendile ${String(d).replace('.',',')} krediiti (${eur(d*r.eur)}), edasi 10 krediiti (${eur(10*r.eur)}).</li>
    <li>${r.commN>0?`Partner saab ${r.comm}% kliendi esimese ${r.commN} kasutuse väärtusest: ${r.discN} × ${eur(d*r.eur*r.comm/100)} + ${Math.max(0,r.commN-r.discN)} × ${eur(10*r.eur*r.comm/100)} = <b>${eur(Math.min(r.discN,r.commN)*d*r.eur*r.comm/100+Math.max(0,r.commN-r.discN)*10*r.eur*r.comm/100)}</b>`:`Partner saab ${r.comm}% <strong>alatiseks</strong> kõigest, mida tema toodud klient kulutab: soodushinnaga objektivaade ${eur(d*r.eur*r.comm/100)}, tavahinnaga ${eur(10*r.eur*r.comm/100)} iga kasutuse kohta. Näiteks firma, kes teeb kuus 20 objektivaadet, toob partnerile ~${eur(20*10*r.eur*r.comm/100)} kuus`} ühe aktiivse kliendi pealt.</li>
@@ -2488,9 +2497,9 @@ if(!acct.tplCut8){const CUT=['paike','moodul','haljastus','varv','aed','ese','to
   SAMPLE.forEach(u=>{let x=r()*tot;u.niche=NW.find(n=>(x-=n[1])<0)[0];const mine=TPL_DEF.filter(t=>t.niche===u.niche||(t.also||[]).includes(u.niche));
     usesOf(u).forEach(e=>{if(r()<.22){e.tpl=null;return;}const pool=e.t==='pic'?TPL_DEF.filter(t=>t.input==='photo'&&(t.niche===u.niche||r()<.3)):mine.filter(t=>t.input==='addr');e.tpl=pool.length?pool[Math.floor(r()*pool.length)].id:null;});});})();
 function tplStats(){const U=allUsers(),st={};TPLS().forEach(t=>st[t.id]={n:0,users:new Set(),rev:0});
-  SAMPLE.forEach(u=>usesOf(u).forEach(e=>{if(e.tpl&&st[e.tpl]){st[e.tpl].n++;st[e.tpl].users.add(u.id);st[e.tpl].rev+=e.cr*R().eur;}}));
-  (acct.tplUse||[]).forEach(e=>{if(st[e.t]){st[e.t].n++;st[e.t].users.add('me');st[e.t].rev+=(tplById(e.t)&&tplById(e.t).input==='photo'?COSTS.design:COSTS.obj)*R().eur;}});return st;}
-function renderTplAdmin(){const st=tplStats(),T=TPLS(),U=allUsers(),tot=Object.values(st).reduce((a,x)=>a+x.n,0),allUses=U.reduce((a,u)=>a+usesOf(u).length,0)+(acct.tplUse||[]).length;
+  (ADM?ADM.users:SAMPLE).forEach(u=>usesOf(u).forEach(e=>{if(e.tpl&&st[e.tpl]){st[e.tpl].n++;st[e.tpl].users.add(u.id);st[e.tpl].rev+=e.cr*R().eur;}}));
+  (ADM?[]:(acct.tplUse||[])).forEach(e=>{if(st[e.t]){st[e.t].n++;st[e.t].users.add('me');st[e.t].rev+=(tplById(e.t)&&tplById(e.t).input==='photo'?COSTS.design:COSTS.obj)*R().eur;}});return st;}
+function renderTplAdmin(){const st=tplStats(),T=TPLS(),U=allUsers(),tot=Object.values(st).reduce((a,x)=>a+x.n,0),allUses=U.reduce((a,u)=>a+usesOf(u).length,0)+(ADM?0:(acct.tplUse||[]).length);
   const top=T.slice().sort((a,b)=>st[b.id].n-st[a.id].n)[0];
   $('tKpis').innerHTML=[['Malle',T.length],['Nähtaval',T.filter(t=>t.on).length],['Kasutusi malliga',tot],['Malliga tehtud',allUses?Math.round(tot/allUses*100)+'%':'—'],['Populaarseim',top?top.name:'—'],['Nišše',new Set(T.map(t=>t.niche)).size]].map(k=>`<div class="kpi"><small>${k[0]}</small><b style="font-size:${String(k[1]).length>14?'16px':'22px'}">${k[1]}</b></div>`).join('');
   hbars($('tUse'),T.map(t=>({k:t.name,v:st[t.id].n,c:t.input==='addr'?'#E5482D':'#2A7FBF'})).sort((a,b)=>b.v-a.v));
@@ -2524,7 +2533,7 @@ async function editTpl(i){const isNew=i<0,t=isNew?{id:'',on:true,name:'',niche:'
 $('tAdd').onclick=()=>editTpl(-1);
 document.addEventListener('change',e=>{if(e.target&&e.target.id==='teIn'){const ph=e.target.value==='photo';$('teShowW').hidden=ph;$('teQW').hidden=ph;$('teStW').hidden=!ph;}});
 $('fbF').onchange=renderFeedback;
-function renderAdmin(tab){tab=tab||document.querySelector('[data-atab][aria-current="true"]').dataset.atab;
+function renderAdmin(tab){tab=tab||document.querySelector('[data-atab][aria-current="true"]').dataset.atab;if(typeof CLOUD!=='undefined'&&CLOUD&&CL.admin&&(!ADM||Date.now()-admAt>60000))loadAdm();
   document.querySelectorAll('[data-atab]').forEach(b=>b.setAttribute('aria-current',b.dataset.atab===tab));document.querySelectorAll('.apane').forEach(p=>p.hidden=p.dataset.apane!==tab);
   ({tpls:renderTplAdmin,roi:renderRoi,feedback:renderFeedback,sources:renderSources,overview:renderOverview,users:renderUsers,partners:renderPartners,payouts:renderPayouts,activity:renderActivity,rules:renderRules})[tab]();}
 document.querySelectorAll('[data-atab]').forEach(b=>b.onclick=()=>renderAdmin(b.dataset.atab));
@@ -2534,11 +2543,12 @@ $('rulesF').onsubmit=e=>{e.preventDefault();const n=id=>Math.max(0,+$(id).value|
 $('addPartner').onclick=async()=>{const ok=await ask2('Lisa partner','Partner saab oma sooduskoodi. Tema kliendid saavad soodustuse ja partner komisjoni programmi reeglite järgi.','Lisa partner',
   `<div style="display:flex;flex-direction:column;gap:10px"><label class="fl" for="npCode">Kood<input id="npCode" type="text" placeholder="NT KATUSEPRO" style="text-transform:uppercase;font-family:var(--mono)"></label><label class="fl" for="npOwner">Partneri nimi<input id="npOwner" type="text"></label><label class="fl" for="npMail">E-post<input id="npMail" type="email"></label><label class="fl" for="npIban">IBAN<input id="npIban" type="text" placeholder="EE00 …"></label></div>`);
   if(!ok)return;const code=($('npCode').value||'').trim().toUpperCase().replace(/[^A-Z0-9]/g,''),owner=($('npOwner').value||'').trim();
-  if(!code||!owner){toast('Sisesta kood ja partneri nimi');return;}if(acct.partners.some(p=>p.code===code)){toast('Selline kood on juba olemas');return;}
+  if(!code||!owner){toast('Sisesta kood ja partneri nimi');return;}if(AP().some(p=>p.code===code)){toast('Selline kood on juba olemas');return;}
+  if(ADM){if(code.length<3||code.length>24){toast('Kood peab olema 3–24 tähte või numbrit');return;}try{const {error}=await CL.sb.from('partners').insert({code,name:owner.slice(0,100),email:$('npMail').value.trim().slice(0,200)||null,iban:$('npIban').value.trim().slice(0,40)||null,active:true});if(error)throw error;admPartner=code;toast('Partner lisatud · '+code);await loadAdm(true);}catch(e){toast(/duplicate/i.test(String(e.message))?'Selline kood on juba olemas':clErr(e));}return;}
   acct.partners.push({code,owner,email:$('npMail').value.trim(),iban:$('npIban').value.trim(),created:today()});admPartner=code;save();syncPromos();renderPartners();toast('Partner lisatud · '+code);};
 function csvOut(name,rows){const esc=v=>`"${String(v).replace(/"/g,'""')}"`;return saveFile(name,new Blob(['\ufeff'+rows.map(r=>r.map(esc).join(';')).join('\n')],{type:'text/csv'}));}
 $('uCsv').onclick=()=>csvOut('kasutajad.csv',[['Nimi','E-post','Ettevõte','Liitus','Kood','Kasutusi','Makstud €','Saldo'],...userRows().map(u=>[u.name,u.email,u.company,u.joined,u.code,usesOf(u).length,u.paid.toFixed(2),u.bal])]).then(()=>toast($('dlMsg').textContent));
-$('poCsv').onclick=()=>csvOut('valjamaksed.csv',[['Partner','Kood','IBAN','Teenitud €','Makstud €','Maksmata €'],...acct.partners.map(p=>{const s=partnerStats(p.code);return[p.owner,p.code,p.iban,s.comm.toFixed(2),s.paidOut.toFixed(2),s.due.toFixed(2)];})]).then(()=>toast($('dlMsg').textContent));
+$('poCsv').onclick=()=>csvOut('valjamaksed.csv',[['Partner','Kood','IBAN','Teenitud €','Makstud €','Maksmata €'],...AP().map(p=>{const s=partnerStats(p.code);return[p.owner,p.code,p.iban,s.comm.toFixed(2),s.paidOut.toFixed(2),s.due.toFixed(2)];})]).then(()=>toast($('dlMsg').textContent));
 $('admM').onclick=()=>show('admin');
 let fbS=0,fbN=null;
 function openFb(){fbS=0;fbN=null;$('fbStars').innerHTML=[1,2,3,4,5].map(i=>`<button type="button" role="radio" aria-checked="false" aria-label="${i} tärni" data-s="${i}">★</button>`).join('');
@@ -2619,7 +2629,7 @@ async function clLoad(){const sb=CL.sb;const {data:{user}}=await sb.auth.getUser
   if(pt){acct.partners.push({code:pt.code,owner:pt.name,email:acct.email,iban:pt.iban||'',created:(pt.created_at||'').slice(0,10),seller:true,cloud:1});clEarn();}
   try{syncPromos();}catch(_){}
   await clLeads();
-  if($('admM'))$('admM').hidden=!CL.admin;if(CL.admin){const ab=document.querySelector('#admin .abanner');if(ab)ab.textContent='Teenuste saldo (Kie.ai ja Claude) on päris andmed. Ülejäänud graafikud ja tabelid näitavad veel näidisandmeid, päris kasutajate statistika tuleb järgmisena.';}
+  if($('admM'))$('admM').hidden=!CL.admin;if(CL.admin){const ab=document.querySelector('#admin .abanner');if(ab)ab.textContent='Päris andmed andmebaasist (uuenevad iga minut). Kulud ja ROI arvutatakse sinu sisestatud ühikuhindadega, AI-teenuste tegelik saldo on ülevaate ülaosas.';}
   CL.snap=clSnap();clRaw('oai_acct',acct);return true;}
 async function clEarn(){const {data}=await CL.sb.rpc('my_partner_earnings');CL.earn=(data&&data[0])||{companies:0,value_eur:0,earned_eur:0,paid_eur:0};if(!$('settings').hidden)try{renderSeller();}catch(_){}}
 
