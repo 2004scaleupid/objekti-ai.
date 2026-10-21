@@ -14,6 +14,18 @@ export const env = (k: string, d = "") => Deno.env.get(k) || d;
 export const admin = (): SupabaseClient =>
   createClient(env("SUPABASE_URL"), env("SUPABASE_SERVICE_ROLE_KEY"), { auth: { persistSession: false } });
 
+/** Serveri saladus: kõigepealt Edge Functioni Secrets, siis andmebaasi krüpteeritud vault (ainult service_role). */
+const secretCache = new Map<string, string>();
+export async function secret(name: string, envKey: string): Promise<string> {
+  const e = env(envKey);
+  if (e) return e;
+  if (secretCache.has(name)) return secretCache.get(name)!;
+  const { data } = await admin().rpc("app_secret", { p_name: name });
+  const v = typeof data === "string" ? data : "";
+  if (v) secretCache.set(name, v);
+  return v;
+}
+
 /** fetch koos ajapiiranguga, et üks aeglane väline teenus ei jääks funktsiooni kinni hoidma. */
 export const tfetch = (url: string, init: RequestInit = {}, ms = 15000) =>
   fetch(url, { ...init, signal: AbortSignal.timeout(ms) });

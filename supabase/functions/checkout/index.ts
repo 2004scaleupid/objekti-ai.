@@ -1,5 +1,5 @@
 // Krediidipaketi ost: Stripe Checkout (kaart, pangalink, Apple Pay).
-import { cors, json, fail, userCompany, env, body, tfetch, rateLimit } from "../_shared/util.ts";
+import { cors, json, fail, userCompany, env, body, tfetch, rateLimit, secret } from "../_shared/util.ts";
 
 export const PACKS: Record<string, { credits: number; eur: number; name: string }> = {
   "100": { credits: 100, eur: 50, name: "Vaade3D · 100 krediiti" },
@@ -21,21 +21,25 @@ Deno.serve(async (req) => {
   const b = await body(req, 10_000).catch(() => ({} as Record<string, unknown>));
   const pk = PACKS[String(b.pack)];
   if (!pk) return fail("bad pack");
-  if (!env("STRIPE_SECRET_KEY")) return fail("Maksed on veel seadistamata. Kirjuta info@vaade3d.ee", 503);
+  const sk = await secret("stripe_secret_key", "STRIPE_SECRET_KEY");
+  if (!sk) return fail("Maksed on veel seadistamata. Kirjuta info@vaade3d.ee", 503);
   const back = safeReturn(b.return_url);
   const f = new URLSearchParams({
     mode: "payment", "success_url": back + "#paid={CHECKOUT_SESSION_ID}", "cancel_url": back + "#cancel",
     "line_items[0][quantity]": "1", "line_items[0][price_data][currency]": "eur",
     "line_items[0][price_data][unit_amount]": String(pk.eur * 100), "line_items[0][price_data][product_data][name]": pk.name,
     "metadata[company_id]": me.companyId, "metadata[pack]": String(b.pack), "client_reference_id": me.companyId,
-    "invoice_creation[enabled]": "true", "locale": "et",
+    "invoice_creation[enabled]": "true", "locale": "et", "metadata[app]": "vaade3d",
+    // kaardiväljavõttel ja kviitungil on näha VAADE3D
+    "payment_intent_data[statement_descriptor_suffix]": "VAADE3D", "payment_intent_data[description]": pk.name,
+    "payment_intent_data[metadata][app]": "vaade3d", "payment_intent_data[metadata][company_id]": me.companyId, "payment_intent_data[metadata][pack]": String(b.pack),
   });
   try {
     const r = await tfetch(env("STRIPE_API_URL", "https://api.stripe.com") + "/v1/checkout/sessions", {
-      method: "POST", headers: { Authorization: `Bearer ${env("STRIPE_SECRET_KEY")}`, "Content-Type": "application/x-www-form-urlencoded" }, body: f,
+      method: "POST", headers: { Authorization: `Bearer ${sk}`, "Content-Type": "application/x-www-form-urlencoded" }, body: f,
     }, 15000);
     const j = await r.json().catch(() => ({}));
-    if (!r.ok || !j.url) return fail("Makselehe avamine ebaõnnestus, proovi uuesti", 502);
+    if (!r.ok || !j.url) { console.error("stripe", r.status, JSON.stringify(j?.error || j).slice(0, 300)); return fail("Makselehe avamine ebaõnnestus, proovi uuesti", 502); }
     return json({ url: j.url });
   } catch { return fail("Makselehe avamine ebaõnnestus, proovi uuesti", 502); }
 });

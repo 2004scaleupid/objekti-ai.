@@ -1,5 +1,5 @@
 // Stripe teavitab makse õnnestumisest -> krediidid lisatakse (ainult üks kord sama makse kohta).
-import { admin, env } from "../_shared/util.ts";
+import { admin, secret } from "../_shared/util.ts";
 
 const PACKS: Record<string, { credits: number; eur: number }> = { "100": { credits: 100, eur: 50 }, "220": { credits: 220, eur: 100 }, "600": { credits: 600, eur: 250 } };
 
@@ -18,13 +18,15 @@ async function verify(raw: string, header: string, secret: string): Promise<bool
 Deno.serve(async (req) => {
   if (req.method !== "POST") return new Response("POST only", { status: 405 });
   const raw = await req.text();
-  if (raw.length > 500_000 || !(await verify(raw, req.headers.get("stripe-signature") || "", env("STRIPE_WEBHOOK_SECRET")))) return new Response("bad signature", { status: 400 });
+  if (raw.length > 500_000 || !(await verify(raw, req.headers.get("stripe-signature") || "", await secret("stripe_webhook_secret", "STRIPE_WEBHOOK_SECRET")))) return new Response("bad signature", { status: 400 });
   const ev = JSON.parse(raw);
   const s = ev?.data?.object || {};
   const okEvent = (ev.type === "checkout.session.completed" && s.payment_status === "paid") || ev.type === "checkout.session.async_payment_succeeded";
   if (okEvent) {
     const md = s.metadata || {}, pk = PACKS[String(md.pack)];
     // summa ja valuuta peavad klappima paketiga (krediidid tulevad meie tabelist, mitte maksest)
+    // sama Stripe'i kontot kasutavad ka teised projektid: ainult Vaade3D maksed
+    if (md.app && md.app !== "vaade3d") return new Response("ignored", { status: 200 });
     if (!pk || s.currency !== "eur" || Number(s.amount_total) !== pk.eur * 100 || !md.company_id) return new Response("ignored", { status: 200 });
     const db = admin();
     const { data: c } = await db.from("companies").select("id").eq("id", md.company_id).maybeSingle();
