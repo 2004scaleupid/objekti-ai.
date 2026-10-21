@@ -26,9 +26,11 @@ const CODE=await api('/rest/v1/rpc/become_seller',{},sS.access_token);
 console.log('müüja kood',CODE);
 
 console.log('\n== Liitumine äpis ==');
-await page.goto('https://app.vaade3d.ee/');await W(2500);
+await page.goto('https://app.vaade3d.ee/#loo-konto');await W(2500);
+ok(await ev(()=>!document.getElementById('upFields').hidden&&document.getElementById('lRefW').hidden&&document.getElementById('gBtn').hidden&&document.getElementById('forgotL').hidden),'#loo-konto: vorm avatud, koodivälja ja Google nuppu pole');
+await page.goto('https://app.vaade3d.ee/#ref='+CODE.toLowerCase());await W(2500);
 ok(await ev(()=>!document.getElementById('login').hidden&&document.getElementById('skipBtn').hidden),'avaneb sisselogimine, demo nupp peidus');
-await ev(()=>setTab(true));await page.fill('#lEmail','mari@katus.ee');await page.fill('#lPass','parool123');await page.fill('#lName','Mari Maasikas');await page.fill('#lComp','Katus OÜ');await page.selectOption('#lNiche',{index:1});await page.selectOption('#lSrc',{index:1});await page.fill('#lRef',CODE.toLowerCase());
+await ev(()=>setTab(true));await page.fill('#lEmail','mari@katus.ee');await page.fill('#lPass','parool123');await page.fill('#lName','Mari Maasikas');await page.fill('#lComp','Katus OÜ');await page.selectOption('#lNiche',{index:1});await page.selectOption('#lSrc',{index:1});ok(await ev(()=>!document.getElementById('lRefW').hidden&&document.getElementById('lRef').readOnly&&document.getElementById('lRef').value),'partneri lingiga: kood lisatud ja lukus');
 await page.click('#lSubmit');ok(await until(()=>!document.getElementById('home').hidden,20000),'konto loodud ja töölaud avanes',await ev(()=>document.getElementById('lErr').textContent));
 const cid=sql(`select company_id from profiles where email='mari@katus.ee'`);const dbBal=()=>+sql(`select coalesce(sum(delta),0) from credit_ledger where company_id='${cid}'`);
 ok(await ev(()=>acct.credits)===30&&dbBal()===30,'saldo 30 tuleb serverist');
