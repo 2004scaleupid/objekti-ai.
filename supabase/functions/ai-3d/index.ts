@@ -31,7 +31,8 @@ export const cleanPrompt = (s: Subject) => BASE_PROMPT.replaceAll("{SUBJECT}", S
 
 // Fotokontrolli vead. Kerged vead lubavad „Jätka ikkagi“, ülejäänud blokeerivad.
 const ISSUES = ["wrong_subject", "different_objects", "cut_off", "duplicate_side", "wrong_side", "backlit", "too_dark", "blurry", "occluded", "too_close", "too_far", "unsupported"];
-const SOFT = new Set(["occluded", "too_far"]);
+// Ainult need blokeerivad: fotodest ei saa üldse üht 3D-mudelit teha. Kõik muu on hoiatus ja kasutaja võib jätkata.
+const SOFT = new Set(["cut_off", "wrong_side", "backlit", "too_dark", "blurry", "occluded", "too_close", "too_far"]);
 const SIDES = ["front", "left", "back", "right"];
 
 async function muKey() {
@@ -100,11 +101,12 @@ const CHECK_SYSTEM = `You check photos before they are turned into a 3D model (o
 Supported subjects: "building" (house, sauna, shed, garden house, garage), "object" (furniture, product, grill, tent, lamp, statue), "vehicle" (car, trailer, boat, motorbike). Rooms/interiors, landscapes and people are "unsupported".
 Check each photo and all photos together:
 1. subject: what is in the photos; are all photos the SAME single thing (else "different_objects"); if it does not match the requested subject use "wrong_subject".
-2. cut_off: the whole thing must be in frame (roof, corners, wheels not cut off).
+2. "cut_off" ONLY if a big part is missing from the frame (more than ~15% of the thing, e.g. a whole corner, half the roof, a wheel). A chimney tip, antenna, gutter or roof edge touching the image border is FINE - do not flag it.
 3. sides: each photo should show the expected side (slot order: front, left, back, right). Two photos of the same side = "duplicate_side"; clearly not the expected side = "wrong_side". Buildings and vehicles need 4 different sides.
 4. light and sharpness: "backlit" (against the sun or blown-out glare), "too_dark", "blurry" (out of focus or motion blur).
 5. "occluded" only if more than ~30% of the thing is hidden (trees, cars, people in front). Small occlusion is fine, it gets cleaned.
-6. "too_close" (only part in frame), "too_far" (thing is small), heavy tilt counts as "wrong_side".
+6. "too_close" (clearly only part of the thing in frame), "too_far" (thing is tiny in the photo), heavy tilt counts as "wrong_side".
+Be lenient: the photos are cleaned by AI and reconstructed afterwards, normal phone photos of the whole thing are good enough. Flag an issue only when it would clearly ruin the 3D model. When in doubt, do NOT flag. Ordinary phone photos with small imperfections must pass with "ok": true.
 Allowed issues: ${ISSUES.join(", ")}.
 Answer ONLY with JSON, no other text:
 {"subject":"building|object|vehicle|unsupported","ok":true|false,"photos":[{"slot":0,"side":"front|left|back|right|unknown","ok":true|false,"issues":[],"tip":"short Estonian tip how to retake, only if not ok"}],"summary":"1-2 short sentences in Estonian for the user"}
