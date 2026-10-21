@@ -11,7 +11,7 @@ Object.entries({
 // ---------- matkitud maailm ----------
 const W = {
   renders: [] as Record<string, unknown>[], spends: [] as string[], refunds: [] as string[], usage: [] as Record<string, unknown>[],
-  calls: [] as string[], productUpd: [] as Record<string, unknown>[], check: {} as Record<string, unknown>, tripo: "processing", kieFail: false, balance: 100,
+  lastAn: null as null | Record<string, unknown>, calls: [] as string[], productUpd: [] as Record<string, unknown>[], check: {} as Record<string, unknown>, tripo: "processing", kieFail: false, balance: 100,
 };
 const res = (b: unknown, status = 200) => new Response(typeof b === "string" ? b : JSON.stringify(b), { status, headers: { "content-type": "application/json" } });
 const eqs = (u: URL) => [...u.searchParams].filter(([, v]) => v.startsWith("eq.")).map(([k, v]) => [k, v.slice(3)]);
@@ -56,7 +56,7 @@ globalThis.fetch = async (input: string | URL | Request, init: RequestInit = {})
   }
   if (u.origin + p === MU + "/predictions/r1/result") return res({ status: W.tripo, outputs: W.tripo === "completed" ? ["http://mu.test/m.glb?x=1"] : [] });
   if (u.origin + p === "http://mu.test/m.glb") return new Response(new Uint8Array(3000));
-  if (u.origin + p === AN + "/v1/messages") return res({ model: "claude-haiku-5-5", usage: { input_tokens: 4000, output_tokens: 200 }, content: [{ type: "text", text: "Siin: " + JSON.stringify(W.check) }] });
+  if (u.origin + p === AN + "/v1/messages") { W.lastAn = JSON.parse(txt); } if (u.origin + p === AN + "/v1/messages") return res({ model: "claude-haiku-5-5", usage: { input_tokens: 4000, output_tokens: 200 }, content: [{ type: "text", text: "Siin: " + JSON.stringify(W.check) }] });
   throw new Error("mock: tundmatu " + m + " " + req.url);
 };
 
@@ -91,7 +91,7 @@ Deno.test("check → start → status → done", async () => {
   assert(String(row.prompt).startsWith("[building] Clean this exact photo for 3D reconstruction of the house."));
   assert(String(row.prompt).includes("heat pump"));
   assertEquals(W.spends.at(-1), s.j.id);
-  assertEquals(W.usage.at(-1)?.model, "nano-banana-2-1+tripo3d-h31-multiview-to-3d");
+  assertEquals(W.usage.at(-1)?.model, "nano-banana-2-1(kie)+tripo3d-h31-multiview-to-3d");
   W.tripo = "processing";
   assertEquals((await call({ action: "status", id: s.j.id })).j.status, "pending");
   W.tripo = "completed";
@@ -176,7 +176,7 @@ Deno.test("subjekti tuvastus 1 fotost ja ese 1 fotoga → image-to-3d", async ()
 Deno.test("fotode arv subjekti järgi", async () => {
   assertEquals((await call({ subject: "building", photos: P4.slice(0, 3), check: "x" })).status, 400);
   assertEquals((await call({ subject: "vehicle", photos: P4.slice(0, 1), check: "x" })).status, 400);
-  assertEquals((await call({ action: "check", subject: "building", photos: [...P4, photo(5)] })).status, 400);
+  assertEquals((await call({ action: "check", subject: "building", photos: [...Array(13).keys()].map(photo) })).status, 400);
   assertEquals((await call({ subject: "boat", photos: P4, check: "x" })).status, 400);
 });
 
@@ -194,4 +194,64 @@ Deno.test("toote 3D-mudel salvestub toote juurde, võõra toote id-d ei arvestat
   const c2 = await call({ action: "check", subject: "object", photos: [photo(2)] });
   const s2 = await call({ subject: "object", photos: [photo(2)], check: c2.j.token, product_id: "voora-firma-toode" });
   assertEquals(W.renders.find((r) => r.id === s2.j.id)!.product_id, null);
+});
+
+// ---------- valikurežiim: rohkem fotosid kui külgi ----------
+const P12 = [...Array(12).keys()].map((i) => photo(100 + i));
+const pick = (sel: Record<string, unknown>, extra: Record<string, unknown> = {}) => ({ subject: "building", selected: sel,
+  photos: Object.entries(sel).map(([side, index]) => ({ side, index, ok: true, issues: [] })), unused: [{ index: 0, reason: "sama külg, uduisem" }], summary: "Valisin parimad.", ...extra });
+
+Deno.test("12 fotot -> AI valib 4, tõend ainult valitud fotodele külgede järjekorras", async () => {
+  W.check = pick({ front: 2, left: 5, back: 7, right: 11 });
+  const c = await call({ action: "check", subject: "building", photos: P12 });
+  assertEquals(c.status, 200);
+  assertEquals(c.j.mode, "pool");
+  assertEquals(c.j.selected, [{ side: "front", index: 2 }, { side: "left", index: 5 }, { side: "back", index: 7 }, { side: "right", index: 11 }]);
+  assertEquals(c.j.unused.length, 8);
+  assertEquals(c.j.unused.find((u: { index: number }) => u.index === 0).reason, "sama külg, uduisem");
+  assert(c.j.ok && c.j.token);
+  // Claude sai nummerdatud fotod ja valikujuhise
+  const msg = (W.lastAn!.messages as { content: { type: string; text?: string }[] }[])[0].content;
+  assertEquals(msg.filter((x) => x.type === "image").length, 12);
+  assert(msg.some((x) => x.text === "Photo 11"));
+  assert(String(W.lastAn!.system).includes("SELECTION MODE"));
+  // start saab ainult valitud 4 õiges järjekorras
+  const sel = [P12[2], P12[5], P12[7], P12[11]];
+  assertEquals((await call({ subject: "building", photos: [P12[0], P12[1], P12[2], P12[3]], check: c.j.token })).status, 409);
+  assertEquals((await call({ subject: "building", photos: [P12[5], P12[2], P12[7], P12[11]], check: c.j.token })).status, 409);
+  assertEquals((await call({ subject: "building", photos: P12, check: c.j.token })).status, 400);
+  assertEquals((await call({ subject: "building", photos: sel, check: c.j.token })).status, 200);
+});
+
+Deno.test("valikurežiim: puuduv külg ja vigased indeksid", async () => {
+  W.check = pick({ front: 2, left: 5, back: null, right: 11 });
+  const c = await call({ action: "check", subject: "building", photos: P12 });
+  assertEquals(c.j.ok, false); assertEquals(c.j.soft, false);
+  assertEquals(c.j.missing, [{ side: "back", tip: "Lisa foto tagaküljelt" }]);
+  assertEquals(c.j.token, null);
+  // sama foto kahele küljele, olematu indeks, number tekstina
+  W.check = pick({ front: 2, left: 2, back: 99, right: "3" });
+  const d = await call({ action: "check", subject: "building", photos: P12 });
+  assertEquals(d.j.selected, [{ side: "front", index: 2 }, { side: "right", index: 3 }]);
+  assertEquals(d.j.missing.map((m: { side: string }) => m.side), ["left", "back"]);
+  assertEquals(d.j.missing[0].tip, "Lisa foto vasakult küljelt");
+});
+
+Deno.test("kasutaja vahetab külje -> tavaline kontroll valitud 4 fotoga", async () => {
+  W.check = good();
+  const mine = [P12[3], P12[5], P12[7], P12[11]];
+  const c = await call({ action: "check", subject: "building", photos: mine });
+  assertEquals(c.j.mode, undefined);
+  assert(c.j.ok && c.j.token);
+  assertEquals((await call({ subject: "building", photos: mine, check: c.j.token })).status, 200);
+});
+
+Deno.test("ese 6 fotost: AI valib ühe -> image-to-3d", async () => {
+  W.check = { subject: "object", selected: { front: 4 }, photos: [{ side: "front", index: 4, ok: true, issues: [] }], unused: [], summary: "" };
+  const P6 = P12.slice(0, 6);
+  const c = await call({ action: "check", subject: "object", photos: P6 });
+  assertEquals(c.j.mode, "pool"); assertEquals(c.j.missing, []); assert(c.j.ok && c.j.token);
+  W.calls.length = 0;
+  assertEquals((await call({ subject: "object", photos: [P6[4]], check: c.j.token })).status, 200);
+  assert(W.calls.includes("POST " + MU + "/tripo3d-h31-image-to-3d"));
 });

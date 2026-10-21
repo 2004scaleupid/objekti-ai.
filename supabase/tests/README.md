@@ -13,4 +13,4 @@ Välised teenused (Kie, Resend, Anthropic, Stripe, EHR) on matkitud failis `gate
 | `mobile2.mjs` | 390 px ja 768 px: ükski vaade ei lähe ekraanist üle |
 
 Testides on teeradade nimed (`/var/tmp/...`, `/home/claude/...`) arenduskeskkonna omad; JWT võti on ainult testi jaoks.
-| `ai3d.test.ts` | Fotod → 3D-mudel ilma päris teenusteta (Supabase, Kie, MuAPI, Anthropic matkitud): check → start → status → done, Tripo/Kie viga → tagastus, kontrollist mööda minek (tõendita, teised fotod, teine subjekt, võltsitud tõend, blokeeriv viga + „Jätka ikkagi“) ei õnnestu. Käivita: `deno test -A --no-config --node-modules-dir=none supabase/tests/ai3d.test.ts` |
+| `ai3d.test.ts` | Fotod → 3D-mudel ilma päris teenusteta (sh valikurežiim: 12 fotot → 4 valitud, puuduv külg, vigased indeksid, kasutaja vahetab külje) (Supabase, Kie, MuAPI, Anthropic matkitud): check → start → status → done, Tripo/Kie viga → tagastus, kontrollist mööda minek (tõendita, teised fotod, teine subjekt, võltsitud tõend, blokeeriv viga + „Jätka ikkagi“) ei õnnestu. Käivita: `deno test -A --no-config --node-modules-dir=none supabase/tests/ai3d.test.ts` |

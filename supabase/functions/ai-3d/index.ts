@@ -144,19 +144,33 @@ Answer ONLY with JSON, no other text:
 {"subject":"building|object|vehicle|unsupported","ok":true|false,"photos":[{"slot":0,"side":"front|left|back|right|unknown","ok":true|false,"issues":[],"tip":"short Estonian tip how to retake, only if not ok"}],"summary":"1-2 short sentences in Estonian for the user"}
 Tips and summary must be in plain Estonian, friendly, concrete (e.g. "Pildista tagakülge siis, kui päike on sinu selja taga.").`;
 
-type Photo = { slot: number; side: string; ok: boolean; issues: string[]; tip?: string };
-async function aiCheck(photos: string[], want: Subject | null) {
-  const content: unknown[] = photos.map((u) => {
+// Valikurežiim: fotosid on rohkem kui külgi (kuni 12). AI valib igale küljele parima, Tripo saab ikka max 4.
+export const MAX_POOL = 12;
+const POOL_SYSTEM = `
+SELECTION MODE: the user uploaded MORE photos than needed. They are numbered 0..N-1 ("Photo i" before each image).
+For each side (front, left, back, right) pick the single BEST photo of that side: the whole thing in frame, sharpest, not backlit, least occluded, closest to straight-on.
+Buildings and vehicles need all 4 sides. An object needs at least "front"; use other sides only if a photo clearly shows a different side.
+Never use the same photo for two sides. If no photo shows a side, set it to null. Photos of a different thing are never selected.
+Answer ONLY with JSON, no other text:
+{"subject":"building|object|vehicle|unsupported","selected":{"front":0,"left":5,"back":null,"right":7},"photos":[{"side":"front","index":0,"ok":true,"issues":[],"tip":"short Estonian tip, only if not ok"}],"unused":[{"index":3,"reason":"very short Estonian reason, e.g. sama külg uduisem"}],"summary":"1-2 short sentences in Estonian"}
+"photos" lists only the selected photos with the same issue rules as above.`;
+const SIDE_TIP = { building: ["Lisa foto esiküljelt", "Lisa foto vasakult küljelt", "Lisa foto tagaküljelt", "Lisa foto paremalt küljelt"], other: ["Lisa foto eest", "Lisa foto vasakult", "Lisa foto tagant", "Lisa foto paremalt"] };
+
+type Photo = { slot: number; side: string; ok: boolean; issues: string[]; tip?: string; index?: number };
+async function aiCheck(photos: string[], want: Subject | null, pool = false) {
+  const content: unknown[] = [];
+  photos.forEach((u, i) => {
     const m = u.match(/^data:(image\/(?:jpeg|png|webp));base64,(.+)$/)!;
-    return { type: "image", source: { type: "base64", media_type: m[1], data: m[2] } };
+    if (pool) content.push({ type: "text", text: `Photo ${i}` });
+    content.push({ type: "image", source: { type: "base64", media_type: m[1], data: m[2] } });
   });
-  content.push({ type: "text", text: (want ? `Requested subject: ${want}. Slots: ${SUBJECTS[want].slots.slice(0, photos.length).map((_, i) => `${i}=${SIDES[i]}`).join(", ")}.` : `No subject chosen yet: detect it from the photo(s).`) + ` Number of photos: ${photos.length}.` });
+  content.push({ type: "text", text: (want ? `Requested subject: ${want}.` + (pool ? "" : ` Slots: ${SUBJECTS[want].slots.slice(0, photos.length).map((_, i) => `${i}=${SIDES[i]}`).join(", ")}.`) : `No subject chosen yet: detect it from the photo(s).`) + ` Number of photos: ${photos.length}.` });
   const r = await tfetch(env("ANTHROPIC_API_URL", "https://api.anthropic.com") + "/v1/messages", {
     method: "POST",
     headers: { "x-api-key": env("ANTHROPIC_API_KEY"), "anthropic-version": "2023-06-01", "content-type": "application/json" },
     // 4 fotot + selgitused vajavad ruumi: 900 tokenist jäi väheks ja JSON jäi poolikuks
-    body: JSON.stringify({ model: env("CHECK3D_MODEL", "claude-haiku-5-5"), max_tokens: Number(env("CHECK3D_MAX_TOKENS", "4000")), system: CHECK_SYSTEM, messages: [{ role: "user", content }] }),
-  }, 60000);
+    body: JSON.stringify({ model: env("CHECK3D_MODEL", "claude-haiku-5-5"), max_tokens: Number(env("CHECK3D_MAX_TOKENS", "4000")), system: pool ? CHECK_SYSTEM + POOL_SYSTEM : CHECK_SYSTEM, messages: [{ role: "user", content }] }),
+  }, pool ? 90000 : 60000);
   const j = await r.json().catch(() => ({}));
   if (!r.ok) throw new Error("anthropic " + r.status + " " + JSON.stringify(j).slice(0, 200));
   const text = String((j.content || []).filter((c: { type?: string }) => c.type === "text").map((c: { text?: string }) => c.text || "").join(""));
@@ -183,6 +197,35 @@ function normalize(a: Record<string, unknown>, n: number, want: Subject | null) 
   else if (want && subject !== want) photos.forEach((p) => { if (!p.issues.includes("wrong_subject")) { p.issues.push("wrong_subject"); p.ok = false; } });
   const all = photos.flatMap((p) => p.issues);
   return { subject, photos, ok: all.length === 0, soft: all.length > 0 && all.every((x) => SOFT.has(x)), summary: typeof a.summary === "string" ? a.summary.slice(0, 400) : "" };
+}
+
+// Valikurežiimi vastus puhtaks: indeksid lubatud ja kordumatud, puuduv külg = blokeeriv viga koos juhisega
+export function normalizePool(a: Record<string, unknown>, n: number, want: Subject | null) {
+  const subject = isSubject(a.subject) ? a.subject : a.subject === "unsupported" ? "unsupported" : (want ?? "unsupported");
+  const kind = isSubject(subject) ? subject : want;
+  const selIn = (a.selected && typeof a.selected === "object" ? a.selected : {}) as Record<string, unknown>;
+  const src = Array.isArray(a.photos) ? a.photos as Record<string, unknown>[] : [];
+  const used = new Set<number>(), selected: { side: string; index: number }[] = [], missing: { side: string; tip: string }[] = [];
+  SIDES.forEach((side, k) => {
+    const v = selIn[side], i = typeof v === "number" ? v : typeof v === "string" && /^\d+$/.test(v) ? Number(v) : NaN;
+    if (Number.isInteger(i) && i >= 0 && i < n && !used.has(i)) { used.add(i); selected.push({ side, index: i }); return; }
+    const need = kind === "building" || kind === "vehicle";
+    if (need) missing.push({ side, tip: SIDE_TIP[kind === "building" ? "building" : "other"][k] });
+  });
+  if (!selected.length && !missing.length) missing.push({ side: "front", tip: SIDE_TIP.other[0] });
+  const photos: Photo[] = selected.map((s, k) => {
+    const p = (src.find((x) => Number(x?.index) === s.index) ?? src.find((x) => x?.side === s.side) ?? {}) as Record<string, unknown>;
+    const issues = [...new Set((Array.isArray(p.issues) ? p.issues : []).map(String).filter((x) => ISSUES.includes(x)))];
+    return { slot: k, side: s.side, index: s.index, ok: issues.length === 0, issues, tip: issues.length && typeof p.tip === "string" ? p.tip.slice(0, 200) : undefined };
+  });
+  if (subject === "unsupported") photos.forEach((p) => { if (!p.issues.includes("unsupported")) { p.issues.push("unsupported"); p.ok = false; } });
+  else if (want && subject !== want) photos.forEach((p) => { if (!p.issues.includes("wrong_subject")) { p.issues.push("wrong_subject"); p.ok = false; } });
+  const reasons = new Map<number, string>();
+  (Array.isArray(a.unused) ? a.unused : []).forEach((u: Record<string, unknown>) => { const i = Number(u?.index); if (Number.isInteger(i) && i >= 0 && i < n && !used.has(i)) reasons.set(i, typeof u.reason === "string" ? u.reason.slice(0, 80) : ""); });
+  const unused = [...Array(n).keys()].filter((i) => !used.has(i)).map((i) => ({ index: i, reason: reasons.get(i) || "" }));
+  const all = photos.flatMap((p) => p.issues);
+  const ok = all.length === 0 && !missing.length;
+  return { mode: "pool", subject, selected, photos, missing, unused, ok, soft: !ok && !missing.length && all.every((x) => SOFT.has(x)), summary: typeof a.summary === "string" ? a.summary.slice(0, 400) : "" };
 }
 
 export async function handler(req: Request): Promise<Response> {
@@ -236,22 +279,23 @@ export async function handler(req: Request): Promise<Response> {
   }
 
   const photos = Array.isArray(b.photos) ? b.photos.map(String) : [];
-  if (!photos.length || photos.length > 4) return fail("Lisa 1–4 fotot");
+  if (!photos.length || photos.length > MAX_POOL) return fail(`Lisa 1–${MAX_POOL} fotot`);
   if (photos.some((u) => !isPhoto(u))) return fail("vigane pilt");
 
   // ---------- fotokontroll ----------
   if (b.action === "check") {
     const want = b.subject == null || b.subject === "" ? null : isSubject(b.subject) ? b.subject : undefined;
     if (want === undefined) return fail("tundmatu subjekt");
-    if (want && photos.length > SUBJECTS[want].max) return fail(`Kuni ${SUBJECTS[want].max} fotot`);
+    // rohkem fotosid kui külgi -> AI valib igale küljele parima
+    const pool = photos.length > (want ? SUBJECTS[want].max : 4);
     if (!(await rateLimit("3dchk:" + me.companyId, 40, 3600))) return fail("Liiga palju kontrolle lühikese ajaga. Proovi hiljem.", 429);
     let res;
     try {
       let r1;
-      try { r1 = await aiCheck(photos, want); }
-      catch (e1) { console.error("ai-3d check, proovin uuesti:", (e1 as Error).message); r1 = await aiCheck(photos, want); }
+      try { r1 = await aiCheck(photos, want, pool); }
+      catch (e1) { console.error("ai-3d check, proovin uuesti:", (e1 as Error).message); r1 = await aiCheck(photos, want, pool); }
       const { a, inT, outT, model } = r1;
-      res = normalize(a, photos.length, want);
+      res = pool ? normalizePool(a, photos.length, want) : normalize(a, photos.length, want);
       const cost = (inT * Number(env("ANTHROPIC_PRICE_IN", "0.10")) + outT * Number(env("ANTHROPIC_PRICE_OUT", "0.50"))) / 1e6;
       await db.from("ai_usage").insert({ company_id: me.companyId, kind: "3d-check", model, input_tokens: inT, output_tokens: outT, cost_usd: cost }).then(() => {}, () => {});
     } catch (e) {
@@ -260,9 +304,11 @@ export async function handler(req: Request): Promise<Response> {
     }
     const subject = want ?? (isSubject(res.subject) ? res.subject : null);
     // tõend ainult siis, kui subjekt on teada ja fotosid on piisavalt
+    // valikurežiimis tõend ainult valitud fotodele külgede järjekorras (täpselt need, mis start saab)
+    const chosen = pool ? (res as ReturnType<typeof normalizePool>).selected.map((x) => photos[x.index]) : photos;
     let token: string | null = null;
-    if (subject && photos.length >= SUBJECTS[subject].min) {
-      token = await signTok({ c: me.companyId, h: await photosHash(photos), s: subject, ok: res.ok, soft: res.soft, exp: Date.now() + 30 * 60_000 });
+    if (subject && chosen.length >= SUBJECTS[subject].min && chosen.length <= SUBJECTS[subject].max) {
+      token = await signTok({ c: me.companyId, h: await photosHash(chosen), s: subject, ok: res.ok, soft: res.soft, exp: Date.now() + 30 * 60_000 });
     }
     return json({ ...res, subject: res.subject, token, slots: subject ? SUBJECTS[subject].slots : null });
   }

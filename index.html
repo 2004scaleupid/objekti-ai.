@@ -846,6 +846,14 @@ body.p3pub>*:not(.p3pubw){display:none!important}
 .p3pubw .p3v{aspect-ratio:auto;height:min(78vh,760px,125vw);max-height:none}
 body.p3emb{background:transparent;margin:0;padding:0;overflow:hidden}body.p3emb .p3pubw{padding:0;max-width:none;height:100vh}body.p3emb .p3pubw .p3v{height:100vh;border:0;border-radius:0}
 .p3by{position:fixed;right:10px;bottom:8px;font:600 11px var(--mono);color:var(--muted);text-decoration:none;background:rgba(255,255,255,.8);padding:3px 8px;border-radius:999px}
+/* 3D: kõik fotod ja külje valik */
+.p3pool{display:flex;flex-direction:column;gap:8px}.p3pool .hd{display:flex;flex-wrap:wrap;gap:10px;align-items:center}.p3pool .hd .ghost{padding:8px 12px;font-size:13.5px}.p3pool .hd small{color:var(--muted);font-size:12.5px}
+.p3pool .grid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:6px}@media (max-width:560px){.p3pool .grid{grid-template-columns:repeat(4,minmax(0,1fr))}}
+.p3pool .pt{position:relative;aspect-ratio:1;padding:0;border:1.5px solid var(--line);border-radius:10px;overflow:hidden;background:var(--bg);cursor:pointer;display:block}
+.p3pool .pt img{width:100%;height:100%;object-fit:cover;display:block}.p3pool .pt.un img{opacity:.42;filter:saturate(.5)}.p3pool .pt.sel{border-color:var(--ok);border-width:2px}.p3pool .pt.on{outline:2.5px solid var(--accent);outline-offset:1px}
+.p3pool .pt .bd{position:absolute;left:4px;top:4px;font:600 10px var(--mono);background:rgba(22,19,15,.72);color:#fff;border-radius:999px;padding:1px 6px;max-width:calc(100% - 8px);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.p3pool .pt.sel .bd{background:var(--ok)}.p3pool .pt small{position:absolute;left:0;right:0;bottom:0;font-size:10px;line-height:1.25;padding:2px 4px;background:rgba(255,255,255,.88);color:#16130F;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.p3as{display:flex;flex-direction:column;gap:6px;padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:var(--bg)}.p3as b{font-size:13.5px}.p3as .row{display:flex;flex-wrap:wrap;gap:6px}.p3as .ghost{padding:7px 11px;font-size:13px}.p3as .ghost[aria-pressed="true"]{border-color:var(--ok);color:var(--ok)}
 /* 3D töö edenemine */
 .p3trk{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px}
 .p3trk li{position:relative;display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center;font-size:12.5px;line-height:1.3;color:var(--muted)}
@@ -1123,7 +1131,7 @@ body.p3emb{background:transparent;margin:0;padding:0;overflow:hidden}body.p3emb 
         <div class="stchips" id="stChips" role="group" aria-label="Vali töö"></div>
         <div class="stsugg" id="stSugg"></div>
         <input type="file" id="stFile" accept="image/*,.heic,.heif" multiple hidden>
-        <input type="file" id="p3File" accept="image/*" hidden>
+        <input type="file" id="p3File" accept="image/*" multiple hidden>
       </div>
     </section>
     <aside class="panel stpanel" id="stPanel" aria-live="polite"></aside>
@@ -3574,14 +3582,15 @@ async function stGenerate(){const gen=$('stGenBtn');if(gen.disabled||gen.hidden)
     if(cl){try{await clRefresh();}catch(_){}if(am.bal==null||am.err){am.bal=acct.credits;stSave();}if(here()){stRenderRes();stRenderPanel();stRenderThread();}}}}
 /* ---------- Fotod → 3D-mudel (sama subjektide tabel on serveris: supabase/functions/ai-3d) ---------- */
 const P3D={
-  building:{n:'Maja/hoone',min:4,max:4,slots:['Esikülg','Vasak külg','Tagakülg','Parem külg'],tips:['Tee igast küljest eraldi foto, otse külje keskelt.','Astu nii kaugele, et kogu maja koos katuse ja nurkadega on kaadris.','Ära pildista vastu päikest: päike olgu sinu selja taga või pilvine ilm.','Puud ja autod ees on okei, kui need ei peida üle kolmandiku seinast.']},
-  object:{n:'Ese/toode',min:1,max:4,slots:['Eest','Vasakult','Tagant','Paremalt'],tips:['Üks foto sobib, 4 fotot eri külgedelt annab parema mudeli.','Kogu ese peab olema kaadris, ükski osa ei tohi ära lõigatud olla.','Hele ühtlane valgus, ilma tugevate varjude ja peegeldusteta.','Lihtne taust aitab, aga AI eemaldab tausta ise.']},
-  vehicle:{n:'Sõiduk',min:4,max:4,slots:['Eest','Vasakult','Tagant','Paremalt'],tips:['Tee igast küljest eraldi foto.','Astu nii kaugele, et kogu sõiduk koos ratastega on kaadris.','Ära pildista vastu päikest.','Teised autod ja inimesed ees on okei, kui need ei peida suurt osa.']}};
-const P3TIPS0=['Vali, mis fotodel on, või lisa esimene foto: AI tunneb ise ära.','Iga külg eraldi foto, kogu asi kaadris.','Ära pildista vastu päikest.'];
-const P3ISS={wrong_subject:'vale asi',different_objects:'fotodel on erinevad asjad',cut_off:'pole tervikuna kaadris',duplicate_side:'sama külg kaks korda',wrong_side:'vale külg',backlit:'vastu päikest',too_dark:'liiga tume',blurry:'udune',occluded:'suur osa on varjatud',too_close:'liiga lähedal',too_far:'liiga kaugel',unsupported:'ei sobi 3D-mudeliks'};
+  building:{n:'Maja/hoone',min:4,max:4,slots:['Esikülg','Vasak külg','Tagakülg','Parem külg'],tips:['Rohkem fotosid igast küljest = AI valib parimad (kuni 12).','Tee igast küljest eraldi foto, otse külje keskelt.','Astu nii kaugele, et kogu maja koos katuse ja nurkadega on kaadris.','Ära pildista vastu päikest: päike olgu sinu selja taga või pilvine ilm.','Puud ja autod ees on okei, kui need ei peida üle kolmandiku seinast.']},
+  object:{n:'Ese/toode',min:1,max:4,slots:['Eest','Vasakult','Tagant','Paremalt'],tips:['Rohkem fotosid igast küljest = AI valib parimad (kuni 12).','Üks foto sobib, 4 fotot eri külgedelt annab parema mudeli.','Kogu ese peab olema kaadris, ükski osa ei tohi ära lõigatud olla.','Hele ühtlane valgus, ilma tugevate varjude ja peegeldusteta.','Lihtne taust aitab, aga AI eemaldab tausta ise.']},
+  vehicle:{n:'Sõiduk',min:4,max:4,slots:['Eest','Vasakult','Tagant','Paremalt'],tips:['Rohkem fotosid igast küljest = AI valib parimad (kuni 12).','Tee igast küljest eraldi foto.','Astu nii kaugele, et kogu sõiduk koos ratastega on kaadris.','Ära pildista vastu päikest.','Teised autod ja inimesed ees on okei, kui need ei peida suurt osa.']}};
+const P3TIPS0=['Rohkem fotosid igast küljest = AI valib parimad (kuni 12).','Vali, mis fotodel on, või lisa esimene foto: AI tunneb ise ära.','Iga külg eraldi foto, kogu asi kaadris.','Ära pildista vastu päikest.'];
+const P3ISS={wrong_subject:'vale asi',different_objects:'fotodel on erinevad asjad',cut_off:'pole tervikuna kaadris',duplicate_side:'sama külg kaks korda',wrong_side:'vale külg',backlit:'vastu päikest',too_dark:'liiga tume',blurry:'udune',occluded:'suur osa on varjatud',too_close:'liiga lähedal',too_far:'liiga kaugel',unsupported:'ei sobi 3D-mudeliks',missing:'foto puudub'};
 function p3Cloud(){return !!(CLOUD&&CL.cid);}
 function p3New(o){o=o||{};const T=tplById(STU.tpl)||{},fix=(T.photo3d||{}).subject;const sub=P3D[o.subject]?o.subject:P3D[fix]?fix:null;
-  return {subject:sub,lock:!!(o.lock||fix),photos:[0,1,2,3].map(i=>(o.photos||[])[i]||null),product:o.product||null,chk:null,checking:0,force:false,gen:0,ehr:o.ehr||null,label:o.label||null,err:null};}
+  const pool=(o.photos||[]).filter(Boolean).slice(0,P3MAXPOOL);
+  return {subject:sub,lock:!!(o.lock||fix),pool,photos:[0,1,2,3].map(i=>pool[i]||null),manual:false,unused:new Map(),asg:-1,product:o.product||null,chk:null,checking:0,force:false,gen:0,ehr:o.ehr||null,label:o.label||null,err:null};}
 const p3List=()=>STU.p3.photos.filter(Boolean);
 function p3ChkFor(){const c=STU.p3&&STU.p3.chk,L=p3List();return c&&c.subj===STU.p3.subject&&c.list.length===L.length&&c.list.every((x,i)=>x===L[i])?c:null;}
 function p3Sess(){const P=STU.p3;let s=stSess();if(!s){s=stNewSession();s.title=P.label||'3D-mudel';}Object.assign(s,{p3sub:P.subject,p3lock:P.lock,p3ehr:P.ehr,p3label:P.label,p3product:P.product});return s;}
@@ -3591,19 +3600,42 @@ function p3CanSend(){const P=STU.p3,s=stSess(),D=P&&P3D[P.subject];if(!p3Cloud()
 async function p3AddFiles(list,slot){if(!STU.p3)STU.p3=p3New();const P=STU.p3,s0=stSess();if(s0&&s0.p3job){toast('See 3D-mudel on juba tehtud. Alusta uut.');return;}
   const max=P.subject?P3D[P.subject].max:4,arr=[...list].filter(f=>/^image\//.test(f.type)||/\.(jpe?g|png|webp|heic|heif)$/i.test(f.name||''));
   if(!arr.length){toast('Vali pildifail (JPG, PNG, WebP või HEIC)');return;}
-  for(const f of arr){let i=slot!=null?slot:P.photos.findIndex((x,k)=>k<max&&!x);slot=null;if(i<0){toast(`Kuni ${max} fotot`);break;}
-    try{P.photos[i]=await shrink(f,2048,.85);}catch(e){toast('Pilti ei õnnestunud avada');}}
+  let free=false;
+  for(const f of arr){let src;try{src=await shrink(f,2048,.85);}catch(e){toast('Pilti ei õnnestunud avada');continue;}
+    if(slot!=null){const old=P.photos[slot];if(old){const oi=P.pool.indexOf(old);if(oi>=0)P.pool.splice(oi,1);}
+      if(P.pool.length>=P3MAXPOOL){toast(`Kuni ${P3MAXPOOL} fotot`);break;}P.pool.push(src);P.photos[slot]=src;slot=null;continue;}
+    if(P.pool.length>=P3MAXPOOL){toast(`Kuni ${P3MAXPOOL} fotot`);break;}
+    P.pool.push(src);free=true;
+    // kuni külgede arvuni nagu varem: järgmine tühi külg; rohkem fotosid -> AI valib igale küljele parima
+    if(P.pool.length<=max){const e=P.photos.findIndex((x,k)=>k<max&&!x);if(e>=0)P.photos[e]=src;}}
+  if(free&&P.pool.length>max)P.manual=false;
   p3Sess();stSave();p3Changed();}
+const P3MAXPOOL=12,P3SIDES=['front','left','back','right'];
+// valikukontrolli päring jääb serveri piiri alla: vajadusel fotod väiksemaks (sama data-URL läheb ka start'i)
+function p3Down(u,m,q){return new Promise((res,rej)=>{const im=new Image();im.onload=()=>{const k=Math.min(1,m/Math.max(im.width,im.height)),c=document.createElement('canvas');c.width=Math.round(im.width*k);c.height=Math.round(im.height*k);c.getContext('2d').drawImage(im,0,0,c.width,c.height);res(c.toDataURL('image/jpeg',q));};im.onerror=rej;im.src=u;});}
+async function p3Fit(){const P=STU.p3;if(P.pool.reduce((a,u)=>a+u.length,0)<=24e6)return;
+  const out=[];for(const u of P.pool)out.push(u.length>1.6e6?await p3Down(u,1600,.82).catch(()=>u):u);
+  const m=new Map(P.pool.map((u,i)=>[u,out[i]]));P.pool=out;P.photos=P.photos.map(u=>u&&m.get(u)||u);}
+function p3Remove(src){const P=STU.p3,i=P.pool.indexOf(src);if(i>=0)P.pool.splice(i,1);P.photos=P.photos.map(u=>u===src?null:u);P.unused.delete(src);P.asg=-1;}
 function p3Changed(){const P=STU.p3;P.gen++;P.err=null;P.force=false;P.checking=0;clearTimeout(P.t);stRender();
-  if(!p3Cloud())return;const L=p3List();if(!L.length)return;
-  if(!P.subject){P.t=setTimeout(()=>p3Check(true),300);return;}
-  if(L.length>=P3D[P.subject].min)P.t=setTimeout(()=>p3Check(false),900);}
-async function p3Check(detect){const P=STU.p3,g=P.gen,sub=P.subject,L=p3List(),send=detect?L.slice(0,1):L;if(!send.length)return;
-  P.checking=1;stRender();
+  if(!p3Cloud())return;const L=p3List(),N=P.pool.length,max=P.subject?P3D[P.subject].max:4;if(!N)return;
+  if(N>max&&!P.manual){P.t=setTimeout(()=>p3Check('pool'),900);return;}
+  if(!L.length)return;
+  if(!P.subject){P.t=setTimeout(()=>p3Check('detect'),300);return;}
+  if(L.length>=P3D[P.subject].min)P.t=setTimeout(()=>p3Check(),900);}
+async function p3Check(mode){const P=STU.p3,g=P.gen,sub=P.subject;
+  P.checking=1;stRender();if(mode==='pool'){await p3Fit();if(P.gen!==g)return;}
+  const L=p3List(),send=mode==='detect'?L.slice(0,1):mode==='pool'?P.pool.slice():L;if(!send.length){P.checking=0;return;}
   try{const r=await clFn('ai-3d',{action:'check',subject:sub||null,photos:send});if(P.gen!==g||STU.p3!==P)return;
+    if(mode==='pool'){
+      if(!sub){if(!P3D[r.subject]){P.err=P3UNSUP;return;}P.subject=r.subject;P.aiSub=r.subject;p3Sess().p3sub=r.subject;}
+      // AI valik: iga külje parim foto; ülejäänud tuhmilt koos põhjusega
+      const ph=[null,null,null,null];(r.selected||[]).forEach(x=>{const k=P3SIDES.indexOf(x.side);if(k>=0&&send[x.index])ph[k]=send[x.index];});
+      P.photos=ph;P.unused=new Map((r.unused||[]).filter(u=>send[u.index]).map(u=>[send[u.index],u.reason||'']));
+      P.chk={...r,list:p3List(),subj:P.subject};p3Note(stSess(),r.summary);return;}
     if(!sub){if(P3D[r.subject]){P.subject=r.subject;P.aiSub=r.subject;const s=p3Sess();s.p3sub=r.subject;
         if(send.length===L.length&&r.token){P.chk={...r,list:L,subj:r.subject};p3Note(s,r.summary);}
-        else if(L.length>=P3D[r.subject].min)P.t=setTimeout(()=>p3Check(false),0);}
+        else if(L.length>=P3D[r.subject].min)P.t=setTimeout(()=>p3Check(),0);}
       else P.err=P3UNSUP;}
     else{P.chk={...r,list:L,subj:sub};p3Note(stSess(),r.summary);}}
   catch(e){if(P.gen===g)P.err=clErr(e);}
@@ -3639,8 +3671,14 @@ function p3Render(){const box=$('st3d'),th=stTheme(STU.tpl);box.hidden=!th.p3;if
   p3Dispose();const sub=P.subject,D=P3D[sub]||null,slots=(D||P3D.object).slots.slice(0,D?D.max:4),c=p3ChkFor(),n=p3List().length;
   let h='';if(!p3Cloud())h+=`<p class="p3note">3D-mudel töötab ainult kontoga. Logi sisse või loo konto, siis saad fotodest mudeli teha.</p>`;
   if(!P.lock)h+=`<div class="p3sub"><b>Mis fotodel on?</b><div class="p3seg" role="group" aria-label="Mis fotodel on?">${Object.entries(P3D).map(([k,v])=>`<button type="button" data-sub="${k}" aria-pressed="${k===sub}">${v.n}</button>`).join('')}</div><small>${P.aiSub&&P.aiSub===sub?'AI tundis ära, saad muuta. ':''}Toad, maastik ja inimesed ei sobi: 3D-mudel tehakse ühest asjast.</small></div>`;
-  let k=0;h+=`<div class="p3slots">${slots.map((nm,i)=>{const ph=P.photos[i],pr=ph&&c?c.photos[k++]:null,bad=pr&&!pr.ok;
+  let k=0;h+=`<div class="p3slots">${slots.map((nm,i)=>{const ph=P.photos[i],ms=!ph&&c&&(c.missing||[]).find(m=>m.side===P3SIDES[i]);let pr=ph&&c?c.photos[k++]:null;if(ms)pr={tip:ms.tip,issues:['missing']};const bad=(pr&&!pr.ok)||!!ms;
     return `<div class="p3slot${ph?' has':''}${bad?' bad':''}${pr&&pr.ok?' good':''}"><button type="button" class="pick" data-slot="${i}" aria-label="${ph?'Vaheta foto':'Lisa foto'}: ${stEsc(nm)}">${ph?`<img src="${stEsc(ph)}" alt="">`:'<span class="plus" aria-hidden="true">+</span>'}</button><span class="cap">${stEsc(nm)}${D&&i>=D.min?' <small>(soovi korral)</small>':''}</span>${ph?`<button type="button" class="x" data-rm="${i}" aria-label="Eemalda foto: ${stEsc(nm)}">×</button>`:''}${bad?`<span class="tip">${stEsc(pr.tip||pr.issues.map(x=>P3ISS[x]||x).join(', '))}</span>`:''}</div>`;}).join('')}</div>`;
+  // kõik fotod: valitud külje märgiga, kasutamata tuhmilt; puudutades saab külje ise valida
+  const N=P.pool.length,extra=N>n;
+  h+=`<div class="p3pool"><div class="hd"><button type="button" class="ghost" id="p3More">Lisa fotod (kuni ${P3MAXPOOL})</button><small>${N?`${N}/${P3MAXPOOL} fotot`:''}${N>(D?D.max:4)?' · AI valib igale küljele parima':''}</small></div>`;
+  if(extra||N>(D?D.max:4)){h+=`<div class="grid">${P.pool.map((u,i)=>{const si=P.photos.indexOf(u),rs=P.unused.get(u);return `<button type="button" class="pt${si>=0?' sel':' un'}${P.asg===i?' on':''}" data-pool="${i}" aria-label="Foto ${i+1}${si>=0?': '+stEsc(slots[si]||''):', kasutamata'}"><img src="${stEsc(u)}" alt=""><span class="bd">${si>=0?stEsc(slots[si]||''):'—'}</span>${si<0&&rs?`<small>${stEsc(rs)}</small>`:''}</button>`;}).join('')}</div>`;
+    if(P.asg>=0&&P.pool[P.asg]){const u=P.pool[P.asg];h+=`<div class="p3as"><b>Foto ${P.asg+1}: vali külg</b><div class="row">${slots.map((nm,k)=>`<button type="button" class="ghost" data-as="${k}" aria-pressed="${P.photos[k]===u}">${stEsc(nm)}</button>`).join('')}<button type="button" class="ghost" data-as="none">Ära kasuta</button><button type="button" class="ghost" data-as="del">Eemalda</button></div></div>`;}}
+  h+=`</div>`;
   const need=D?Math.max(0,D.min-n):1;
   h+=P.err?`<p class="p3err">${stEsc(P.err)}</p>`:P.checking?`<div class="p3stat">AI kontrollib fotosid…</div>`:c&&c.photos.some(x=>x.issues.includes('unsupported'))?`<p class="p3err">${P3UNSUP}</p>`:c?`<div class="p3stat ${c.ok?'ok':'bad'}">${c.ok?'✓ Fotod on korras. Võid 3D-mudeli teha.':stEsc(c.summary||'Mõni foto vajab uuendamist.')}</div>`
     :`<div class="p3stat">${!D?'Lisa esimene foto või vali, mis fotodel on.':need?`Lisa veel ${need} ${need===1?'foto':'fotot'}: ${stEsc(D.slots.filter((_,i)=>!P.photos[i]).slice(0,need).join(', ').toLowerCase())}.`:'Fotod on lisatud.'}</div>`;
@@ -3648,7 +3686,12 @@ function p3Render(){const box=$('st3d'),th=stTheme(STU.tpl);box.hidden=!th.p3;if
   box.innerHTML=h;
   box.querySelectorAll('[data-sub]').forEach(b=>b.onclick=()=>{if(P.subject===b.dataset.sub)return;P.subject=b.dataset.sub;P.aiSub=null;const m=P3D[P.subject].max;for(let i=m;i<4;i++)P.photos[i]=null;const s2=stSess();if(s2)s2.p3sub=P.subject;p3Changed();});
   box.querySelectorAll('[data-slot]').forEach(b=>b.onclick=()=>{STU.p3slot=+b.dataset.slot;$('p3File').click();});
-  box.querySelectorAll('[data-rm]').forEach(b=>b.onclick=()=>{P.photos[+b.dataset.rm]=null;p3Changed();});
+  box.querySelectorAll('[data-rm]').forEach(b=>b.onclick=()=>{const u=P.photos[+b.dataset.rm];if(u)p3Remove(u);p3Changed();});
+  const mo=$('p3More');if(mo)mo.onclick=()=>{STU.p3slot=null;$('p3File').click();};
+  box.querySelectorAll('[data-pool]').forEach(b=>b.onclick=()=>{const i=+b.dataset.pool;P.asg=P.asg===i?-1:i;stRender();});
+  box.querySelectorAll('[data-as]').forEach(b=>b.onclick=()=>{const u=P.pool[P.asg],v=b.dataset.as;if(!u)return;
+    if(v==='del'){p3Remove(u);p3Changed();return;}
+    P.photos=P.photos.map(x=>x===u?null:x);if(v!=='none')P.photos[+v]=u;P.asg=-1;P.manual=true;P.unused.delete(u);p3Changed();});
   const f=$('p3Force');if(f)f.onchange=()=>{P.force=f.checked;stSync();};}
 // Edenemine: aeg alates algusest. Päris töö 2740abc1: puhastus 56 s, mudel ~4 min. 100% ainult siis, kui server ütleb valmis.
 const P3CLEAN=60000,P3MODEL=240000;
