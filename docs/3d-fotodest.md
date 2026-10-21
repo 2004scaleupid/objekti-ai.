@@ -25,11 +25,20 @@ Need tuleb **üldistada**, mitte uuesti teha.
 
 Mitte toetatud: toad / interjöör, maastik, inimesed. Ütle seda kasutajale selgelt (Tripo teeb üksikobjekte, mitte ruume).
 
-Mallide seos:
-- **Kinnisvara kuulutus** → `building` (lisaks olemasolevale aadressi-vaatele nupp „Tee päris majast 3D (4 fotot)“).
-- **Foto → 3D-mudel** → kasutaja valib subjekti (Maja/hoone · Ese/toode · Sõiduk) või AI tunneb esimese foto järgi ära (vt p 4).
-- **Toode kliendi hoovis** (valikuline, hiljem) → `object`; firma saab oma tootest 3D-mudeli „Minu tooted“ alla.
-- Uued mallid saavad lihtsalt `photo3d: {subject: 'object'}` vms.
+Mallide seos — **3D fotodest peab olema KÕIGIS mallides**, üks ühine komponent (`photo3d: {subject, ...}` malli juures):
+
+| Mall | Kuidas 3D fotodest seal töötab | subject |
+|---|---|---|
+| Kinnisvara kuulutus | aadressi-vaate kõrval nupp „Tee päris majast 3D (4 fotot)“, seotakse objektiga | `building` |
+| Katusetööd | sama nupp, seotakse objektiga | `building` |
+| Fassaaditööd | sama nupp, seotakse objektiga | `building` |
+| Foto → 3D-mudel | põhitöö: kasutaja valib Maja/hoone · Ese/toode · Sõiduk või AI pakub | valik / AI |
+| Toode kliendi hoovis | „Tee tootest 3D-mudel“ – firma toode (Seaded → Minu tooted), .glb salvestatakse toote juurde | `object` |
+| Vaba idee | pärast fotot / AI-pilti nupp „Tee sellest 3D“; AI fotokontroll tunneb ära, mis fotol on | AI otsustab |
+| Sisekujundus | „Tee esemest 3D“ – üks mööbliese või toode toast (mitte terve tuba); kasutaja näitab, mis ese | `object` |
+
+Mitte toetatud: terve tuba/interjöör, maastik, inimesed. Kui AI kontroll leiab `unsupported`, ütleb äpp selgelt, et 3D-ks saab teha maja, eseme või sõiduki, ja krediite ei võeta.
+Uus mall saab 3D lihtsalt seadistusega `photo3d: {subject: 'object'}` vms, ilma uue koodita.
 
 ## 2. Puhastuse prompt (Kie, mudel `nano-banana-2-1`, 1K, iga foto eraldi, paralleelselt)
 
