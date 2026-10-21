@@ -3483,8 +3483,8 @@ function p3Render(){const box=$('st3d'),th=stTheme(STU.tpl);box.hidden=!th.p3;if
   box.querySelectorAll('[data-slot]').forEach(b=>b.onclick=()=>{STU.p3slot=+b.dataset.slot;$('p3File').click();});
   box.querySelectorAll('[data-rm]').forEach(b=>b.onclick=()=>{P.photos[+b.dataset.rm]=null;p3Changed();});
   const f=$('p3Force');if(f)f.onchange=()=>{P.force=f.checked;stSync();};}
-// Edenemine: aeg alates algusest (puhastus ~30 s, mudel ~4,5 min). 100% ainult siis, kui server ütleb valmis.
-const P3CLEAN=30000,P3MODEL=270000;
+// Edenemine: aeg alates algusest. Päris töö 2740abc1: puhastus 56 s, mudel ~4 min. 100% ainult siis, kui server ütleb valmis.
+const P3CLEAN=60000,P3MODEL=240000;
 const p3RM=()=>!!(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches);
 function p3Cleaning(j){return !j.tm&&(j.stage==='cleaning'||!j.id);}
 function p3Prog(j,now){now=now||Date.now();if(j.status==='done')return {pct:100,left:0};const t0=j.t||now;
