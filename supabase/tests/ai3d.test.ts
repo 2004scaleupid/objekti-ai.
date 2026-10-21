@@ -135,10 +135,10 @@ Deno.test("kontrollist ei saa mööda", async () => {
   const [p, sig] = ok.split(".");
   const forged = btoa(JSON.stringify({ ...JSON.parse(atob(p.replace(/-/g, "+").replace(/_/g, "/"))), ok: true, exp: Date.now() + 1e9 })).replace(/=+$/, "") + "." + sig;
   assertEquals((await call({ subject: "building", photos: P4, check: forged })).status, 409);
-  // raske viga + „Jätka ikkagi“ ei aita
-  W.check = good(); (W.check.photos as { issues: string[] }[])[1].issues = ["cut_off"];
+  // blokeeriv viga + „Jätka ikkagi“ ei aita
+  W.check = good(); (W.check.photos as { issues: string[] }[])[1].issues = ["different_objects"];
   const bad = await call({ action: "check", subject: "building", photos: P4 });
-  assertEquals(bad.j.ok, false); assertEquals(bad.j.soft, false); assertEquals(bad.j.photos[1].issues, ["cut_off"]);
+  assertEquals(bad.j.ok, false); assertEquals(bad.j.soft, false); assertEquals(bad.j.photos[1].issues, ["different_objects"]);
   assertEquals((await call({ subject: "building", photos: P4, check: bad.j.token, force: true })).status, 409);
   // AI ütleb ok:true, aga vead on olemas: server ei usalda
   W.check = { ...good(), ok: true }; (W.check.photos as { issues: string[] }[])[0].issues = ["duplicate_side"];
