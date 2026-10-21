@@ -1,5 +1,5 @@
 // AI-abiline: Claude API, ainult objekti andmete põhjal.
-import { cors, json, fail, userCompany, rateLimit, env, body, tfetch } from "../_shared/util.ts";
+import { cors, json, fail, userCompany, rateLimit, env, body, tfetch, admin } from "../_shared/util.ts";
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
@@ -24,6 +24,10 @@ Deno.serve(async (req) => {
     }, 45000);
     const j = await r.json().catch(() => ({}));
     if (!r.ok) { console.error("anthropic", r.status, JSON.stringify(j).slice(0, 300)); return fail("AI-abiline ei vastanud, proovi uuesti", 502); }
+    // kulu admini ülevaate jaoks (hind dollarites miljoni tokeni kohta, Haiku 5.5: 0,10 / 0,50)
+    const inT = Number(j.usage?.input_tokens) || 0, outT = Number(j.usage?.output_tokens) || 0;
+    const cost = (inT * Number(env("ANTHROPIC_PRICE_IN", "0.10")) + outT * Number(env("ANTHROPIC_PRICE_OUT", "0.50"))) / 1e6;
+    await admin().from("ai_usage").insert({ company_id: me.companyId, kind: "chat", model: String(j.model || "").slice(0, 60), input_tokens: inT, output_tokens: outT, cost_usd: cost }).then(() => {}, () => {});
     return json({ text: (j.content || []).map((c: { text?: string }) => c.text || "").join("") });
   } catch { return fail("AI-abiline ei vastanud, proovi uuesti", 502); }
 });

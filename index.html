@@ -128,6 +128,14 @@ input::-webkit-calendar-picker-indicator{display:none!important}
 .ahead h2{margin:0;font-size:24px;letter-spacing:-.02em}
 .rng{background:var(--bg);border:1px solid var(--line)}
 .rng button{color:var(--ink)}.rng button[aria-pressed="true"]{background:var(--ink);color:var(--paper)}
+.svcx{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-bottom:12px}
+@media (max-width:700px){.svcx{grid-template-columns:minmax(0,1fr)}}
+.svcc{border:1px solid var(--line);border-radius:12px;padding:14px 16px;background:var(--paper);display:flex;flex-direction:column;gap:4px}
+.svcc.low{border-color:var(--accent);box-shadow:0 0 0 3px rgba(229,72,45,.10)}
+.svh{display:flex;align-items:center;justify-content:space-between;gap:8px}.svh b{font-size:14px}
+.svh .st{font:600 10.5px var(--mono);padding:2px 8px;border-radius:999px;background:#E3F1E6;color:#1F6B35}.svcc.low .svh .st{background:var(--accent);color:#fff}.svh .st.na{background:var(--line);color:var(--muted)}
+.svbig{font:800 26px var(--display);letter-spacing:-.02em;font-variant-numeric:tabular-nums}.svbig span{font:500 13px var(--display);color:var(--muted);letter-spacing:0}
+.svcc small{color:var(--muted);font-size:12.5px}.svf{display:flex;gap:14px;align-items:center;margin-top:6px;font-size:13px}.svf a{color:var(--accent)}
 .kpis{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
 .kpi{border:1px solid var(--line);border-radius:10px;padding:12px 14px;background:var(--paper)}
 .kpi small{display:block;color:var(--muted);font-size:12px}.kpi b{display:block;font:800 22px var(--display);letter-spacing:-.02em;margin-top:4px;font-variant-numeric:tabular-nums}
@@ -808,6 +816,7 @@ body.cvm .panel>*:not(#cvPanel){display:none!important}
       <section class="apane" data-apane="overview">
         <div class="ahead"><h2>Ülevaade</h2>
           <div class="seg rng" id="rng"><button type="button" data-d="7">7 p</button><button type="button" data-d="30" aria-pressed="true">30 p</button><button type="button" data-d="90">90 p</button></div></div>
+        <div class="svcx" id="svcBox" aria-live="polite"></div>
         <div class="kpis" id="kpis"></div>
         <div class="cgrid">
           <div class="chart card"><div class="ct"><b>Tulu päevas</b><span class="fhint">€, krediidipakettide müük</span></div><div class="cv" id="chRev"></div></div>
@@ -2311,7 +2320,31 @@ function hbars(el,rows,fmt){const mx=Math.max(1,...rows.map(r=>r.v));el.innerHTM
 /* ---------- render ---------- */
 let admRange=30,admPartner='MAXNOULIK';
 function days(n){const out=[];for(let i=n-1;i>=0;i--)out.push(iso(Date.now()-i*DAY));return out;}
-function renderOverview(){const U=allUsers(),D=days(admRange),from=D[0],inR=e=>e.d>=from;
+/* teenuste saldo: Kie.ai krediidid otse Kie'st, Claude'i kulu serveri logist */
+let svcData=null,svcAt=0,svcBusy=false;
+function usd(v){return '$'+(Math.abs(v)<10?v.toFixed(2):v.toFixed(0)).replace('.',',');}
+function drawSvc(){const box=$('svcBox');if(!box)return;const d=svcData,esc=t=>String(t==null?'':t).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  if(!d){box.innerHTML='<div class="svcc"><small>Laen teenuste saldot…</small></div>';return;}
+  if(d.err){box.innerHTML=`<div class="svcc"><div class="svh"><b>Teenuste saldo</b><span class="st na">viga</span></div><small>${esc(d.err)}</small><div class="svf"><button type="button" class="lnk" id="svRe">Proovi uuesti</button></div></div>`;$('svRe').onclick=()=>loadSvc(true);return;}
+  const k=d.kie||{},c=d.claude||{},m=c.month||{},st=c.since_topup,kLow=k.ok&&k.credits<100,cLow=st&&st.left_usd<2;
+  box.innerHTML=`<div class="svcc${kLow?' low':''}"><div class="svh"><b>Kie.ai · AI-pildid</b><span class="st${k.ok?'':' na'}">${k.ok?(kLow?'vähe':'korras'):'pole teada'}</span></div>
+    ${k.ok?`<div class="svbig">${k.credits} <span>krediiti</span></div><small>≈ ${k.images_left} pilti jagu (${k.per_image} krediiti pilt, ≈ ${usd(k.credits*k.usd_per_credit)})</small>`:`<div class="svbig">—</div><small>${esc(k.error||'')}</small>`}
+    <small>Sel kuul tehtud ${k.images_month||0} AI-pilti${kLow?' · <b style="color:var(--accent)">lae juurde enne, kui pildid peatuvad</b>':''}</small>
+    <div class="svf"><a href="https://kie.ai" target="_blank" rel="noopener">Lae Kie krediite ↗</a></div></div>
+  <div class="svcc${cLow?' low':''}"><div class="svh"><b>Claude · AI-abiline</b><span class="st${c.key_set?'':' na'}">${!c.key_set?'võti puudub':cLow?'vähe':'korras'}</span></div>
+    <div class="svbig">${usd(m.cost_usd||0)} <span>kulu sel kuul</span></div>
+    <small>${m.chats||0} vastust · täna ${usd(c.today_usd||0)} · ${(((m.input_tokens||0)+(m.output_tokens||0))/1000).toFixed(0)} tuh tokenit</small>
+    <small>${st?`Jääk ≈ <b>${usd(st.left_usd)}</b> (laetud ${usd(st.topup_usd)} · ${new Date(st.at).toLocaleDateString('et-EE')})`:'Jäägi nägemiseks märgi, kui palju kontole laadisid.'}</small>
+    ${c.report?(c.report.ok?`<small>Anthropicu arvestus sel kuul: ${usd(c.report.month_usd)}</small>`:`<small>Anthropicu arvestus: ${esc(c.report.error)}</small>`):''}
+    <div class="svf"><button type="button" class="lnk" id="svTop">Märgi laadimine</button><a href="https://console.anthropic.com/settings/billing" target="_blank" rel="noopener">Ava Claude'i konsool ↗</a></div></div>`;
+  $('svTop').onclick=async()=>{const ok=await ask2('Laadisid Claude\'i kontole raha?','Sisesta summa dollarites. Jääk arvutatakse sellest ja edasistest AI-abilise vastustest.','Salvesta',`<label class="fl" for="svAmt">Summa ($)<input id="svAmt" type="number" min="1" step="1" value="10" inputmode="decimal"></label>`);if(!ok)return;
+    const a=+$('svAmt').value;if(!(a>0)){toast('Sisesta summa');return;}
+    if(!(CLOUD&&CL.cid)){svcData.claude.since_topup={topup_usd:a,at:new Date().toISOString(),spent_usd:0,left_usd:a};drawSvc();toast('Laadimine märgitud');return;}
+    try{svcData=await clFn('admin-stats',{service:'anthropic',amount_usd:a});svcAt=Date.now();drawSvc();toast('Laadimine märgitud');}catch(e){toast(clErr(e));}};}
+async function loadSvc(force){if(svcBusy)return;if(!force&&svcData&&Date.now()-svcAt<60000){drawSvc();return;}
+  if(!(CLOUD&&CL.cid)){svcData={demo:1,kie:{ok:true,credits:1240,per_image:4,images_left:310,usd_per_credit:0.005,images_month:86},claude:{key_set:true,month:{chats:212,input_tokens:910000,output_tokens:64000,cost_usd:0.12},today_usd:0.01,since_topup:{topup_usd:10,at:'2026-10-01',spent_usd:0.31,left_usd:9.69}}};drawSvc();return;}
+  svcBusy=true;if(!svcData)drawSvc();try{svcData=await clFn('admin-stats');svcAt=Date.now();}catch(e){svcData={err:clErr(e)};}svcBusy=false;drawSvc();}
+function renderOverview(){loadSvc();const U=allUsers(),D=days(admRange),from=D[0],inR=e=>e.d>=from;
   const ev=U.flatMap(u=>u.ev.map(e=>({...e,u})));const R_=ev.filter(inR);
   const rev=R_.filter(e=>e.t==='purchase').reduce((a,e)=>a+e.eur,0),sign=R_.filter(e=>e.t==='signup').length,obj=R_.filter(e=>e.t==='obj').length,pic=R_.filter(e=>e.t==='pic').length;
   const act=new Set(R_.filter(e=>e.t==='obj'||e.t==='pic').map(e=>e.u.id)).size,promoU=U.filter(u=>u.code).length,due=acct.partners.reduce((a,p)=>a+partnerStats(p.code).due,0);
