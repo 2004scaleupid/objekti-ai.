@@ -781,6 +781,19 @@ body.cvm .panel>*:not(#cvPanel){display:none!important}
 .p3force{display:flex;gap:8px;align-items:center;font-size:13.5px;cursor:pointer}
 .p3note{margin:0;padding:12px 14px;border-radius:10px;background:var(--soft);font-size:13.5px;line-height:1.5}
 .p3err{margin:0;padding:12px 14px;border-radius:10px;border:1px solid var(--accent);color:var(--ink);font-size:14px}
+/* 3D jagamine, mudelite kogu, avalik vaatur */
+.p3share{display:flex;flex-direction:column;gap:8px;padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:var(--bg)}.p3share b{font-size:14px}
+.p3share .row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}.p3share .ghost{padding:8px 12px;font-size:13.5px}
+.p3models{display:flex;flex-direction:column;gap:10px;max-height:420px;overflow-y:auto}
+.p3m{display:flex;gap:10px;align-items:center}.p3m img,.p3m .ph{width:64px;height:48px;object-fit:cover;border-radius:8px;border:1px solid var(--line);background:#fff;flex:none}
+.p3m .mt{display:flex;flex-direction:column;gap:2px;min-width:0}.p3m .mt b{font-size:13.5px}.p3m .mt small{color:var(--muted);font-size:12px}
+.p3m .ma{display:flex;flex-wrap:wrap;gap:4px 10px}.p3m .linkbtn{font-size:12.5px}
+body.p3pub>*:not(.p3pubw){display:none!important}
+.p3pubw{max-width:1100px;margin:0 auto;padding:16px;display:flex;flex-direction:column;gap:12px;box-sizing:border-box}
+.p3pubw header{display:flex;justify-content:space-between;align-items:center;gap:10px}.p3pubw header .send{text-decoration:none;padding:10px 14px}
+.p3pubw .p3v{aspect-ratio:auto;height:min(78vh,760px,125vw);max-height:none}
+body.p3emb{background:transparent;margin:0;padding:0;overflow:hidden}body.p3emb .p3pubw{padding:0;max-width:none;height:100vh}body.p3emb .p3pubw .p3v{height:100vh;border:0;border-radius:0}
+.p3by{position:fixed;right:10px;bottom:8px;font:600 11px var(--mono);color:var(--muted);text-decoration:none;background:rgba(255,255,255,.8);padding:3px 8px;border-radius:999px}
 /* 3D töö edenemine */
 .p3trk{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px}
 .p3trk li{position:relative;display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center;font-size:12.5px;line-height:1.3;color:var(--muted)}
@@ -2893,7 +2906,7 @@ async function clLoad(){const sb=CL.sb;const {data:{user}}=await sb.auth.getUser
   try{syncPromos();}catch(_){}
   await clLeads();
   if($('admM'))$('admM').hidden=!CL.admin;if(CL.admin){const ab=document.querySelector('#admin .abanner');if(ab)ab.textContent='Päris andmed andmebaasist (uuenevad iga minut). Kulud ja ROI arvutatakse sinu sisestatud ühikuhindadega, AI-teenuste tegelik saldo on ülevaate ülaosas.';}
-  CL.snap=clSnap();clRaw('oai_acct',acct);setTimeout(p3Resume,0);return true;}
+  CL.snap=clSnap();clRaw('oai_acct',acct);setTimeout(p3Resume,0);p3LoadModels();return true;}
 async function clEarn(){const {data}=await CL.sb.rpc('my_partner_earnings');CL.earn=(data&&data[0])||{companies:0,value_eur:0,earned_eur:0,paid_eur:0};if(!$('settings').hidden)try{renderSeller();}catch(_){}}
 
 /* muudatused serverisse (ettevõte, vidin, tooted, objektid, IBAN) */
@@ -3457,7 +3470,7 @@ async function p3Poll(sid){if(P3POLL[sid]||!CL.cid)return;P3POLL[sid]=1;
       await new Promise(r=>setTimeout(r,10000));let r=null;
       try{r=await clFn('ai-3d',{action:'status',id:j.id});}catch(e){if(e.status===404){j.status='failed';j.err='Tööd ei leitud.';}else continue;}
       if(r){j.stage=r.stage||j.stage;if(j.stage!=='cleaning'&&!j.tm)j.tm=Date.now();if(r.cleaned&&r.cleaned.length)j.cleaned=r.cleaned.filter(safeUrl);
-        if(r.status==='done'&&safeUrl(r.url)){j.status='done';j.url=r.url;p3Note(s,'3D-mudel on valmis.');const pr=r.product_id&&(acct.products||[]).find(x=>x.sid===r.product_id);if(pr){pr.model=r.url;p3Note(s,'Mudel salvestati toote „'+pr.name+'“ juurde.');}}
+        if(r.status==='done'&&safeUrl(r.url)){j.status='done';j.url=r.url;p3Note(s,'3D-mudel on valmis.');p3LoadModels();const pr=r.product_id&&(acct.products||[]).find(x=>x.sid===r.product_id);if(pr){pr.model=r.url;p3Note(s,'Mudel salvestati toote „'+pr.name+'“ juurde.');}}
         else if(r.status==='failed'){j.status='failed';j.err=r.error||'3D-mudeli tegemine ebaõnnestus, krediidid tagastati.';p3Note(s,j.err);clRefresh();}}
       stSave();if(!$('studio').hidden&&STU.sid===sid)stRender();}}
   finally{delete P3POLL[sid];}}
@@ -3508,14 +3521,50 @@ function p3JobHtml(j){const st=j.status,cl=(j.cleaned||[]).filter(safeUrl),cur=s
     h+=`<p class="p3tip in" id="p3Tip">${stEsc(p3TipFor(j))}</p>`;
     if(ph.length)h+=`<div class="p3scan${cl.length?'':' dim'}" aria-label="${cl.length?'Puhastatud fotod':'Sinu fotod'}">${ph.map(u=>`<div class="sc"><img src="${stEsc(u)}" alt=""></div>`).join('')}</div>`;
     h+=`<small class="fhint">Võid vahepeal äpis muud teha või lehe kinni panna, edenemine jätkub siit.</small>`;}
-  if(st==='done'&&safeUrl(j.url))h+=`<div class="p3v" id="p3V"><div class="p3load"><span>Laadin 3D-mudelit…</span><div class="p3bar"><i></i></div></div></div><div class="p3act"><a class="send" href="${stEsc(j.url+(j.url.includes('?')?'&':'?')+'download=3d-mudel.glb')}" download="3d-mudel.glb">Laadi alla .glb</a><span class="fhint">Pööra hiire või sõrmega, suumi rattaga või kahe sõrmega.</span></div>`;
+  if(st==='done'&&safeUrl(j.url))h+=`<div class="p3v" id="p3V"><div class="p3load"><span>Laadin 3D-mudelit…</span><div class="p3bar"><i></i></div></div></div><div class="p3act"><a class="send" href="${stEsc(j.url+(j.url.includes('?')?'&':'?')+'download=3d-mudel.glb')}" download="3d-mudel.glb">Laadi alla .glb</a><span class="fhint">Pööra hiire või sõrmega, suumi rattaga või kahe sõrmega.</span></div>${p3ShareHtml(j.url)}`;
   if(st==='done'&&cl.length)h+=`<div class="p3clean"><b>Puhastatud fotod</b><div>${cl.map(u=>`<img src="${stEsc(u)}" alt="Puhastatud foto" loading="lazy">`).join('')}</div></div>`;
   return h+`<button type="button" class="ghost" id="p3New" style="align-self:flex-start">Uus 3D-mudel</button>`;}
 function p3Panel(){const P=STU.p3||p3New(),D=P3D[P.subject],s=stSess(),T=stTheme(STU.tpl).T||{};
   let h=`<div class="stcard"><h3>${T.icon?ticon(T,18):''}${stEsc(T.name||'3D-mudel')}</h3><span class="pr">3D-mudel · ${stEsc(priceTxt('3d'))}</span><span class="fhint">Saldo: ${String(acct.credits).replace('.',',')} krediiti</span>${p3Cloud()?'':'<span class="fhint">3D-mudel töötab ainult kontoga.</span>'}</div>`;
   h+=`<div class="stcard"><h3>Nii saad hea 3D-mudeli</h3><ul class="sttips">${(D?D.tips:P3TIPS0).map(t=>`<li>${stEsc(t)}</li>`).join('')}</ul><p>AI kontrollib fotod enne üle. Krediite võetakse alles siis, kui fotod on korras ja vajutad saatmist.</p></div>`;
+  h+=p3ModelsHtml();
   const notes=s?s.msgs.filter(m=>m.note).slice(-8):[];if(notes.length)h+=`<div class="stcard"><h3>Ajalugu</h3><div class="sthist">${notes.map(m=>`<div class="sth"><span class="p">${stEsc(m.note)}</span></div>`).join('')}</div></div>`;
-  $('stPanel').innerHTML=h;}
+  $('stPanel').innerHTML=h;p3ModelsWire();}
+// ---------- Minu 3D-mudelid (serverist, igas seadmes) + jagamislink ja kodulehe kood ----------
+const P3SIZE={};
+async function p3LoadModels(){if(!CL.sb||!CL.cid)return;
+  try{const {data,error}=await CL.sb.from('renders').select('id,output_url,input_urls,tpl,created_at').eq('company_id',CL.cid).eq('kind','3d').eq('status','done').order('created_at',{ascending:false}).limit(50);
+    if(error)return;acct.models=(data||[]).filter(m=>safeUrl(m.output_url)).map(m=>({id:m.id,url:m.output_url,img:(m.input_urls||[]).filter(safeUrl)[0]||'',cleaned:(m.input_urls||[]).filter(safeUrl),tpl:m.tpl,d:m.created_at}));
+    if(!$('studio').hidden&&stTheme(STU.tpl).p3)stRenderPanel();}catch(_){}}
+// avalik link: ainult firma ja töö id (mudel on niikuinii avalikus kaustas)
+function p3Path(url){const m=String(url||'').match(/\/models\/([0-9a-f-]{36}\/[0-9a-f-]{36})\.glb(\?|$)/);return m?m[1]:'';}
+function p3Links(url){const p=p3Path(url);if(!p)return null;const link=location.origin+location.pathname+'#m='+p;
+  return {link,embed:`<iframe src="${link}&e=1" title="3D-mudel" width="100%" height="480" style="border:0;border-radius:12px" allow="fullscreen" loading="lazy"></iframe>`};}
+function p3ShareHtml(url){const L=p3Links(url);if(!L)return '';
+  return `<div class="p3share"><b>Jaga või pane kodulehele</b><div class="row"><button type="button" class="ghost" data-p3copy="${stEsc(L.link)}" data-p3ok="Jagamislink kopeeritud">Kopeeri jagamislink</button><button type="button" class="ghost" data-p3copy="${stEsc(L.embed)}" data-p3ok="Kodulehe kood kopeeritud">Kopeeri kodulehe kood</button><a class="fhint" href="${stEsc(L.link)}" target="_blank" rel="noopener">Ava avalik vaade ↗</a></div><span class="fhint">Link töötab ilma sisselogimiseta. Koodi saad kleepida kodulehele või e-poodi, mudel pöörleb seal ise.</span></div>`;}
+function p3ModelsHtml(){const M=acct.models||[];if(!p3Cloud())return '';
+  if(!M.length)return `<div class="stcard"><h3>Minu 3D-mudelid</h3><p>Valmis mudelid jäävad siia alles igas seadmes.</p></div>`;
+  return `<div class="stcard"><h3>Minu 3D-mudelid <small style="color:var(--muted);font-weight:500">${M.length}</small></h3><div class="p3models">${M.map((m,i)=>{const T=tplById(m.tpl),L=p3Links(m.url);
+    return `<div class="p3m">${m.img?`<img src="${stEsc(m.img)}" alt="" loading="lazy">`:'<span class="ph"></span>'}<div class="mt"><b>${stEsc(T&&T.id!=='mudel3d'?T.name:'3D-mudel')}</b><small>${stEsc(new Date(m.d).toLocaleDateString('et-EE'))}<span data-p3size="${i}">${P3SIZE[m.url]?' · '+P3SIZE[m.url]:''}</span></small><div class="ma"><button type="button" class="linkbtn" data-p3open="${i}">Ava</button>${L?`<button type="button" class="linkbtn" data-p3copy="${stEsc(L.link)}" data-p3ok="Jagamislink kopeeritud">Jaga</button><button type="button" class="linkbtn" data-p3copy="${stEsc(L.embed)}" data-p3ok="Kodulehe kood kopeeritud">Kood</button>`:''}<a class="linkbtn" href="${stEsc(m.url+(m.url.includes('?')?'&':'?')+'download=3d-mudel.glb')}" download>.glb</a></div></div></div>`;}).join('')}</div></div>`;}
+function p3ModelsWire(){const M=acct.models||[];
+  $('stPanel').querySelectorAll('[data-p3open]').forEach(b=>b.onclick=()=>p3OpenModel(M[+b.dataset.p3open]));
+  $('stPanel').querySelectorAll('[data-p3size]').forEach(el=>{const m=M[+el.dataset.p3size];if(!m||P3SIZE[m.url])return;P3SIZE[m.url]='…';
+    fetch(m.url,{method:'HEAD'}).then(r=>{const n=+r.headers.get('content-length');P3SIZE[m.url]=n?(n/1048576).toFixed(1).replace('.',',')+' MB':'';el.textContent=P3SIZE[m.url]?' · '+P3SIZE[m.url]:'';}).catch(()=>{P3SIZE[m.url]='';});});}
+// mudel lahti: olemasolev töö või uus vaate-sessioon (mudel ise on serveris)
+function p3OpenModel(m){if(!m)return;const ex=acct.studio.find(x=>x.p3job&&x.p3job.id===m.id);if(ex)return stOpenSession(ex.id);
+  openStudio('mudel3d');const s=stNewSession();Object.assign(s,{title:'3D-mudel · '+new Date(m.d).toLocaleDateString('et-EE'),thumb:m.img||null,p3job:{status:'done',id:m.id,url:m.url,cleaned:m.cleaned||[],seen:1,t:Date.parse(m.d)||Date.now()}});
+  STU.sid=s.id;stSave();stRender();}
+document.addEventListener('click',async e=>{const b=e.target.closest&&e.target.closest('[data-p3copy]');if(!b)return;const t=b.dataset.p3copy;
+  try{await navigator.clipboard.writeText(t);toast(b.dataset.p3ok||'Kopeeritud');}catch(_){window.prompt('Kopeeri:',t);}});
+// avalik vaatur (#m=firma/töö, &e=1 = kodulehe vidin): ilma sisselogimiseta, ainult mudel
+function p3Public(h){const W=wHash(h),m=String(W.m||'');if(!CLOUD||!/^[0-9a-f-]{36}\/[0-9a-f-]{36}$/.test(m))return false;
+  const url=CLOUD.url.replace(/\/$/,'')+'/storage/v1/object/public/models/'+m+'.glb',em=W.e==='1';
+  document.body.classList.add('p3pub');if(em)document.body.classList.add('p3emb');document.title='3D-mudel · Vaade3D';
+  const d=document.createElement('main');d.className='p3pubw';
+  d.innerHTML=(em?'':`<header><b>3D-mudel</b><a class="send" href="${stEsc(url+'?download=3d-mudel.glb')}" download="3d-mudel.glb">Laadi alla .glb</a></header>`)
+    +`<div class="p3v" id="p3PubV"><div class="p3load"><span>Laadin 3D-mudelit…</span><div class="p3bar"><i></i></div></div></div>`
+    +(em?`<a class="p3by" href="https://app.vaade3d.ee/" target="_blank" rel="noopener">Vaade3D</a>`:`<p class="fhint">Pööra hiire või sõrmega, suumi rattaga või kahe sõrmega. Tehtud Vaade3D-ga.</p>`);
+  document.body.appendChild(d);p3View($('p3PubV'),url,true);return true;}
 // 3D-vaatur: pööramine, suum, pehme valgus ja vari; üks WebGL kontekst korraga
 let P3V=null;
 function p3Dispose(){if(!P3V)return;P3V.stop();P3V.ro.disconnect();P3V.r.dispose();P3V=null;}
@@ -3533,7 +3582,7 @@ function p3View(box,url,reveal){if(!box)return;
     const bb=new THREE.Box3().setFromObject(o),sz=bb.getSize(new THREE.Vector3()),c=bb.getCenter(new THREE.Vector3());o.position.set(-c.x,-bb.min.y,-c.z);sc.add(o);
     const R=Math.max(sz.x,sz.y,sz.z)||1;g.scale.set(R*6,R*6,1);d.position.set(R*1.6,R*2.6,R*1.3);
     const sh=d.shadow.camera;sh.left=sh.bottom=-R*1.6;sh.right=sh.top=R*1.6;sh.near=R*.05;sh.far=R*8;sh.updateProjectionMatrix();
-    cam.near=R/200;cam.far=R*40;cam.updateProjectionMatrix();cam.position.set(R*1.7,R*1.05,R*2.1);ct.target.set(0,sz.y*.42,0);ct.minDistance=R*.35;ct.maxDistance=R*6;ct.update();
+    cam.near=R/200;cam.far=R*40;cam.updateProjectionMatrix();const ka=Math.max(1,1/(cam.aspect||1));cam.position.set(R*1.7*ka,R*1.05*ka,R*2.1*ka); // kitsas/püstine vaade: kaamera kaugemale, et mudel mahuksct.target.set(0,sz.y*.42,0);ct.minDistance=R*.35;ct.maxDistance=R*6;ct.update();
     V.ok=true;box.classList.add('ready');
     if(rv){ct.autoRotate=true;ct.autoRotateSpeed=7.5;const stop=()=>{ct.autoRotate=false;ct.removeEventListener('start',stop);};ct.addEventListener('start',stop);setTimeout(stop,8000);}},
     e=>{if(bar&&e.total)bar.style.width=Math.round(e.loaded/e.total*100)+'%';},
@@ -3575,8 +3624,11 @@ async function p3Crop(s,orig){const m=STU.sel>=0&&s.marks[STU.sel]&&isArea(s.mar
 $('p3File').onchange=e=>{const f=[...e.target.files];e.target.value='';if(f.length)p3AddFiles(f,STU.p3slot);};
 $('p3Btn').onclick=()=>{const h=HOUSES[cur],T=tplById(h.tpl);openStudio('mudel3d',null,{subject:p3Cfg(T,'addr').subject||'building',lock:true,ehr:h.ehr,label:(T?T.name:'Objekt')+' · '+h.short});};
 
-restoreRT();renderList();renderPanel();build();updFotos();chatReset();setTab(false);renderAcct();const DEV_AUTOLOGIN=true;/* arenduse ajal: avab kohe töölaua; enne käivitamist pane false */
-if(CLOUD)clBoot();else if(!startFromHash()&&(DEV_AUTOLOGIN||store.get('oai_session',null)))enter();tick();
+const DEV_AUTOLOGIN=true;/* arenduse ajal: avab kohe töölaua; enne käivitamist pane false */
+// avalik 3D-mudel (#m=…, ka kodulehe vidinana): ainult vaatur, ülejäänud äppi ei käivitata
+const P3PUB=location.hash.startsWith('#m=')&&p3Public(location.hash);
+if(!P3PUB){restoreRT();renderList();renderPanel();build();updFotos();chatReset();setTab(false);renderAcct();
+  if(CLOUD)clBoot();else if(!startFromHash()&&(DEV_AUTOLOGIN||store.get('oai_session',null)))enter();tick();}
 </script>
 
 </body>
