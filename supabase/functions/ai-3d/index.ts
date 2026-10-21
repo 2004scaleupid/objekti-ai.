@@ -111,7 +111,8 @@ async function key() {
   hmacKey = await crypto.subtle.importKey("raw", k, { name: "HMAC", hash: "SHA-256" }, false, ["sign", "verify"]);
   return hmacKey;
 }
-type Tok = { c: string; h: string; s: Subject; ok: boolean; soft: boolean; exp: number };
+// one = ühe pildi režiim (image-to-3d mis tahes subjektile); tõend kehtib ainult samas režiimis
+type Tok = { c: string; h: string; s: Subject; ok: boolean; soft: boolean; exp: number; one?: boolean };
 async function signTok(t: Tok) {
   const p = b64u(enc.encode(JSON.stringify(t)));
   const sig = new Uint8Array(await crypto.subtle.sign("HMAC", await key(), enc.encode(p)));
@@ -157,14 +158,14 @@ Answer ONLY with JSON, no other text:
 const SIDE_TIP = { building: ["Lisa foto esiküljelt", "Lisa foto vasakult küljelt", "Lisa foto tagaküljelt", "Lisa foto paremalt küljelt"], other: ["Lisa foto eest", "Lisa foto vasakult", "Lisa foto tagant", "Lisa foto paremalt"] };
 
 type Photo = { slot: number; side: string; ok: boolean; issues: string[]; tip?: string; index?: number };
-async function aiCheck(photos: string[], want: Subject | null, pool = false) {
+async function aiCheck(photos: string[], want: Subject | null, pool = false, single = false) {
   const content: unknown[] = [];
   photos.forEach((u, i) => {
     const m = u.match(/^data:(image\/(?:jpeg|png|webp));base64,(.+)$/)!;
     if (pool) content.push({ type: "text", text: `Photo ${i}` });
     content.push({ type: "image", source: { type: "base64", media_type: m[1], data: m[2] } });
   });
-  content.push({ type: "text", text: (want ? `Requested subject: ${want}.` + (pool ? "" : ` Slots: ${SUBJECTS[want].slots.slice(0, photos.length).map((_, i) => `${i}=${SIDES[i]}`).join(", ")}.`) : `No subject chosen yet: detect it from the photo(s).`) + ` Number of photos: ${photos.length}.` });
+  content.push({ type: "text", text: (want ? `Requested subject: ${want}.` + (pool ? "" : ` Slots: ${SUBJECTS[want].slots.slice(0, photos.length).map((_, i) => `${i}=${SIDES[i]}`).join(", ")}.`) : `No subject chosen yet: detect it from the photo(s).`) + ` Number of photos: ${photos.length}.` + (single ? " SINGLE PICTURE MODE: only one picture is given on purpose (also for a building or vehicle). Judge only this picture; never use duplicate_side or wrong_side." : "") });
   const r = await tfetch(env("ANTHROPIC_API_URL", "https://api.anthropic.com") + "/v1/messages", {
     method: "POST",
     headers: { "x-api-key": env("ANTHROPIC_API_KEY"), "anthropic-version": "2023-06-01", "content-type": "application/json" },
@@ -287,13 +288,16 @@ export async function handler(req: Request): Promise<Response> {
     const want = b.subject == null || b.subject === "" ? null : isSubject(b.subject) ? b.subject : undefined;
     if (want === undefined) return fail("tundmatu subjekt");
     // rohkem fotosid kui külgi -> AI valib igale küljele parima
-    const pool = photos.length > (want ? SUBJECTS[want].max : 4);
+    // ühe pildi režiim: „Tee 3D-ks“ ühest pildist (image-to-3d) mis tahes subjektile
+    const single = b.single === true;
+    if (single && photos.length !== 1) return fail("Ühe pildi režiimis on vaja täpselt 1 pilti");
+    const pool = !single && photos.length > (want ? SUBJECTS[want].max : 4);
     if (!(await rateLimit("3dchk:" + me.companyId, 40, 3600))) return fail("Liiga palju kontrolle lühikese ajaga. Proovi hiljem.", 429);
     let res;
     try {
       let r1;
-      try { r1 = await aiCheck(photos, want, pool); }
-      catch (e1) { console.error("ai-3d check, proovin uuesti:", (e1 as Error).message); r1 = await aiCheck(photos, want, pool); }
+      try { r1 = await aiCheck(photos, want, pool, single); }
+      catch (e1) { console.error("ai-3d check, proovin uuesti:", (e1 as Error).message); r1 = await aiCheck(photos, want, pool, single); }
       const { a, inT, outT, model } = r1;
       res = pool ? normalizePool(a, photos.length, want) : normalize(a, photos.length, want);
       const cost = (inT * Number(env("ANTHROPIC_PRICE_IN", "0.10")) + outT * Number(env("ANTHROPIC_PRICE_OUT", "0.50"))) / 1e6;
@@ -307,8 +311,8 @@ export async function handler(req: Request): Promise<Response> {
     // valikurežiimis tõend ainult valitud fotodele külgede järjekorras (täpselt need, mis start saab)
     const chosen = pool ? (res as ReturnType<typeof normalizePool>).selected.map((x) => photos[x.index]) : photos;
     let token: string | null = null;
-    if (subject && chosen.length >= SUBJECTS[subject].min && chosen.length <= SUBJECTS[subject].max) {
-      token = await signTok({ c: me.companyId, h: await photosHash(chosen), s: subject, ok: res.ok, soft: res.soft, exp: Date.now() + 30 * 60_000 });
+    if (subject && chosen.length >= (single ? 1 : SUBJECTS[subject].min) && chosen.length <= SUBJECTS[subject].max) {
+      token = await signTok({ c: me.companyId, h: await photosHash(chosen), s: subject, ok: res.ok, soft: res.soft, exp: Date.now() + 30 * 60_000, one: single });
     }
     return json({ ...res, subject: res.subject, token, slots: subject ? SUBJECTS[subject].slots : null });
   }
@@ -316,10 +320,11 @@ export async function handler(req: Request): Promise<Response> {
   // ---------- alusta ----------
   if (!isSubject(b.subject)) return fail("Vali, mis fotodel on: hoone, ese või sõiduk");
   const subject = b.subject, S = SUBJECTS[subject];
-  if (photos.length < S.min || photos.length > S.max) return fail(S.min === S.max ? `Vaja on ${S.min} fotot: ${S.slots.join(", ").toLowerCase()}` : `Lisa ${S.min}–${S.max} fotot`);
+  const single = b.single === true;
+  if (single ? photos.length !== 1 : photos.length < S.min || photos.length > S.max) return fail(single ? "Ühe pildi režiimis on vaja täpselt 1 pilti" : S.min === S.max ? `Vaja on ${S.min} fotot: ${S.slots.join(", ").toLowerCase()}` : `Lisa ${S.min}–${S.max} fotot`);
   // server kontrollib ise: sama firma, sama subjekt, täpselt samad fotod, korras (või lubatud „Jätka ikkagi“)
   const t = await readTok(b.check);
-  const pass = !!t && t.c === me.companyId && t.s === subject && t.exp > Date.now() && t.h === await photosHash(photos) && (t.ok || (b.force === true && t.soft));
+  const pass = !!t && t.c === me.companyId && t.s === subject && t.exp > Date.now() && t.h === await photosHash(photos) && !!t.one === single && (t.ok || (b.force === true && t.soft));
   if (!pass) return fail("Fotod pole kontrollitud või kontroll ei läinud läbi. Kontrolli fotod uuesti.", 409);
   await refundStale(me.companyId);
   if (!(await rateLimit("3d:" + me.companyId, 10, 3600))) return fail("Liiga palju 3D-mudeleid lühikese ajaga. Proovi hiljem.", 429);
@@ -339,7 +344,7 @@ export async function handler(req: Request): Promise<Response> {
   let credits: number;
   try { credits = await spend(me.companyId, "3d", label, id); }
   catch (e) { const m = (e as Error).message; return fail(m, m === "insufficient_credits" ? 402 : 400); }
-  await db.from("renders").insert({ id, company_id: me.companyId, object_id: objectId, kind: "3d", product_id: productId, tpl: b.tpl ? String(b.tpl).slice(0, 40) : null, prompt: `[${subject}] ${prompt}`, stage: "cleaning" });
+  await db.from("renders").insert({ id, company_id: me.companyId, object_id: objectId, kind: "3d", product_id: productId, tpl: b.tpl ? String(b.tpl).slice(0, 40) : null, prompt: `[${subject}${single ? " 1 pilt" : ""}] ${prompt}`, stage: "cleaning" });
   try {
     const ins = await Promise.all(photos.map((u, i) => uploadDataUrl(u, `${me.companyId}/in/${id}-${i}`)));
     // puhastused paralleelselt; tulemus meie kausta ILMA firma logota (logo ei tohi mudeli tekstuuri sattuda)

@@ -255,3 +255,35 @@ Deno.test("ese 6 fotost: AI valib ühe -> image-to-3d", async () => {
   assertEquals((await call({ subject: "object", photos: [P6[4]], check: c.j.token })).status, 200);
   assert(W.calls.includes("POST " + MU + "/tripo3d-h31-image-to-3d"));
 });
+
+// ---------- ühe pildi režiim („Tee 3D-ks“) ----------
+Deno.test("ühe pildi režiim: maja ühest pildist -> image-to-3d, tõend seotud režiimiga", async () => {
+  W.balance = 100; // varasemad testid kulutasid matkitud saldo ära
+  W.check = good("building", 1);
+  const one = [photo(500)];
+  const c = await call({ action: "check", single: true, photos: one });
+  assertEquals(c.status, 200); assertEquals(c.j.subject, "building"); assert(c.j.token);
+  assert(JSON.stringify(W.lastAn!.messages).includes("SINGLE PICTURE MODE"));
+  // tavarežiimis maja 1 fotoga ei lähe (vaja 4)
+  assertEquals((await call({ subject: "building", photos: one, check: c.j.token })).status, 400);
+  W.calls.length = 0;
+  const s = await call({ subject: "building", single: true, photos: one, check: c.j.token });
+  assertEquals(s.status, 200);
+  assert(W.calls.includes("POST " + MU + "/tripo3d-h31-image-to-3d"));
+  assert(String(W.renders.find((r) => r.id === s.j.id)!.prompt).startsWith("[building 1 pilt]"));
+  // ühe pildi režiimis täpselt 1 pilt
+  assertEquals((await call({ action: "check", single: true, photos: P4.slice(0, 2) })).status, 400);
+  assertEquals((await call({ subject: "building", single: true, photos: P4, check: c.j.token })).status, 400);
+});
+
+Deno.test("ühe pildi tõend ei kehti tavarežiimis ja vastupidi (ese)", async () => {
+  W.balance = 100;
+  W.check = good("object", 1);
+  const one = [photo(600)];
+  const single = (await call({ action: "check", subject: "object", single: true, photos: one })).j.token;
+  const normal = (await call({ action: "check", subject: "object", photos: one })).j.token;
+  assertEquals((await call({ subject: "object", photos: one, check: single })).status, 409);
+  assertEquals((await call({ subject: "object", single: true, photos: one, check: normal })).status, 409);
+  assertEquals((await call({ subject: "object", photos: one, check: normal })).status, 200);
+  assertEquals((await call({ subject: "object", single: true, photos: one, check: single })).status, 200);
+});
