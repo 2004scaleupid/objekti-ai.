@@ -102,11 +102,21 @@ await ev(()=>{clBuy(220).catch(()=>{});});await page.waitForURL(/checkout\.strip
 const sid='cs_e2e',ev1={type:'checkout.session.completed',data:{object:{id:sid,payment_status:'paid',currency:'eur',amount_total:10000,payment_intent:'pi_e2e',metadata:{company_id:cid,pack:'220'}}}},raw=JSON.stringify(ev1),t=Math.floor(Date.now()/1000);
 await fetch(G+'/functions/v1/stripe-webhook',{method:'POST',headers:{'stripe-signature':`t=${t},v1=`+crypto.createHmac('sha256','whsec_test').update(`${t}.${raw}`).digest('hex')},body:raw});
 await page.goto('https://app.vaade3d.ee/#paid=cs_e2e');await until(()=>typeof acct!=='undefined',15000);ok(await until(()=>/krediiti lisatud/.test(document.getElementById('toast').textContent),20000),'pärast makset: “+220 krediiti lisatud”',await ev(()=>[acct.credits,document.getElementById('toast').textContent]));
+// vaba kogus: 15 krediiti = 7,50 €
+await ev(()=>show('settings','billing'));await W(800);await page.fill('#cuCr','15');ok(/7,50/.test(await ev(()=>document.getElementById('cuPr').textContent)),'vaba kogus: 15 krediiti = 7,50 €',await ev(()=>document.getElementById('cuPr').textContent));
+await page.fill('#cuCr','5');ok(await ev(()=>document.getElementById('cuBuy').disabled),'alla 10 krediidi ei saa osta');await page.fill('#cuCr','15');
+await page.click('#cuBuy');await W(400);await page.click('#dYes');await page.waitForURL(/checkout\.stripe\.com/,{timeout:15000}).catch(()=>{});
+{const l=(await ckLog()).pop()[1];ok(l['metadata[pack]']==='custom'&&l['metadata[credits]']==='15'&&l['line_items[0][price_data][unit_amount]']==='750','Stripe: vaba kogus 15 krediiti, 750 senti',l);}
+{const before=dbBal(),mk=(o,id)=>{const raw=JSON.stringify({type:'checkout.session.completed',data:{object:{id,payment_status:'paid',currency:'eur',payment_intent:'pi_'+id,...o}}}),t=Math.floor(Date.now()/1000);return fetch(G+'/functions/v1/stripe-webhook',{method:'POST',headers:{'stripe-signature':`t=${t},v1=`+crypto.createHmac('sha256','whsec_test').update(`${t}.${raw}`).digest('hex')},body:raw});};
+  await mk({amount_total:500,metadata:{company_id:cid,pack:'custom',credits:'15',cents:'750',app:'vaade3d'}},'cs_bad');ok(dbBal()===before,'vale summaga vaba kogus ei anna krediite');
+  await mk({amount_total:750,metadata:{company_id:cid,pack:'custom',credits:'15',cents:'750',app:'vaade3d'}},'cs_cust');ok(dbBal()===before+15,'vaba kogus: +15 krediiti',[before,dbBal()]);
+  await mk({amount_total:5000,metadata:{company_id:cid,pack:'100',app:'muu-projekt'}},'cs_other');ok(dbBal()===before+15,'teise projekti makse ei anna krediite');}
+await page.goto('https://app.vaade3d.ee/#paid=cs_cust');await until(()=>typeof acct!=='undefined',15000);ok(await until(()=>/15 krediiti lisatud/.test(document.getElementById('toast').textContent),20000),'pärast makset: “+15 krediiti lisatud”',await ev(()=>document.getElementById('toast').textContent));
 // müüja logib sisse ja näeb tulu
 await ev(()=>{document.getElementById('logoutS').click();});await page.waitForLoadState('domcontentloaded');await until(()=>typeof acct!=='undefined'&&!document.getElementById('login').hidden,15000);
 await page.fill('#lEmail','max@seller.ee');await page.fill('#lPass','parool123');await page.click('#lSubmit');await until(()=>!document.getElementById('home').hidden,20000);
 await ev(()=>show('settings','seller'));await W(1500);
-ok(/Teenitud 25,00/.test(await ev(()=>document.getElementById('slSum').textContent)),'müüja näeb 25% tulu',await ev(()=>document.getElementById('slSum').textContent));
+ok(/Teenitud 26,8/.test(await ev(()=>document.getElementById('slSum').textContent)),'müüja näeb 25% tulu',await ev(()=>document.getElementById('slSum').textContent));
 await page.screenshot({path:D+'e2e-seller.png'});
 // vale parool
 await ev(()=>{document.getElementById('logoutS').click();});await W(1500);await until(()=>typeof acct!=='undefined'&&!document.getElementById('login').hidden,15000);await page.fill('#lEmail','max@seller.ee');await page.fill('#lPass','vale');await page.click('#lSubmit');await W(1500);

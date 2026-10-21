@@ -23,11 +23,17 @@ Deno.serve(async (req) => {
   const s = ev?.data?.object || {};
   const okEvent = (ev.type === "checkout.session.completed" && s.payment_status === "paid") || ev.type === "checkout.session.async_payment_succeeded";
   if (okEvent) {
-    const md = s.metadata || {}, pk = PACKS[String(md.pack)];
+    const md = s.metadata || {};
+    let pk: { credits: number; eur: number } | undefined = PACKS[String(md.pack)];
+    // vaba kogus: kogus ja summa tulevad meie enda metadata'st (seda saab panna ainult meie server), summa peab klappima
+    if (md.pack === "custom") {
+      const n = Number(md.credits), c = Number(md.cents);
+      pk = Number.isInteger(n) && n >= 10 && n <= 2000 && Number.isInteger(c) && c >= 50 && c <= n * 100 ? { credits: n, eur: c / 100 } : undefined;
+    }
     // summa ja valuuta peavad klappima paketiga (krediidid tulevad meie tabelist, mitte maksest)
     // sama Stripe'i kontot kasutavad ka teised projektid: ainult Vaade3D maksed
     if (md.app && md.app !== "vaade3d") return new Response("ignored", { status: 200 });
-    if (!pk || s.currency !== "eur" || Number(s.amount_total) !== pk.eur * 100 || !md.company_id) return new Response("ignored", { status: 200 });
+    if (!pk || s.currency !== "eur" || Number(s.amount_total) !== Math.round(pk.eur * 100) || !md.company_id) return new Response("ignored", { status: 200 });
     const db = admin();
     const { data: c } = await db.from("companies").select("id").eq("id", md.company_id).maybeSingle();
     if (!c) return new Response("no company", { status: 200 });

@@ -536,6 +536,13 @@ body.cvm .panel>*:not(#cvPanel){display:none!important}
 .pack{border:1px solid var(--line);border-radius:10px;padding:14px;background:var(--paper);display:flex;flex-direction:column;gap:6px;text-align:left;cursor:pointer;font:inherit;color:var(--ink)}
 .pack:hover{border-color:var(--accent)}
 .pack b{font:800 22px var(--display)}.pack .pr{font:600 14px var(--mono)}.pack small{color:var(--muted)}
+.custbuy{display:grid;grid-template-columns:minmax(0,1fr) auto auto auto;gap:12px;align-items:center;border:1px dashed var(--line);border-radius:10px;padding:12px 14px;background:var(--paper)}
+.custbuy .cbt b{display:block;font-size:15px}.custbuy .cbt small{color:var(--muted);font-size:12px}
+.custin{display:flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:8px;padding:4px 10px;background:var(--bg)}
+.custin input{width:72px;border:0;background:transparent;font:600 16px var(--mono);color:var(--ink);outline:none;text-align:right}
+.custin span{color:var(--muted);font-size:13px}.custpr{font:700 16px var(--mono);min-width:64px;text-align:right}
+#cuBuy[disabled]{opacity:.45;cursor:not-allowed}
+@media (max-width:700px){.custbuy{grid-template-columns:1fr auto}.custbuy .cbt{grid-column:1/-1}}
 .pack .tagx{align-self:flex-start;font:600 10.5px var(--mono);background:var(--accent);color:#fff;padding:2px 7px;border-radius:999px}
 .tbl{overflow-x:auto}
 .tbl table{width:100%;border-collapse:collapse;font-size:13px}
@@ -997,6 +1004,9 @@ body.cvm .panel>*:not(#cvPanel){display:none!important}
           <button type="button" class="pack" data-cr="220" data-eur="100"><span class="tagx">+20 boonust</span><b>220 krediiti</b><span class="pr">100 €</span><small>22 objektivaadet · 55 esituspilti · 110 disaini</small></button>
           <button type="button" class="pack" data-cr="600" data-eur="250"><span class="tagx">+100 boonust</span><b>600 krediiti</b><span class="pr">250 €</span><small>60 objektivaadet · 150 esituspilti · 300 disaini</small></button>
         </div>
+        <div class="custbuy"><div class="cbt"><b>Vali ise kogus</b><small>Alates 10 krediidist · <span id="cuPer">0,50 €</span> krediit · ilma boonuseta</small></div>
+          <label class="custin"><input id="cuCr" type="number" min="10" max="2000" step="1" value="30" inputmode="numeric" aria-label="Krediitide arv"><span>krediiti</span></label>
+          <b class="custpr" id="cuPr">15 €</b><button type="button" class="apply" id="cuBuy">Osta</button></div>
         <span class="fhint">Makse toimub Stripe'i kaudu (kaart, pangalink, Apple Pay). Arve tuleb ettevõtte andmetega e-postile.</span></div>
       <div style="display:flex;flex-direction:column;gap:10px"><div class="tag">Ajalugu</div>
         <div class="tbl"><table><thead><tr><th>Kuupäev</th><th>Kirjeldus</th><th>Krediidid</th><th>Summa</th></tr></thead><tbody id="hist"></tbody></table></div></div>
@@ -1695,7 +1705,7 @@ Object.entries(acct.roofTypes||{}).forEach(([e,t])=>{});
 function toast(t){const el=$('toast');el.textContent=t;el.hidden=false;clearTimeout(toast.t);toast.t=setTimeout(()=>el.hidden=true,2600);}
 function initials(n){return (n||'?').split(/\s+/).filter(Boolean).slice(0,2).map(w=>w[0]).join('').toUpperCase();}
 function today(){return new Date().toISOString().slice(0,10);}
-function renderAcct(){try{renderPlans();}catch(e){}$('hdrBal').textContent=acct.credits;$('cBal').textContent=acct.credits;$('sBal').innerHTML=acct.credits+' <span>krediiti</span>';$('sBalEur').textContent='≈ '+(acct.credits/2).toFixed(2).replace('.',',').replace(',00','')+' € väärtuses';
+function renderAcct(){try{renderPlans();}catch(e){}try{if($('cuCr'))cuDraw();}catch(e){}$('hdrBal').textContent=acct.credits;$('cBal').textContent=acct.credits;$('sBal').innerHTML=acct.credits+' <span>krediiti</span>';$('sBalEur').textContent='≈ '+(acct.credits/2).toFixed(2).replace('.',',').replace(',00','')+' € väärtuses';
   $('avComp').textContent=acct.company||acct.name;$('mName').textContent=acct.name;$('mEmail').textContent=acct.email;
   const av=$('avIni');av.innerHTML=acct.logo?`<img src="${acct.logo}" alt="" style="width:100%;height:100%;object-fit:contain;border-radius:50%;background:#fff">`:initials(acct.company||acct.name);
   $('logoPrev').innerHTML=acct.logo?`<img src="${acct.logo}" alt="Logo">`:initials(acct.company||acct.name);try{renderLgPrev();}catch(_){}
@@ -1773,6 +1783,18 @@ $('logoIn').addEventListener('change',e=>{const f=e.target.files[0];if(!f)return
 $('secF').onsubmit=e=>{e.preventDefault();const n=$('sNew').value;if(!$('sOld').value){$('secErr').textContent='Sisesta praegune parool või vajuta „Ei mäleta praegust parooli?“.';return;}if(n.length<8){$('secErr').textContent='Uus parool peab olema vähemalt 8 märki.';return;}if(n!==$('sNew2').value){$('secErr').textContent='Uued paroolid ei kattu.';return;}$('sNew2').value='';$('secErr').textContent='';$('sOld').value=$('sNew').value='';toast('Parool muudetud');};
 document.querySelectorAll('.pack').forEach(b=>b.onclick=async()=>{const cr=+b.dataset.cr,eur=+b.dataset.eur;
   if(await ask2(`Osta ${cr} krediiti`,`Summa ${eur} € (sisaldab käibemaksu). Demo: päris äpis avaneb siin Stripe'i makseleht.`,`Maksa ${eur} €`)){acct.credits+=cr;acct.hist.push({d:today(),t:`Ostetud ${cr} krediiti`,c:cr,e:eur.toFixed(2).replace('.',',')+' €'});save();renderAcct();toast(`+${cr} krediiti lisatud`);}});
+/* vaba kogus: 10–2000 krediiti, krediidi hind seadetest (vaikimisi 0,50 €), ilma boonuseta */
+function crEur(){const e=+((acct.admRules&&acct.admRules.eur)||0.5);return e>0?e:0.5;}
+function cuPrice(n){return Math.round(n*crEur()*100)/100;}
+function eurTxt(v){return (Number.isInteger(v)?String(v):v.toFixed(2)).replace('.',',')+' €';}
+function cuRead(){const n=+$('cuCr').value;return Number.isInteger(n)?n:NaN;}
+function cuDraw(){const n=cuRead(),ok=n>=10&&n<=2000;$('cuPer').textContent=eurTxt(crEur());$('cuPr').textContent=ok?eurTxt(cuPrice(n)):'10–2000';$('cuBuy').disabled=!ok;}
+$('cuCr').addEventListener('input',cuDraw);$('cuCr').addEventListener('keydown',e=>{if(e.key==='Enter')$('cuBuy').click();});
+$('cuBuy').onclick=async()=>{const n=cuRead();if(!(n>=10&&n<=2000)){toast('Vali 10–2000 krediiti');return;}const eu=cuPrice(n);
+  if(!await ask2(`Osta ${n} krediiti`,`Summa ${eurTxt(eu)} (sisaldab käibemaksu). ${CLOUD&&CL.cid?"Avaneb turvaline Stripe'i makseleht: kaart, Apple Pay, Google Pay.":"Demo: päris äpis avaneb siin Stripe'i makseleht."}`,`Maksa ${eurTxt(eu)}`))return;
+  if(CLOUD&&CL.cid){clBuy(n,true).catch(e=>toast(clErr(e)));return;}
+  acct.credits=+(acct.credits+n).toFixed(2);acct.hist.push({d:today(),t:`Ostetud ${n} krediiti`,c:n,e:eurTxt(eu)});save();renderAcct();toast(`+${n} krediiti lisatud`);};
+cuDraw();
 
 
 /* ---------- plans ---------- */
@@ -2044,17 +2066,19 @@ function wHash(h){const o={};h.slice(1).split('&').forEach(kv=>{const i=kv.index
 /* out of credits */
 const PACKS=[[100,50,''],[220,100,'Populaarseim'],[600,250,'Parim hind']];
 function needCredits(need,label){return new Promise(res=>{const bal=acct.credits,lack=+(need-bal).toFixed(2),p=basePrice('obj');let sel=PACKS.findIndex(x=>x[0]>=lack&&x[2]);if(sel<0)sel=PACKS.findIndex(x=>x[0]>=lack);if(sel<0)sel=2;if(sel===0&&lack<=100)sel=1;
+  // valikud: täpselt puuduv kogus (vähemalt 10) + paketid
+  const cx=Math.max(10,Math.ceil(lack)),OPTS=PACKS.map(([cr,eu,tg])=>({cr,eu,tg}));if(cx<100){OPTS.unshift({cr:cx,eu:cuPrice(cx),tg:'Täpselt vajalik',custom:true});sel++;}
   $('ocT').textContent=bal<p?'Krediidid said otsa':'Krediiti ei jätku';
   $('ocP').textContent=`${label} vajab ${crTxt(need)}. Vali pakett ja jätkame kohe sealt, kus pooleli jäid.`;
   $('ocBal').textContent=String(bal).replace('.',',');$('ocNeed').textContent=String(need).replace('.',',');$('ocLack').textContent=String(lack).replace('.',',');
-  const draw=()=>{$('ocPacks').innerHTML=PACKS.map(([cr,eu,tg],i)=>{const n=Math.floor((cr+bal)/p),per=eu/(cr/10);return `<button type="button" class="ocp" data-k="${i}" aria-pressed="${i===sel}"><span class="rd"></span><span><b>${cr} krediiti</b>${tg?`<span class="tg">${tg}</span>`:''}<small>≈ ${Math.floor(cr/p)} objektivaadet · ${per.toFixed(2).replace('.',',')} € tükk${cr>eu*2?` · +${cr-eu*2} boonust`:''}</small></span><span class="pr">${eu} €<small>saldo pärast ${String(+(cr+bal).toFixed(2)).replace('.',',')}</small></span></button>`;}).join('');
-    $('ocPacks').querySelectorAll('.ocp').forEach(b=>b.onclick=()=>{sel=+b.dataset.k;draw();});$('ocPay').textContent=`Maksa ${PACKS[sel][1]} € ja jätka`;};
+  const draw=()=>{$('ocPacks').innerHTML=OPTS.map(({cr,eu,tg,custom},i)=>{const per=eu/(cr/10),bonus=Math.round(cr-eu/crEur());return `<button type="button" class="ocp" data-k="${i}" aria-pressed="${i===sel}"><span class="rd"></span><span><b>${cr} krediiti</b>${tg?`<span class="tg">${tg}</span>`:''}<small>${custom?'Ainult see, mis puudu':`≈ ${Math.floor(cr/p)} objektivaadet`} · ${per.toFixed(2).replace('.',',')} € tükk${bonus>0?` · +${bonus} boonust`:''}</small></span><span class="pr">${eurTxt(eu)}<small>saldo pärast ${String(+(cr+bal).toFixed(2)).replace('.',',')}</small></span></button>`;}).join('');
+    $('ocPacks').querySelectorAll('.ocp').forEach(b=>b.onclick=()=>{sel=+b.dataset.k;draw();});$('ocPay').textContent=`Maksa ${eurTxt(OPTS[sel].eu)} ja jätka`;};
   draw();$('oc').hidden=false;setTimeout(()=>$('ocPay').focus(),50);
   const done=v=>{$('oc').hidden=true;document.removeEventListener('keydown',esc,true);res(v);},esc=e=>{if(e.key==='Escape'&&!$('oc').hidden){e.stopPropagation();done(false);}};document.addEventListener('keydown',esc,true);
   $('ocX').onclick=()=>done(false);$('oc').onclick=e=>{if(e.target===$('oc'))done(false);};
   $('ocAll').onclick=()=>{done(false);show('settings','billing');};
-  $('ocPay').onclick=()=>{const [cr,eu]=PACKS[sel];$('ocPay').disabled=true;$('ocPay').textContent=CLOUD&&CL.cid?'Avan makselehe…':'Makse kinnitamine…';if(CLOUD&&CL.cid){clBuy(cr).catch(er=>{toast(clErr(er));$('ocPay').disabled=false;draw();});return;}
-    setTimeout(()=>{$('ocPay').disabled=false;acct.credits=+(acct.credits+cr).toFixed(2);acct.hist.push({d:today(),t:`Ostetud ${cr} krediiti`,c:cr,e:eu.toFixed(2).replace('.',',')+' €'});save();renderAcct();if(!$('home').hidden)renderHome();toast(`+${cr} krediiti lisatud · saldo ${acct.credits}`);done(acct.credits>=need);},900);};});}
+  $('ocPay').onclick=()=>{const {cr,eu,custom}=OPTS[sel];$('ocPay').disabled=true;$('ocPay').textContent=CLOUD&&CL.cid?'Avan makselehe…':'Makse kinnitamine…';if(CLOUD&&CL.cid){clBuy(cr,custom).catch(er=>{toast(clErr(er));$('ocPay').disabled=false;draw();});return;}
+    setTimeout(()=>{$('ocPay').disabled=false;acct.credits=+(acct.credits+cr).toFixed(2);acct.hist.push({d:today(),t:`Ostetud ${cr} krediiti`,c:cr,e:eurTxt(eu)});save();renderAcct();if(!$('home').hidden)renderHome();toast(`+${cr} krediiti lisatud · saldo ${acct.credits}`);done(acct.credits>=need);},900);};});}
 /* esituspilt generation */
 async function startGen(skipAsk){if(acct.gen[HOUSES[cur].ehr]){setRen(true);return;}
   if(!isR(cur)){$('genMsg').textContent='Demos on esituspilt valmis ainult Tammekännu tee 44 jaoks. Päris äpis genereeritakse see iga objekti jaoks.';return;}
@@ -2616,7 +2640,7 @@ function clLoginUi(){
   $('outAll').onclick=async()=>{if(await ask2('Logi välja kõigist seadmetest?','Kõik seansid lõpetatakse, ka see.','Logi välja'))out('global');};
   // krediitide ost: Stripe makseleht
   document.querySelectorAll('.pack').forEach(b=>b.onclick=async()=>{const cr=+b.dataset.cr,eu=+b.dataset.eur;if(await ask2(`Osta ${cr} krediiti`,`Summa ${eu} € (sisaldab käibemaksu). Avaneb turvaline Stripe'i makseleht: kaart, Apple Pay, Google Pay.`,`Maksa ${eu} €`))clBuy(cr).catch(e=>toast(clErr(e)));});}
-async function clBuy(cr){const pack={100:'100',220:'220',600:'600'}[cr];if(!pack)throw new Error('Tundmatu pakett');const r=await clFn('checkout',{pack,return_url:appBase()});location.href=r.url;}
+async function clBuy(cr,custom){const pack=custom?'custom':{100:'100',220:'220',600:'600'}[cr];if(!pack)throw new Error('Tundmatu pakett');const r=await clFn('checkout',custom?{pack,credits:cr,return_url:appBase()}:{pack,return_url:appBase()});location.href=r.url;}
 async function clPaid(){const sid=(location.hash.match(/#paid=(cs_[A-Za-z0-9_]+)/)||[])[1];history.replaceState(null,'',location.pathname+location.search);toast('Makse õnnestus, krediidid lisatakse kontole…');
   // Stripe teatab serverile tavaliselt enne, kui klient siia tagasi jõuab: vaatame, kas just see makse on kontol
   for(let k=0;k<12;k++){const {data}=sid?await CL.sb.from('credit_ledger').select('delta').eq('kind','purchase').eq('ref',sid).limit(1):{data:null};
