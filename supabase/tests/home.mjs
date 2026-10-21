@@ -20,4 +20,12 @@ ok(r.studio&&r.tray===1&&r.txt==='Värvi fassaad tumehalliks','reopens with pict
 // text-only draft also saved
 await p.click('#stNew2');await p.fill('#stIn','Moodne saun järve ääres');await p.waitForTimeout(1300);await p.click('#stHome');await p.waitForTimeout(300);
 ok(await p.evaluate(()=>document.querySelectorAll('#ocards .ocard[data-st]').length===2),'text-only draft saved too');
+r=await p.evaluate(()=>{const w=[...document.querySelectorAll('#ocards .owrap')].filter(x=>x.querySelector('.ocard[data-st]'));return w.map(x=>({del:!!x.querySelector('.odel:not(.odl)'),dl:!!x.querySelector('.odl')}));});
+ok(r.length===2&&r.every(x=>x.del&&!x.dl),'unfinished cards: delete yes, download no '+JSON.stringify(r));
+await p.evaluate(()=>{const s=acct.studio[0];s.msgs.push({role:'a',gen:1,out:[EXIMG.maja]});save();renderHome();});await p.waitForTimeout(200);
+r=await p.evaluate(()=>{const c=document.querySelector('#ocards .ocard[data-st="'+acct.studio[0].id+'"]');const w=c.parentElement;return {dl:!!w.querySelector('.odl'),txt:c.textContent};});
+ok(r.dl&&r.txt.includes('1 AI-pilti'),'finished card has download '+JSON.stringify(r));
+const n0=await p.evaluate(()=>acct.studio.length);await p.hover('#ocards .owrap:has(.ocard[data-st]) ');await p.click('#ocards .owrap:has(.ocard[data-st]) .odel:not(.odl)');await p.waitForTimeout(300);await p.click('#dYes');await p.waitForTimeout(300);
+ok(await p.evaluate(n=>acct.studio.length===n-1&&document.querySelectorAll('#ocards .ocard[data-st]').length===1,n0),'delete removes work');
+await p.screenshot({path:'home-2.png'});
 ok(!errs.length,'no errors '+errs);console.log('fails',F);await b.close();
