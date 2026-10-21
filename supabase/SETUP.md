@@ -18,6 +18,39 @@ Kõik AI-pildid saavad firma logo alla paremale (kui firmal on logo ja seadetes 
 | `ehr` | `functions/ehr` | ehitisregistri andmed EHR-koodi järgi |
 | `checkout` | `functions/checkout` | krediidipaketi ost Stripe'iga (50 € / 100 € / 250 €) |
 | `stripe-webhook` | `functions/stripe-webhook` | makse õnnestus → krediidid kontole (sama makse ainult üks kord) |
+| `ai-3d` | `functions/ai-3d` | fotod → 3D-mudel (vt allpool). `check` (AI fotokontroll), `start` (puhastus + Tripo, võtab krediidid `price_3d`), `status` (kopeerib .glb kausta `models`) |
+
+## Fotod → 3D-mudel (`ai-3d`)
+
+Töövoog: fotod → Claude fotokontroll → Kie Nano Banana 2.1 puhastus (iga foto eraldi) → MuAPI Tripo H3.1 → .glb kausta `models` → 3D-vaatur äpis (`vendor/GLTFLoader.js`, three r128).
+
+| Subjekt | Fotosid | Slotid |
+|---|---|---|
+| `building` (maja, saun, kuur, garaaž) | 4 | Esikülg, Vasak külg, Tagakülg, Parem külg |
+| `object` (mööbel, toode, grill, telk) | 1–4 | Eest, Vasakult, Tagant, Paremalt |
+| `vehicle` (auto, haagis, paat) | 4 | Eest, Vasakult, Tagant, Paremalt |
+
+Tabel ja puhastuse promptid on `functions/ai-3d/index.ts` alguses (`SUBJECTS`); sama tabel on äpis (`P3D` failis `index.html`).
+
+3D on kõigis mallides üks ühine komponent, mida juhib malli seadistus `photo3d:{subject, from, btn}` (`p3Cfg()` failis `index.html`):
+
+| Mall | Kus | `photo3d` |
+|---|---|---|
+| Kinnisvara, Katusetööd, Fassaaditööd (ja iga aadressivaade) | aadressivaates nupp „Tee päris majast 3D (4 fotot)“, seotakse objektiga | `{subject:'building'}` |
+| Foto → 3D-mudel | põhitöö, kasutaja valib või AI pakub | `{}` |
+| Toode kliendi hoovis | Stuudio paneel: „Tee tootest 3D-mudel“, toote fotod lähevad slottidesse | `{subject:'object',from:'product'}` |
+| Vaba idee | pärast fotot / AI-pilti „Tee sellest 3D“, AI otsustab subjekti | `{from:'image'}` |
+| Sisekujundus | „Tee esemest 3D“: ainult märgitud ese (pintsel / ristkülik / vabakuju) lõigatakse välja | `{subject:'object',from:'mark'}` |
+
+Uus mall saab 3D lihtsalt seadistusega (nt `photo3d:{subject:'object',from:'image'}`), ilma uue koodita. Mallil ilma seadistuseta: aadressimall = hoone, fotomall = AI otsustab. Sisseehitatud mallide `photo3d` tuleb alati koodist (ka siis, kui kontol on mallidest salvestatud koopia).
+
+- **Fotokontroll on kohustuslik.** `check` vastab allkirjastatud tõendiga (HMAC, 30 min), mis on seotud firma, subjekti ja täpselt nende fotodega (SHA-256). `start` keeldub (409), kui tõend puudub, on võltsitud, aegunud, teiste fotode või subjekti jaoks või kontroll ei läinud läbi. „Jätka ikkagi“ (`force`) aitab ainult kergete vigade korral (`occluded`, `too_far`). Ok arvutab server ise vigade järgi, AI „ok“ üksi ei loe.
+- 1 foto (ainult ese) → Tripo image-to-3d, 2–4 → multiview. Kulu logitakse `ai_usage` tabelisse (`3d-check` ja `3d`).
+- Krediidid võetakse `start`-is, iga vea korral ja 25 min ajapiirangul tagastatakse. Äpp küsib olekut iga 10 s ka pärast lehe värskendamist (server kopeerib .glb alles olekupäringu ajal).
+- Saladused: `MUAPI_API_KEY` (praegu Supabase'is nimega `Muapi.ai `, kood loeb mõlemat), `ANTHROPIC_API_KEY`, `KIE_API_KEY`. Valikulised: `CHECK3D_SECRET` (tõendi võti; vaikimisi tuletatud service_role võtmest), `CHECK3D_MODEL` (vaikimisi `claude-haiku-5-5`), `TRIPO_TEXTURE` (`detailed` = 4K), `TRIPO_FACES` (vaikimisi 150000; langeta, kui .glb tuleb üle ~20 MB).
+- Hind: `settings.price_3d` (äpp loeb sealt, eraldi hinnatekste pole).
+- Deploy: `supabase functions deploy ai-3d --project-ref twubqebmjuvwypeduqqq`
+- Test: `deno test -A --no-config --node-modules-dir=none supabase/tests/ai3d.test.ts` (kõik välised teenused matkitud).
 
 ## Reeglid serveris (tabel `settings`, muudetav adminis)
 

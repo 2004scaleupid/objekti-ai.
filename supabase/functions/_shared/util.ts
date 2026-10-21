@@ -159,7 +159,7 @@ export async function brand(bytes: Uint8Array, logoUrl: string): Promise<Uint8Ar
 export async function storeImage(url: string, path: string, companyId?: string): Promise<string> {
   const db = admin();
   const r = await tfetch(url, {}, 20000);
-  let bytes = new Uint8Array(await r.arrayBuffer());
+  let bytes: Uint8Array = new Uint8Array(await r.arrayBuffer());
   if (bytes.length > 9_000_000) throw new Error("tulemus liiga suur");
   if (companyId) {
     const { data: c } = await db.from("companies").select("logo_url,logo_on_images").eq("id", companyId).single();
