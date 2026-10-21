@@ -1122,8 +1122,8 @@ body.cvm .panel>*:not(#cvPanel){display:none!important}
 </div>
 
 <script>window.V3D_CONFIG={"url": "https://twubqebmjuvwypeduqqq.supabase.co", "key": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR3dWJxZWJtanV2d3lwZWR1cXFxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI0ODM0MDcsImV4cCI6MjEwODA1OTQwN30.LraEV7cHjBKnm-P9l0VIAPJ7ho8Ik4p_gYXS1rlACKc"}</script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script src="vendor/three.min.js"></script>
+<script src="vendor/OrbitControls.js"></script>
 <script>
 /* Serveri seaded: index.html annab window.V3D_CONFIG={url,key}. Ilma nendeta töötab rakendus demo-režiimis. */
 const CLOUD=(window.V3D_CONFIG&&window.V3D_CONFIG.url&&window.V3D_CONFIG.key)?window.V3D_CONFIG:null;
@@ -2537,7 +2537,7 @@ function maybeAskFb(){const uses=acct.hist.filter(h=>h.c<0).length;if((acct.feed
 /* ---------- päris server (Supabase). Ilma window.V3D_CONFIG-ita jääb kõik demo-režiimi ---------- */
 const CL={sb:null,fn:CLOUD?CLOUD.url.replace(/\/$/,'')+'/functions/v1/':'',cid:null,uid:null,wid:null,st:null,syncT:0,snap:null,leads:{},earn:null,busy:false};
 let WPRODS=null;
-function clLoadSdk(){return new Promise((res,rej)=>{if(window.supabase&&window.supabase.createClient)return res();const s=document.createElement('script');s.src='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js';s.onload=()=>res();s.onerror=()=>rej(new Error('Serveriga ühendamine ebaõnnestus'));document.head.appendChild(s);});}
+function clLoadSdk(){return new Promise((res,rej)=>{if(window.supabase&&window.supabase.createClient)return res();const s=document.createElement('script');s.src='vendor/supabase.js';s.onload=()=>res();s.onerror=()=>rej(new Error('Serveriga ühendamine ebaõnnestus'));document.head.appendChild(s);});}
 async function clInit(){if(CL.sb)return CL.sb;await clLoadSdk();CL.sb=window.supabase.createClient(CLOUD.url,CLOUD.key,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
   CL.sb.auth.onAuthStateChange((ev)=>{if(ev==='PASSWORD_RECOVERY')setTimeout(clNewPass,300);});return CL.sb;}
 async function clFn(name,body,opt){opt=opt||{};const h={'Content-Type':'application/json',apikey:CLOUD.key};
@@ -2647,6 +2647,9 @@ async function clNewPass(){const ok=await ask2('Uus parool','Sisesta uus parool 
   if(!ok)return;const pw=$('npw').value;if(pw.length<8){toast('Parool peab olema vähemalt 8 märki');return clNewPass();}const {error}=await CL.sb.auth.updateUser({password:pw});toast(error?clErr(error):'Parool muudetud');}
 function clLoginUi(){
   $('skipBtn').hidden=true;
+  // päris versioonis demo-tekst ära; Google'i nupp ainult siis, kui Google'i sisselogimine on Supabase'is sisse lülitatud (V3D_CONFIG.google)
+  $('lNote').textContent='Uue konto puhul saadame kinnituslingi e-postile.';
+  if(!(window.V3D_CONFIG&&window.V3D_CONFIG.google)){$('gBtn').hidden=true;const o=document.querySelector('#login .or');if(o)o.hidden=true;}
   $('loginF').onsubmit=async e=>{e.preventDefault();const em=$('lEmail').value.trim(),pw=$('lPass').value,er=$('lErr');er.style.color='';
     if(!/^\S+@\S+\.\S+$/.test(em)){er.textContent='Sisesta korrektne e-posti aadress.';return;}
     if(pw.length<(signUp?8:1)){er.textContent=signUp?'Parool peab olema vähemalt 8 märki.':'Sisesta parool.';return;}
