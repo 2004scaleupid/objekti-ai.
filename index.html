@@ -737,6 +737,9 @@ body:not(.cvm) #mSeg{display:none}
 .stzoom{position:fixed;inset:0;z-index:140;background:rgba(15,12,10,.86);display:flex;align-items:center;justify-content:center;padding:24px;cursor:zoom-out}.stzoom img{max-width:100%;max-height:100%;border-radius:12px}
 .stedback{border:1px solid var(--line);background:var(--paper);color:var(--ink);font-size:13px;height:34px;padding:0 12px 0 8px}.stedback:hover{border-color:var(--ink)}
 .studio.editing .sttn{cursor:pointer}.studio.editing .sttn:hover{color:var(--accent)}
+.stf .qw{position:absolute;right:30px;top:4px;width:18px;height:18px;border-radius:50%;background:#F2B705;color:#16130F;font:800 12px/18px var(--display);text-align:center;box-shadow:0 1px 3px rgba(0,0,0,.3)}.stf .qw.bad{background:#E5482D;color:#fff}
+.stqual{display:flex;flex-direction:column;gap:7px;margin:0;padding:0;list-style:none}.stqual li{display:flex;gap:8px;font-size:13px;line-height:1.45;color:var(--muted)}.stqual li b{color:var(--ink);font-weight:600}.stqual li i{flex:none;width:18px;height:18px;border-radius:50%;background:rgba(47,158,91,.15);color:#2F9E5B;font:700 11px/18px var(--display);font-style:normal;text-align:center;margin-top:1px}
+.stqw{border-radius:10px;padding:9px 11px;font-size:13px;line-height:1.45;background:rgba(242,183,5,.13);border:1px solid rgba(242,183,5,.4)}.stqw.bad{background:rgba(229,72,45,.1);border-color:rgba(229,72,45,.35)}.stqw b{display:block}
 .stedbar{display:flex;align-items:center;gap:10px;font-size:13.5px;flex-wrap:wrap}.stedbar b{font:700 14px var(--display)}.stedbar span{color:var(--muted)}
 .stdone{border:0;background:var(--ink);color:var(--paper);border-radius:10px;height:34px;padding:0 14px;font:700 13px var(--display);cursor:pointer}
 .stf .op{display:block;width:100%;height:100%;border:0;padding:0;background:none;cursor:pointer;position:relative}
@@ -3399,15 +3402,17 @@ document.addEventListener('click',e=>{if(!e.target.closest||!e.target.closest('.
 function stSetBase(src,demo){return stAddPic(src,'up',demo);}
 function stRenderFiles(){const s=stSess(),box=$('stFiles'),T=s?(s.tray||[]):[],th=stTheme(STU.tpl);box.hidden=!T.length||th.need==='addr'||!!th.p3;if(box.hidden){box.innerHTML='';return;}
   box.innerHTML=T.map((ix,n)=>{const im=s.imgs[ix],u=im&&stAiImg(im.src);if(!u)return '';const mk=(im.marks||[]).length;
-    return `<div class="stf ${STU.edit===ix?'on':''}"><button type="button" class="op" data-ed="${ix}" title="Klõpsa, et pilti ${n+1} märkida"><img src="${stEsc(u)}" alt="Pilt ${n+1}"><span class="no">${n+1}</span>${mk?`<span class="bl">${mk} ${mk===1?'märk':'märki'}</span>`:`<span class="bl ed">Märgi</span>`}</button><button type="button" class="x" data-x="${n}" aria-label="Eemalda pilt ${n+1}">×</button></div>`;}).join('')+(T.length<ST_MAXP?'<button type="button" class="stf add" id="stAdd2" aria-label="Lisa veel pilt" title="Lisa veel pilt">+</button>':'');
+    return `<div class="stf ${STU.edit===ix?'on':''}"><button type="button" class="op" data-ed="${ix}" title="Klõpsa, et pilti ${n+1} märkida"><img src="${stEsc(u)}" alt="Pilt ${n+1}"><span class="no">${n+1}</span>${im.q&&im.q.lvl!=='ok'?`<span class="qw ${im.q.lvl}" title="${stEsc(im.q.iss.map(x=>x[1]+'. '+x[2]).join(' '))}">!</span>`:''}${mk?`<span class="bl">${mk} ${mk===1?'märk':'märki'}</span>`:`<span class="bl ed">Märgi</span>`}</button><button type="button" class="x" data-x="${n}" aria-label="Eemalda pilt ${n+1}">×</button></div>`;}).join('')+(T.length<ST_MAXP?'<button type="button" class="stf add" id="stAdd2" aria-label="Lisa veel pilt" title="Lisa veel pilt">+</button>':'');
   box.querySelectorAll('[data-ed]').forEach(b=>b.onclick=()=>{if(STU.busy)return;stEdit(+b.dataset.ed);});
   box.querySelectorAll('[data-x]').forEach(b=>b.onclick=()=>{const n=+b.dataset.x,ix=s.tray[n];s.tray.splice(n,1);if(STU.edit===ix)STU.edit=null;stSave();stRender();});
   const a=$('stAdd2');if(a)a.onclick=()=>$('stFile').click();}
 async function stAddFiles(list){const th=stTheme(STU.tpl);if(th.need==='addr'){toast('Selle töö jaoks sisesta aadress');return;}if(th.p3)return p3AddFiles(list);
   const arr=[...list].filter(f=>/^image\//.test(f.type)||/\.(jpe?g|png|webp|heic|heif)$/i.test(f.name||''));if(!arr.length){toast('Vali pildifail (JPG, PNG, WebP või HEIC)');return;}
-  let added=0;for(const f of arr){let src;try{src=await shrink(f);}catch(e){toast('Pilti ei õnnestunud avada');continue;}P3ORIG.set(src,f);if(stAddPic(src,'up')<0)break;added++;}
+  let added=0,warn=null;for(const f of arr){let src;try{src=await shrink(f);}catch(e){toast('Pilti ei õnnestunud avada');continue;}P3ORIG.set(src,f);const ix=stAddPic(src,'up');if(ix<0)break;added++;
+    const q=await stQuality(src),s1=stSess();if(q&&s1&&s1.imgs[ix]){s1.imgs[ix].q=q;if(q.lvl!=='ok'&&(!warn||(q.lvl==='bad'&&warn.q.lvl!=='bad')))warn={n:s1.tray.indexOf(ix)+1,q};}}
+  if(added)stSave();
   if(!added)return;stRender();const n=(stSess().tray||[]).length;
-  if(!acct.stTipSeen){acct.stTipSeen=1;save();toast('Pilt lisatud. Klõpsa pildil, et märkida, mida muuta, või kirjuta kohe ja vajuta Genereeri.');}else toast(added>1?added+' pilti lisatud':'Lisatud: pilt '+n);
+  if(warn){const i=warn.q.iss.find(x=>x[0]==='bad')||warn.q.iss[0];toast(`Pilt ${warn.n}: ${i[1]}. ${i[2]}`);}else if(!acct.stTipSeen){acct.stTipSeen=1;save();toast('Pilt lisatud. Klõpsa pildil, et märkida, mida muuta, või kirjuta kohe ja vajuta Genereeri.');}else toast(added>1?added+' pilti lisatud':'Lisatud: pilt '+n);
   if(innerWidth>820)$('stIn').focus();}
 function stToStage(){if(innerWidth<=820)setTimeout(()=>{const r=$('studio').getBoundingClientRect();scrollBy({top:r.top-8,behavior:'smooth'});},60);}
 function stAuto(){const i=$('stIn');i.style.height='auto';i.style.height=Math.min(i.scrollHeight,200)+'px';}
@@ -3466,10 +3471,13 @@ function stRenderPanel(){if(!$('stPanel'))return;if(stTheme(STU.tpl).p3)return p
       :`<p>Vali vasakult tööriist ja märgi pildil, mida muuta: pintsliga sein, ristkülikuga katus, punktid A ja B tee jaoks, Toode-tööriistaga koht sinu tootele.</p>`}${s.scale?`<span class="fhint">Mõõtkava seatud. <button type="button" class="linkbtn" id="stScRe">Muuda</button></span>`:''}</div>`;}
   if(th.prod||(hasImg&&STU.edit!=null&&P.length)){const real=P.some(x=>!x.sample);
     html+=`<div class="stcard"><h3>Sinu tooted</h3><p>Klõpsa tootel, et lisada tekstile „toode N“, või märgi koht Toode-tööriistaga.</p><div class="stprods">${P.map((p,i)=>`<button type="button" class="pp" data-pn="${i+1}"><i>${i+1}</i>${p.imgs&&p.imgs[0]?`<img src="${stEsc(p.imgs[0])}" alt="">`:''}<span>${stEsc(p.name)}<small>${stEsc([p.W&&p.L?p.W+' × '+p.L+' m':'',p.sample?'näidis':''].filter(Boolean).join(' · '))}</small></span></button>`).join('')}</div><button type="button" class="ghost sm" id="stProdSet">${real?'Halda tooteid':'Lisa oma toode'}</button></div>`;}
+  if(k!=='addr'&&!th.p3){const T2=stTrayImgs(s),bad=T2.map((im,i)=>({im,i})).filter(x=>x.im.q&&x.im.q.lvl!=='ok');
+    html+=`<div class="stcard" id="stQCard"><h3>Hea foto = hea tulemus</h3>${bad.map(x=>`<div class="stqw ${x.im.q.lvl}"><b>Pilt ${x.i+1}: ${stEsc(x.im.q.iss.map(z=>z[1]).join(', '))}</b>${stEsc(x.im.q.iss[0][2])}</div>`).join('')}<ul class="stqual">${stGoodTips().map(([a,b])=>`<li><i>✓</i><span><b>${stEsc(a)}.</b> ${stEsc(b)}</span></li>`).join('')}</ul>${T2.length?'<button type="button" class="ghost sm" id="stQAi">Küsi AI-lt, kas fotod sobivad</button><span class="fhint">Tasuta. AI vaatab, kas midagi on ees ja kas nurk ja valgus sobivad.</span>':''}</div>`;}
   html+=`<div class="stcard"><h3>Nii saad parima tulemuse</h3><ul class="sttips">${k==='addr'?'<li>Vali aadress soovituste hulgast, siis on maja kindlasti õige.</li><li>3D-vaates saad katuse ja seinte mõõdud ning esituspildi.</li>':'<li>Pildid on nummerdatud. Kirjuta näiteks „pane pildil 2 olev telk pildile 1“.</li><li>Klõpsa pildil, et märkida täpne ala. AI muudab ainult seda.</li><li>Noolega saad AI-abilisega vestelda tasuta. Pildi teeb nupp Genereeri.</li><li>Üks muudatus korraga annab parima tulemuse.</li>'}</ul></div>`;
   $('stPanel').innerHTML=html;
   $('stPanel').querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>{stPush();s.marks.splice(+b.dataset.del,1);STU.sel=-1;stSave();stRenderMarks();});
     $('stPanel').querySelectorAll('[data-pn]').forEach(b=>b.onclick=()=>stInsert('toode '+b.dataset.pn));
+  const qa=$('stQAi');if(qa)qa.onclick=()=>{if(STU.chatting||STU.busy)return;stChat('Kas need fotod sobivad hea tulemuse jaoks? Kontrolli teravust, valgust, nurka ja kas midagi on muudetava koha ees. Ütle lühidalt iga pildi kohta, mida parandada.');};
   p3EntryWire(T,s);
   const ps=$('stProdSet');if(ps)ps.onclick=()=>show('settings','products');const sr=$('stScRe');if(sr)sr.onclick=()=>{s.scale=null;stSave();STU.tool='ruler';stRenderMarks();stRenderPanel();toast('Tõmba joon üle asja, mille pikkust tead');};}
 function stHomeCards(){try{const e=t=>String(t==null?'':t).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -3482,6 +3490,18 @@ function stHomeActs(){document.querySelectorAll('#ocards .ocard[data-st]').forEa
   d.onclick=async e=>{e.stopPropagation();const ok=await ask2('Kustuta töö?','„'+(s.title&&s.title!=='Uus töö'?s.title:'Vaba idee')+'“ ja selle pildid kustutatakse. Seda ei saa tagasi võtta.','Kustuta');if(!ok)return;acct.studio=acct.studio.filter(x=>x.id!==s.id);if(STU.sid===s.id){STU.sid=null;STU.edit=null;}save();renderHome();toast('Töö kustutatud');};w.appendChild(d);
   const outs=(s.msgs||[]).filter(m=>m.gen&&m.out&&m.out.length).flatMap(m=>m.out),last=outs.length?stAiImg(outs[outs.length-1]):'';
   if(last){const a=document.createElement('a');a.className='odel odl';a.href=last;a.download='vaade3d-'+(s.title||'pilt').replace(/[^\p{L}\p{N}]+/gu,'-').slice(0,40)+'.jpg';a.target='_blank';a.rel='noopener';a.title='Laadi alla viimane AI-pilt';a.setAttribute('aria-label','Laadi alla viimane AI-pilt');a.innerHTML='<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg>';a.onclick=e=>e.stopPropagation();w.appendChild(a);}});}
+/* foto kvaliteet: teravus, valgus, kontrast, suurus (arvutatakse brauseris, tasuta) */
+async function stQuality(src){try{const img=await stLoadImg(src),k=Math.min(1,512/Math.max(img.naturalWidth,img.naturalHeight)),w=Math.max(8,Math.round(img.naturalWidth*k)),h=Math.max(8,Math.round(img.naturalHeight*k));
+  const cv=document.createElement('canvas');cv.width=w;cv.height=h;const g=cv.getContext('2d',{willReadFrequently:true});g.drawImage(img,0,0,w,h);const d=g.getImageData(0,0,w,h).data,n=w*h,a=new Float32Array(n);
+  let sum=0,clip=0;for(let i=0;i<n;i++){const v=.299*d[i*4]+.587*d[i*4+1]+.114*d[i*4+2];a[i]=v;sum+=v;if(v>250)clip++;}const mean=sum/n;let vs=0;for(let i=0;i<n;i++)vs+=(a[i]-mean)**2;const va=vs/n;
+  let ls=0,ls2=0,c=0;for(let y=1;y<h-1;y++)for(let x=1;x<w-1;x++){const i=y*w+x,L=a[i-1]+a[i+1]+a[i-w]+a[i+w]-4*a[i];ls+=L;ls2+=L*L;c++;}const lv=ls2/c-(ls/c)**2,sharp=lv/(va+1);
+  const iss=[];if(sharp<.06)iss.push(['bad','Foto on udune','Hoia telefon paigal ja puuduta ekraanil objekti, et fookus oleks õige.']);else if(sharp<.15)iss.push(['warn','Foto on veidi udune','Teravam foto annab detailsema tulemuse.']);
+  if(mean<55)iss.push(['bad','Foto on liiga tume','Pildista päevavalges või lülita toas tuled põlema.']);else if(clip/n>.25||mean>220)iss.push(['warn','Foto on üle valgustatud','Ära pildista vastu päikest, pilves päev on parim.']);
+  if(mean>=55&&Math.sqrt(va)<22)iss.push(['warn','Foto on hägune või udune ilm','Selge ilmaga tuleb parem tulemus.']);
+  if(Math.max(img.naturalWidth,img.naturalHeight)<900)iss.push(['warn','Pilt on väike','Kasuta originaalfotot, mitte ekraanipilti ega väikest pilti.']);
+  return {lvl:iss.some(x=>x[0]==='bad')?'bad':iss.length?'warn':'ok',iss};}catch(e){return null;}}
+const ST_GOOD=[['Terav','Hoia telefon paigal ja puuduta objekti, et fookus oleks õige.'],['Päevavalgus','Pilves päev on parim. Ära pildista vastu päikest ega pimedas.'],['Kogu objekt pildil','Jäta servadesse veidi ruumi, ära lõika katust ega nurki ära.'],['Midagi pole ees','Autod, inimesed, oksad ega aed ei tohi muudetavat kohta varjata.'],['Hea nurk','Otse või kergelt nurga alt, umbes silmade kõrguselt. Ära kasuta 0,5× lainurka.'],['Originaalfoto','Mitte ekraanipilt, filter ega tugevalt suumitud pilt.']];
+function stGoodTips(){const t=STU.tpl;return t==='sisek'?[...ST_GOOD.slice(0,1),['Tuled põlema','Lülita toas tuled põlema ja ava kardinad.'],['Pildista nurgast','Nii on näha kaks seina ja põrand.'],['Korista ees olev','Juhtmed, kotid ja väikesed asjad eemalda enne pildistamist.']]:t==='toodehoov'?[...ST_GOOD.slice(0,2),['Maapind näha','Pildista kohast, kust toodet hiljem vaadataks. Koht, kuhu toode tuleb, peab olema vaba ja näha.'],ST_GOOD[4]]:ST_GOOD;}
 /* AI juhis koos märkidega */
 const ST_CN={'#E5482D':'red','#F2B705':'yellow','#2A7FBF':'blue','#2F9E5B':'green','#FFFFFF':'white','#16130F':'black'};
 function stMarksText(s){const NAT=s.nat||STU.nat;const L=stLabels(s.marks),P=prodList(),pc=v=>Math.round(Math.max(0,Math.min(1,v))*100),pt=p=>`(x ${pc(p[0])}%, y ${pc(p[1])}%)`;
@@ -3570,7 +3590,8 @@ async function stGenerate(){const gen=$('stGenBtn');if(gen.disabled||gen.hidden)
   s.msgs.push({role:'u',text,gen:1,pics:pics.map(p=>p.src),marks:nm,d:Date.now()});const am={role:'a',gen:1,pending:1,n,cr:price(pk),d:Date.now()};s.msgs.push(am);
   $('stIn').value='';stAuto();STU.busy=true;STU.busyN=n;STU.cmp=false;STU.edit=null;stSave();stRender();stScrollEnd();
   for(let k=0;k<pics.length;k++){const im=pics[k],N=k+1;if(images.length>=5){toast('Korraga saab AI-le anda kuni 5 pilti, osa jäi välja');break;}
-    images.push(im.src);roles.push(`Image ${images.length} is the user's picture ${N} ("pilt ${N}").`);
+    let big=im.src;const o=im.k==='up'&&P3ORIG.get(im.src);if(o){try{big=await shrink(o,1600,.88);}catch(e){big=im.src;}}
+    images.push(big);roles.push(`Image ${images.length} is the user's picture ${N} ("pilt ${N}").`);
     if((im.marks||[]).length){let comp=null;try{comp=await stComposite2(im);}catch(e){comp=null;}
       if(comp&&images.length<5){images.push(comp);roles.push(`Image ${images.length} is picture ${N} with the user's markings drawn on top. Use it only to see where the changes go.`);}
       legend.push(`Markings on picture ${N} (coordinates are % from the top-left corner of picture ${N}):\n`+stMarksText({marks:im.marks,scale:im.scale,nat:im.nat}));}}
