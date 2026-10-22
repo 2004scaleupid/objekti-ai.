@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
-"""Maa- ja Ruumiameti LOD2 CityGML -> data/lod2/NN.json (NN = EHR koodi 2 viimast numbrit).
+"""Maa- ja Ruumiameti LOD2 CityGML -> data/lod2/NNN.json (NNN = EHR koodi 3 viimast numbrit; kogu Eesti ~480 000 hoonet, ~300 KB kild).
 
-Kasutus:  python3 -I scripts/lod2_tiles.py <hooned_lod2-...gml> [väljundkaust=data/lod2]
+Kasutus:  python3 -I scripts/lod2_tiles.py <hooned_lod2-eesti-citygml.zip | ...gml> [väljundkaust=data/lod2]
+          (kogu Eesti: ~5 min, 480 000 hoonet EHR koodiga; vanad kildud kustuta enne, kui teed kõik uuesti)
           python3 -I scripts/lod2_tiles.py --selftest
 Uue omavalitsuse fail liidetakse olemasolevate kildudega (sama EHR kirjutatakse üle).
 
@@ -86,8 +87,17 @@ def measure(polys, height=None):
 
 
 def parse(path):
-    """yield (ehr, measures, updated)"""
-    for _, el in ET.iterparse(path, events=('end',)):
+    """yield (ehr, measures, updated). path võib olla .gml või .zip (kogu Eesti fail ~6 GB loetakse voona, mälu ei kasva)."""
+    if path.endswith('.zip'):
+        import zipfile
+        z = zipfile.ZipFile(path)
+        path = z.open([n for n in z.namelist() if n.endswith('.gml')][0])
+    root = None
+    for ev, el in ET.iterparse(path, events=('start', 'end')):
+        if ev == 'start':
+            if root is None:
+                root = el
+            continue
         if el.tag != BLDG + 'Building':
             continue
         ehr = None
@@ -104,8 +114,12 @@ def parse(path):
         polys = [ring(pl.text) for pl in el.iter(GML + 'posList') if pl.text]
         m = measure(polys, float(h) if h else None) if ehr and ehr.isdigit() else None
         el.clear()
+        root.clear()  # töödeldud hooned mälust välja
         if m:
             yield ehr, m, upd
+
+
+KLEN = 3  # kildude võti: EHR koodi viimased numbrid (app: loadLod2)
 
 
 def write(items, out):
@@ -113,7 +127,7 @@ def write(items, out):
     shards = {}
     for ehr, m, upd in items:
         m['t'] = upd
-        sh = shards.setdefault(ehr[-2:].zfill(2), {})
+        sh = shards.setdefault(ehr[-KLEN:].zfill(KLEN), {})
         if ehr in sh:
             # sama EHR mitmes osas: liidame pinnad, kujud kõrvuti (keskpunkt 1. osa järgi)
             a = sh[ehr]

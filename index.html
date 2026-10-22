@@ -2447,10 +2447,11 @@ function renderEhr(h){const box=$('ehrBox');if(!box)return;const link=`https://l
   loadEhr(h.ehr).then(d=>{if(HOUSES[cur]!==h)return;h.ehrData=d;const rows=[['Kasutusotstarve',d.otstarve],['Esmane kasutus',d.esmane],['Korruseid',d.korrused],['Välissein',(d.sein||[]).join(', ')],['Fassaadi viimistlus',d.viimistlus],['Katusekate',d.katus],['Küte',d.kute],['Energiaallikas',d.energia],['Köetav pind',d.koetav?fmt(+d.koetav)+' m²':null],['Ehitisealune pind',d.alune?fmt(+d.alune)+' m²':null]].filter(r=>r[1]);
     box.innerHTML='<div class="tag">Ehitisregister</div>'+rows.map(r=>`<div class="row"><div class="k"><span>${r[0]}</span></div><b>${String(r[1]).replace(/</g,'&lt;')}</b></div>`).join('')+`<a class="fhint" href="${link}" target="_blank" rel="noopener" style="padding-top:8px">Andmed: ehitisregister (EHR ${h.ehr}) · ava registris ↗</a>`;})
   .catch(()=>{if(HOUSES[cur]!==h)return;box.innerHTML=`<div class="tag">Ehitisregister</div><div class="fhint" style="padding:8px 0">Ehitusaasta, materjalid ja küte tulevad ehitisregistrist. Selles vaates ei saanud andmeid laadida.</div><a class="ghost" href="${link}" target="_blank" rel="noopener" style="align-self:flex-start;text-decoration:none;display:inline-block">Ava ehitisregistris ↗</a>`;});}
-/* Maa-ameti LOD2: ametlikud mõõdud failidest data/lod2/NN.json (NN = EHR 2 viimast numbrit, vt scripts/lod2_tiles.py) */
+/* Maa-ameti LOD2: ametlikud mõõdud failidest data/lod2/NNN.json, kogu Eesti (vt scripts/lod2_tiles.py) */
 const LOD2C={},LOD2_SRC='Hoonete 3D-mudelid: Maa- ja Ruumiamet 2026',DIR8=['põhja','kirdesse','itta','kagusse','lõunasse','edelasse','läände','loodesse'];
-function loadLod2(ehr){ehr=String(ehr||'');if(!/^\d{2,}$/.test(ehr))return Promise.resolve(null);const k=ehr.slice(-2);
-  LOD2C[k]=LOD2C[k]||fetch('data/lod2/'+k+'.json').then(r=>r.ok?r.json():{}).catch(()=>{delete LOD2C[k];return {};});
+/* kogu Eesti: data/lod2/NNN.json (EHR 3 viimast numbrit, scripts/lod2_tiles.py). Kui seda kildu pole (nt demos), proovib vana 2-numbrilist. */
+function loadLod2(ehr){ehr=String(ehr||'');if(!/^\d{3,}$/.test(ehr))return Promise.resolve(null);const k=ehr.slice(-3);
+  LOD2C[k]=LOD2C[k]||fetch('data/lod2/'+k+'.json').then(r=>r.ok?r.json():fetch('data/lod2/'+k.slice(-2)+'.json').then(r2=>r2.ok?r2.json():{})).catch(()=>{delete LOD2C[k];return {};});
   return LOD2C[k].then(d=>d[ehr]||null);}
 function lod2Face(f){return f[2]==null?'lame':`${fmt(f[1],0)}° kalle, vaatab ${DIR8[Math.round(f[2]/45)%8]}`;}
 function lod2Ctx(m){return m?{pohiplaan_m2:m.fp,perimeeter_m:m.per,korgeim_punkt_m:m.ridge,raasta_korgus_m:m.eave,katus_kokku_m2:m.roof,seinad_kokku_m2_aknad_sees:m.wall,
@@ -4865,7 +4866,7 @@ const seg=$('rtSeg');if(seg&&!seg.querySelector('[data-rt="lod2"]')){const b=doc
 const _srt=syncRT;syncRT=function(){const r=_srt.apply(this,arguments);const h=HOUSES[cur],b=seg&&seg.querySelector('[data-rt="lod2"]');if(b)b.hidden=!h.l2;
   const hint=seg&&seg.nextElementSibling;if(hint&&hint.classList.contains('fhint'))hint.textContent=h.l2?(h.roofType==='lod2'?'Katuse kuju ja kalded on riigi LOD2 andmetest. Kui see ei klapi, vali käsitsi.':'Selle maja kohta on LOD2 mudel olemas. Vali „Päris (LOD2)“, et näha päris katust.'):'Selle maja kohta pole LOD2 mudelit. Vali, milline katus päriselt on, ja pinnad arvutatakse ümber.';return r;};
 
-/* andmed: sama LOD2 allikas mis mõõtudel (data/lod2/NN.json kilud, loadLod2). Uue omavalitsuse andmed lisanduvad sinna
+/* andmed: sama LOD2 allikas mis mõõtudel (data/lod2/NNN.json kilud, loadLod2). Uue omavalitsuse andmed lisanduvad sinna
    ja katused tulevad kõikjal, kus kild olemas, mitte ainult Viimsis. Kild laetakse alles siis, kui maja avatakse. */
 function l2Raw(m){if(!m||!m.f||!m.f.length)return null;let cx=0,cy=0;const g=m.g&&m.g[0];
   /* kilu punktid on hoone kõigi punktide keskmest; 3D-maja keskpunkt on põhiplaani raskuskese */
