@@ -825,6 +825,18 @@ body:not(.cvm) #mSeg{display:none}
 .gbtn{display:flex;align-items:center;justify-content:center;gap:8px;border:1px solid var(--line);background:var(--bg);border-radius:8px;padding:11px;font:600 14px var(--display);cursor:pointer;color:var(--ink)}
 .or{display:flex;align-items:center;gap:10px;color:var(--muted);font-size:12px}.or::before,.or::after{content:"";flex:1;height:1px;background:var(--line)}
 .err{color:var(--accent);font-size:13px;min-height:18px;margin:0}
+/* sisselogimine: käivitusekraan, tervitus, „Jäta mind meelde“ */
+.lform .err{min-height:36px}.lrem{display:flex;gap:8px;align-items:center;font-size:13.5px;margin-top:-6px;cursor:pointer;align-self:flex-start}.lrem input{width:16px;height:16px;accent-color:var(--accent)}
+.lspin{display:inline-block;width:14px;height:14px;margin-right:8px;vertical-align:-2px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:lspin .7s linear infinite}@keyframes lspin{to{transform:rotate(360deg)}}
+.boot{position:fixed;inset:0;z-index:500;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;background:var(--bg);transition:opacity .35s ease;padding:16px;text-align:center}
+.boot .blogo,.lwel .blogo{width:64px;height:64px;background-size:contain;background-repeat:no-repeat;background-position:center;animation:bootp 1.8s ease-in-out infinite}
+@keyframes bootp{0%,100%{transform:scale(1) rotate(0)}50%{transform:scale(1.08) rotate(8deg)}}
+.boot .bwel{margin:0;font:700 22px var(--display);color:var(--ink);opacity:0;transition:opacity .3s ease}.boot.wel .bwel{opacity:1}.boot.out{opacity:0}
+.login{transition:opacity .35s ease,transform .45s ease}.login.lfade{opacity:0}.login.out{opacity:0;transform:scale(1.04)}
+.login .lform{position:relative}.login .lform>*:not(.lwel){transition:opacity .25s ease}.login.wel .lform>*:not(.lwel){opacity:0}
+.lwel{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;text-align:center;padding:24px;opacity:0;transition:opacity .3s ease .12s;pointer-events:none}.login.wel .lwel{opacity:1}.lwel h2{margin:0;font-size:24px}
+#app{transition:opacity .35s ease,transform .35s ease}#app.appin{opacity:0;transform:scale(.985)}
+@media (prefers-reduced-motion:reduce){.boot,.login,#app,.lwel,.boot .bwel,.login .lform>*{transition:opacity .25s ease!important}.boot .blogo,.lwel .blogo,.lspin{animation:none}.login.out,#app.appin{transform:none}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 /* Fotod → 3D-mudel */
 .studio.p3{grid-template-columns:minmax(0,1fr) 320px}
@@ -940,7 +952,8 @@ body.p3emb{background:transparent;margin:0;padding:0;overflow:hidden}body.p3emb 
 </style>
 </head>
 <body>
-<div class="login" id="login">
+<div class="boot" id="boot" hidden aria-live="polite"><span class="stlogo blogo" aria-hidden="true"></span><p class="bwel" id="bootT"></p></div>
+<div class="login" id="login" hidden>
   <div class="lside">
     <div class="logo" style="color:#F1ECE5"><i></i><span>Vaade<b>3D</b></span></div>
     <h1>Vaata maja 3D-s. <em>Ära sõida kohale.</em></h1>
@@ -963,6 +976,7 @@ body.p3emb{background:transparent;margin:0;padding:0;overflow:hidden}body.p3emb 
     </div>
     <label class="fl" for="lEmail">E-post<input id="lEmail" type="email" autocomplete="email" placeholder="mari@firma.ee"></label>
     <label class="fl" for="lPass">Parool<input id="lPass" type="password" autocomplete="current-password" placeholder="••••••••"></label>
+    <label class="lrem"><input type="checkbox" id="lRem" checked> Jäta mind meelde</label>
     <p class="err" id="lErr"></p>
     <button type="button" class="linkbtn" id="forgotL" style="align-self:flex-start;margin-top:-8px">Unustasid parooli?</button>
     <button class="send" type="submit" id="lSubmit">Logi sisse</button>
@@ -3104,7 +3118,28 @@ function maybeAskFb(){const uses=acct.hist.filter(h=>h.c<0).length;if((acct.feed
 const CL={sb:null,fn:CLOUD?CLOUD.url.replace(/\/$/,'')+'/functions/v1/':'',cid:null,uid:null,wid:null,st:null,syncT:0,snap:null,leads:{},earn:null,busy:false};
 let WPRODS=null;
 function clLoadSdk(){return new Promise((res,rej)=>{if(window.supabase&&window.supabase.createClient)return res();const s=document.createElement('script');s.src='vendor/supabase.js';s.onload=()=>res();s.onerror=()=>rej(new Error('Serveriga ühendamine ebaõnnestus'));document.head.appendChild(s);});}
-async function clInit(){if(CL.sb)return CL.sb;await clLoadSdk();CL.sb=window.supabase.createClient(CLOUD.url,CLOUD.key,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
+const clRemember=()=>store.get('v3d_remember',true)!==false;
+// Supabase'i seansi hoidla: loeb mõlemast, kirjutab vastavalt „Jäta mind meelde“ valikule
+const CL_STORE={getItem:k=>{try{return localStorage.getItem(k)??sessionStorage.getItem(k);}catch(_){return null;}},
+  setItem:(k,v)=>{try{const [a,b]=clRemember()?[localStorage,sessionStorage]:[sessionStorage,localStorage];a.setItem(k,v);b.removeItem(k);}catch(_){}},
+  removeItem:k=>{try{localStorage.removeItem(k);sessionStorage.removeItem(k);}catch(_){}}};
+// kas salvestatud seanss võib olemas olla (enne kui Supabase'i teek on laetud)
+function clHasToken(){if(/access_token=|[?&]code=/.test(location.hash+location.search))return true;
+  try{for(const S of [localStorage,sessionStorage])for(let i=0;i<S.length;i++)if(/^sb-.+-auth-token$/.test(S.key(i)||''))return true;}catch(_){}return false;}
+const clRM=()=>!!(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches);
+function clShowLogin(){const B=$('boot'),L=$('login');if(!L.hidden&&B.hidden)return;L.classList.add('lfade');L.hidden=false;void L.offsetWidth;L.classList.remove('lfade');
+  if(!B.hidden){B.classList.add('out');setTimeout(()=>{B.hidden=true;B.classList.remove('out','wel');},350);}}
+function clIsNew(){const c=CL.user&&Date.parse(CL.user.created_at);return !!c&&Date.now()-c<15*60e3;}
+// tervitus ~1 s (klõps jätab vahele), siis sujuvalt äppi; kokku alla 1,8 s
+function clWelcome(fromForm,isNew){return new Promise(res=>{const nm=String(acct.name||'').trim().split(/\s+/)[0]||acct.company||'',t=(isNew?'Tere tulemast':'Tere tulemast tagasi')+(nm?', '+nm:'')+'!';
+  let done=false;const fin=()=>{if(done)return;done=true;document.removeEventListener('click',fin,true);res();};document.addEventListener('click',fin,true);
+  if(fromForm){const L=$('login');let w=L.querySelector('.lwel');if(!w){w=document.createElement('div');w.className='lwel';w.innerHTML='<span class="stlogo blogo" aria-hidden="true"></span><h2></h2>';L.querySelector('.lform').appendChild(w);}w.querySelector('h2').textContent=t;L.classList.add('wel');}
+  else{$('bootT').textContent=t;$('boot').classList.add('wel');}
+  setTimeout(fin,1050);});}
+function clIntoApp(fromForm,after){const L=$('login'),B=$('boot');(fromForm?L:B).classList.add('out');
+  setTimeout(()=>{B.hidden=true;B.classList.remove('out','wel');L.classList.remove('wel','out');const a=$('app');a.classList.add('appin');enter();
+    void a.offsetWidth;a.classList.remove('appin');if(after)after();},clRM()?150:350);}
+async function clInit(){if(CL.sb)return CL.sb;await clLoadSdk();CL.sb=window.supabase.createClient(CLOUD.url,CLOUD.key,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true,storage:CL_STORE}});
   CL.sb.auth.onAuthStateChange((ev)=>{if(ev==='PASSWORD_RECOVERY')setTimeout(clNewPass,300);});return CL.sb;}
 async function clFn(name,body,opt){opt=opt||{};const h={'Content-Type':'application/json',apikey:CLOUD.key};
   if(!opt.pub&&CL.sb){const {data}=await CL.sb.auth.getSession();if(data.session)h.Authorization='Bearer '+data.session.access_token;}
@@ -3131,7 +3166,7 @@ async function clLeads(){const {data}=await CL.sb.from('leads').select('*').orde
 function clSnap(){return JSON.stringify({co:[acct.company,acct.cphone,acct.web,acct.reg,acct.services,acct.areas,acct.roofMat,acct.wallMat,acct.logo,acct.logoOnImg!==false],nm:acct.name,
   w:[acct.wTitle,acct.wDims,acct.wColor,acct.wMode,acct.wFeat,acct.wMail,acct.wSms,acct.wHook,acct.wPl||{},acct.wCap||30],obj:acct.objects||[],del:acct.deleted||[],jobs:acct.jobs||{},rt:acct.roofTypes||{},
   pr:(acct.products||[]).map(p=>[p.id,p.sid,p.name,p.cat,p.imgs,p.W,p.L,p.H,p.cap,p.price,p.desc,p.link,p.pl||'ground',p.inW!==false]),iban:(acct.partners.find(x=>x.cloud)||{}).iban||'',fb:(acct.feedback||[]).length,ar:CL.admin?acct.admRules:null});}
-async function clLoad(){const sb=CL.sb;const {data:{user}}=await sb.auth.getUser();if(!user)return false;
+async function clLoad(){const sb=CL.sb;const {data:{user}}=await sb.auth.getUser();CL.user=user;if(!user)return false;
   const [{data:pr},{data:st}]=await Promise.all([sb.from('profiles').select('*').eq('user_id',user.id).single(),sb.from('settings').select('*').eq('id',1).single()]);
   if(!pr||!pr.company_id||!st)return false;CL.uid=user.id;CL.cid=pr.company_id;CL.st=st;CL.admin=pr.is_admin;
   const cid=CL.cid;
@@ -3212,7 +3247,7 @@ if(CLOUD){
 async function clNewPass(){const ok=await ask2('Uus parool','Sisesta uus parool (vähemalt 8 märki).','Salvesta','<input id="npw" type="password" autocomplete="new-password" placeholder="Uus parool" style="width:100%;font:500 15px var(--display);padding:10px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink)">');
   if(!ok)return;const pw=$('npw').value;if(pw.length<8){toast('Parool peab olema vähemalt 8 märki');return clNewPass();}const {error}=await CL.sb.auth.updateUser({password:pw});toast(error?clErr(error):'Parool muudetud');}
 function clLoginUi(){
-  $('skipBtn').hidden=true;
+  $('skipBtn').hidden=true;{const em0=store.get('v3d_email','');if(em0&&!$('lEmail').value)$('lEmail').value=em0;$('lRem').checked=clRemember();}
   // päris versioonis demo-tekst ära; Google'i nupp ainult siis, kui Google'i sisselogimine on Supabase'is sisse lülitatud (V3D_CONFIG.google)
   $('lNote').textContent='Uue konto puhul saadame kinnituslingi e-postile.';
   if(!(window.V3D_CONFIG&&window.V3D_CONFIG.google)){$('gBtn').hidden=true;const o=document.querySelector('#login .or');if(o)o.hidden=true;}
@@ -3221,15 +3256,15 @@ function clLoginUi(){
     if(pw.length<(signUp?8:1)){er.textContent=signUp?'Parool peab olema vähemalt 8 märki.':'Sisesta parool.';return;}
     let meta=null;if(signUp){if(!$('lName').value.trim()||!$('lComp').value.trim()){er.textContent='Sisesta nimi ja ettevõte.';return;}if(!$('lNiche').value){er.textContent='Vali oma valdkond, siis näitame sulle õigeid malle.';return;}if(!$('lSrc').value){er.textContent='Vali, kust sa meist kuulsid.';return;}
       meta={name:$('lName').value.trim(),company:$('lComp').value.trim(),niche:$('lNiche').value,source:$('lSrc').value,source_other:$('lSrc').value==='other'?$('lSrcO').value.trim():'',ref:$('lRef').value.trim().toUpperCase()};}
-    const btn=$('lSubmit'),t0=btn.textContent;btn.disabled=true;btn.textContent='Oota…';er.textContent='';
+    const btn=$('lSubmit'),t0=btn.textContent;btn.disabled=true;btn.setAttribute('aria-busy','true');btn.innerHTML='<span class="lspin" aria-hidden="true"></span>'+stEsc(t0);er.textContent='';store.set('v3d_remember',$('lRem').checked);
     try{await clInit();
       if(meta){if(meta.ref){const {data:ok}=await CL.sb.rpc('ref_code_ok',{p_code:meta.ref});if(!ok){$('lRef').value='';$('lRefW').hidden=true;meta.ref='';er.textContent='Partneri link on aegunud või vigane. Vajuta uuesti „Loo konto“, et jätkata ilma soodustuseta.';return;}}
         acct.niche=meta.niche;acct.activeTpl=null;acct.source=meta.source;
         const {data,error}=await CL.sb.auth.signUp({email:em,password:pw,options:{emailRedirectTo:appBase(),data:meta}});if(error)throw error;
         if(!data.session){er.style.color='var(--ok)';er.textContent='Peaaegu valmis! Saatsime aadressile '+em+' kinnituslingi. Vajuta sellel ja oled sees.';return;}}
       else{const {error}=await CL.sb.auth.signInWithPassword({email:em,password:pw});if(error)throw error;}
-      if(await clLoad()){$('lPass').value='';enter();}else er.textContent='Konto andmeid ei leitud. Kirjuta info@vaade3d.ee';
-    }catch(err){er.textContent=clErr(err);}finally{btn.disabled=false;btn.textContent=t0;}};
+      if(await clLoad()){$('lPass').value='';store.set('v3d_email',em);await clWelcome(true,!!meta||clIsNew());clIntoApp(true);}else er.textContent='Konto andmeid ei leitud. Kirjuta info@vaade3d.ee';
+    }catch(err){er.textContent=clErr(err);}finally{btn.disabled=false;btn.removeAttribute('aria-busy');btn.textContent=t0;}};
   $('gBtn').onclick=async()=>{try{await clInit();const {error}=await CL.sb.auth.signInWithOAuth({provider:'google',options:{redirectTo:appBase()}});if(error)throw error;}catch(e){$('lErr').textContent=clErr(e);}};
   $('forgotL').onclick=async()=>{const em=$('lEmail').value.trim();if(!/^\S+@\S+\.\S+$/.test(em)){$('lErr').textContent='Sisesta ülal oma e-post, siis saadame parooli taastamise lingi.';return;}
     try{await clInit();const {error}=await CL.sb.auth.resetPasswordForEmail(em,{redirectTo:appBase()});if(error)throw error;$('lErr').style.color='var(--ok)';$('lErr').textContent='Saatsime parooli taastamise lingi aadressile '+em+'.';}catch(e){$('lErr').textContent=clErr(e);}};
@@ -3302,9 +3337,14 @@ async function clBoot(){const h=location.hash||'';
   if(h.startsWith('#wr=')){wrView(h.slice(4));return;}
   if(h.startsWith('#w=')){const W=wHash(h),p=b64d(W.w);if(p&&p.id){clWidget(p,W.a||'',W.p);return;}if(startFromHash())return;}
   if(h.startsWith('#s=')&&startFromHash())return;
-  clLoginUi();$('app').hidden=true;$('login').hidden=false;if(h.startsWith('#ref=')||h==='#loo-konto'||h==='#signup')startFromHash();
-  try{await clInit();const {data}=await CL.sb.auth.getSession();if(data.session){$('lErr').textContent='Laadin kontot…';if(await clLoad()){$('lErr').textContent='';enter();if(h.startsWith('#paid='))clPaid();else if(h.startsWith('#cancel'))history.replaceState(null,'',location.pathname);}else $('lErr').textContent='';}}
-  catch(e){$('lErr').textContent=clErr(e);}}
+  clLoginUi();$('app').hidden=true;const direct=h.startsWith('#ref=')||h==='#loo-konto'||h==='#signup';
+  if(direct||!clHasToken())clShowLogin();else $('boot').hidden=false;if(direct)startFromHash();
+  const slow=setTimeout(()=>{if(!$('boot').hidden){clShowLogin();$('lErr').textContent='Ühendus on aeglane. Proovi lehte uuesti laadida või logi sisse.';}},8000);
+  try{await clInit();const {data}=await CL.sb.auth.getSession();
+    if(data.session&&await clLoad()){clearTimeout(slow);const ff=!$('login').hidden;await clWelcome(ff,clIsNew());
+      clIntoApp(ff,()=>{if(h.startsWith('#paid='))clPaid();else if(h.startsWith('#cancel'))history.replaceState(null,'',location.pathname);});}
+    else{clearTimeout(slow);clShowLogin();}}
+  catch(e){clearTimeout(slow);clShowLogin();$('lErr').textContent=clErr(e);}}
 
 /* ---------- STUUDIO: vali töö -> töölaud tööriistade ja chatiga ---------- */
 acct.studio=acct.studio||[];
@@ -4267,7 +4307,7 @@ document.addEventListener('keydown',e=>{if($('body').hidden||document.body.class
   if(document.querySelector('.modal:not([hidden]),.dlg:not([hidden])'))return;const t=obTools().find(x=>x&&x.k&&x.k.length===1&&x.k.toLowerCase()===e.key.toLowerCase());if(t){e.preventDefault();obTool(t.id);}});
 
 restoreRT();renderList();renderPanel();build();updFotos();chatReset();setTab(false);renderAcct();
-  if(CLOUD)clBoot();else if(!startFromHash()&&(DEV_AUTOLOGIN||store.get('oai_session',null)))enter();tick();}
+  if(CLOUD)clBoot();else if(!startFromHash()){if(DEV_AUTOLOGIN||store.get('oai_session',null))enter();else $('login').hidden=false;}tick();}
 </script>
 
 </body>
