@@ -219,20 +219,40 @@ export async function brand(bytes: Uint8Array, logoUrl: string): Promise<Uint8Ar
   } catch (_) { return bytes; } // logo ei tohi kunagi pilti ära rikkuda
 }
 
+/** Pildi tüüp baitidest (AI teenused annavad sageli PNG-d, kuigi küsime JPEG-i). */
+export const sniffType = (b: Uint8Array) => b[0] === 0xff && b[1] === 0xd8 && b[2] === 0xff ? "image/jpeg"
+  : b[0] === 0x89 && b[1] === 0x50 && b[2] === 0x4e && b[3] === 0x47 ? "image/png"
+  : b[0] === 0x52 && b[1] === 0x49 && b[2] === 0x46 && b[3] === 0x46 && b[8] === 0x57 && b[9] === 0x45 && b[10] === 0x42 && b[11] === 0x50 ? "image/webp" : "application/octet-stream";
+/** Päris JPEG (q90), et .jpg fail ja image/jpeg tüüp vastaksid sisule; kui teisendus ei õnnestu, jääb pilt oma õige tüübiga. */
+export async function asJpeg(bytes: Uint8Array): Promise<{ bytes: Uint8Array; type: string }> {
+  const t = sniffType(bytes);
+  if (t === "image/jpeg") return { bytes, type: t };
+  if (t !== "image/png") return { bytes, type: t }; // WebP jääb oma õige tüübiga
+  try {
+    // kerged puhta JS teegid (imagescripti laadimine võttis ~1 min); NB: aadressid otse kirjas, Supabase paneb need kaasa
+    const UPNG = (await import("npm:upng-js@2.1.0")).default, jpeg = (await import("npm:jpeg-js@0.4.4")).default;
+    const img = UPNG.decode(bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength));
+    const rgba = new Uint8Array(UPNG.toRGBA8(img)[0]);
+    return { bytes: new Uint8Array(jpeg.encode({ data: rgba, width: img.width, height: img.height }, 90).data), type: "image/jpeg" };
+  } catch (_) { return { bytes, type: t }; }
+}
+
 /** Salvestab Kie tulemuse meie 'renders' bucketisse (soovi korral firma logoga) ja tagastab avaliku URL-i. */
 export async function storeImage(url: string, path: string, companyId?: string): Promise<string> {
   const db = admin();
   const r = await tfetch(url, {}, 20000);
-  let bytes: Uint8Array = new Uint8Array(await r.arrayBuffer());
-  if (bytes.length > 9_000_000) throw new Error("tulemus liiga suur");
+  const raw = new Uint8Array(await r.arrayBuffer());
+  if (raw.length > 9_000_000) throw new Error("tulemus liiga suur");
+  let { bytes, type } = await asJpeg(raw);
   if (companyId) {
     const { data: c } = await db.from("companies").select("logo_url,logo_on_images").eq("id", companyId).single();
     if (c?.logo_on_images && c.logo_url) {
-      await db.storage.from("renders").upload(path.replace(/\.jpg$/, "-raw.jpg"), bytes, { contentType: "image/jpeg", upsert: true });
+      await db.storage.from("renders").upload(path.replace(/\.jpg$/, "-raw.jpg"), bytes, { contentType: type, upsert: true });
       bytes = await brand(bytes, c.logo_url);
+      type = sniffType(bytes);
     }
   }
-  const { error } = await db.storage.from("renders").upload(path, bytes, { contentType: "image/jpeg", upsert: true });
+  const { error } = await db.storage.from("renders").upload(path, bytes, { contentType: type, upsert: true });
   if (error) throw new Error("storage: " + error.message);
   const pub = db.storage.from("renders").getPublicUrl(path).data.publicUrl;
   const host = env("PUBLIC_STORAGE_URL");
