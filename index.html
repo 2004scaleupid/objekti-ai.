@@ -839,6 +839,7 @@ body:not(.cvm) #mSeg{display:none}
 /* sisselogimine: käivitusekraan, tervitus, „Jäta mind meelde“ */
 .ghost.dz{color:#C2410C;border-color:rgba(194,65,12,.45)}.ghost.dz:hover{background:rgba(194,65,12,.08)}#gdprC .fhint a{color:inherit}
 .capw{min-height:0}.capw iframe{max-width:100%}
+.m3cf{color:var(--ok);font-weight:600}
 .lform .err{min-height:36px}.lterms{align-items:flex-start;line-height:1.4}.lterms input{margin-top:1px;flex:none}.lterms a{color:var(--accent);font-weight:600}.lrem{display:flex;gap:8px;align-items:center;font-size:13.5px;margin-top:-6px;cursor:pointer;align-self:flex-start}.lrem input{width:16px;height:16px;accent-color:var(--accent)}
 .lspin{display:inline-block;width:14px;height:14px;margin-right:8px;vertical-align:-2px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:lspin .7s linear infinite}@keyframes lspin{to{transform:rotate(360deg)}}
 .boot{position:fixed;inset:0;z-index:500;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;background:var(--bg);transition:opacity .35s ease;padding:16px;text-align:center}
@@ -4438,7 +4439,7 @@ function p3Public(h){const W=wHash(h),m=String(W.m||'');if(!CLOUD||!/^[0-9a-f-]{
   // mõõdud ainult siis, kui omanik lülitas „Mõõdud lingil“ sisse
   fetch(CLOUD.url.replace(/\/$/,'')+'/rest/v1/rpc/public_model_marks',{method:'POST',headers:{apikey:CLOUD.key,Authorization:'Bearer '+CLOUD.key,'Content-Type':'application/json'},body:JSON.stringify({p_ref:m.split('/')[1]})})
     .then(r=>r.ok?r.json():null).then(j=>{if(!j||((!Array.isArray(j.items)||!j.items.length)&&!(j.ehr&&j.fit)))return;const box=$('p3PubV'),lab=document.createElement('div');lab.className='m3labs';box.appendChild(lab);
-      const mdl={items:(j.items||[]).filter(m3Ok),scale:+j.scale||null,ehr:/^\d{5,12}$/.test(j.ehr||'')?j.ehr:null,fit:j.fit&&typeof j.fit==='object'?j.fit:null},show=()=>{if(P3V&&P3V.ok){m3Draw(P3V,mdl,lab,[]);P3V.onFrame=()=>m3Frame(P3V,lab);}};if(P3V)P3V.onReady=show;show();
+      const mdl={items:(j.items||[]).filter(m3Ok),scale:+j.scale||null,ehr:/^\d{5,12}$/.test(j.ehr||'')?j.ehr:null,fit:j.fit&&typeof j.fit==='object'?j.fit:null},show=()=>{if(P3V&&P3V.ok){if(mdl.fit&&mdl.fit.conf&&mdl.fit.conf.ok)m3ConformApply(P3V,mdl.fit.conf);m3Draw(P3V,mdl,lab,[]);P3V.onFrame=()=>m3Frame(P3V,lab);}};if(P3V)P3V.onReady=show;show();
       // ametlikud tahud ka lingil (kui omanik jagab mõõte ja sobitus on kindel)
       if(mdl.ehr&&mdl.fit)loadLod2(mdl.ehr).then(L=>{M3L2[mdl.ehr]=L;show();});
       const t=document.createElement('button');t.type='button';t.className='ghost m3tog';t.setAttribute('aria-pressed','true');t.textContent='Näita mõõte';(d.querySelector('header')||d).appendChild(t);
@@ -4553,12 +4554,49 @@ function m3OffHtml(m){if(!p3Cloud())return '';const L=m.ehr&&M3L2[m.ehr];
   if(!L)return `<div class="stcard"><h3>Ametlikud mõõdud (Maa-amet)</h3><span class="fhint">${stEsc(m3AddrTxt(m.ehr))}${chg}</span><p>${L===null?'Selle hoone kohta pole Maa-ameti 3D-mudelit.':'Laadin…'}</p></div>`;
   const R=[['Ehitisealune pind',fmt(L.fp)+' m²'],['Perimeeter',fmt(L.per)+' m'],['Kõrgeim punkt',fmt(L.ridge,2)+' m'],['Räästa kõrgus',fmt(L.eave,1)+' m'],['Katuse pind',fmt(L.roof)+' m²'],['Seinte pind',fmt(L.wall)+' m²']];
   const tg=m3AutoOn(m)?`<div class="tgl"><div>Näita katuse ja seinte mõõte<small>Iga tahu ametlik pind mudelil</small></div><span class="sw2"><input type="checkbox" data-m3="off" ${m.offOn!==false?'checked':''} aria-label="Näita katuse ja seinte mõõte"><i></i></span></div>`:'';
-  return `<div class="stcard"><h3>Ametlikud mõõdud (${m3Yr(L)})</h3><span class="fhint">${stEsc(m3AddrTxt(m.ehr))}${chg}</span>${tg}${m3GardenHtml(m)}${R.map(r=>`<div class="row"><div class="k"><span>${r[0]}</span></div><b>${r[1]}</b></div>`).join('')}<span class="fhint">${LOD2_SRC}</span></div>`;}
+  const cf=m.fit&&m.fit.conf&&m.fit.conf.ok&&m3AutoOn(m)?`<span class="fhint m3cf">${m3ConfTxt(m.fit.conf)}</span>`:'';
+  return `<div class="stcard"><h3>Ametlikud mõõdud (${m3Yr(L)})</h3><span class="fhint">${stEsc(m3AddrTxt(m.ehr))}${chg}</span>${cf}${tg}${m3GardenHtml(m)}${R.map(r=>`<div class="row"><div class="k"><span>${r[0]}</span></div><b>${r[1]}</b></div>`).join('')}<span class="fhint">${LOD2_SRC}</span></div>`;}
 function m3Lod2(m){if(!m||!m.ehr)return;if(m.ehr in M3L2){m3AutoFit();return;}loadLod2(m.ehr).then(L=>{M3L2[m.ehr]=L;m3AutoFit();if(!$('studio').hidden)stRenderPanel();});}
 // automaatne mõõtkava: ainult kui kasutaja pole ise seadistanud ja selle aadressiga pole veel arvutatud
+/* Joonda ametlike mõõtudega: LOD2 on tõde, fotodest mudel annab välimuse. Kui telg on kindel (≤5°) ning pind ja kõrgus ±12 %,
+   venitatakse mudelit LOD2 põhiplaani peatelgede (pikkus, laius) ja kõrguse järgi, max ±20 % telje kohta; siis sobitatakse uuesti. */
+const M3CF={axis:5,area:.12,height:.12,max:.2};
+function m3Hull2(pts){const a=pts.slice().sort((p,q)=>p[0]-q[0]||p[1]-q[1]),cr=(o,p,q)=>(p[0]-o[0])*(q[1]-o[1])-(p[1]-o[1])*(q[0]-o[0]),lo=[],up=[];
+  for(const p of a){while(lo.length>1&&cr(lo[lo.length-2],lo[lo.length-1],p)<=0)lo.pop();lo.push(p);}for(const p of a.reverse()){while(up.length>1&&cr(up[up.length-2],up[up.length-1],p)<=0)up.pop();up.push(p);}return lo.slice(0,-1).concat(up.slice(0,-1));}
+const m3HullA=h=>Math.abs(h.reduce((t,p,i)=>{const q=h[(i+1)%h.length];return t+p[0]*q[1]-q[0]*p[1];},0))/2;
+// ulatus telje (kraadides) suunas ja risti
+function m3Ext(h,deg){const t=deg*Math.PI/180,c=Math.cos(t),sn=Math.sin(t);let a=1e9,b=1e9,A=-1e9,B=-1e9;for(const p of h){const x=p[0]*c+p[1]*sn,y=-p[0]*sn+p[1]*c;a=Math.min(a,x);A=Math.max(A,x);b=Math.min(b,y);B=Math.max(B,y);}return [A-a,B-b];}
+// minimaalse pindalaga ümbritseva ristküliku nurk (0–90°)
+function m3RectAng(h){let best=null;for(let d=0;d<90;d+=.25){const e=m3Ext(h,d),ar=e[0]*e[1];if(!best||ar<best.ar)best={ar,d};}return best.d;}
+function m3ConformCalc(V,L,f){if(!V||!V.model||!L||!L.g||!(L.ridge>0)||!f)return null;V.model.updateMatrixWorld(true);
+  const eave=L.eave>0?L.eave:L.ridge*.6,Z=[.3,.5,.7].map(k=>k*eave),P=[],S=[],v=new THREE.Vector3();
+  // seinte lõiked: kolmnurga servad lõikavad tasandeid z = 30/50/70 % räästast (ka hõreda võrgu korral)
+  V.model.traverse(o=>{const g=o.isMesh&&o.geometry,p=g&&g.attributes.position;if(!p)return;const ix=g.index,n=ix?ix.count:p.count,Q=[];
+    for(let i=0;i<p.count;i++){v.fromBufferAttribute(p,i).applyMatrix4(o.matrixWorld);Q.push(m3ToL(f,v));}P.push(...Q);
+    for(let t=0;t+2<n;t+=3){const T3=[0,1,2].map(k=>Q[ix?ix.getX(t+k):t+k]);for(const z of Z)for(let k=0;k<3;k++){const A=T3[k],B=T3[(k+1)%3];if((A[2]<z)!==(B[2]<z)){const u=(z-A[2])/(B[2]-A[2]);S.push([A[0]+u*(B[0]-A[0]),A[1]+u*(B[1]-A[1])]);}}}});
+  if(S.length<8)return null;
+  const FP=[];L.g.forEach(r=>{for(let i=0;i+1<r.length;i+=2)FP.push([r[i],r[i+1]]);});
+  const hm=m3Hull2(S),hl=m3Hull2(FP),a=m3RectAng(hl),am=m3RectAng(hm);let dA=Math.abs(am-a)%90;dA=Math.min(dA,90-dA);
+  // mudel mõõdetakse oma telgede järgi (pööratud ristkülik paistaks võõra telje suunas laiem); telg, mis on LOD2 teljele lähim
+  const amA=Math.abs(((am-a)%90+90)%90)<45?a+((am-a)%90+90)%90:a+((am-a)%90+90)%90-90,el=m3Ext(hl,a),em=m3Ext(hm,amA),ku=el[0]/em[0],kw=el[1]/em[1];
+  // kõrgus: pealtvaate rakkude kõrgeimad punktid, 98. protsentiil (korsten ja antennid välja)
+  const cell=new Map();P.forEach(q=>{const k=Math.round(q[0]*4)+','+Math.round(q[1]*4);if(!(cell.get(k)>q[2]))cell.set(k,q[2]);});const H=[...cell.values()].sort((x,y)=>x-y),top=H[Math.floor(H.length*.98)]||0;
+  const kz=top>0?L.ridge/top:0,area=m3HullA(hm)/m3HullA(hl)-1,height=top/L.ridge-1;
+  const long=el[0]>=el[1],c={beta:+(amA-f.rot).toFixed(3),ku:+ku.toFixed(4),kw:+kw.toFixed(4),kz:+kz.toFixed(4),len:+((long?ku:kw)-1).toFixed(3),wid:+((long?kw:ku)-1).toFixed(3),hgt:+(kz-1).toFixed(3),axis:+dA.toFixed(1),area:+area.toFixed(3),height:+height.toFixed(3)};
+  c.why=dA>M3CF.axis?'telg':Math.abs(area)>M3CF.area?'pind':Math.abs(height)>M3CF.height?'kõrgus':[ku,kw,kz].some(k=>!(Math.abs(k-1)<=M3CF.max))?'üle 20 %':'';c.ok=!c.why;return c;}
+// mudeli venitamine (mudeli enda teljestikus, alus ja keskkoht paigal); conf=null eemaldab
+function m3ConformApply(V,c){const o=V&&V.model;if(!o)return;let G=o.userData.conf;
+  if(!c){if(G){while(G.children.length)o.add(G.children[0]);o.remove(G);o.userData.conf=null;o.updateMatrixWorld(true);}return;}
+  if(G&&G.userData.key===JSON.stringify(c))return;if(G)m3ConformApply(V,null);
+  o.updateMatrixWorld(true);const bb=new THREE.Box3().setFromObject(o),ctr=bb.getCenter(new THREE.Vector3());const C=new THREE.Vector3(ctr.x,bb.min.y,ctr.z).sub(o.position);
+  const b=c.beta*Math.PI/180,M=new THREE.Matrix4().makeTranslation(C.x,C.y,C.z).multiply(new THREE.Matrix4().makeRotationY(b)).multiply(new THREE.Matrix4().makeScale(c.ku,c.kz,c.kw)).multiply(new THREE.Matrix4().makeRotationY(-b)).multiply(new THREE.Matrix4().makeTranslation(-C.x,-C.y,-C.z));
+  G=new THREE.Group();G.matrixAutoUpdate=false;G.matrix.copy(M);G.userData.key=JSON.stringify(c);while(o.children.length)G.add(o.children[0]);o.add(G);o.userData.conf=G;o.updateMatrixWorld(true);}
+const m3Pct=x=>(x>=0?'+':'−')+fmt(Math.abs(x)*100,1)+' %';
+function m3ConfTxt(c){return `Mõõdud joondatud Maa-ameti andmetega (pikkus ${m3Pct(c.len)}, laius ${m3Pct(c.wid)}, kõrgus ${m3Pct(c.hgt)})`;}
 function m3AutoFit(){const s=stSess(),m=s&&s.model,V=P3V,L=m&&m.ehr&&M3L2[m.ehr];if(!L||!V||!V.ok||V.url!==m.url)return;
   if(V.model.userData.lod2){if(!(m.fit&&m.fit.src==='lod2')){const o=V.model.position;m.fit={s:1,rot:0,mc:[o.x,-o.z],lc:[0,0],y0:o.y,iou:1,err:0,ok:true,sym:false,v:1,src:'lod2',ehr:m.ehr};m.scale=1;m3Changed();m3RenderBar();}m3GardenSync();return;}
-  if(m.scale&&!m.fit)return;if(m.fit&&m.fit.ehr===m.ehr){m3GardenSync();return;}const f=m3Fit(V,L);if(!f)return;
+  if(m.scale&&!m.fit)return;if(m.fit&&m.fit.ehr===m.ehr){if(m.fit.conf&&m.fit.conf.ok)m3ConformApply(V,m.fit.conf);m3GardenSync();return;}let f=m3Fit(V,L);if(!f)return;
+  if(!f.ok){const c=m3ConformCalc(V,L,f);if(c&&c.ok){m3ConformApply(V,c);const f2=m3Fit(V,L,f.rot);if(f2&&f2.ok)f=Object.assign(f2,{conf:c,pre:{iou:f.iou,err:f.err}});else{m3ConformApply(V,null);f.conf=Object.assign(c,{ok:false,why:'kuju'});}}else if(c)f.conf=c;}
   m.fit=Object.assign(f,{ehr:m.ehr});if(f.ok){m.scale=f.s;toast(`Mõõtkava seadistati Maa-ameti andmetest (±${m3Pm(f)}%)`);}m3Changed();m3RenderBar();m3GardenSync();}
 async function m3AddrAsk(mod,at){addrPick(mod.ehr?'Muuda aadressi':'Lisa aadress',at,async a=>{
   const {error}=await CL.sb.from('renders').update({ehr:a[1]}).eq('id',mod.id).eq('company_id',CL.cid);if(error){toast('Aadressi salvestamine ebaõnnestus');return;}
@@ -4577,14 +4615,16 @@ function m3Hull(P){P=P.slice().sort((a,b)=>a[0]-b[0]||a[1]-b[1]);const cr=(o,a,b
   const H=lo.slice(0,-1).concat(up.slice(0,-1));let a=0;for(let i=0;i<H.length;i++){const p=H[i],q=H[(i+1)%H.length];a+=p[0]*q[1]-q[0]*p[1];}return Math.abs(a)/2;}
 function m3Mom(G,W,H,c,a,b){let n=0,sx=0,sy=0,sxx=0,syy=0,sxy=0;for(let j=0;j<H;j++)for(let i=0;i<W;i++)if(G[j*W+i]){const x=a+(i+.5)*c,y=b+(j+.5)*c;n++;sx+=x;sy+=y;sxx+=x*x;syy+=y*y;sxy+=x*y;}
   const mx=sx/n,my=sy/n;return {n,mx,my,ang:.5*Math.atan2(2*(sxy/n-mx*my),(sxx/n-mx*mx)-(syy/n-my*my))};}
-function m3Fit(V,L){if(!V||!V.model||!L||!L.g||!L.g.length||!(L.ridge>0))return null;V.model.updateMatrixWorld(true);
+function m3Fit(V,L,rot0){if(!V||!V.model||!L||!L.g||!L.g.length||!(L.ridge>0))return null;V.model.updateMatrixWorld(true);
   const T=[],Y=[],v=new THREE.Vector3();let y0=Infinity,y1=-Infinity;
   V.model.traverse(o=>{const g=o.isMesh&&o.geometry,p=g&&g.attributes.position;if(!p)return;const ix=g.index,n=ix?ix.count:p.count;
     for(let i=0;i<n;i++){v.fromBufferAttribute(p,ix?ix.getX(i):i).applyMatrix4(o.matrixWorld);y0=Math.min(y0,v.y);y1=Math.max(y1,v.y);T.push(v.x,-v.z);Y.push(v.y);}});
-  if(T.length<6||!(y1>y0))return null;const Hm=y1-y0;
+  if(T.length<6||!(y1>y0))return null;let Hm=y1-y0;
   // pealtvaade rastriks
   let a=Infinity,b=Infinity,A=-Infinity,B=-Infinity;for(let i=0;i<T.length;i+=2){a=Math.min(a,T[i]);A=Math.max(A,T[i]);b=Math.min(b,T[i+1]);B=Math.max(B,T[i+1]);}
   const c=Math.max(A-a,B-b)/120,W=Math.floor((A-a)/c)+1,H=Math.floor((B-b)/c)+1,G=new Uint8Array(W*H),HT=new Float32Array(W*H).fill(-Infinity),ci=x=>Math.min(W-1,Math.floor((x-a)/c)),cj=y=>Math.min(H-1,Math.floor((y-b)/c));
+  // kõrgus: pealtvaate rakkude kõrgeimad tipud, 98. protsentiil (korsten ja antennid ei moonuta mõõtkava ega kõrguse kontrolli)
+  {const VM=new Map();for(let i=0;i<T.length;i+=2){const q=cj(T[i+1])*W+ci(T[i]),y=Y[i/2];if(!(VM.get(q)>y))VM.set(q,y);}const VS=[...VM.values()].sort((p,q)=>p-q),top=VS[Math.min(VS.length-1,Math.floor(VS.length*.98))];if(top>y0)Hm=top-y0;}
   const cr=(x0,y0_,x1,y1_,px,py)=>(x1-x0)*(py-y0_)-(y1_-y0_)*(px-x0);
   // seinte lõiked: kolmnurk lõikab tasandit y = ys -> 2 punkti
   const er=Math.min(.95,(L.eave>0?L.eave:L.ridge*.6)/L.ridge),cut=[.3,.5,.7].map(f=>y0+f*er*Hm),S=[];
@@ -4612,7 +4652,9 @@ function m3Fit(V,L){if(!V||!V.model||!L||!L.g||!L.g.length||!(L.ridge>0))return 
     const inter=hit*c*c*s*s;return {iou:inter/(M.n*c*c*s*s+LM.n*lc*lc-inter),th,hz:hn?he/hn:Infinity};};
   // 4 suunda: kuju kattuvus, viigi korral (±0,03) katuse kõrguste kokkulangevus
   const C=[0,1,2,3].map(k=>iouAt(LM.ang-M.ang+k*Math.PI/2)),top=Math.max(...C.map(r=>r.iou));
-  let best=C.filter(r=>r.iou>=top-.03).sort((p,q)=>p.hz-q.hz)[0];const alt=C[(C.indexOf(best)+2)%4];
+  // rot0: eelmise sobituse suund (pärast mõõtude joondamist on maja ruudulähedane ja 90° pöörded on peaaegu võrdsed)
+  const dd=r=>{const d=((r.th*180/Math.PI-rot0)%360+540)%360-180;return Math.abs(d);};
+  let best=rot0!=null?C.slice().sort((p,q)=>dd(p)-dd(q))[0]:C.filter(r=>r.iou>=top-.03).sort((p,q)=>p.hz-q.hz)[0];const alt=C[(C.indexOf(best)+2)%4];
   // peatelg on peaaegu ruudukujulisel majal ebatäpne: täpsusta nurka ±10° (1°), siis ±1° (0,2°)
   for(const [w,st] of [[10,1],[1,.2]]){const t0=best.th;for(let d=-w;d<=w;d+=st){const r=iouAt(t0+d*Math.PI/180);if(r.iou>best.iou)best=r;}}
   // pööratud 180° on sama hea -> põhjasuunda ei tea (sümmeetriline maja)
