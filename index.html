@@ -837,6 +837,7 @@ body:not(.cvm) #mSeg{display:none}
 .or{display:flex;align-items:center;gap:10px;color:var(--muted);font-size:12px}.or::before,.or::after{content:"";flex:1;height:1px;background:var(--line)}
 .err{color:var(--accent);font-size:13px;min-height:18px;margin:0}
 /* sisselogimine: käivitusekraan, tervitus, „Jäta mind meelde“ */
+.ghost.dz{color:#C2410C;border-color:rgba(194,65,12,.45)}.ghost.dz:hover{background:rgba(194,65,12,.08)}#gdprC .fhint a{color:inherit}
 .lform .err{min-height:36px}.lterms{align-items:flex-start;line-height:1.4}.lterms input{margin-top:1px;flex:none}.lterms a{color:var(--accent);font-weight:600}.lrem{display:flex;gap:8px;align-items:center;font-size:13.5px;margin-top:-6px;cursor:pointer;align-self:flex-start}.lrem input{width:16px;height:16px;accent-color:var(--accent)}
 .lspin{display:inline-block;width:14px;height:14px;margin-right:8px;vertical-align:-2px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:lspin .7s linear infinite}@keyframes lspin{to{transform:rotate(360deg)}}
 .boot{position:fixed;inset:0;z-index:500;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;background:var(--bg);transition:opacity .35s ease;padding:16px;text-align:center}
@@ -1549,6 +1550,10 @@ input[type=checkbox]{accent-color:var(--accent)}
         <div class="tgl"><div>Tooteuudised<small>Uued funktsioonid, kord kuus</small></div><span class="sw2"><input type="checkbox" id="nNews" aria-label="Tooteuudised"><i></i></span></div>
       </div>
       <div><button class="apply" type="submit">Salvesta</button></div></form>
+      <div class="card" id="gdprC"><div class="tag">Sinu andmed</div>
+        <div class="tgl"><div>Lae alla minu andmed<small>Konto, ettevõtte, tööde ja maksete andmed JSON-failina koos failide nimekirjaga</small></div><button type="button" class="ghost" id="gdprDl">Lae alla</button></div>
+        <div class="tgl"><div>Kustuta konto<small>Kustutab konto, ettevõtte andmed ja failid jäädavalt. Arved jäävad seaduse alusel alles.</small></div><button type="button" class="ghost dz" id="gdprDel">Kustuta konto</button></div>
+        <span class="fhint"><a href="privaatsus/" target="_blank" rel="noopener">Privaatsuspoliitika</a> · <a href="tingimused/" target="_blank" rel="noopener">Kasutustingimused</a></span></div>
     </div>
     <div class="spane" data-pane="company" hidden>
       <h2>Ettevõte</h2><p class="lead">Need andmed ja logo lähevad allalaaditavale objekti lehele.</p>
@@ -2424,6 +2429,7 @@ $('avatarBtn').onclick=e=>{e.stopPropagation();const m=$('menu');m.hidden=!m.hid
 document.addEventListener('click',e=>{if(!$('menu').hidden&&!e.target.closest('.menuwrap'))$('menu').hidden=true;});
 function logout(){store.del('oai_session');$('app').hidden=true;$('login').hidden=false;$('lPass').value='';}
 $('logoutM').onclick=logout;$('logoutS').onclick=logout;
+$('gdprDl').onclick=$('gdprDel').onclick=()=>toast('See töötab päris kontoga (sisselogitult).');
 /* forms */
 $('profF').onsubmit=e=>{e.preventDefault();if(!/^\S+@\S+\.\S+$/.test($('pEmail').value)){toast('Kontrolli e-posti aadressi');return;}Object.entries(PREF).forEach(([id,k])=>acct[k]=$(id).value);Object.entries(NOTI).forEach(([id,k])=>acct[k]=$(id).checked);setTimeout(renderProfHead,0);['Name','Email','Phone','Role'].forEach(k=>acct[k.toLowerCase()]=$('p'+k).value.trim());save();renderAcct();toast('Profiil salvestatud');};
 $('compF').onsubmit=e=>{e.preventDefault();Object.entries(CF).forEach(([id,k])=>acct[k]=$(id).value.trim());Object.keys(CH).forEach(k=>acct[k]=readChips(k));applyMatDefaults();acct.company=$('cName').value.trim();acct.reg=$('cReg').value.trim();acct.vat=$('cVat').value.trim();acct.web=$('cWeb').value.trim();acct.addr=$('cAddr').value.trim();save();renderAcct();toast('Ettevõtte andmed salvestatud');};
@@ -3527,6 +3533,7 @@ function clLoginUi(){
       else{const {error}=await CL.sb.auth.signInWithPassword({email:em,password:pw});if(error)throw error;}
       if(await clLoad()){$('lPass').value='';store.set('v3d_email',em);await clWelcome(true,!!meta||clIsNew());clIntoApp(true);}else er.textContent='Konto andmeid ei leitud. Kirjuta info@vaade3d.ee';
     }catch(err){er.textContent=clErr(err);}finally{btn.disabled=false;btn.removeAttribute('aria-busy');btn.textContent=t0;}};
+  try{if(sessionStorage.getItem('v3d_deleted')){sessionStorage.removeItem('v3d_deleted');$('lErr').style.color='var(--ok)';$('lErr').textContent='Konto ja andmed kustutati. Aitäh, et proovisid Vaade3D-d.';}}catch(_){}
   $('gBtn').onclick=async()=>{if(!termsOk())return;if(signUp)sessionStorage.setItem('v3d_terms',TERMS_V);try{await clInit();const {error}=await CL.sb.auth.signInWithOAuth({provider:'google',options:{redirectTo:appBase()}});if(error)throw error;}catch(e){$('lErr').textContent=clErr(e);}};
   $('forgotL').onclick=async()=>{const em=$('lEmail').value.trim();if(!/^\S+@\S+\.\S+$/.test(em)){$('lErr').textContent='Sisesta ülal oma e-post, siis saadame parooli taastamise lingi.';return;}
     try{await clInit();const {error}=await CL.sb.auth.resetPasswordForEmail(em,{redirectTo:appBase()});if(error)throw error;$('lErr').style.color='var(--ok)';$('lErr').textContent='Saatsime parooli taastamise lingi aadressile '+em+'.';}catch(e){$('lErr').textContent=clErr(e);}};
@@ -3536,6 +3543,17 @@ function clLoginUi(){
     const {error}=await CL.sb.auth.updateUser({password:n});if(error){$('secErr').textContent=clErr(error);return;}$('secErr').textContent='';$('sOld').value=$('sNew').value=$('sNew2').value='';toast('Parool muudetud');};
   const out=async(scope)=>{try{await CL.sb.auth.signOut(scope?{scope}:undefined);}catch(_){}['oai_acct','v3d_leads','oai_session'].forEach(k=>{try{localStorage.removeItem(k);}catch(_){}});location.href=appBase();};
   $('logoutM').onclick=()=>out();$('logoutS').onclick=()=>out();
+  // GDPR: andmete allalaadimine ja konto kustutamine (Edge Function "account")
+  $('gdprDl').onclick=async()=>{const b=$('gdprDl'),t0=b.textContent;b.disabled=true;b.textContent='Koostan…';
+    try{const j=await clFn('account',{action:'export'}),u=URL.createObjectURL(new Blob([JSON.stringify(j,null,2)],{type:'application/json'})),a=document.createElement('a');
+      a.href=u;a.download='vaade3d-andmed-'+new Date().toISOString().slice(0,10)+'.json';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),4000);toast(`Andmed alla laaditud (${(j.files||[]).length} faili nimekirjas)`);}
+    catch(e){toast(clErr(e));}finally{b.disabled=false;b.textContent=t0;}};
+  $('gdprDel').onclick=async()=>{const cr=+acct.credits||0;
+    const ok=await ask2('Kustuta konto jäädavalt?',`Kustutame sinu konto, ettevõtte andmed, objektid, 3D-mudelid, pildid ja failid.${cr>0?' Kasutamata '+stKr(cr)+' kaob.':''} Arved jäävad raamatupidamise seaduse alusel alles. Seda ei saa tagasi võtta.`,'Kustuta jäädavalt',
+      '<label class="fl" for="delC">Kinnitamiseks kirjuta KUSTUTA<input id="delC" type="text" autocomplete="off" autocapitalize="characters" spellcheck="false"></label>');
+    const c=($('delC')||{}).value||'';if(!ok)return;if(c.trim().toUpperCase()!=='KUSTUTA'){toast('Konto jäi alles: kinnitussõna ei klappinud.');return;}
+    try{toast('Kustutan…');await clFn('account',{action:'delete',confirm:c});try{sessionStorage.setItem('v3d_deleted','1');}catch(_){}await out();}
+    catch(e){toast(clErr(e));}};
   $('outAll').onclick=async()=>{if(await ask2('Logi välja kõigist seadmetest?','Kõik seansid lõpetatakse, ka see.','Logi välja'))out('global');};
   // krediitide ost: Stripe makseleht
   document.querySelectorAll('.pack').forEach(b=>b.onclick=()=>{if(b.disabled)return;const cr=+b.dataset.cr,undo=buyBusy(b);clBuy(cr).catch(e=>{undo();toast(clErr(e));});});}
