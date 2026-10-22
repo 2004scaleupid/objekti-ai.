@@ -995,6 +995,93 @@ input[type=checkbox]{accent-color:var(--accent)}
 .sw2 input:disabled+i{opacity:.5}
 /* sektsioonide sildid seadetes: sama vahe üleval/all */
 #profF>.tag{margin-top:10px}#profF>.tag:first-child{margin-top:0}
+
+/* Avalehe liikumine ja sügavus (paigutus, suurused, tekstid, värvid samad; ainult absoluutsed kaunistused) */
+@keyframes hUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+@keyframes hDrift{from{transform:translate(0,0)}to{transform:translate(-120px,-40px)}}
+@keyframes hFloat{0%,100%{transform:translateY(0) rotate(0)}50%{transform:translateY(-8px) rotate(-2deg)}}
+@keyframes hShine{0%,72%{transform:translateX(-120%)}100%{transform:translateX(120%)}}
+@keyframes hAnts{to{background-position:14px 0,-14px 100%,0 -14px,100% 14px,0 0}}
+@keyframes hBump{0%,86%,100%{transform:scale(1)}90%{transform:scale(1.35)}94%{transform:scale(.9)}}
+@keyframes hPulse{0%{box-shadow:0 0 0 0 color-mix(in srgb,var(--accent) 55%,transparent)}70%{box-shadow:0 0 0 7px transparent}100%{box-shadow:0 0 0 0 transparent}}
+@keyframes hBreathe{0%,100%{box-shadow:0 0 0 0 color-mix(in srgb,var(--accent) 45%,transparent)}50%{box-shadow:0 0 0 7px transparent}}
+@keyframes hDash{to{stroke-dashoffset:0}}@keyframes hFade{to{opacity:1}}
+@keyframes hKb{from{transform:scale(1)}to{transform:scale(1.12) translate(-2%,-2%)}}
+@keyframes hLoad{from{width:20%}to{width:95%}}
+@keyframes hDot{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.25);opacity:.65}}
+@property --ha{syntax:"<angle>";inherits:false;initial-value:0deg}
+@keyframes hSpin{to{--ha:360deg}}
+@keyframes hUpI{from{opacity:0;top:12px}to{opacity:1;top:0}}
+#hHello .hw{position:relative;opacity:0;animation:hUpI .7s cubic-bezier(.2,.8,.2,1) forwards}
+#home .newcard{isolation:isolate;opacity:0;animation:hUp .8s cubic-bezier(.2,.8,.2,1) .15s forwards}
+#home #ncDesign{animation-delay:.27s}
+#home .newcard::before{content:"";position:absolute;width:520px;height:520px;right:-180px;bottom:-330px;border-radius:50%;background:radial-gradient(closest-side,color-mix(in srgb,var(--accent) 40%,transparent),transparent);z-index:-1;animation:hDrift 12s ease-in-out infinite alternate;pointer-events:none}
+#home #ncDesign::before{animation-delay:-6s}
+#home .newcard:hover::before{filter:brightness(1.25)}
+.ncghost{position:absolute;right:22px;top:46px;width:120px;opacity:.1;z-index:-1;animation:hFloat 7s ease-in-out infinite;pointer-events:none}
+#home .newform button{position:relative;overflow:hidden;transition:transform .2s,filter .2s}
+#home .newform button:hover{transform:translateY(-1px);filter:brightness(1.06)}#home .newform button:active{transform:translateY(1px)}
+#home .newform button::after{content:"";position:absolute;inset:0;background:linear-gradient(110deg,transparent 35%,rgba(255,255,255,.35) 50%,transparent 65%);transform:translateX(-120%);animation:hShine 4s ease-in-out 1.6s infinite;pointer-events:none}
+#home .newform label{transition:box-shadow .25s}
+#home .newform label:focus-within{box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 55%,transparent)}
+#home .dzdrop{border-color:transparent!important;background:linear-gradient(90deg,var(--accent) 50%,transparent 0) repeat-x top/14px 1.5px,linear-gradient(90deg,var(--accent) 50%,transparent 0) repeat-x bottom/14px 1.5px,linear-gradient(0deg,var(--accent) 50%,transparent 0) repeat-y left/1.5px 14px,linear-gradient(0deg,var(--accent) 50%,transparent 0) repeat-y right/1.5px 14px,color-mix(in srgb,var(--accent) 7%,transparent)!important;animation:hAnts 1.2s linear infinite;transition:background-color .2s}
+#home .dzdrop:hover,#home .dz.drag .dzdrop{background-color:color-mix(in srgb,var(--accent) 16%,transparent)!important}
+#home .dzdrop svg{transition:transform .3s}#home .dzdrop:hover svg{transform:translateY(-2px) rotate(-6deg)}
+#home .mtag b{position:relative;overflow:hidden}
+#home .mtag b::after{content:"";position:absolute;inset:0;background:linear-gradient(110deg,transparent 30%,rgba(255,255,255,.6) 50%,transparent 70%);transform:translateX(-120%);animation:hShine 2.8s ease-in-out 1.5s infinite}
+/* foto -> 3D minidemo kaardil 02 */
+.p3d{position:absolute;right:22px;top:40px;width:104px;perspective:600px;z-index:-1;pointer-events:none}
+.p3d .p3s{position:relative;aspect-ratio:4/3;border-radius:10px;overflow:hidden;border:1px solid rgba(255,255,255,.14);box-shadow:0 18px 40px rgba(0,0,0,.45);transform:rotateY(-14deg) rotateX(6deg);animation:p3dTilt 9s ease-in-out infinite;background:#fff}
+.p3d img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.p3d .b{object-fit:contain;background:#fff;clip-path:inset(0 100% 0 0);animation:p3dB 9s ease-in-out infinite}
+.p3d .c{object-fit:contain;background:radial-gradient(circle at 50% 40%,#fff,#E9E4DC);opacity:0;animation:p3dC 9s ease-in-out infinite}
+.p3d .scan{position:absolute;top:0;bottom:0;width:2px;left:0;background:var(--accent);box-shadow:0 0 14px 3px color-mix(in srgb,var(--accent) 70%,transparent);opacity:0;animation:p3dScan 9s ease-in-out infinite}
+.p3d .t{position:absolute;left:6px;bottom:6px;font:600 9.5px var(--mono);letter-spacing:.06em;text-transform:uppercase;background:rgba(22,19,15,.82);color:#fff;border-radius:4px;padding:2px 6px;opacity:0;font-style:normal}
+.p3d .t1{animation:p3dT1 9s infinite}.p3d .t2{animation:p3dT2 9s infinite;background:var(--accent)}.p3d .t3{animation:p3dT3 9s infinite;background:var(--accent)}
+@keyframes p3dB{0%,18%{clip-path:inset(0 100% 0 0)}36%,100%{clip-path:inset(0 0 0 0)}}
+@keyframes p3dScan{0%,17%{left:0;opacity:0}19%{opacity:1}35%{left:calc(100% - 2px);opacity:1}37%,100%{left:calc(100% - 2px);opacity:0}}
+@keyframes p3dC{0%,44%{opacity:0;transform:scale(.92)}52%,92%{opacity:1;transform:scale(1)}100%{opacity:0}}
+@keyframes p3dTilt{0%,45%{transform:rotateY(-14deg) rotateX(6deg)}60%{transform:rotateY(16deg) rotateX(4deg)}78%{transform:rotateY(-22deg) rotateX(8deg)}92%,100%{transform:rotateY(-14deg) rotateX(6deg)}}
+@keyframes p3dT1{0%,16%{opacity:1}18%,100%{opacity:0}}
+@keyframes p3dT2{0%,17%{opacity:0}20%,42%{opacity:1}45%,100%{opacity:0}}
+@keyframes p3dT3{0%,48%{opacity:0}52%,90%{opacity:1}94%,100%{opacity:0}}
+@media (max-width:640px){.p3d{display:none}}
+/* kitsal kaardil (tekst ühes veerus) jääb minidemole ruumi */
+@media (min-width:641px) and (max-width:760px){#ncDesign h2,#ncDesign p{max-width:calc(100% - 130px)}}
+/* mallid */
+#home .tcard{overflow:hidden;opacity:0;animation:hUp .6s cubic-bezier(.2,.8,.2,1) forwards;animation-delay:calc(.35s + var(--i,0)*60ms);transition:transform .4s cubic-bezier(.2,.8,.2,1),box-shadow .4s,border-color .25s}
+#home .tcard:hover{transform:translateY(-4px);box-shadow:0 18px 30px -20px rgba(60,25,10,.45);border-color:color-mix(in srgb,var(--accent) 45%,var(--line))}
+#home .tcard::after{content:"";position:absolute;inset:0;background:linear-gradient(115deg,transparent 40%,color-mix(in srgb,var(--accent) 10%,transparent) 50%,transparent 60%);transform:translateX(-100%);transition:transform .9s cubic-bezier(.2,.8,.2,1);pointer-events:none}
+#home .tcard:hover::after{transform:translateX(100%)}
+#home .tcard .ti{transition:background .3s,color .3s,transform .5s cubic-bezier(.34,1.56,.64,1)}
+#home .tcard:hover .ti{background:var(--accent);color:#fff;transform:rotate(-8deg) scale(1.08)}
+#home .tcard .ar{display:inline-block;width:0;overflow:hidden;vertical-align:bottom;transition:width .3s}
+#home .tcard:hover .ar{width:12px}
+#home .tcard[aria-pressed="true"]::before{content:"";position:absolute;inset:0;border-radius:inherit;padding:1.5px;background:conic-gradient(from var(--ha,0deg),var(--accent),transparent 30%,transparent 70%,var(--accent));-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;animation:hSpin 3s linear infinite;pointer-events:none;z-index:2}
+#home .tex img{animation:hKb 14s ease-in-out infinite alternate}
+/* numbrid, krediit */
+#home .stat{position:relative;overflow:hidden}
+.hspark{position:absolute;right:12px;top:14px;width:90px;height:30px;pointer-events:none}@media (max-width:640px){.hspark{width:60px;height:22px}}
+.hspark .l{fill:none;stroke:var(--accent);stroke-width:2;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:200;stroke-dashoffset:200;animation:hDash 1.6s cubic-bezier(.2,.8,.2,1) .8s forwards}
+.hspark .f{fill:color-mix(in srgb,var(--accent) 14%,transparent);opacity:0;animation:hFade .8s 1.4s forwards}
+.cmeter{position:absolute;left:0;right:0;bottom:0;height:4px;background:color-mix(in srgb,var(--accent) 18%,transparent);pointer-events:none}
+.cmeter b{display:block;height:100%;width:0;background:var(--accent);transition:width 1.4s cubic-bezier(.2,.8,.2,1) .6s}
+#stBuy{animation:hBreathe 2.8s ease-in-out infinite}
+/* teavitused, päringud, objektid */
+#bellDot{animation:hBump 3s ease-in-out 1s infinite}
+#home .hleads h3 small{display:inline-block;animation:hBump 3s ease-in-out 2s infinite}
+.ldot{display:inline-block;animation:hDot 2s ease-in-out infinite;color:var(--accent)}
+#home .ocard{position:relative;transition:transform .35s cubic-bezier(.2,.8,.2,1),box-shadow .35s,border-color .2s}
+#home .ocard img{transition:transform 1s cubic-bezier(.2,.8,.2,1)}
+#home .ocard:hover img{transform:scale(1.06)}
+.oprog{display:block;position:relative;height:3px;margin-top:-3px;background:rgba(0,0,0,.15);z-index:1}
+.oprog b{display:block;height:100%;background:var(--accent);animation:hLoad 8s linear infinite}
+@media (prefers-reduced-motion:reduce){
+  #home *,#home *::before,#home *::after,#bellDot{animation:none!important;transition:none!important}
+  #hHello .hw,#home .newcard,#home .tcard{opacity:1!important;transform:none!important;top:0!important}
+  .hspark .l{stroke-dashoffset:0}.hspark .f{opacity:1}
+  .p3d .b{clip-path:none}.p3d .c,.p3d .t3{opacity:1}.p3d .p3s{transform:rotateY(-14deg) rotateX(6deg)}
+  .oprog b{width:60%}}
 </style>
 </head>
 <body>
@@ -1069,12 +1156,12 @@ input[type=checkbox]{accent-color:var(--accent)}
   <section class="home" id="home" hidden>
     <div class="hhead"><div><div class="tag" id="hDate"></div><h1 id="hHello">Tere!</h1></div></div>
     <div class="modes">
-    <div class="newcard" id="ncHouse">
+    <div class="newcard" id="ncHouse"><svg class="ncghost" viewBox="0 0 120 110" aria-hidden="true"><g fill="none" stroke="#fff" stroke-width="2"><path d="M10 60 60 85 110 60 60 35z"/><path d="M25 57v-25l35 18 35-18v25"/><path d="M25 32 47 10l35 18M95 32 82 28"/><path d="M60 50v35"/></g></svg>
       <div><span class="mtag"><i>01</i>Majavaade 3D</span><span class="tchip" id="tchipH" hidden></span><h2>Maja aadressi järgi</h2><p>Sisesta aadress ja maja kerkib 3D-s koos mõõtudega. Objektile ei pea sõitma.</p></div>
       <span class="src2">10 krediiti · Maa- ja Ruumiameti andmed</span>
       <form class="newform" id="homeF"><label for="homeIn"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input id="homeIn" type="text" placeholder="Nt Tammekännu tee 44, Viimsi vald" autocomplete="off" aria-label="Objekti aadress"></label><button type="submit">Loo objekt</button></form>
     </div>
-    <div class="newcard dz" id="ncDesign">
+    <div class="newcard dz" id="ncDesign"><div class="p3d" aria-hidden="true"><div class="p3s"><img class="a" src="examples/building-1.webp" alt=""><img class="b" src="examples/building-1-clean.webp" alt=""><img class="c" src="examples/building-poster.webp" alt=""><i class="scan"></i><i class="t t1">Foto</i><i class="t t2">AI puhastab</i><i class="t t3">3D-mudel</i></div></div>
       <div><span class="mtag"><i>02</i>Disain pildist<b>Uus</b></span><span class="tchip" id="tchipP" hidden></span><h2>Foto järgi uus välimus</h2><p>Lae üles foto majast, toast, aiast või esemest. AI näitab, milline see oleks uue värvi, materjali või stiiliga.</p></div>
       <span class="src2" id="dzPrice">2 krediiti · 2 varianti</span>
       <div class="newform"><label class="dzdrop" id="dzDrop" for="dzFile"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="15" rx="2"/><circle cx="9" cy="11" r="2"/><path d="m21 17-5-5-8 8"/></svg><span>Lohista foto siia või vali failist</span><input id="dzFile" type="file" accept="image/*" hidden></label><button type="button" id="dzBtn">Lae foto</button></div>
@@ -1086,10 +1173,10 @@ input[type=checkbox]{accent-color:var(--accent)}
       <button type="button" class="lnk" id="tMore" style="align-self:flex-start"></button>
     </div>
     <div class="stats">
-      <div class="stat"><b id="stObj">2</b><small>Objekti kontol</small></div>
+      <div class="stat"><b id="stObj">2</b><small>Objekti kontol</small><svg class="hspark" viewBox="0 0 90 30" aria-hidden="true"><path class="f" d="M0 26 L18 24 36 25 54 18 72 19 90 8 90 30 0 30z"/><path class="l" d="M0 26 L18 24 36 25 54 18 72 19 90 8"/></svg></div>
       <div class="stat"><b id="stMonth">0</b><small>Objektivaadet sel kuul</small></div>
       <div class="stat"><b id="stGen">0</b><small>Esituspilti</small></div>
-      <div class="stat cr"><div><b id="stCred">30</b><small>Krediiti saldo</small></div><button class="ghost" type="button" id="stBuy">Osta</button></div>
+      <div class="stat cr"><div><b id="stCred">30</b><small>Krediiti saldo</small></div><button class="ghost" type="button" id="stBuy">Osta</button><i class="cmeter" aria-hidden="true"><b id="stMeter"></b></i></div>
     </div>
     <div class="hgrid">
       <div style="display:flex;flex-direction:column;gap:12px;min-width:0"><div class="ohead"><div class="tag">Viimased objektid</div><label class="osrch" id="oSrchW" hidden><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input id="oSrch" type="search" placeholder="Otsi objekti" aria-label="Otsi objekti"></label></div><div class="ocards" id="ocards"></div><div class="fhint" id="oNone" hidden>Sellist objekti ei leitud.</div><div id="dWrap" hidden style="display:flex;flex-direction:column;gap:12px;margin-top:10px"><div class="tag">Disainid pildist</div><div class="ocards" id="dcards"></div></div></div>
@@ -2262,7 +2349,7 @@ function ask2(title,text,yes,extra){return new Promise(res=>{$('dT').textContent
   const done=v=>{$('dlg').hidden=true;$('dYes').onclick=$('dNo').onclick=null;res(v);};$('dYes').onclick=()=>done(true);$('dNo').onclick=()=>done(false);});}
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('dlg').hidden)$('dNo').click();});
 /* views */
-function show(view,tab){if(view==='admin'&&typeof CLOUD!=='undefined'&&CLOUD&&!(typeof CL!=='undefined'&&CL.admin))view='home';$('admin').hidden=view!=='admin';if(view==='admin')setTimeout(()=>renderAdmin(),0);$('home').hidden=view!=='home';if(view==='home')renderHome();$('body').hidden=view!=='app';$('settings').hidden=view!=='settings';if($('studio'))$('studio').hidden=view!=='studio';$('menu').hidden=true;$('avatarBtn').setAttribute('aria-expanded','false');
+function show(view,tab){if(view==='admin'&&typeof CLOUD!=='undefined'&&CLOUD&&!(typeof CL!=='undefined'&&CL.admin))view='home';$('admin').hidden=view!=='admin';if(view==='admin')setTimeout(()=>renderAdmin(),0);$('home').hidden=view!=='home';if(view!=='home')$('home').classList.remove('seen');if(view==='home')renderHome();$('body').hidden=view!=='app';$('settings').hidden=view!=='settings';if($('studio'))$('studio').hidden=view!=='studio';$('menu').hidden=true;$('avatarBtn').setAttribute('aria-expanded','false');
   if(view==='settings'){fillForms();if(tab==='widget')setTimeout(renderWidgetPane,0);if(tab==='products')setTimeout(renderProducts,0);if(tab==='seller')setTimeout(renderSeller,0);document.querySelectorAll('.stabs [data-tab]').forEach(b=>b.setAttribute('aria-current',b.dataset.tab===tab));document.querySelectorAll('.spane').forEach(p=>p.hidden=p.dataset.pane!==tab);}
   if(view==='app')setTimeout(resize,0);}
 document.querySelector('.body').id='body';
@@ -2472,7 +2559,7 @@ function renderBell(ring){const {L,s}=leadsForUi(),nw=L.filter(leadIsNew).length
   renderHomeLeads();}
 function renderHomeLeads(){const box=$('hLeads');if(!box)return;const {L,s}=leadsForUi(),used=!s||acct.wMode||acct.wTitle||acct.wColor;if(!used&&!s){box.hidden=true;return;}
   const nw=L.filter(leadIsNew).length;box.hidden=false;
-  box.innerHTML=`<h3>Päringud kodulehelt${nw?`<small>${nw} uus</small>`:''}</h3>${s?'<span class="fhint">Näidis. Kui vidin on sinu kodulehel, tulevad päringud siia ja sinu e-postile.</span>':''}`+L.slice(0,3).map((l,i)=>`<button type="button" class="hl" data-hl="${i}"><b>${leadIsNew(l)?'● ':''}${String(l.n).replace(/</g,'&lt;')} · ${String(l.m||'').replace(/</g,'&lt;')}</b><span>${String(l.a).replace(/,.*$/,'')} · ${(l.sv||[]).join(', ')||'päring'} · ${agoTxt(l.d)} tagasi</span></button>`).join('')+`<button type="button" class="ghost" id="hLeadsAll" style="align-self:flex-start">Kõik päringud</button>`;
+  box.innerHTML=`<h3>Päringud kodulehelt${nw?`<small>${nw} uus</small>`:''}</h3>${s?'<span class="fhint">Näidis. Kui vidin on sinu kodulehel, tulevad päringud siia ja sinu e-postile.</span>':''}`+L.slice(0,3).map((l,i)=>`<button type="button" class="hl" data-hl="${i}"><b>${leadIsNew(l)?'<span class="ldot" aria-hidden="true">●</span> ':''}${String(l.n).replace(/</g,'&lt;')} · ${String(l.m||'').replace(/</g,'&lt;')}</b><span>${String(l.a).replace(/,.*$/,'')} · ${(l.sv||[]).join(', ')||'päring'} · ${agoTxt(l.d)} tagasi</span></button>`).join('')+`<button type="button" class="ghost" id="hLeadsAll" style="align-self:flex-start">Kõik päringud</button>`;
   box.querySelectorAll('[data-hl]').forEach(b=>b.onclick=()=>{const l=L[+b.dataset.hl];l.seen=1;if(!s)store.set('v3d_leads',L);show('settings','widget');setTimeout(()=>showLeadMail(l),250);renderBell();});
   $('hLeadsAll').onclick=()=>show('settings','widget');}
 $('bellBtn').onclick=e=>{e.stopPropagation();const pop=$('bellPop'),open=pop.hidden;$('menu').hidden=true;pop.hidden=!open;$('bellBtn').setAttribute('aria-expanded',open);if(open)renderBell();};
@@ -2822,11 +2909,17 @@ function planSvg(h){const L=h.lot,pad=3,w=L[2]-L[0]+pad*2,hh=L[3]-L[1]+pad*2,sc=
   const nb=h.nb.map(b=>`<polygon points="${b.p.map(pt).join(' ')}" fill="#D9D3CA" stroke="#C4BDB2" stroke-width="1"/>`).join('');
   const tr=h.trees.map(t=>`<circle cx="${(ox+t[0]*sc).toFixed(1)}" cy="${(oy-t[1]*sc).toFixed(1)}" r="${(t[2]*.28*sc).toFixed(1)}" fill="#9DB27A" opacity=".7"/>`).join('');
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 200" width="320" height="200"><rect width="320" height="200" fill="#E9EDE0"/>${tr}${nb}<rect x="${(ox+L[0]*sc).toFixed(1)}" y="${(oy-L[3]*sc).toFixed(1)}" width="${((L[2]-L[0])*sc).toFixed(1)}" height="${((L[3]-L[1])*sc).toFixed(1)}" fill="none" stroke="#16130F" stroke-width="1.2" stroke-dasharray="4 3"/><polygon points="${h.pts.map(pt).join(' ')}" fill="#E5482D" stroke="#16130F" stroke-width="1.2"/></svg>`;}
+// arv loeb nullist üles (1 s, ease-out); vähendatud liikumisel kohe
+function countUp(el){const n=+el.textContent;if(!(n>0)||matchMedia('(prefers-reduced-motion: reduce)').matches)return;const t0=performance.now()+500,tok=el.cu=(el.cu||0)+1;el.textContent='0';
+  const st=t=>{if(el.cu!==tok)return;const p=Math.max(0,Math.min(1,(t-t0)/1000));el.textContent=String(Math.round(n*(1-Math.pow(1-p,3))));if(p<1)requestAnimationFrame(st);};requestAnimationFrame(st);
+  // taustal olevas vahekaardis rAF seisab: lõppväärtus igal juhul
+  setTimeout(()=>{if(el.cu===tok)el.textContent=String(n);},1700);}
 function renderHome(){const n=acct.name.split(' ')[0]||'';const hr=new Date().getHours();
-  $('hHello').textContent=(hr<11?'Tere hommikust':hr<18?'Tere päevast':'Tere õhtust')+(n?', '+n:'')+'!';
+  const hi=(hr<11?'Tere hommikust':hr<18?'Tere päevast':'Tere õhtust')+(n?', '+n:'')+'!',intro=!$('home').classList.contains('seen');$('home').classList.add('seen');
+  if(intro)$('hHello').innerHTML=hi.split(' ').map((w,k)=>`<span class="hw" style="animation-delay:${k*80}ms">${stEsc(w)}</span>`).join(' ');else if($('hHello').textContent!==hi)$('hHello').textContent=hi;
   $('hDate').textContent=new Date().toLocaleDateString('et-EE',{weekday:'long',day:'numeric',month:'long'});
   const ym=today().slice(0,7);$('stObj').textContent=HOUSES.length;$('stMonth').textContent=acct.hist.filter(r=>r.d.startsWith(ym)&&/Objektivaade/.test(r.t)).length;
-  $('stGen').textContent=Object.values(acct.gen).filter(Boolean).length;$('stCred').textContent=acct.credits;{const pl=curPlan(),p=basePrice('obj'),left=Math.floor(acct.credits/p)+planLeft(),c=$('stCred').closest('.stat');c.classList.toggle('low',left<2);c.querySelector('small').textContent=(pl?pl.name+': '+planLeft()+' objekti sel kuul alles · ':'')+(left<1?'Ei jätku järgmiseks objektiks':left<2?'Jätkub veel 1 objektiks':'Krediiti saldo · '+left+' objekti');c.querySelector('button').textContent=left<2?'Osta krediite':pl?'Pakett':'Osta';}
+  $('stGen').textContent=Object.values(acct.gen).filter(Boolean).length;$('stCred').textContent=acct.credits;if(intro)['stObj','stMonth','stGen','stCred'].forEach(id=>countUp($(id)));$('stMeter').style.width=Math.min(100,acct.credits/basePrice('obj')*100)+'%';{const pl=curPlan(),p=basePrice('obj'),left=Math.floor(acct.credits/p)+planLeft(),c=$('stCred').closest('.stat');c.classList.toggle('low',left<2);c.querySelector('small').textContent=(pl?pl.name+': '+planLeft()+' objekti sel kuul alles · ':'')+(left<1?'Ei jätku järgmiseks objektiks':left<2?'Jätkub veel 1 objektiks':'Krediiti saldo · '+left+' objekti');c.querySelector('button').textContent=left<2?'Osta krediite':pl?'Pakett':'Osta';}
   document.querySelector('#ncHouse .src2').textContent=priceTxt('obj')+' · Maa- ja Ruumiameti andmed';$('dzPrice').textContent=priceTxt('design')+' · 2 varianti';renderDesigns();renderTpls();renderBell();
   $('ocards').innerHTML=stHomeCards()+HOUSES.map((h,i)=>{const im=(isR(i)&&acct.gen[HOUSES[i].ehr])?((acct.genUrl||{})[HOUSES[i].ehr]||RENDER):((h.thumb&&h.thumb!=='pending'?h.thumb:null)||(i<2?THUMBS[i]:'data:image/svg+xml;utf8,'+encodeURIComponent(planSvg(h))));return `<button type="button" class="ocard" data-i="${i}"><img src="${im}" alt="${h.short} 3D-vaade"><div class="ob"><div class="ot"><b>${h.short}</b>${otag(i)}</div><span class="fhint">Viimsi vald · ${h.date}</span><div class="om"><span>${fmt(h.footprint)} m² põhiplaan</span><span>~${fmt(h.roof,0)} m² katus</span></div></div></button>`;}).join('')+'<button type="button" class="ocard add" id="addCard"><span>+</span>Uus objekt</button>';
   document.querySelectorAll('.ocard[data-i]').forEach(b=>b.onclick=()=>{show('app');select(+b.dataset.i);});document.querySelectorAll('.ocard[data-st]').forEach(b=>b.onclick=()=>stOpenSession(b.dataset.st));stHomeActs();
@@ -2889,7 +2982,7 @@ function renderTpls(){const all=TPLS().filter(t=>t.on);if(tFil===null)tFil='all'
   $('tFil').innerHTML=F.map(([k,l])=>`<button type="button" data-f="${k}" aria-pressed="${tFil===k}">${l}</button>`).join('');
   $('tFil').querySelectorAll('button').forEach(b=>b.onclick=()=>{tFil=b.dataset.f;tMoreOpen=false;renderTpls();});
   const L=all.filter(t=>tFil==='all'||(tFil==='mine'&&tplMine(t))||t.input===tFil).sort((a,b)=>(tplMine(b)-tplMine(a))),lim=(tMoreOpen||tFil==='all')?99:4;
-  $('tGrid').innerHTML=L.slice(0,lim).map(t=>`<button type="button" class="tcard" data-t="${t.id}" aria-pressed="${acct.activeTpl===t.id}">${tplMine(t)?'<span class="tyou">Sinu töö</span>':''}${EXMAP[t.id]?`<span class="tex"><img class="ea" src="${EXIMG[EXMAP[t.id][1]]}" alt="${t.name}: pärast" loading="lazy"><img class="eb" src="${EXIMG[EXMAP[t.id][0]]}" alt="${t.name}: enne" loading="lazy"><span class="tl"><i class="pa">Pärast · AI</i><i class="pb">Enne</i></span></span>`:''}${EXMAP[t.id]?'':`<span class="ti">${ticon(t)}</span>`}<b>${t.name}</b><p>${t.desc}</p><div class="tm"><span>${t.input==='addr'?'Aadress → 3D':t.out==='3d'?'Foto → 3D-mudel':'Foto → AI disain'}</span><span>${acct.activeTpl===t.id?'Valitud ✓':'Kasuta'}</span></div></button>`).join('');
+  $('tGrid').innerHTML=L.slice(0,lim).map((t,ti)=>`<button type="button" class="tcard" data-t="${t.id}" aria-pressed="${acct.activeTpl===t.id}" style="--i:${ti}">${tplMine(t)?'<span class="tyou">Sinu töö</span>':''}${EXMAP[t.id]?`<span class="tex"><img class="ea" src="${EXIMG[EXMAP[t.id][1]]}" alt="${t.name}: pärast" loading="lazy"><img class="eb" src="${EXIMG[EXMAP[t.id][0]]}" alt="${t.name}: enne" loading="lazy"><span class="tl"><i class="pa">Pärast · AI</i><i class="pb">Enne</i></span></span>`:''}${EXMAP[t.id]?'':`<span class="ti">${ticon(t)}</span>`}<b>${t.name}</b><p>${t.desc}</p><div class="tm"><span>${t.input==='addr'?'Aadress → 3D':t.out==='3d'?'Foto → 3D-mudel':'Foto → AI disain'}</span><span>${acct.activeTpl===t.id?'Valitud ✓':'Kasuta<span class="ar" aria-hidden="true">→</span>'}</span></div></button>`).join('');
   $('tGrid').querySelectorAll('.tcard').forEach(b=>b.onclick=()=>useTpl(b.dataset.t));
   $('tMore').hidden=L.length<=4||tFil==='all';$('tMore').textContent=tMoreOpen?'Näita vähem':'Näita kõiki malle ('+L.length+')';
   const T=tplById(acct.activeTpl),chip=(el,on)=>{el.hidden=!on;if(on)el.innerHTML=`${T.name}<button type="button" aria-label="Eemalda mall">×</button>`;if(on)el.querySelector('button').onclick=()=>{acct.activeTpl=null;save();renderTpls();};};
@@ -3829,7 +3922,7 @@ function stHomeCards(){try{const e=t=>String(t==null?'':t).replace(/[&<>"']/g,c=
   const L=(acct.studio||[]).filter(s=>(s.imgs&&s.imgs.length)||(s.msgs&&s.msgs.length)||(s.draft&&s.draft.trim())||s.p3job).slice().sort((a,b)=>(b.upd||0)-(a.upd||0)).slice(0,8);
   return L.map(s=>{const T=tplById(s.tpl),t1=s.imgs&&s.tray&&s.imgs[s.tray[0]],lo=(s.msgs||[]).filter(m=>m.gen&&m.out&&m.out.length).map(m=>m.out[0]).pop(),u=stAiImg((t1&&t1.src)||lo||s.thumb||''),gens=(s.msgs||[]).filter(m=>m.gen&&m.out&&m.out.length).length,done=gens>0||(s.p3job&&s.p3job.status==='done');
     const d=s.upd?new Date(s.upd).toLocaleDateString('et-EE'):(s.date||'');
-    return `<button type="button" class="ocard" data-st="${e(s.id)}">${u?`<img src="${e(u)}" alt="">`:'<span class="imgph">Pilte pole veel</span>'}<div class="ob"><div class="ot"><b>${e(s.title&&s.title!=='Uus töö'?s.title:(T?(T.id==='vaba'?'Vaba idee':T.name):'Töö'))}</b><span class="st ${done?'':'stw'}">${done?gens+' AI-pilti':'Pooleli'}</span></div><span class="fhint">${e(T?(T.id==='vaba'?'Vaba idee':T.name):'Stuudio')} · ${e(d)}</span><div class="om"><span>${(s.tray||[]).length} pilti</span>${s.draft&&s.draft.trim()?`<span>${e(s.draft.trim().slice(0,40))}</span>`:''}</div></div></button>`;}).join('');}catch(_){return '';}}
+    return `<button type="button" class="ocard" data-st="${e(s.id)}">${u?`<img src="${e(u)}" alt="">`:'<span class="imgph">Pilte pole veel</span>'}${s.p3job&&s.p3job.status==='pending'?'<i class="oprog" aria-hidden="true"><b></b></i>':''}<div class="ob"><div class="ot"><b>${e(s.title&&s.title!=='Uus töö'?s.title:(T?(T.id==='vaba'?'Vaba idee':T.name):'Töö'))}</b><span class="st ${done?'':'stw'}">${done?gens+' AI-pilti':'Pooleli'}</span></div><span class="fhint">${e(T?(T.id==='vaba'?'Vaba idee':T.name):'Stuudio')} · ${e(d)}</span><div class="om"><span>${(s.tray||[]).length} pilti</span>${s.draft&&s.draft.trim()?`<span>${e(s.draft.trim().slice(0,40))}</span>`:''}</div></div></button>`;}).join('');}catch(_){return '';}}
 function stHomeActs(){document.querySelectorAll('#ocards .ocard[data-st]').forEach(el=>{const s=(acct.studio||[]).find(x=>x.id===el.dataset.st);if(!s)return;const w=document.createElement('div');w.className='owrap';el.replaceWith(w);w.appendChild(el);
   const d=document.createElement('button');d.type='button';d.className='odel';d.title='Kustuta töö';d.setAttribute('aria-label','Kustuta töö');d.innerHTML='<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/></svg>';
   d.onclick=async e=>{e.stopPropagation();const ok=await ask2('Kustuta töö?','„'+(s.title&&s.title!=='Uus töö'?s.title:'Vaba idee')+'“ ja selle pildid kustutatakse. Seda ei saa tagasi võtta.','Kustuta');if(!ok)return;acct.studio=acct.studio.filter(x=>x.id!==s.id);if(STU.sid===s.id){STU.sid=null;STU.edit=null;}save();renderHome();toast('Töö kustutatud');};w.appendChild(d);
