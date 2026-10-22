@@ -16,6 +16,7 @@ Brauser ei näe ühtegi salajast võtit ja ei saa hinda ega saldot muuta.
 
 Kõik AI-pildid saavad firma logo alla paremale (kui firmal on logo ja seadetes „Logo AI-piltidel“ sees). Originaal ilma logota salvestatakse kõrvale (`…-raw.jpg`).
 | `ehr` | `functions/ehr` | ehitisregistri andmed EHR-koodi järgi |
+| `garden` | `functions/garden` | „Aed ja ümbrus“: Maa-ameti ortofoto, maakatte kõrgusmudel (nDSM), piirded ja katastriüksused maja ümber (±64 m), vahemälus `models/aed/<EHR>/` 30 päeva; `Server-Timing` |
 | `checkout` | `functions/checkout` | krediidipaketi ost Stripe'iga (50 € / 100 € / 250 €). Klient kutsub `?forceFunctionRegion=eu-central-1` (andmebaasi kõrval), eelsoojendus `{warm:true}` ostunupul/modaalis; JWT kontroll kohapeal (ES256, JWKS), firma + kiiruspiirang ühe ringiga; vastuses `Server-Timing` (auth, db, stripe, total), brauseri konsoolis `[checkout]` rida |
 | `stripe-webhook` | `functions/stripe-webhook` | makse õnnestus → krediidid kontole (sama makse ainult üks kord) |
 | `ai-3d` | `functions/ai-3d` | fotod → 3D-mudel (vt allpool). `check` (AI fotokontroll), `start` (puhastus + Tripo, võtab krediidid `price_3d`), `status` (kopeerib .glb kausta `models`) |
@@ -113,3 +114,13 @@ Uus mall saab 3D lihtsalt seadistusega (nt `photo3d:{subject:'object',from:'imag
 - Turvalisus: kasutaja ei saa muuta oma saldot, soodustust, admin-õigust ega teise firma andmeid; `spend_credits` on ainult serverile.
 - Funktsioonid läbivad Deno tüübikontrolli.
 - Rünnakutestid (121 kontrolli) päris Postgres + PostgREST + funktsioonide vastu: otse andmebaasi kirjutamine, võõra firma andmed, tagastuse ärakasutamine, paralleelsed kulutused, vidina krediitide tühjendamine, võltsitud IP, botid, XSS e-kirjas, maksete võltsimine ja kordamine, tagasimaksed, müüja enda ostud. Testid on kaustas `tests/` (vt `tests/README.md`).
+
+
+## Aed ja ümbrus (fotodest 3D-mudel + aadress)
+
+- Andmed: `functions/garden` (ja `ai-3d` töö valmimisel taustal) laeb paralleelselt Maa-ameti WMS-ist ortofoto (`EESTIFOTO`, 1536 px), maakatte kõrgusmudeli (`nDSM`, 768 px PNG), piirded (`etak_piirded`) ja katastri WFS-ist katastriüksused; failid `models/aed/<EHR>/` (ortho.jpg, ndsm.png, fences.png, meta.json). Ühe aadressi kohta ~0,4 MB, kõigile firmadele ühine (avaandmed).
+- Vaade (`js/garden.js`, laetakse ainult aia sisselülitamisel): maapind = ortofoto, kus maja jalajälg + vari on kustutatud ja ümbrusest täidetud; puud nDSM kõrguse tippudest (naabrite ja maja jalajäljed maskitud, vahe ≥ 4 m), võra suurus kõrgusmudelist, tüüp kõrguse/kuju/värvi järgi; piirded rastrist vektoriks; naabrid `data/lod2/geo/` ruutudest; krundi piir ja ametlik pindala katastrist. Paigutus mudeli raami sama sobituse kaudu mis ametlikud mõõdud (ainult kindla sobitusega). Päike Viimsi koordinaatidega (hommik/päev/õhtu), taevas, udu, varjud (telefonis 1024 px).
+- Ajad: konsoolis `[aed] kokku … ms {server, meta, pildid, puud, maapind, objektid}` ja serveri `Server-Timing`.
+- Puud: `assets/trees/*.glb` – Quaternius (CC0 1.0, avalik omand), allikas Poly Pizza: maple = qZtx0AHhcy („Tree“), tree2 = aVOxaHRPWe („Tree“), birch = QVOop92WmG („Tree“, koor värvitakse heledaks), fruit = t9KbsfYdXz („Tree“), bush = ooG6CkLyE8 („Bush“), spruce = 79gmlLnweB („Pine“), pine = 699sFuLCN2 („Pine“). Töötlus: tekstuurid 512 px WebP, meshopt (`@gltf-transform/cli@4.1.1`), kokku ~0,8 MB. Kauged puud: kaks risti tasapinda puu pildiga (renderdatakse brauseris üks kord); lehtede lihtsustamine ei sobi (kaardid lagunevad ribadeks).
+- three r128 piirangud: ümbritsev varjutus (SAO) on välja jäetud – r128 SAOPass annab pildi ilma sRGB teisenduseta ja lehekaardid täisristkülikutena. Uuem three (≥ r155) annaks: GTAO + OutputPass (õige värviruum), BatchedMesh/InstancedMesh LOD, paremad varjud (VSM), KTX2 tekstuurid, WebGPU tee.
+- Andmeallikate viide: „Ortofoto, maakatte kõrgusmudel, piirded, hooned: Maa- ja Ruumiamet 2026“.

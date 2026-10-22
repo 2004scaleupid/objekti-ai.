@@ -886,6 +886,7 @@ body.p3emb{background:transparent;margin:0;padding:0;overflow:hidden}body.p3emb 
 .p3v.m3v{aspect-ratio:auto;height:clamp(280px,calc(100vh - 380px),640px);max-height:none}
 .m3bar{position:absolute;left:8px;top:8px;z-index:3;display:flex;flex-direction:column;gap:2px;padding:4px;border:1px solid var(--line);border-radius:12px;background:var(--paper)}
 .m3bar .sep{height:1px;margin:3px 4px;background:var(--line)}
+.gchips{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0}.gchips .chip{border:1px solid var(--line);background:var(--paper);color:var(--ink);border-radius:999px;padding:5px 11px;font:600 12.5px var(--display);cursor:pointer}.gchips .chip[aria-pressed="true"]{background:var(--ink);color:var(--paper);border-color:var(--ink)}.gtime{margin:4px 0 6px}.p3g{display:flex;gap:8px;align-items:center;font-size:13.5px;margin-top:4px}.p3g small{color:var(--muted)}
 .m3labs{position:absolute;inset:0;pointer-events:none;overflow:hidden;z-index:2}.m3svg{position:absolute;left:0;top:0;display:block;overflow:visible}
 .m3l{position:absolute;left:0;top:0;white-space:nowrap;font:600 12px/1.3 inherit;font-family:inherit;color:#fff;background:rgba(22,19,15,.82);border-radius:6px;padding:2px 7px}.m3l b{color:#F6A58F;margin-right:2px}.m3l.t-note{background:var(--accent)}.m3l.t-note b{color:#fff}
 .m3card .m3list{display:flex;flex-direction:column;gap:6px;max-height:260px;overflow-y:auto}.m3it{display:flex;gap:6px;align-items:center;font-size:13px}.m3it i{font-style:normal;font:700 11px var(--mono);min-width:18px}.m3it span{flex:1;min-width:0}.m3it small{color:var(--muted)}
@@ -4149,7 +4150,7 @@ async function p3Start(){if(!p3CanSend())return;const P=STU.p3,L=p3List(),c=p3Ch
   const s=p3Sess();let object_id;
   if(P.ehr&&CL.sb){try{const {data}=await CL.sb.from('objects').select('id').eq('company_id',CL.cid).eq('ehr',P.ehr).is('deleted_at',null).maybeSingle();object_id=data&&data.id||undefined;}catch(_){}}
   s.p3job={status:'pending',stage:'cleaning',subject:sub,t:Date.now()};P.starting=1;stSave();stRender();
-  try{const r=await clFn('ai-3d',{subject:sub,photos:L,single:P.single||undefined,check:c.token,force:!c.ok&&P.force,label:P.label||'3D-mudel · '+P3D[sub].n,tpl:STU.tpl,object_id,ehr:sub==='building'&&P.ehr||undefined,product_id:P.product||undefined});
+  try{const r=await clFn('ai-3d',{subject:sub,photos:L,single:P.single||undefined,check:c.token,force:!c.ok&&P.force,label:P.label||'3D-mudel · '+P3D[sub].n,tpl:STU.tpl,object_id,ehr:sub==='building'&&P.ehr||undefined,garden:sub==='building'&&!!P.ehr&&P.garden!==false,product_id:P.product||undefined});
     Object.assign(s.p3job,{id:r.id,stage:r.stage||'modelling',tm:Date.now(),cleaned:(r.cleaned||[]).filter(safeUrl)});if(s.p3job.cleaned[0])s.thumb=s.p3job.cleaned[0];
     p3Note(s,'Fotod on puhastatud. Ehitan 3D-mudelit, see võtab umbes 4 minutit.');acct.tplUse=acct.tplUse||[];acct.tplUse.push({d:today(),t:STU.tpl});}
   catch(e){s.p3job=null;P.err=e.status===409?'Fotod tuleb uuesti kontrollida.':clErr(e)+(e.status===502?' Krediidid tagastati.':'');toast(P.err);if(e.status===409){P.chk=null;P.starting=0;p3Changed();}}
@@ -4175,7 +4176,7 @@ function p3Render(){const box=$('st3d'),th=stTheme(STU.tpl);box.hidden=!th.p3;if
   if(!(P3V&&P3EXV&&P3V.url===P3EXV))p3Dispose();const sub=P.subject,D=P3D[sub]||null,slots=P.single?['Pilt']:(D||P3D.object).slots.slice(0,D?D.max:4),c=p3ChkFor(),n=p3List().length;
   let h='';if(!p3Cloud())h+=`<p class="p3note">3D-mudel töötab ainult kontoga. Logi sisse või loo konto, siis saad fotodest mudeli teha.</p>`;
   if(!P.lock)h+=`<div class="p3sub"><b>Mis fotodel on?</b><div class="p3seg" role="group" aria-label="Mis fotodel on?">${Object.entries(P3D).map(([k,v])=>`<button type="button" data-sub="${k}" aria-pressed="${k===sub}">${v.n}</button>`).join('')}${sub?'<button type="button" class="linkbtn p3exlink" id="p3ExL">Vaata näidet</button>':''}</div><small>${P.aiSub&&P.aiSub===sub?'AI tundis ära, saad muuta. ':''}Toad, maastik ja inimesed ei sobi: 3D-mudel tehakse ühest asjast.</small></div>`;
-  if(sub==='building'&&p3Cloud()){const a=P.ehr&&DS.A.find(x=>x[1]===P.ehr);h+=`<div class="p3addr"><label for="p3Ad"><b>Aadress</b> <small>(valikuline)</small></label><input id="p3Ad" type="text" list="p3AdL" autocomplete="off" maxlength="120" placeholder="nt Tammekännu tee 44" value="${a?stEsc(a[0]):''}"><datalist id="p3AdL"></datalist><small id="p3AdS">${a?P3AD_OK:P3AD_HINT}</small></div>`;}
+  if(sub==='building'&&p3Cloud()){const a=P.ehr&&DS.A.find(x=>x[1]===P.ehr);h+=`<div class="p3addr"><label for="p3Ad"><b>Aadress</b> <small>(valikuline)</small></label><input id="p3Ad" type="text" list="p3AdL" autocomplete="off" maxlength="120" placeholder="nt Tammekännu tee 44" value="${a?stEsc(a[0]):''}"><datalist id="p3AdL"></datalist><small id="p3AdS">${a?P3AD_OK:P3AD_HINT}</small><label class="p3g"${P.ehr?'':' hidden'}><input type="checkbox" id="p3Gd"${P.garden!==false?' checked':''}> Lisa aed ja ümbrus <small>(puud, piirded, naabrid Maa-ameti andmetest; tasuta)</small></label></div>`;}
   let k=0;h+=`<div class="p3slots">${slots.map((nm,i)=>{const ph=P.photos[i],ms=!ph&&c&&(c.missing||[]).find(m=>m.side===P3SIDES[i]);let pr=ph&&c?c.photos[k++]:null;if(ms)pr={tip:ms.tip,issues:['missing']};const bad=(pr&&!pr.ok)||!!ms;
     return `<div class="p3slot${ph?' has':''}${bad?' bad':''}${pr&&pr.ok?' good':''}"><button type="button" class="pick" data-slot="${i}" aria-label="${ph?'Vaheta foto':'Lisa foto'}: ${stEsc(nm)}">${ph?`<img src="${stEsc(ph)}" alt="">`:'<span class="plus" aria-hidden="true">+</span>'}</button><span class="cap">${stEsc(nm)}${D&&i>=D.min?' <small>(soovi korral)</small>':''}</span>${ph?`<button type="button" class="x" data-rm="${i}" aria-label="Eemalda foto: ${stEsc(nm)}">×</button>`:''}${bad?`<span class="tip">${stEsc(pr.tip||pr.issues.map(x=>P3ISS[x]||x).join(', '))}</span>`:''}</div>`;}).join('')}</div>`;
   // kõik fotod: valitud külje märgiga, kasutamata tuhmilt; puudutades saab külje ise valida
@@ -4200,8 +4201,9 @@ function p3Render(){const box=$('st3d'),th=stTheme(STU.tpl);box.hidden=!th.p3;if
     if(v==='del'){p3Remove(u);p3Changed();return;}
     P.photos=P.photos.map(x=>x===u?null:x);if(v!=='none')P.photos[+v]=u;P.asg=-1;P.manual=true;P.unused.delete(u);p3Changed();});
   const f=$('p3Force');if(f)f.onchange=()=>{P.force=f.checked;stSync();};
+  const gch=$('p3Gd');if(gch)gch.onchange=()=>{P.garden=gch.checked;};
   const ad=$('p3Ad');if(ad)ad.oninput=()=>{$('p3AdL').innerHTML=findAddr(ad.value).slice(0,8).map(a=>`<option value="${stEsc(a[0])}">`).join('');const q=ad.value.trim(),a=q?addrOne(q):null;
-    P.ehr=a?a[1]:null;const s2=stSess();if(s2)s2.p3ehr=P.ehr;$('p3AdS').textContent=a?P3AD_OK:q?'Aadressi ei leitud (praegu Viimsi vald). Mudel tehakse ka ilma.':P3AD_HINT;};}
+    P.ehr=a?a[1]:null;const s2=stSess();if(s2)s2.p3ehr=P.ehr;const gl=box.querySelector('.p3g');if(gl)gl.hidden=!P.ehr;$('p3AdS').textContent=a?P3AD_OK:q?'Aadressi ei leitud (praegu Viimsi vald). Mudel tehakse ka ilma.':P3AD_HINT;};}
 const P3AD_HINT='Aadressiga saab mudel ametlikud mõõdud ja õige mõõtkava (Maa-amet). Praegu Viimsi vald.',P3AD_OK='✓ Seotud: ametlikud mõõdud ja mõõtkava tulevad Maa-ametist.';
 // Edenemine: aeg alates algusest. Päris töö 2740abc1: puhastus 56 s, mudel ~4 min. 100% ainult siis, kui server ütleb valmis.
 const P3CLEAN=60000,P3MODEL=240000;
@@ -4242,8 +4244,8 @@ function p3Panel(){const P=STU.p3||p3New(),D=P3D[P.subject],s=stSess(),T=stTheme
 // ---------- Minu 3D-mudelid (serverist, igas seadmes) + jagamislink ja kodulehe kood ----------
 const P3SIZE={};
 async function p3LoadModels(){if(!CL.sb||!CL.cid)return;
-  try{const {data,error}=await CL.sb.from('renders').select('id,output_url,input_urls,tpl,created_at,ehr').eq('company_id',CL.cid).eq('kind','3d').eq('status','done').order('created_at',{ascending:false}).limit(50);
-    if(error)return;acct.models=(data||[]).filter(m=>safeUrl(m.output_url)).map(m=>({id:m.id,url:m.output_url,img:(m.input_urls||[]).filter(safeUrl)[0]||'',cleaned:(m.input_urls||[]).filter(safeUrl),tpl:m.tpl,d:m.created_at,ehr:m.ehr||null}));
+  try{const {data,error}=await CL.sb.from('renders').select('id,output_url,input_urls,tpl,created_at,ehr,garden').eq('company_id',CL.cid).eq('kind','3d').eq('status','done').order('created_at',{ascending:false}).limit(50);
+    if(error)return;acct.models=(data||[]).filter(m=>safeUrl(m.output_url)).map(m=>({id:m.id,url:m.output_url,img:(m.input_urls||[]).filter(safeUrl)[0]||'',cleaned:(m.input_urls||[]).filter(safeUrl),tpl:m.tpl,d:m.created_at,ehr:m.ehr||null,garden:!!m.garden}));
     if(!$('studio').hidden){stRenderPanel();m3MyRow();}}catch(_){}}
 // avalik link: ainult firma ja töö id (mudel on niikuinii avalikus kaustas)
 function p3Path(url){const m=String(url||'').match(/\/models\/([0-9a-f-]{36}\/[0-9a-f-]{36})\.glb(\?|$)/);return m?m[1]:'';}
@@ -4254,7 +4256,7 @@ function p3Acts(url,sm){const L=p3Links(url);if(!L)return '';const share=`<butto
   if(sm)return `<div class="p3acts sm" role="group" aria-label="Kasuta seda 3D-mudelit">${share}<button type="button" class="p3more" data-p3more="${stEsc(url)}" aria-haspopup="menu" aria-label="Veel tegevusi">⋯</button></div>`;
   return `<div class="p3acts" role="group" aria-label="Kasuta seda 3D-mudelit">${share}${p3MoreHtml(url)}</div>`;}
 function p3MoreHtml(url){const L=p3Links(url),dl=url+(url.includes('?')?'&':'?')+'download=3d-mudel.glb',u=stEsc(url);
-  return `<button type="button" data-p3copy="${stEsc(L.embed)}" data-p3ok="Kodulehe kood kopeeritud">Manusta kodulehele</button><button type="button" data-p3dl="${u}">Lae alla (GLB, USDZ, OBJ, STL)</button><button type="button" data-p3a="prod" data-u="${u}">Lisa tootele</button><button type="button" data-p3a="obj" data-u="${u}">Lisa objektile/kuulutusele</button><button type="button" data-p3a="offer" data-u="${u}">Kasuta pakkumises</button>${p3ArOk()?`<button type="button" data-p3a="ar" data-u="${u}">Vaata AR-is</button>`:''}<button type="button" data-p3a="studio" data-u="${u}">Ava Vaba ideas</button>${p3Cloud()?`<button type="button" data-p3a="addr" data-u="${u}">${m3ByUrl(url).ehr?'Muuda aadressi':'Lisa aadress'}</button>`:''}<button type="button" data-p3a="pub" data-u="${u}">Mõõdud lingil: ${M3PUB[p3Path(url).split('/')[1]]?'sees':'väljas'}</button>`;}
+  return `<button type="button" data-p3copy="${stEsc(L.embed)}" data-p3ok="Kodulehe kood kopeeritud">Manusta kodulehele</button><button type="button" data-p3dl="${u}">Lae alla (GLB, USDZ, OBJ, STL)</button><button type="button" data-p3a="prod" data-u="${u}">Lisa tootele</button><button type="button" data-p3a="obj" data-u="${u}">Lisa objektile/kuulutusele</button><button type="button" data-p3a="offer" data-u="${u}">Kasuta pakkumises</button>${p3ArOk()?`<button type="button" data-p3a="ar" data-u="${u}">Vaata AR-is</button>`:''}<button type="button" data-p3a="studio" data-u="${u}">Ava Vaba ideas</button>${p3Cloud()?`<button type="button" data-p3a="addr" data-u="${u}">${m3ByUrl(url).ehr?'Muuda aadressi':'Lisa aadress'}</button>`:''}${p3Cloud()&&m3ByUrl(url).ehr?`<button type="button" data-p3a="garden" data-u="${u}">Lisa aed ja ümbrus</button>`:''}<button type="button" data-p3a="pub" data-u="${u}">Mõõdud lingil: ${M3PUB[p3Path(url).split('/')[1]]?'sees':'väljas'}</button>`;}
 document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('[data-p3more]');if(!b)return;
   const pop=stPop(`<div class="p3acts p3menu" role="menu">${p3MoreHtml(b.dataset.p3more)}</div>`,b);
   // kopeerimine ja allalaadimine sulgevad menüü; ülejäänud avavad oma akna
@@ -4288,7 +4290,7 @@ function p3Offer(url,btn){const L=p3Links(url);if(!L)return;const ehr=Object.key
   const mt=l=>'mailto:'+encodeURIComponent(l.m)+'?subject='+encodeURIComponent('3D-mudel'+(h?': '+h.short:''))+'&body='+encodeURIComponent($('p3OfT').value);
   pop.querySelectorAll('[data-om]').forEach(a=>{const l=LD[+a.dataset.om];a.href=mt(l);a.onclick=()=>{a.href=mt(l);};});}
 document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('[data-p3a]');if(!b)return;const k=b.dataset.p3a,u=b.dataset.u;if(!safeUrl(u))return;
-  if(k==='prod'||k==='obj')p3LinkTo(k,u,b);else if(k==='offer')p3Offer(u,b);else if(k==='ar')p3Ar(u,b);else if(k==='studio'){stPopClose();m3Open(m3ByUrl(u),true);}else if(k==='pub'){stPopClose();m3TogglePub(u);}else if(k==='addr'){stPopClose();m3AddrAsk(m3ByUrl(u),b);}});
+  if(k==='prod'||k==='obj')p3LinkTo(k,u,b);else if(k==='offer')p3Offer(u,b);else if(k==='ar')p3Ar(u,b);else if(k==='studio'){stPopClose();m3Open(m3ByUrl(u),true);}else if(k==='pub'){stPopClose();m3TogglePub(u);}else if(k==='addr'){stPopClose();m3AddrAsk(m3ByUrl(u),b);}else if(k==='garden'){stPopClose();m3Open({...m3ByUrl(u),garden:true},true);}});
 // „Tee 3D-ks“ mis tahes pildist: ühe pildi režiim (image-to-3d); üles laetud fotost võetakse originaal
 async function p3FromPicture(src,label){if(!src)return;const up=/^data:/.test(src),orig=up?P3ORIG.get(src):null;
   if(up&&!orig){toast('Algne foto pole enam alles. Lisa sama foto uuesti, siis tuleb 3D täisresolutsiooniga.');const i=document.createElement('input');i.type='file';i.accept='image/*';
@@ -4358,7 +4360,7 @@ function p3View(box,url,reveal,spin){if(!box)return;
   // physicallyCorrectLights: ilma π-ta, seepärast suuremad numbrid; häälestatud töö 2740abc1 fotode järgi
   sc.add(new THREE.HemisphereLight(0xffffff,0xd8d2c8,env?2.0:3.0));const d=new THREE.DirectionalLight(0xffffff,env?2.5:3.0);d.castShadow=true;d.shadow.mapSize.set(2048,2048);d.shadow.radius=6;d.shadow.bias=-0.0005;sc.add(d,d.target);
   const g=new THREE.Mesh(new THREE.PlaneGeometry(1,1),new THREE.ShadowMaterial({opacity:.16}));g.rotation.x=-Math.PI/2;g.receiveShadow=true;sc.add(g);
-  const bar=box.querySelector('.p3bar i'),V=P3V={url,r,env,cam,ct,sc,ok:false,ro:null,stop:()=>{}};
+  const bar=box.querySelector('.p3bar i'),V=P3V={url,r,env,cam,ct,sc,sun:d,catcher:g,ok:false,ro:null,stop:()=>{}};
   const ld=new THREE.GLTFLoader();if(window.MeshoptDecoder)ld.setMeshoptDecoder(MeshoptDecoder);
   const done=o=>{if(P3V!==V)return;o.traverse(m=>{if(m.isMesh){m.castShadow=true;m.receiveShadow=true;(Array.isArray(m.material)?m.material:[m.material]).forEach(mt=>{if(mt&&'envMapIntensity' in mt){mt.envMapIntensity=0.8;mt.needsUpdate=true;}});}});
     const bb=new THREE.Box3().setFromObject(o),sz=bb.getSize(new THREE.Vector3()),c=bb.getCenter(new THREE.Vector3());o.position.set(-c.x,-bb.min.y,-c.z);sc.add(o);
@@ -4376,7 +4378,7 @@ function p3View(box,url,reveal,spin){if(!box)return;
     e=>{if(bar&&e.total)bar.style.width=Math.round(e.loaded/e.total*100)+'%';},
     ()=>{if(P3V===V)box.querySelector('.p3load span').textContent='3D-mudelit ei õnnestunud avada. Laadi see alla.';});
   V.ro=new ResizeObserver(()=>{const p=r.domElement.parentNode;if(!p)return;const w=p.clientWidth,h=p.clientHeight;if(w&&h){r.setSize(w,h);cam.aspect=w/h;cam.updateProjectionMatrix();}});V.ro.observe(box);
-  let raf=0;const loop=()=>{if(!r.domElement.isConnected){p3Dispose();return;}ct.update();if(V.onFrame)V.onFrame();r.render(sc,cam);raf=requestAnimationFrame(loop);};V.stop=()=>cancelAnimationFrame(raf);loop();}
+  let raf=0;const loop=()=>{if(!r.domElement.isConnected){p3Dispose();return;}ct.update();if(V.onFrame)V.onFrame();if(V.tick)V.tick();r.render(sc,cam);raf=requestAnimationFrame(loop);};V.stop=()=>cancelAnimationFrame(raf);loop();}
 // ---------- Näidiskaart (examples/examples.json): kuidas pildistada ja milline tulemus tuleb ----------
 let P3EX=null,P3EXV=null;const P3EXON={};
 function p3LoadEx(){if(P3EX)return;P3EX={};fetch('examples/examples.json').then(r=>r.ok?r.json():{}).then(j=>{P3EX=j&&typeof j==='object'?j:{};if(!$('studio').hidden&&stTheme(STU.tpl).p3)stRender();}).catch(()=>{});}
@@ -4422,7 +4424,7 @@ document.addEventListener('click',e=>{const o=e.target.closest&&e.target.closest
   if(o){const u=o.dataset.m3o;if(safeUrl(u))m3Open(m3ByUrl(u),true);}else if(a)m3Picker(a);});
 function m3ByUrl(u){return m3All().find(x=>x.url===u)||{id:p3Path(u).split('/')[1],url:u,tpl:null,d:new Date().toISOString(),img:''};}
 function m3Open(m,fresh){if(!m||!(safeUrl(m.url)||/^lod2:\d{5,12}$/.test(m.url)))return;if(fresh||STU.tpl!=='vaba')openStudio('vaba');let s=stSess();if(!s)s=stNewSession();
-  s.model={ref:String(m.id),url:m.url,name:m3Name(m),scale:null,items:[],ehr:m.ehr||null,fit:null};if(!s.title||s.title==='Uus töö')s.title=s.model.name;STU.edit=null;M3.tool='orbit';M3.pts=[];stSave();stRender();m3Load(s.model);}
+  s.model={ref:String(m.id),url:m.url,name:m3Name(m),scale:null,items:[],ehr:m.ehr||null,fit:null,garden:!!m.garden,gopt:{}};if(!s.title||s.title==='Uus töö')s.title=s.model.name;STU.edit=null;M3.tool='orbit';M3.pts=[];stSave();stRender();m3Load(s.model);}
 async function m3Load(m){if(!CL.sb||!CL.cid){m3Lod2(m);return;}try{const {data}=await CL.sb.from('model_marks').select('scale,items,public,ehr,fit').eq('company_id',CL.cid).eq('ref',m.ref).maybeSingle();
   if(data){if(data.scale)m.scale=+data.scale;if(data.fit&&typeof data.fit==='object')m.fit=data.fit;if(!m.ehr&&data.ehr)m.ehr=data.ehr;if(Array.isArray(data.items)&&data.items.length)m.items=data.items.filter(m3Ok);M3PUB[m.ref]=!!data.public;stSave();if(!$('studio').hidden)stRender();}}catch(_){}m3Lod2(m);}
 function m3SaveSoon(){clearTimeout(M3T);M3T=setTimeout(m3Save,800);}
@@ -4441,13 +4443,13 @@ function m3OffHtml(m){if(!p3Cloud())return '';const L=m.ehr&&M3L2[m.ehr];
   if(!L)return `<div class="stcard"><h3>Ametlikud mõõdud (Maa-amet)</h3><span class="fhint">${stEsc(m3AddrTxt(m.ehr))}${chg}</span><p>${L===null?'Selle hoone kohta pole Maa-ameti 3D-mudelit.':'Laadin…'}</p></div>`;
   const R=[['Ehitisealune pind',fmt(L.fp)+' m²'],['Perimeeter',fmt(L.per)+' m'],['Kõrgeim punkt',fmt(L.ridge,2)+' m'],['Räästa kõrgus',fmt(L.eave,1)+' m'],['Katuse pind',fmt(L.roof)+' m²'],['Seinte pind',fmt(L.wall)+' m²']];
   const tg=m3AutoOn(m)?`<div class="tgl"><div>Näita katuse ja seinte mõõte<small>Iga tahu ametlik pind mudelil</small></div><span class="sw2"><input type="checkbox" data-m3="off" ${m.offOn!==false?'checked':''} aria-label="Näita katuse ja seinte mõõte"><i></i></span></div>`:'';
-  return `<div class="stcard"><h3>Ametlikud mõõdud (Maa-amet)</h3><span class="fhint">${stEsc(m3AddrTxt(m.ehr))}${chg}</span>${tg}${R.map(r=>`<div class="row"><div class="k"><span>${r[0]}</span></div><b>${r[1]}</b></div>`).join('')}<span class="fhint">${LOD2_SRC}</span></div>`;}
+  return `<div class="stcard"><h3>Ametlikud mõõdud (Maa-amet)</h3><span class="fhint">${stEsc(m3AddrTxt(m.ehr))}${chg}</span>${tg}${m3GardenHtml(m)}${R.map(r=>`<div class="row"><div class="k"><span>${r[0]}</span></div><b>${r[1]}</b></div>`).join('')}<span class="fhint">${LOD2_SRC}</span></div>`;}
 function m3Lod2(m){if(!m||!m.ehr)return;if(m.ehr in M3L2){m3AutoFit();return;}loadLod2(m.ehr).then(L=>{M3L2[m.ehr]=L;m3AutoFit();if(!$('studio').hidden)stRenderPanel();});}
 // automaatne mõõtkava: ainult kui kasutaja pole ise seadistanud ja selle aadressiga pole veel arvutatud
 function m3AutoFit(){const s=stSess(),m=s&&s.model,V=P3V,L=m&&m.ehr&&M3L2[m.ehr];if(!L||!V||!V.ok||V.url!==m.url)return;
-  if(V.model.userData.lod2){if(!(m.fit&&m.fit.src==='lod2')){const o=V.model.position;m.fit={s:1,rot:0,mc:[o.x,-o.z],lc:[0,0],y0:o.y,iou:1,err:0,ok:true,sym:false,v:1,src:'lod2',ehr:m.ehr};m.scale=1;m3Changed();m3RenderBar();}return;}
-  if(m.scale&&!m.fit)return;if(m.fit&&m.fit.ehr===m.ehr)return;const f=m3Fit(V,L);if(!f)return;
-  m.fit=Object.assign(f,{ehr:m.ehr});if(f.ok){m.scale=f.s;toast(`Mõõtkava seadistati Maa-ameti andmetest (±${m3Pm(f)}%)`);}m3Changed();m3RenderBar();}
+  if(V.model.userData.lod2){if(!(m.fit&&m.fit.src==='lod2')){const o=V.model.position;m.fit={s:1,rot:0,mc:[o.x,-o.z],lc:[0,0],y0:o.y,iou:1,err:0,ok:true,sym:false,v:1,src:'lod2',ehr:m.ehr};m.scale=1;m3Changed();m3RenderBar();}m3GardenSync();return;}
+  if(m.scale&&!m.fit)return;if(m.fit&&m.fit.ehr===m.ehr){m3GardenSync();return;}const f=m3Fit(V,L);if(!f)return;
+  m.fit=Object.assign(f,{ehr:m.ehr});if(f.ok){m.scale=f.s;toast(`Mõõtkava seadistati Maa-ameti andmetest (±${m3Pm(f)}%)`);}m3Changed();m3RenderBar();m3GardenSync();}
 async function m3AddrAsk(mod,at){addrPick(mod.ehr?'Muuda aadressi':'Lisa aadress',at,async a=>{
   const {error}=await CL.sb.from('renders').update({ehr:a[1]}).eq('id',mod.id).eq('company_id',CL.cid);if(error){toast('Aadressi salvestamine ebaõnnestus');return;}
   const mm=(acct.models||[]).find(x=>x.id===mod.id);if(mm)mm.ehr=a[1];toast('Aadress lisatud: '+a[0]);
@@ -4510,10 +4512,15 @@ function m3Fit(V,L){if(!V||!V.model||!L||!L.g||!L.g.length||!(L.ridge>0))return 
   return {s:+s.toPrecision(5),rot:+(best.th*180/Math.PI).toFixed(1),mc:[+M.mx.toFixed(4),+M.my.toFixed(4)],lc:[+LM.mx.toFixed(2),+LM.my.toFixed(2)],y0:+y0.toFixed(4),iou:+best.iou.toFixed(2),err:+err.toFixed(3),ok,sym,v:1};}
 /* Ametlik tahk: klõps mudelil -> LOD2 koordinaadid (sobituse kaudu) -> lähim katusetahk/sein, esile tõstetud. Ainult kindla sobitusega. */
 // klõps (pööramise režiimis) ametlikul tahul: tõsta esile ja kinnita silt; uus klõps samal tahul vabastab
-function m3PinAt(e){const s=stSess(),m=s&&s.model,V=P3V;if(!m||!V||!m3OffOn(m))return;const b=V.r.domElement.getBoundingClientRect(),rc=new THREE.Raycaster();
+function m3PinAt(e){const s=stSess(),m=s&&s.model,V=P3V;if(!m||!V)return;if(V.garden&&m3TreeAt(V,e))return;if(!m3OffOn(m))return;const b=V.r.domElement.getBoundingClientRect(),rc=new THREE.Raycaster();
   rc.setFromCamera(new THREE.Vector2((e.clientX-b.left)/b.width*2-1,-(e.clientY-b.top)/b.height*2+1),V.cam);const h=rc.intersectObject(V.model,true)[0];if(!h)return;
   const nr=h.face?h.face.normal.clone().transformDirection(h.object.matrixWorld):null,k=m3FaceKey(M3L2[m.ehr],m3ToL(m.fit,h.point),!!nr&&Math.abs(nr.y)<.45);if(!k)return;
   const P=new Set(m.pin||[]);P.has(k)?P.delete(k):P.add(k);m.pin=[...P];stSave();m3Redraw();}
+function m3TreeAt(V,e){const b=V.r.domElement.getBoundingClientRect(),rc=new THREE.Raycaster();rc.setFromCamera(new THREE.Vector2((e.clientX-b.left)/b.width*2-1,-(e.clientY-b.top)/b.height*2+1),V.cam);
+  const h=rc.intersectObjects([V.model,...(V.gpick||[]),...V.sc.children.filter(o=>o.type==='Group')],true).find(x=>x.object.isMesh);if(!h||!h.object.isInstancedMesh||h.instanceId==null)return false;
+  const {list,kd}=h.object.userData,M=new THREE.Matrix4();h.object.getMatrixAt(h.instanceId,M);const p=new THREE.Vector3().setFromMatrixPosition(M);const t=list.reduce((a,x)=>Math.hypot(x.x-p.x,-x.y-p.z)<Math.hypot(a.x-p.x,-a.y-p.z)?x:a,list[0]);
+  const nm={spruce:'Kuusk',pine:'Mänd',birch:'Kask',fruit:'Viljapuu',bush:'Põõsas'}[kd]||'Lehtpuu';
+  stPop(`<b>${nm} · kõrgus ~${fmt(t.h,1)} m</b><span class="fhint">Võra Ø ~${fmt(t.r*2,1)} m · maakatte kõrgusmudelist (Maa-amet)</span>`,null,{x:e.clientX,y:e.clientY});return true;}
 function m3FaceKey(L,P,vert){if(!vert){const r=m3FaceAt(L,P,false);if(r&&r.kind==='roof')return 'r'+r.i;}
   let best=null;(L.w||[]).forEach((W,i)=>{const c=W[2],Q=[];for(let k=0;k+2<c.length;k+=3)Q.push([c[k],c[k+1],c[k+2]]);const z0=Math.min(...Q.map(q=>q[2])),lo=Q.filter(q=>q[2]-z0<.06);
     for(let a=0;a<lo.length;a++)for(let b=a+1;b<lo.length;b++){const d=m3Seg2(P,lo[a],lo[b]).d;if(!best||d<best.d)best={d,i};}});
@@ -4554,6 +4561,9 @@ function m3PanelWire(){const s=stSess(),m=s&&s.model,P=$('stPanel');if(!m||!P)re
   P.querySelectorAll('[data-m3d]').forEach(b=>b.onclick=()=>{m.items.splice(+b.dataset.m3d,1);m3Changed();});
   P.querySelectorAll('[data-m3e]').forEach(b=>b.onclick=()=>{const it=m.items[+b.dataset.m3e],r=b.getBoundingClientRect();m3Ask(it.t==='note'?'Muuda märget':'Nimi (nt „lõunasein“)',it.t==='note'?it.txt:it.lb||'',{x:r.left,y:r.bottom},v=>{if(it.t==='note'){if(!v)return;it.txt=v;}else it.lb=v;m3Changed();});});
   const sc=P.querySelector('[data-m3="scale"]');if(sc)sc.onclick=()=>m3SetTool('scale');
+  const gd=P.querySelector('[data-m3="garden"]');if(gd)gd.onchange=()=>{m.garden=gd.checked;stSave();m3GardenSync();stRenderPanel();};
+  P.querySelectorAll('[data-gk]').forEach(b=>b.onclick=()=>{const k=b.dataset.gk;m.gopt[k]=m.gopt[k]===false;stSave();const V=P3V;if(V&&V.garden)V.garden.vis();stRenderPanel();});
+  P.querySelectorAll('[data-gt]').forEach(b=>b.onclick=()=>{m.gopt.time=b.dataset.gt;stSave();const V=P3V;if(V&&V.garden)V.garden.setTime(m.gopt.time);stRenderPanel();});
   const of=P.querySelector('[data-m3="off"]');if(of)of.onchange=()=>{m.offOn=of.checked;if(!of.checked){m.pin=[];m3FaceClear();}stSave();m3Redraw();};
   const ad=P.querySelector('[data-m3="addr"]');if(ad)ad.onclick=()=>m3AddrAsk({id:m.ref,url:m.url,ehr:m.ehr},ad);
   const cp=P.querySelector('[data-m3="copy"]');if(cp)cp.onclick=async()=>{const t=m3Text(m);try{await navigator.clipboard.writeText(t);toast('Mõõdud kopeeritud');}catch(_){window.prompt('Kopeeri:',t);}};}
@@ -4583,8 +4593,9 @@ function m3Show(){const s=stSess(),m=s.model,box=$('m3View');M3URL=m.url;p3View(
   m3RenderBar();m3Hint();}
 // pinnapunkt; lähima kolmnurga nurga juurde tõmme, kui see on ekraanil alla 12 px kaugusel
 function m3Pick(V,e){if(!V.model)return null;const b=V.r.domElement.getBoundingClientRect(),n=new THREE.Vector2((e.clientX-b.left)/b.width*2-1,-(e.clientY-b.top)/b.height*2+1),rc=new THREE.Raycaster();rc.setFromCamera(n,V.cam);
-  const hit=rc.intersectObject(V.model,true).find(x=>x.object.isMesh);if(!hit)return null;let p=hit.point.clone();const pos=hit.object.geometry.attributes.position;
-  if(hit.face&&pos&&!pos.normalized){let bd=144;for(const k of ['a','b','c']){const v=new THREE.Vector3().fromBufferAttribute(pos,hit.face[k]).applyMatrix4(hit.object.matrixWorld),q=v.clone().project(V.cam),dx=(q.x-n.x)*b.width/2,dy=(q.y-n.y)*b.height/2,dd=dx*dx+dy*dy;if(dd<bd){bd=dd;p=v;}}}
+  const hit=rc.intersectObjects([V.model,...(V.gpick||[])],true).find(x=>x.object.isMesh);if(!hit)return null;let p=hit.point.clone();const pos=hit.object.geometry.attributes.position;
+  let own=false;hit.object.traverseAncestors(a=>{if(a===V.model)own=true;});
+  if(own&&hit.face&&pos&&!pos.normalized){let bd=144;for(const k of ['a','b','c']){const v=new THREE.Vector3().fromBufferAttribute(pos,hit.face[k]).applyMatrix4(hit.object.matrixWorld),q=v.clone().project(V.cam),dx=(q.x-n.x)*b.width/2,dy=(q.y-n.y)*b.height/2,dd=dx*dx+dy*dy;if(dd<bd){bd=dd;p=v;}}}
   return p;}
 const m3r=v=>[+v.x.toFixed(4),+v.y.toFixed(4),+v.z.toFixed(4)];
 function m3Click(e){const V=P3V,s=stSess(),m=s&&s.model;if(!m)return;const p=m3Pick(V,e);if(!p){toast('Klõpsa mudelil');return;}const at={x:e.clientX,y:e.clientY},t=M3.tool;
@@ -4604,6 +4615,26 @@ function m3FinishArea(){const s=stSess(),m=s&&s.model;if(!m||M3.pts.length<3)ret
    ametlikud tagurpidi/varjatud peidus (enda mõõdud alati näha), kattuvad lükatakse eest või kokku "+N", kuni 25 nähtaval. */
 const M3PILL={font:"600 12px 'Inter Tight',Arial,sans-serif",small:"600 11px 'Inter Tight',Arial,sans-serif"},M3TW=new Map();
 function m3TW(t,small){const k=(small?'s':'n')+t;if(M3TW.has(k))return M3TW.get(k);const c=m3TW.c||(m3TW.c=document.createElement('canvas').getContext('2d'));c.font=small?M3PILL.small:M3PILL.font;const w=c.measureText(t).width;M3TW.set(k,w);return w;}
+/* Aed ja ümbrus: andmed garden-funktsioonist (vahemälu aadressi kaupa), stseen js/garden.js; ainult kindla sobitusega */
+const GARDEN_SRC='Ortofoto, maakatte kõrgusmudel, piirded, hooned: Maa- ja Ruumiamet 2026';
+function m3GardenHtml(m){if(!m3AutoOn(m)||!p3Cloud())return '';m.gopt=m.gopt||{};const V=P3V,G=V&&V.garden,on=!!m.garden;
+  let h=`<div class="tgl"><div>Aed ja ümbrus<small>Maapind, puud, piirded, naabrid ja krunt Maa-ameti andmetest</small></div><span class="sw2"><input type="checkbox" data-m3="garden" ${on?'checked':''} aria-label="Aed ja ümbrus"><i></i></span></div>`;
+  if(!on)return h;
+  h+=`<div class="gchips">${[['aed','Aed'],['puud','Puud'],['naabrid','Naabrid'],['krunt','Krundi piir']].map(([k,l])=>`<button type="button" class="chip" data-gk="${k}" aria-pressed="${m.gopt[k]!==false}">${l}</button>`).join('')}</div>`
+   +`<div class="seg2 gtime" role="radiogroup" aria-label="Kellaaeg (päikese suund)">${[['h','Hommik'],['p','Päev'],['o','Õhtu']].map(([k,l])=>`<button type="button" role="radio" data-gt="${k}" aria-checked="${(m.gopt.time||'p')===k}">${l}</button>`).join('')}</div>`;
+  const P=G&&G.parcel;h+=`<span class="fhint">${V&&V.gErr?stEsc(V.gErr):G?`${G.trees.length} puud · ${G.neighbours} naabrit${P?` · krunt ${fmt(P.p,0)} m² (ametlik)`:''}`:'Laadin aeda…'}</span>`;
+  if(P&&P.a)h+=`<div class="row"><div class="k"><span>Krunt</span><small>${stEsc(P.a)} · ${stEsc(P.t)}</small></div><b>${fmt(P.p,0)} m²</b></div>`;
+  return h+`<span class="fhint">${GARDEN_SRC}</span>`;}
+async function m3GardenSync(){const s=stSess(),m=s&&s.model,V=P3V;if(!m||!V||!V.ok)return;m.gopt=m.gopt||{};
+  const want=!!m.garden&&m3AutoOn(m)&&!!M3L2[m.ehr];
+  if(!want){if(V.garden){V.garden.off();V.garden=null;}return;}if(V.garden||V.gLoading)return;V.gLoading=1;V.gErr=null;const t0=performance.now(),T={};
+  try{if(!window.V3DGarden){await new Promise((res,rej)=>{const sc=document.createElement('script');sc.src='js/garden.js';sc.onload=res;sc.onerror=()=>rej(new Error('garden.js'));document.head.appendChild(sc);});}
+    const r=await clFn('garden',/^lod2:/.test(m.url)?{ehr:m.ehr}:{ref:m.ref},{q:CO_Q});T.server=Math.round(performance.now()-t0);
+    const meta=await (await fetch(r.meta)).json();T.meta=Math.round(performance.now()-t0)-T.server;
+    if(P3V!==V||stSess()!==s)return;V.garden=await V3DGarden.show(V,m,meta,T);
+    console.info('[aed] kokku',Math.round(performance.now()-t0)+' ms',JSON.stringify(T),'server:',JSON.stringify(r.timing||{}),r.cached?'(vahemälust)':'(Maa-ametist)');}
+  catch(e){V.gErr='Aeda ei õnnestunud laadida: '+(e.message||e);console.warn('[aed]',e);}
+  finally{V.gLoading=0;if(!$('studio').hidden)stRenderPanel();}}
 function m3OffOn(m){return !!(m&&m.offOn!==false&&m3AutoOn(m)&&m.ehr&&M3L2[m.ehr]);}
 // LOD2 tahud mudeli maailmas (sobituse kaudu): katused ja seinad
 function m3OffFaces(m){const L=M3L2[m.ehr],f=m.fit,V3=fl=>{const P=[];for(let i=0;i+2<fl.length;i+=3)P.push(m3FromL(f,[fl[i],fl[i+1],fl[i+2]]));return P;},O=[];

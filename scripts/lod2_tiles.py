@@ -5,6 +5,7 @@ Kasutus:  python3 -I scripts/lod2_tiles.py <hooned_lod2-eesti-citygml.zip | ...g
           (kogu Eesti: ~5 min, 480 000 hoonet EHR koodiga; vanad kildud kustuta enne, kui teed kõik uuesti)
           python3 -I scripts/lod2_tiles.py --selftest
 Uue omavalitsuse fail liidetakse olemasolevate kildudega (sama EHR kirjutatakse üle).
+Lisaks data/lod2/geo/GX_GY.json: hooned 250 m ruutude kaupa (aia vaates naabrid).
 
 Failis on ühe hoone kohta üks lod2MultiSurface ilma katuse/seina märgisteta, seega:
   sein  = tahk, mille kalle > 85°
@@ -15,6 +16,7 @@ Koordinaadid väljundis: meetrid hoone keskpunktist, x = ida, y = põhi, z = maa
 import json, math, os, sys
 import xml.etree.ElementTree as ET
 
+GEO = 250  # naabrite ruudustiku samm (m)
 GML = '{http://www.opengis.net/gml}'
 CORE = '{http://www.opengis.net/citygml/2.0}'
 BLDG = '{http://www.opengis.net/citygml/building/2.0}'
@@ -152,6 +154,20 @@ def write(items, out):
         else:
             sh[ehr] = m
     n = 0
+    # asukoharuudustik naabrite jaoks: data/lod2/geo/GX_GY.json (250 m), kompaktne kuju (0,1 m)
+    geo = {}
+    for sh in shards.values():
+        for ehr, m in sh.items():
+            k = f"{int(m['c'][0] // GEO)}_{int(m['c'][1] // GEO)}"
+            r1 = lambda a: [round(v, 1) for v in a]
+            geo.setdefault(k, {})[ehr] = {'c': m['c'], 'g': [r1(g) for g in m['g']], 'f': [r1(f[3]) for f in m['f']], 'e': m['eave'], 'r': m['ridge']}
+    os.makedirs(os.path.join(out, 'geo'), exist_ok=True)
+    for k, sh in geo.items():
+        fn = os.path.join(out, 'geo', k + '.json')
+        old = json.load(open(fn)) if os.path.exists(fn) else {}
+        old.update(sh)
+        with open(fn, 'w') as f:
+            json.dump(old, f, separators=(',', ':'), sort_keys=True)
     for key, sh in shards.items():
         fn = os.path.join(out, key + '.json')
         old = {}
