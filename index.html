@@ -890,6 +890,16 @@ body.p3emb{background:transparent;margin:0;padding:0;overflow:hidden}body.p3emb 
 .m3l{position:absolute;left:0;top:0;white-space:nowrap;font:600 12px/1.3 inherit;font-family:inherit;color:#fff;background:rgba(22,19,15,.82);border-radius:6px;padding:2px 7px}.m3l b{color:#F6A58F;margin-right:2px}.m3l.t-note{background:var(--accent)}.m3l.t-note b{color:#fff}
 .m3card .m3list{display:flex;flex-direction:column;gap:6px;max-height:260px;overflow-y:auto}.m3it{display:flex;gap:6px;align-items:center;font-size:13px}.m3it i{font-style:normal;font:700 11px var(--mono);min-width:18px}.m3it span{flex:1;min-width:0}.m3it small{color:var(--muted)}
 .m3x{border:0;background:none;color:var(--muted);font-size:16px;cursor:pointer;padding:0 4px}
+.sticon.stlab{width:auto;padding:0 10px 0 7px;gap:6px;display:inline-flex;align-items:center;font:600 13px var(--display);color:var(--ink);border:1px solid var(--line)}
+.stmy3d{display:flex;flex-direction:column;gap:8px;margin-top:10px}.studio:not(.fresh) .stmy3d{display:none}.stmy3d .hd{display:flex;justify-content:space-between;align-items:center;font-size:13px;color:var(--muted)}
+.m3row{display:grid;grid-template-columns:repeat(4,minmax(0,132px));gap:8px}
+.m3th{display:flex;flex-direction:column;gap:4px;border:1px solid var(--line);background:var(--paper);border-radius:10px;padding:5px;cursor:pointer;font:inherit;color:inherit;text-align:left;min-width:0}.m3th:hover{border-color:var(--accent)}
+.m3th img,.m3th .ph{width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:7px;background:var(--soft);display:block}.m3th span{font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.m3li2{display:flex;flex-direction:column;gap:6px}.m3li{display:flex;gap:8px;align-items:center}
+.m3lt{flex:1;min-width:0;display:flex;gap:10px;align-items:center;border:0;background:none;padding:0;cursor:pointer;font:inherit;color:inherit;text-align:left}
+.m3lt img,.m3lt .ph{width:56px;height:42px;object-fit:cover;border-radius:7px;background:var(--soft);flex:none}.m3lt span{min-width:0;font-size:13px}.m3lt b{display:block;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.m3lt small{display:block;color:var(--muted);font-size:12px}
+.m3li .ghost{padding:5px 10px;font-size:13px}
+@media (max-width:480px){#stStyleT{display:none}#stStyle::before{content:'Stiil'}.sticon.stlab{width:34px;padding:0;justify-content:center;border:0}.sticon.stlab span{display:none}.m3row{gap:6px}}
 .m3pick{display:flex;flex-direction:column;gap:4px;max-height:300px;overflow-y:auto;min-width:min(280px,80vw)}.m3pick button{display:flex;gap:8px;align-items:center;border:1px solid var(--line);background:var(--bg);border-radius:8px;padding:5px;cursor:pointer;text-align:left;font:inherit;color:inherit}.m3pick img,.m3pick .ph{width:48px;height:36px;object-fit:cover;border-radius:6px;background:var(--soft);flex:none}
 .m3tog[aria-pressed="true"]{border-color:var(--ok);color:var(--ok)}
 @media (max-width:760px){.m3bar{top:auto;bottom:6px;left:6px;right:6px;flex-direction:row;overflow-x:auto;justify-content:space-between}.m3bar .sep{display:none}.m3bar .sttool{width:34px;height:34px;flex:none}.m3bar .sttool svg{width:18px;height:18px}.p3v.m3v{height:min(56vh,480px)}}
@@ -1191,11 +1201,12 @@ body.p3emb{background:transparent;margin:0;padding:0;overflow:hidden}body.p3emb 
           <div class="stdrop" id="stDrop" hidden></div>
           <div class="stfiles" id="stFiles" hidden></div>
           <button type="button" class="stup" id="stUp"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="15" rx="2"/><circle cx="9" cy="11" r="2"/><path d="m21 17-5-5-8 8"/></svg><span><b id="stUpT">Lisa pilt</b><small id="stUpS">Lohista siia, kleebi või vali failist</small></span></button>
+          <div class="stmy3d" id="stMy3d" hidden></div>
           <div class="stmk" id="stMk" hidden></div>
           <textarea id="stIn" rows="1" placeholder="Kirjelda, mida soovid…" aria-label="Sõnum"></textarea>
           <div class="stbar">
             <button type="button" class="sticon" id="stAdd" aria-label="Lisa pilt" title="Lisa pilt (või näidispilt)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button>
-            <button type="button" class="sticon" id="stAdd3d" aria-label="Lisa 3D-mudel" title="Lisa 3D-mudel" hidden><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="m12 3 8 4.5v9L12 21l-8-4.5v-9z"/><path d="m4 7.5 8 4.5 8-4.5M12 12v9"/></svg></button>
+            <button type="button" class="sticon stlab" id="stAdd3d" aria-label="Minu 3D-mudelid" title="Minu 3D-mudelid" hidden><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="m12 3 8 4.5v9L12 21l-8-4.5v-9z"/><path d="m4 7.5 8 4.5 8-4.5M12 12v9"/></svg><span>Minu 3D-mudelid</span></button>
             <div class="stsel" id="stProdW" hidden><button type="button" class="stpick" id="stProd" aria-haspopup="listbox"><span id="stProdT">Vali toode</span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button><div class="stmenu" id="stProdM" role="listbox" hidden></div></div>
             <span class="stsp"></span>
             <div class="stsel" id="stStyleW"><button type="button" class="stpick" id="stStyle" aria-haspopup="listbox"><span id="stStyleT">Fotorealistlik</span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button><div class="stmenu up" id="stStyleM" role="listbox" hidden></div></div>
@@ -3629,7 +3640,7 @@ function stRender(){const th=stTheme(STU.tpl),s=stSess();if(STU.edit!=null&&!(s&
   ON.sort((a,b)=>((order.indexOf(a.id)+99)%99)-((order.indexOf(b.id)+99)%99));
   $('stChips').innerHTML=ON.map(t=>`<button type="button" class="stchip" data-t="${t.id}" aria-pressed="${t.id===STU.tpl}">${ticon(t,16)}<span>${stEsc(t.id==='vaba'?'Vaba idee':t.name)}</span></button>`).join('');
   $('stChips').querySelectorAll('.stchip').forEach(b=>b.onclick=()=>{if(b.dataset.t!==STU.tpl)openStudio(b.dataset.t);});
-  $('stM3').hidden=!mdl;$('stAdd3d').hidden=!(th.T&&th.T.id==='vaba');if(mdl)m3Show();
+  $('stM3').hidden=!mdl;$('stAdd3d').hidden=!(th.T&&th.T.id==='vaba');m3MyRow();if(mdl)m3Show();
   $('stStage').hidden=!editing;$('stThread').hidden=editing||!hasMsgs||!!th.p3;$('stTo3d').hidden=!(s&&s.obj&&HOUSES.some(h=>h.ehr===s.obj));
   if(editing){const n=(s.tray||[]).indexOf(STU.edit);$('stEdT').textContent=n>=0?'Pilt '+(n+1):'Pilt';}
   stRenderStyle();stRenderProd();stRenderFiles();stRenderFilm();stShowImg();stRenderThread();stRenderPanel();stRenderRail();stRenderSugg();stRenderMk();stRenderRes();p3Render();stSync();}
@@ -3681,7 +3692,7 @@ function stRenderSugg(){const th=stTheme(STU.tpl),s=stSess(),fresh=!s||(!s.base&
   $('stSugg').querySelectorAll('[data-s]').forEach(b=>b.onclick=()=>{const v=b.dataset.s,i=$('stIn');if(th.need==='addr'){i.value=v;stSync();stSend();return;}i.value=v;stAuto();stSync();i.focus();});
   const d=$('stDemo');if(d)d.onclick=()=>{stAddPic(EXIMG.maja,'up',true);$('stIn').value='Lisa maja katusele päikesepaneelid';stAuto();stRender();toast('Näidisfoto on pilt 1. Klõpsa pildil, et katus märkida, või vajuta kohe Genereeri.');};}
 function stRenderStyle(){const L=stStyles(),th=stTheme(STU.tpl);if(!STU.style||!L.includes(STU.style))STU.style=L[0];
-  $('stStyleW').hidden=th.need==='addr'||!!th.soon;$('stStyleT').textContent=STU.style;
+  $('stStyleW').hidden=th.need==='addr'||!!th.soon;$('stStyleT').textContent=STU.style;$('stStyle').title='Stiil: '+STU.style;
   $('stStyleM').innerHTML=L.map(x=>`<button type="button" role="option" data-v="${stEsc(x)}" aria-selected="${x===STU.style}">${stEsc(x)}${x===STU.style?'<span class="ok">✓</span>':''}</button>`).join('');
   $('stStyleM').querySelectorAll('button').forEach(b=>b.onclick=()=>{STU.style=b.dataset.v;const s=stSess();if(s){s.style=STU.style;stSave();}stMenu(null);stRenderStyle();});}
 function stRenderProd(){const th=stTheme(STU.tpl);$('stProdW').hidden=!th.prod;if(!th.prod)return;const P=prodList();
@@ -4066,7 +4077,7 @@ const P3SIZE={};
 async function p3LoadModels(){if(!CL.sb||!CL.cid)return;
   try{const {data,error}=await CL.sb.from('renders').select('id,output_url,input_urls,tpl,created_at,ehr').eq('company_id',CL.cid).eq('kind','3d').eq('status','done').order('created_at',{ascending:false}).limit(50);
     if(error)return;acct.models=(data||[]).filter(m=>safeUrl(m.output_url)).map(m=>({id:m.id,url:m.output_url,img:(m.input_urls||[]).filter(safeUrl)[0]||'',cleaned:(m.input_urls||[]).filter(safeUrl),tpl:m.tpl,d:m.created_at,ehr:m.ehr||null}));
-    if(!$('studio').hidden&&stTheme(STU.tpl).p3)stRenderPanel();}catch(_){}}
+    if(!$('studio').hidden){stRenderPanel();m3MyRow();}}catch(_){}}
 // avalik link: ainult firma ja töö id (mudel on niikuinii avalikus kaustas)
 function p3Path(url){const m=String(url||'').match(/\/models\/([0-9a-f-]{36}\/[0-9a-f-]{36})\.glb(\?|$)/);return m?m[1]:'';}
 function p3Links(url){const p=p3Path(url);if(!p)return null;const link=location.origin+location.pathname+'#m='+p;
@@ -4216,8 +4227,19 @@ const M3TOOLS=[{id:'orbit',n:'Pööra',d:'Lohista mudelit, rullik suurendab.',i:
   {id:'face',n:'Ametlik tahk',d:'Klõpsa katusel või seinal: näed selle Maa-ameti ametlikku mõõtu.',need:1,i:()=>SI('<path d="M3 12 12 4l9 8"/><path d="M6 11v8h12v-8"/><path d="M12 4 21 12H3z" fill="currentColor" fill-opacity=".3"/>')},0,
   {id:'snap',n:'Kasuta seda vaadet',d:'Vaade läheb pildiks chati, nt „tee fotorealistlikuks“.',act:1,i:()=>SI('<path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/>')},
   {id:'close',n:'Sulge mudel',d:'Mõõdud jäävad mudeli juurde alles.',act:1,i:()=>SI('<path d="M6 6l12 12M18 6 6 18"/>')}];
-function m3Name(m){const T=tplById(m.tpl);return (T&&T.id!=='mudel3d'?T.name:'3D-mudel')+' · '+new Date(m.d||Date.now()).toLocaleDateString('et-EE');}
-function m3ByUrl(u){return (acct.models||[]).find(x=>x.url===u)||{id:p3Path(u).split('/')[1],url:u,tpl:null,d:new Date().toISOString(),img:''};}
+function m3Title(m){if(m.ehr)return m3AddrTxt(m.ehr);const T=tplById(m.tpl);return T&&T.id!=='mudel3d'?T.name:'3D-mudel';}
+function m3Date(m){return m.d?new Date(m.d).toLocaleDateString('et-EE'):'';}
+function m3Name(m){return m3Title(m)+(m.d?' · '+m3Date(m):'');}
+// ettevõtte 3D-mudelid: fotodest tehtud (uuemad ees) + objektidega seotud, sama .glb üks kord
+function m3All(){const M=(acct.models||[]).slice(),seen=new Set(M.map(m=>m.url));
+  Object.entries(acct.objModels||{}).forEach(([e,u])=>{if(!safeUrl(u)||seen.has(u))return;seen.add(u);const h=HOUSES.find(x=>x.ehr===e),t=h&&h.thumb;M.push({id:p3Path(u).split('/')[1]||e,url:u,img:t&&t!=='pending'?t:'',tpl:null,d:null,ehr:e});});return M;}
+function m3Img(m){return m.img?`<img src="${stEsc(m.img)}" alt="" loading="lazy">`:'<span class="ph" aria-hidden="true"></span>';}
+function m3MyRow(){const el=$('stMy3d');if(!el)return;const M=p3Cloud()?m3All():[],th=stTheme(STU.tpl);el.hidden=!M.length||!(th.T&&th.T.id==='vaba');if(el.hidden){el.innerHTML='';return;}
+  el.innerHTML=`<div class="hd"><span>Või ava oma 3D-mudel:</span><button type="button" class="linkbtn" data-m3all>Kõik →</button></div><div class="m3row">${M.slice(0,4).map(m=>`<button type="button" class="m3th" data-m3o="${stEsc(m.url)}" title="${stEsc(m3Name(m))}">${m3Img(m)}<span>${stEsc(m3Title(m))}</span></button>`).join('')}</div>`;}
+function m3SideHtml(){const M=m3All().slice(0,3);return `<div class="stcard"><h3>Minu 3D-mudelid</h3><div class="m3li2">${M.map(m=>`<div class="m3li"><button type="button" class="m3lt" data-m3o="${stEsc(m.url)}">${m3Img(m)}<span><b>${stEsc(m3Title(m))}</b><small>${stEsc(m3Date(m)||'Objektiga seotud')}</small></span></button><button type="button" class="ghost" data-m3o="${stEsc(m.url)}" aria-label="Ava ${stEsc(m3Name(m))}">Ava</button></div>`).join('')}</div><button type="button" class="ghost" data-m3all style="align-self:flex-start">Kõik mudelid</button></div>`;}
+document.addEventListener('click',e=>{const o=e.target.closest&&e.target.closest('[data-m3o]'),a=e.target.closest&&e.target.closest('[data-m3all]');
+  if(o){const u=o.dataset.m3o;if(safeUrl(u))m3Open(m3ByUrl(u),true);}else if(a)m3Picker(a);});
+function m3ByUrl(u){return m3All().find(x=>x.url===u)||{id:p3Path(u).split('/')[1],url:u,tpl:null,d:new Date().toISOString(),img:''};}
 function m3Open(m,fresh){if(!m||!safeUrl(m.url))return;if(fresh||STU.tpl!=='vaba')openStudio('vaba');let s=stSess();if(!s)s=stNewSession();
   s.model={ref:String(m.id),url:m.url,name:m3Name(m),scale:null,items:[],ehr:m.ehr||null,fit:null};if(!s.title||s.title==='Uus töö')s.title=s.model.name;STU.edit=null;M3.tool='orbit';M3.pts=[];stSave();stRender();m3Load(s.model);}
 async function m3Load(m){if(!CL.sb||!CL.cid)return;try{const {data}=await CL.sb.from('model_marks').select('scale,items,public,ehr,fit').eq('company_id',CL.cid).eq('ref',m.ref).maybeSingle();
@@ -4405,8 +4427,8 @@ function m3Snap(withLab){const V=P3V;if(!V||!V.ok){toast('Mudel pole veel laetud
   if(withLab){const f=c.width/src.clientWidth,br=src.getBoundingClientRect();g.font=`600 ${Math.round(13*f)}px sans-serif`;g.textBaseline='middle';
     $('m3Labs').querySelectorAll('.m3l').forEach(el=>{if(el.style.display==='none')return;const r=el.getBoundingClientRect(),x=(r.left-br.left)*f,y=(r.top-br.top)*f,w=r.width*f,h=r.height*f;g.fillStyle='rgba(22,19,15,.82)';g.fillRect(x,y,w,h);g.fillStyle='#fff';g.fillText(el.textContent,x+6*f,y+h/2);});}
   const i=stAddPic(c.toDataURL('image/jpeg',.88),'up');if(i<0)return;const n=(stSess().tray||[]).indexOf(i)+1;toast('Vaade lisati pildiks '+n+'. Kirjuta all, mida sellega teha.');stRender();}
-function m3Picker(btn){const M=acct.models||[];if(!p3Cloud()){toast('3D-mudelid töötavad ainult kontoga');return;}if(!M.length){toast('Sul pole veel 3D-mudeleid. Tee need „Foto → 3D-mudel“ alt.');return;}
-  stPop(`<b>Lisa 3D-mudel</b><input id="m3Q" type="search" placeholder="Otsi…" aria-label="Otsi mudelit"><div class="m3pick" id="m3PL"></div>`,btn);
+function m3Picker(btn){const M=m3All();if(!p3Cloud()){toast('3D-mudelid töötavad ainult kontoga');return;}if(!M.length){toast('Sul pole veel 3D-mudeleid. Tee need „Foto → 3D-mudel“ alt.');return;}
+  stPop(`<b>Minu 3D-mudelid</b><input id="m3Q" type="search" placeholder="Otsi…" aria-label="Otsi mudelit"><div class="m3pick" id="m3PL"></div>`,btn);
   const draw=()=>{const q=($('m3Q').value||'').toLowerCase();$('m3PL').innerHTML=M.map((m,i)=>({m,i,n:m3Name(m)})).filter(x=>!q||x.n.toLowerCase().includes(q)).map(x=>`<button type="button" data-m3p="${x.i}">${x.m.img?`<img src="${stEsc(x.m.img)}" alt="">`:'<span class="ph"></span>'}<span>${stEsc(x.n)}</span></button>`).join('')||'<span class="fhint">Ei leidnud</span>';
     $('m3PL').querySelectorAll('[data-m3p]').forEach(b=>b.onclick=()=>{stPopClose();m3Open(M[+b.dataset.m3p]);});};$('m3Q').oninput=draw;draw();$('m3Q').focus();}
 $('stAdd3d').onclick=e=>m3Picker(e.currentTarget);
@@ -4417,6 +4439,7 @@ const P3UNSUP='Sellest ei saa 3D-mudelit teha. 3D-mudeli saab teha majast, eseme
 function p3Cfg(T,kind){if(T&&T.photo3d)return T.photo3d;return (T&&T.input==='addr')||kind==='addr'?{subject:'building'}:{from:'image',btn:'Tee sellest 3D'};}
 function p3EntryHtml(T,s,hasImg){const c=p3Cfg(T);if(!c.from)return '';
   if(c.from==='product')return `<div class="stcard"><h3>3D-mudel</h3><p>Tee oma tootest pööratav 3D-mudel toote fotodest (kuni 4).</p><div class="p3prods">${prodList().map((p,i)=>`<button type="button" class="ghost" data-p3p="${i}">${stEsc(c.btn||'Tee tootest 3D-mudel')}: ${stEsc(p.name)}</button>${p.model?`<a class="fhint" href="${stEsc(p.model+(p.model.includes('?')?'&':'?')+'download=3d-mudel.glb')}" download>✓ 3D-mudel olemas · laadi alla .glb</a>`:''}`).join('')}</div></div>`;
+  if(!hasImg&&p3Cloud()&&m3All().length)return m3SideHtml();
   if(!hasImg)return `<div class="stcard"><h3>3D-mudel</h3><p>Lisa foto, siis saad ${c.from==='mark'?'märgitud esemest':'sellest'} teha pööratava 3D-mudeli.</p></div>`;
   return `<div class="stcard"><h3>3D-mudel</h3><p>${c.from==='mark'?'Märgi pintsli, ristküliku või vabakujuga üks ese (mööbel, lamp, toode), mitte terve tuba.':'AI vaatab, mis pildil on: maja, ese või sõiduk.'}</p><button type="button" class="ghost" id="p3Go" style="align-self:flex-start">${stEsc(c.btn||'Tee sellest 3D')}</button></div>`;}
 function p3EntryWire(T,s){const c=p3Cfg(T),go=$('p3Go');
