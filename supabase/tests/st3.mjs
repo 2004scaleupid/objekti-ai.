@@ -4,8 +4,8 @@ let F=0;const ok=(c,m)=>{console.log((c?'PASS ':'FAIL ')+m);if(!c)F++;};
 for (const [w,h,n] of [[1440,900,'d'],[390,844,'m']]){
 const p=await (await b.newContext({viewport:{width:w,height:h}})).newPage();const errs=[];p.on('pageerror',e=>errs.push(e.message+' '+String(e.stack).split('\n')[1]));
 await p.goto('file:///home/claude/viimsi/t/local.html');await p.waitForTimeout(1500);
-await p.evaluate(()=>{const s=document.getElementById('skipBtn');if(s&&!s.hidden)s.click();acct.fbDone=1;});await p.waitForTimeout(400);
-await p.evaluate(()=>{show('home');openStudio('vaba');});await p.waitForTimeout(300);
+await p.evaluate(()=>{const s=document.getElementById('skipBtn');if(s&&!s.hidden)s.click();acct.kind='firm';acct.kindSet=1;acct.fbDone=1;});await p.waitForTimeout(400);
+await p.evaluate(()=>{const kd=document.getElementById('kindDlg');if(kd)kd.remove();show('home');openStudio('vaba');});await p.waitForTimeout(300);
 const E=f=>p.evaluate(f);
 await p.setInputFiles('#stFile',[{name:'a.png',mimeType:'image/png',buffer:fs.readFileSync('a.png')},{name:'b.png',mimeType:'image/png',buffer:fs.readFileSync('b.png')}]);for(let i=0;i<40;i++){if(await E(()=>stSess()&&stSess().tray.length===2))break;await p.waitForTimeout(250);}await p.waitForTimeout(300);
 let r=await E(()=>({tray:stSess().tray.length,fresh:document.getElementById('studio').classList.contains('fresh'),stage:!document.getElementById('stStage').hidden,nums:[...document.querySelectorAll('#stFiles .no')].map(x=>x.textContent).join(',')}));
@@ -46,6 +46,6 @@ await p.click('#stRail .sttool[data-tool="brush"]');await p.waitForTimeout(300);
 const t0=await E(()=>stSess().tray.length);await p.click('#stFiles [data-x="1"]');ok(await p.evaluate(t=>stSess().tray.length===t-1,t0),n+' remove picture');
 // text only picture
 await p.click('#stNew2');await p.waitForTimeout(200);await p.fill('#stIn','Moodne puitmaja männimetsas');ok(await E(()=>stKind()==='pic'&&!document.getElementById('stGenBtn').disabled),n+' text only -> pic');
-await p.click('.stchip[data-t="maakler"]');await p.waitForTimeout(200);ok(await E(()=>document.getElementById('stGenBtn').hidden&&stKind()==='addr'),n+' address work hides Genereeri');
+await p.click('.stchip[data-t="maja"]');await p.waitForTimeout(200);ok(await E(()=>document.getElementById('stGenBtn').hidden&&stKind()==='addr'),n+' address work hides Genereeri');
 ok(!errs.length,n+' no errors '+JSON.stringify(errs));await p.close();}
 console.log('fails',F);await b.close();

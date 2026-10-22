@@ -1213,7 +1213,7 @@ input[type=checkbox]{accent-color:var(--accent)}
       <div class="rtag" id="rtag" hidden>ESITLUS · AI-visualiseering, mõõdud vaata 3D-vaatest</div>
       <div class="ov tl">
         <div class="stsel obsel"><button type="button" class="obpick" id="obPick" aria-haspopup="listbox"><span id="obPickT">Objektid</span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button><div class="stmenu" id="obMenu" role="listbox" hidden></div></div>
-        <div class="chip"><span class="tag">3D-mudel · Maa- ja Ruumiamet</span></div>
+        <div class="chip"><span class="tag">Hoonete ruumiandmed · Maa- ja Ruumiamet 2026</span></div>
         <div class="chip" id="vchip"></div>
       </div>
       <div class="compass" title="Põhjasuund"><svg id="north" width="30" height="30" viewBox="0 0 30 30"><path d="M15 3 20 16H10Z" fill="#E5482D"/><path d="M15 27 10 16h10Z" fill="#B5AFA7"/></svg></div>
@@ -1245,7 +1245,7 @@ input[type=checkbox]{accent-color:var(--accent)}
           <div class="sw" id="roofSw">Katus</div>
           <div class="sw" id="wallSw">Sein</div>
         </div>
-        <span class="src">Hoonete 3D-mudelid: Maa- ja Ruumiamet 2026</span>
+        <span class="src">Hoonete ruumiandmed: Maa- ja Ruumiamet 2026 · <a href="https://geoportaal.maaruum.ee/avaandmete-litsents" target="_blank" rel="noopener" style="color:inherit">litsents</a></span>
         </div>
       </div>
     </section>
@@ -1294,7 +1294,7 @@ input[type=checkbox]{accent-color:var(--accent)}
         <button class="ghost" type="button" id="dlRen">Esituspilt (JPG)</button>
         <div class="fhint" id="dlMsg">Objekti leht sisaldab 3D-vaadet, aadressi ja mõõte. Saada see kliendile ise e-posti või sõnumiga.</div>
       </div>
-      <p class="note">Põhiplaan, perimeeter, kõrgus ja naabermajade asukohad on riigi 3D-andmetest. Katuse kuju (30°), aknad, aed, puud ja hoovi detailid on selles näidises hinnangulised, kuni LOD2, katastri- ja puude andmed on lisatud.</p>
+      <p class="note">Põhiplaan, perimeeter, kõrgus ja naabermajade asukohad on riigi 3D-andmetest. Katuse kuju ja kalded on riigi LOD2 andmetest, kui maja kohta on LOD2 mudel. Aknad, aed, puud ja hoovi detailid on hinnangulised. Andmed: Maa- ja Ruumiamet 2026, <a href="https://geoportaal.maaruum.ee/avaandmete-litsents" target="_blank" rel="noopener">avaandmete litsents</a>.</p>
     </aside>
   </div>
 
@@ -1829,11 +1829,11 @@ function renderPanel(){applyRoofType(HOUSES[cur]);setTimeout(()=>{const h=HOUSES
   const R=[['Põhiplaani pind',fmt(h.footprint)+' m²','d','Hoone jalajälg','fp'],
     ['Perimeeter',fmt(h.perimeter)+' m','d','Räästa ja sokli pikkus','per'],
     ['Kõrgus harjani',fmt(h.height,2)+' m','d','Maapinnast kõrgeima punktini','h'],
-    ['Räästa kõrgus',fmt(h.eave,1)+' m','h',h.roofType==='flat'?'Lamekatusel = kõrgus':'Tuletatud 30° katusekaldest','eave'],
-    ['Katuse pind',fmt(h.roof)+' m²','h',h.roofType==='flat'?'Lamekatus':'30° '+RTN[h.roofType],'roof'],
-    ['Katuse kalle',h.roofType==='flat'?'0°':'30°','h','LOD1 andmetes kallet pole, kontrolli fotolt','slope'],
+    ['Räästa kõrgus',fmt(h.eave,1)+' m',h.roofType==='lod2'?'d':'h',h.roofType==='lod2'?'Madalaim katuseserv, LOD2 andmed':h.roofType==='flat'?'Lamekatusel = kõrgus':'Tuletatud 30° katusekaldest','eave'],
+    ['Katuse pind',fmt(h.roof)+' m²',h.roofType==='lod2'?'d':'h',h.roofType==='lod2'?h.l2.faces.filter(f=>f.a>=.5).length+' tahku, LOD2 andmed':h.roofType==='flat'?'Lamekatus':'30° '+RTN[h.roofType],'roof'],
+    ['Katuse kalle',h.roofType==='lod2'?h.l2.slopeTxt:h.roofType==='flat'?'0°':'30°',h.roofType==='lod2'?'d':'h',h.roofType==='lod2'?'Iga tahu kalle riigi LOD2 mudelist':'LOD2 mudelit pole, kontrolli fotolt','slope'],
     (()=>{const s=sunFace(h);return['Päikesepoolne tahk',s.area?fmt(s.area,0)+' m²':'—','h',s.txt,'south'];})(),
-    ['Seinte pind',fmt(h.wall)+' m²','h',(h.roofType==='gable'?'Viilud sees, ':'')+'aknad maha arvamata','wall']];
+    ['Seinte pind',fmt(h.wall)+' m²','h',(h.roofType==='gable'||h.roofType==='lod2'?'Viilud sees, ':'')+'aknad maha arvamata','wall']];
   const Y=yard(h);R.push(['Krunt (aiaga)',fmt(Y.lw)+' × '+fmt(Y.ll)+' m','h','~'+fmt(Y.area,0)+' m², katastripiir täpsustub','lot'],['Hoovi pind',fmt(Y.yard,0)+' m²','h','Krunt miinus maja','yard'],
     ['Aia pikkus',fmt(2*(Y.lw+Y.ll),0)+' m','h','Krundi ümbermõõt, väravad maha arvamata','fence'],
     ['Lähim naabermaja',fmt(Y.nb.d)+' m','d','Seinast seinani','nb'],['Lähim puu',fmt(Y.tr[0].d)+' m','h','Puud on näidis, LOD0 andmetega täpsed','tree']);
@@ -1874,7 +1874,7 @@ $('dlSheet').onclick=()=>{const src=snap(),h=HOUSES[cur],W=1800,H=1100,c=documen
   {let y=860;g.fillStyle='#16130F';g.font='600 16px "Inter Tight",Arial';if((acct.services||[]).length){g.fillText('Teenused',x,y);g.font='400 14px "Inter Tight",Arial';g.fillStyle='#4A443E';
     let line='';(acct.services||[]).join(' · ').split(' ').forEach(w=>{if(g.measureText(line+w).width>W-40-x){g.fillText(line,x,y+=22);line='';}line+=w+' ';});g.fillText(line,x,y+=22);y+=34;}
    g.fillStyle='#16130F';g.font='500 14px "Inter Tight",Arial';const ct=[acct.warranty?`Garantii ${acct.warranty} a`:'',acct.cphone,acct.cmail].filter(Boolean).join(' · ');if(ct)g.fillText(ct,x,y);}
-  ['* hinnang (30° viilkatus), aknad maha arvamata.','Mõõdud umbkaudsed, lõplik mõõt enne lepingut.','Hoonete 3D-mudelid: Maa- ja Ruumiamet 2026'].forEach((t,i)=>g.fillText(t,x,740+i*24));
+  ['* hinnang (30° viilkatus), aknad maha arvamata.','Mõõdud umbkaudsed, lõplik mõõt enne lepingut.','Hoonete ruumiandmed: Maa- ja Ruumiamet 2026'].forEach((t,i)=>g.fillText(t,x,740+i*24));
   g.fillStyle='#E5482D';g.fillRect(x,H-120,W-40-x,3);
   c.toBlob(b=>b&&saveFile(slug()+'-objekti-leht.png',b),'image/png');};
 
@@ -2194,7 +2194,7 @@ let lastMeasure=null;
 function ctx(){const h=HOUSES[cur],Y=yard(h),rf=roofFaces(h),wl=wallInfo(h);
   return{aadress:h.address,ehr_kood:h.ehr,
     andmed_riigilt:{pohiplaan_m2:h.footprint,perimeeter_m:h.perimeter,korgus_harjani_m:h.height,lahim_naabermaja_m:+Y.nb.d.toFixed(1)},
-    hinnangud:{raasta_korgus_m:h.eave,katuse_tyyp:RTN[h.roofType]+' (kasutaja valik või hinnang)',katuse_kalle:h.roofType==='flat'?'0°':'30° (eeldus, LOD1 andmetes kallet pole)',katusetahud:rf,
+    hinnangud:{raasta_korgus_m:h.eave,katuse_tyyp:RTN[h.roofType]+(h.roofType==='lod2'?' (riigi andmed)':' (kasutaja valik või hinnang)'),katuse_kalle:h.roofType==='lod2'?h.l2.slopeTxt+' (LOD2 andmed)':h.roofType==='flat'?'0°':'30° (eeldus, LOD2 mudelit pole)',katusetahud:rf,
       katus_kokku_m2:+rf.reduce((a,f)=>a+f.pind_m2,0).toFixed(1),katus_kokku_koos_raastaga_m2:+rf.reduce((a,f)=>a+f.pind_koos_raastaga_m2,0).toFixed(1),
       seinad:wl,seinad_kokku_viiludega_m2:h.wall,akende_uste_pind_kokku_naidis_m2:+wl.reduce((a,w)=>a+w.akende_uste_pind_naidis_m2,0).toFixed(1),
       krunt_m:[+Y.lw.toFixed(1),+Y.ll.toFixed(1)],krunt_m2:+Y.area.toFixed(0),hoov_m2:+Y.yard.toFixed(0),lahim_puu_m:+Y.tr[0].d.toFixed(1),
@@ -2204,8 +2204,8 @@ function ctx(){const h=HOUSES[cur],Y=yard(h),rf=roofFaces(h),wl=wallInfo(h);
 const hist=[];
 function addMsg(role,text){$('cpop').hidden=false;const d=document.createElement('div');d.className='msg '+(role==='user'?'u':'a');d.textContent=text;$('msgs').appendChild(d);$('msgs').scrollTop=1e6;return d;}
 function localAnswer(q){const c=ctx(),hn=c.hinnangud,q2=q.toLowerCase();
-  if(/katus/.test(q2)&&acct.roofMat&&acct.roofMat[0])return`Katuse pind on ~${fmt(hn.katus_kokku_m2)} m², koos 0,55 m räästaga ~${fmt(hn.katus_kokku_koos_raastaga_m2)} m². ${acct.roofMat[0]} koos 10% varuga: ~${fmt(hn.katus_kokku_koos_raastaga_m2*1.1,0)} m². Kalle 30° on hinnang, täpne tuleb LOD2 andmetest.`;
-  if(/katus/.test(q2))return`Katuse pind on ~${fmt(hn.katus_kokku_m2)} m² ja koos 0,55 m räästaga ~${fmt(hn.katus_kokku_koos_raastaga_m2)} m². Arvestasin ${hn.katusetahud.length} katusetahku 30° kaldega. Kalle on hinnang, täpne tuleb LOD2 andmetest.`;
+  if(/katus/.test(q2)&&acct.roofMat&&acct.roofMat[0])return`Katuse pind on ~${fmt(hn.katus_kokku_m2)} m², koos 0,55 m räästaga ~${fmt(hn.katus_kokku_koos_raastaga_m2)} m². ${acct.roofMat[0]} koos 10% varuga: ~${fmt(hn.katus_kokku_koos_raastaga_m2*1.1,0)} m². ${HOUSES[cur].roofType==='lod2'?'Kalle on riigi LOD2 andmetest: '+HOUSES[cur].l2.slopeTxt+'.':'Kalle 30° on hinnang.'}`;
+  if(/katus/.test(q2))return`Katuse pind on ~${fmt(hn.katus_kokku_m2)} m² ja koos 0,55 m räästaga ~${fmt(hn.katus_kokku_koos_raastaga_m2)} m². Arvestasin ${hn.katusetahud.length} katusetahku ${HOUSES[cur].roofType==='lod2'?'riigi LOD2 mudelist, kalded '+HOUSES[cur].l2.slopeTxt+'.':'30° kaldega. Kalle on hinnang.'}`;
   if(/sein|fassaad|akn/.test(q2))return`Seinte pind koos viiludega on ~${fmt(hn.seinad_kokku_viiludega_m2)} m². Kui akende ja uste pind (~${fmt(hn.akende_uste_pind_kokku_naidis_m2)} m², näidis) maha arvata, jääb ~${fmt(hn.seinad_kokku_viiludega_m2-hn.akende_uste_pind_kokku_naidis_m2)} m².`;
   if(/hoov|krunt|naab|puu|kaug/.test(q2))return`Krunt (aia hinnang) on ${fmt(hn.krunt_m[0])} × ${fmt(hn.krunt_m[1])} m, ~${fmt(hn.krunt_m2,0)} m², ja hoovi pinda on ~${fmt(hn.hoov_m2,0)} m². Lähim naabermaja on ${fmt(c.andmed_riigilt.lahim_naabermaja_m)} m kaugusel ja lähim puu ${fmt(hn.lahim_puu_m)} m kaugusel.`;
   return'Oskan arvutada katuse pinda, seinte pinda, krundi ja hoovi suurust ning kaugusi. Proovi näiteks: „arvuta katuse pindala“.';}
@@ -4252,7 +4252,7 @@ function p3Acts(url,sm){const L=p3Links(url);if(!L)return '';const share=`<butto
   if(sm)return `<div class="p3acts sm" role="group" aria-label="Kasuta seda 3D-mudelit">${share}<button type="button" class="p3more" data-p3more="${stEsc(url)}" aria-haspopup="menu" aria-label="Veel tegevusi">⋯</button></div>`;
   return `<div class="p3acts" role="group" aria-label="Kasuta seda 3D-mudelit">${share}${p3MoreHtml(url)}</div>`;}
 function p3MoreHtml(url){const L=p3Links(url),dl=url+(url.includes('?')?'&':'?')+'download=3d-mudel.glb',u=stEsc(url);
-  return `<button type="button" data-p3copy="${stEsc(L.embed)}" data-p3ok="Kodulehe kood kopeeritud">Manusta kodulehele</button><a href="${stEsc(dl)}" download="3d-mudel.glb">Lae alla .glb</a><button type="button" data-p3a="prod" data-u="${u}">Lisa tootele</button><button type="button" data-p3a="obj" data-u="${u}">Lisa objektile/kuulutusele</button><button type="button" data-p3a="offer" data-u="${u}">Kasuta pakkumises</button>${p3ArOk()?`<button type="button" data-p3a="ar" data-u="${u}">Vaata AR-is</button>`:''}<button type="button" data-p3a="studio" data-u="${u}">Ava Vaba ideas</button>${p3Cloud()?`<button type="button" data-p3a="addr" data-u="${u}">${m3ByUrl(url).ehr?'Muuda aadressi':'Lisa aadress'}</button>`:''}<button type="button" data-p3a="pub" data-u="${u}">Mõõdud lingil: ${M3PUB[p3Path(url).split('/')[1]]?'sees':'väljas'}</button>`;}
+  return `<button type="button" data-p3copy="${stEsc(L.embed)}" data-p3ok="Kodulehe kood kopeeritud">Manusta kodulehele</button><button type="button" data-p3dl="${u}">Lae alla (GLB, USDZ, OBJ, STL)</button><button type="button" data-p3a="prod" data-u="${u}">Lisa tootele</button><button type="button" data-p3a="obj" data-u="${u}">Lisa objektile/kuulutusele</button><button type="button" data-p3a="offer" data-u="${u}">Kasuta pakkumises</button>${p3ArOk()?`<button type="button" data-p3a="ar" data-u="${u}">Vaata AR-is</button>`:''}<button type="button" data-p3a="studio" data-u="${u}">Ava Vaba ideas</button>${p3Cloud()?`<button type="button" data-p3a="addr" data-u="${u}">${m3ByUrl(url).ehr?'Muuda aadressi':'Lisa aadress'}</button>`:''}<button type="button" data-p3a="pub" data-u="${u}">Mõõdud lingil: ${M3PUB[p3Path(url).split('/')[1]]?'sees':'väljas'}</button>`;}
 document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('[data-p3more]');if(!b)return;
   const pop=stPop(`<div class="p3acts p3menu" role="menu">${p3MoreHtml(b.dataset.p3more)}</div>`,b);
   // kopeerimine ja allalaadimine sulgevad menüü; ülejäänud avavad oma akna
@@ -4298,7 +4298,7 @@ document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest
 function p3ObjRender(h){const el=$('p3ObjM');if(!el)return;const u=h&&(acct.objModels||{})[h.ehr];
   el.innerHTML=u&&safeUrl(u)?`<span class="fhint">✓ Sellel objektil on 3D-mudel. <a href="${stEsc((p3Links(u)||{}).link||u)}" target="_blank" rel="noopener">Ava ↗</a></span>${p3Acts(u,true)}`:'';}
 function p3ShareHtml(url){const L=p3Links(url);if(!L)return '';
-  return `<div class="p3share"><b>Jaga või pane kodulehele</b><div class="row"><button type="button" class="ghost" data-p3copy="${stEsc(L.link)}" data-p3ok="Jagamislink kopeeritud">Kopeeri jagamislink</button><button type="button" class="ghost" data-p3copy="${stEsc(L.embed)}" data-p3ok="Kodulehe kood kopeeritud">Kopeeri kodulehe kood</button><a class="fhint" href="${stEsc(L.link)}" target="_blank" rel="noopener">Ava avalik vaade ↗</a></div><span class="fhint">Link töötab ilma sisselogimiseta. Koodi saad kleepida kodulehele või e-poodi, mudel pöörleb seal ise.</span></div>`;}
+  return `<div class="p3share"><b>Jaga või pane kodulehele</b><div class="row"><button type="button" class="ghost" data-p3copy="${stEsc(L.link)}" data-p3ok="Jagamislink kopeeritud">Kopeeri jagamislink</button><button type="button" class="ghost" data-p3copy="${stEsc(L.embed)}" data-p3ok="Kodulehe kood kopeeritud">Kopeeri kodulehe kood</button><button type="button" class="ghost" data-p3dl="${stEsc(url)}">Lae alla</button><a class="fhint" href="${stEsc(L.link)}" target="_blank" rel="noopener">Ava avalik vaade ↗</a></div><span class="fhint">Link töötab ilma sisselogimiseta. Koodi saad kleepida kodulehele või e-poodi, mudel pöörleb seal ise.</span></div>`;}
 function p3ModelsHtml(){const M=acct.models||[];if(!p3Cloud())return '';
   if(!M.length)return `<div class="stcard"><h3>Minu 3D-mudelid</h3><p>Valmis mudelid jäävad siia alles igas seadmes.</p></div>`;
   return `<div class="stcard"><h3>Minu 3D-mudelid <small style="color:var(--muted);font-weight:500">${M.length}</small></h3><div class="p3models">${M.map((m,i)=>{const T=tplById(m.tpl),L=p3Links(m.url);
@@ -4318,7 +4318,7 @@ function p3Public(h){const W=wHash(h),m=String(W.m||'');if(!CLOUD||!/^[0-9a-f-]{
   const url=CLOUD.url.replace(/\/$/,'')+'/storage/v1/object/public/models/'+m+'.glb',em=W.e==='1';
   document.body.classList.add('p3pub');if(em)document.body.classList.add('p3emb');document.title='3D-mudel · Vaade3D';
   const d=document.createElement('main');d.className='p3pubw';
-  d.innerHTML=(em?'':`<header><b>3D-mudel</b><a class="send" href="${stEsc(url+'?download=3d-mudel.glb')}" download="3d-mudel.glb">Laadi alla .glb</a></header>`)
+  d.innerHTML=(em?'':`<header><b>3D-mudel</b><button type="button" class="send" data-p3dl="${stEsc(url)}">Laadi alla</button></header>`)
     +`<div class="p3v" id="p3PubV"><div class="p3load"><span>Laadin 3D-mudelit…</span><div class="p3bar"><i></i></div></div></div>`
     +(em?`<a class="p3by" href="https://app.vaade3d.ee/" target="_blank" rel="noopener">Vaade3D</a>`:`<p class="fhint">Pööra hiire või sõrmega, suumi rattaga või kahe sõrmega. Tehtud Vaade3D-ga.</p>`);
   document.body.appendChild(d);p3View($('p3PubV'),url,true);
@@ -4681,6 +4681,221 @@ document.addEventListener('click',e=>{if(!e.target.closest||!e.target.closest('.
 {const _sm=setMode;setMode=function(m){_sm(m);try{obRenderRail();}catch(e){}};}
 document.addEventListener('keydown',e=>{if($('body').hidden||document.body.classList.contains('cvm'))return;const tg=e.target;if(tg&&(tg.tagName==='INPUT'||tg.tagName==='TEXTAREA'||tg.isContentEditable)||e.metaKey||e.ctrlKey||e.altKey)return;
   if(document.querySelector('.modal:not([hidden]),.dlg:not([hidden])'))return;const t=obTools().find(x=>x&&x.k&&x.k.length===1&&x.k.toLowerCase()===e.key.toLowerCase());if(t){e.preventDefault();obTool(t.id);}});
+
+/* ---------- 22.10: konto tüüp (firma / eraisik) + üks „Maja ülevaade“ mall ---------- */
+(()=>{
+const MAJA={id:'maja',on:true,name:'Maja ülevaade',pname:'Minu maja',niche:'katus',also:['fassaad','puhastus','paike','moodul','maakler','haljastus','varv','other'],input:'addr',icon:'roof',photo3d:{subject:'building'},
+  desc:'Maja 3D-s aadressi järgi: katus, seinad, krunt ja kõik mõõdud ühes kohas.',pdesc:'Sisesta oma aadress ja vaata oma maja 3D-s koos katuse, seinte ja krundi mõõtudega.',
+  show:['fp','per','h','eave','roof','slope','wall','lot','yard','nb','tree'],q:[['Mis plaanis?',['Katusetööd','Fassaaditööd','Aknad ja uksed','Juurdeehitus','Müük või üür','Lihtsalt ülevaade'],1]],
+  role:'ehitus- ja kinnisvarafirmadele ning majaomanikele',prompt:'Fotorealistlik pilt samast majast, sama vaatenurk, naabrid ja aed jäävad samaks.'};
+const OLD_HOUSE=['katus','fassaad','maakler'];
+if(!TPL_DEF.some(t=>t.id==='maja'))TPL_DEF.unshift(JSON.parse(JSON.stringify(MAJA)));
+if(!acct.tpls.some(t=>t.id==='maja'))acct.tpls.unshift(JSON.parse(JSON.stringify(MAJA)));
+{const m=acct.tpls.find(t=>t.id==='maja');m.pname=MAJA.pname;m.pdesc=MAJA.pdesc;}
+if(!acct.tplMaja1){acct.tpls.forEach(t=>{if(OLD_HOUSE.includes(t.id))t.on=false;if(t.id==='maja')t.on=true;});if(OLD_HOUSE.includes(acct.activeTpl))acct.activeTpl='maja';acct.tplMaja1=1;}
+const PRIV_HIDE=['toodehoov'];                 /* vajab firma tootepilte */
+const FIRM_TABS=['company','widget','products'];
+
+acct.kind=acct.kind==='private'?'private':'firm';   /* olemasolevad kontod on firmad */
+const isPriv=()=>acct.kind==='private';
+window.v3dIsPrivate=isPriv;
+
+const css=document.createElement('style');css.textContent=`
+.kwho{display:inline-block;margin-left:8px;vertical-align:2px;font:600 10.5px var(--mono);letter-spacing:.04em;text-transform:uppercase;background:var(--soft);color:var(--ink);border-radius:999px;padding:3px 8px}
+.khdr{font:600 10px var(--mono);letter-spacing:.04em;text-transform:uppercase;border:1px solid var(--line);color:var(--muted);border-radius:999px;padding:2px 7px}
+@media (max-width:640px){.khdr{display:none}}
+.kseg{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.kseg button{border:1.5px solid var(--line);background:var(--bg);color:var(--ink);border-radius:12px;padding:12px 14px;text-align:left;cursor:pointer;font:inherit;display:flex;flex-direction:column;gap:3px}
+.kseg button b{font-size:14.5px}.kseg button small{color:var(--muted);font-size:12px;line-height:1.35}
+.kseg button[aria-checked="true"]{border-color:var(--accent);background:var(--paper);box-shadow:0 0 0 3px rgba(229,72,45,.12)}
+.kdlg{position:fixed;inset:0;z-index:60;background:rgba(15,12,10,.72);display:flex;align-items:center;justify-content:center;padding:16px}
+.kdlg>div{background:var(--paper);color:var(--ink);border-radius:16px;padding:24px;max-width:460px;width:100%;display:flex;flex-direction:column;gap:14px}
+.kdlg h2{margin:0;font-size:20px;letter-spacing:-.02em}.kdlg p{margin:0;color:var(--muted);font-size:13.5px}
+body.pv .stabs [data-tab="company"],body.pv .stabs [data-tab="widget"],body.pv .stabs [data-tab="products"],
+body.pv #menu [data-go="company"],body.pv .menuwrap:has(#bellBtn),body.pv #bellBtn,body.pv #hLeads,
+body.pv .tyou,body.pv #tFil [data-f="mine"],
+body.pv label[for="pRole"],body.pv label[for="pWasteR"],body.pv label[for="pWasteW"]{display:none!important}
+${PRIV_HIDE.map(id=>`body.pv .tcard[data-t="${id}"]`).join(',')}{display:none!important}`;
+document.head.appendChild(css);
+
+const segHtml=(id)=>`<div class="kseg" id="${id}" role="radiogroup" aria-label="Konto tüüp">
+  <button type="button" data-k="private" role="radio" aria-checked="false"><b>Eraisikuna</b><small>Minu maja, kodu ja hoov. Saan küsida pakkumisi.</small></button>
+  <button type="button" data-k="firm" role="radio" aria-checked="false"><b>Firmana</b><small>Klientide objektid, kodulehe vidin ja päringud.</small></button></div>`;
+const segSet=(el,k)=>el&&el.querySelectorAll('button').forEach(b=>b.setAttribute('aria-checked',b.dataset.k===k));
+
+const H0={};
+function applyKind(){const p=isPriv();document.body.classList.toggle('pv',p);
+  const h=$('ncHouse');if(h){const h2=h.querySelector('h2'),pp=h.querySelector('p');if(!H0.h2){H0.h2=h2.textContent;H0.p=pp.textContent;}
+    h2.textContent=p?'Minu maja 3D-s':H0.h2;pp.textContent=p?'Sisesta oma aadress ja vaata maja 3D-s koos katuse, seinte ja krundi mõõtudega.':H0.p;}
+  segSet($('pKind'),acct.kind);
+  {const lbl=p?'Eraisik':'Firma',mk=(id,host,cls,before)=>{if(!host)return;let e=$(id);if(!e){e=document.createElement('span');e.id=id;e.className=cls;before?host.insertBefore(e,host.firstChild):host.appendChild(e);}e.textContent=lbl+(id==='kindPill'?' · konto':'');e.title='Konto tüüp: '+lbl.toLowerCase()+'. Vaheta: Seaded → Profiil';};
+    mk('kindPill',document.querySelector('.phead .pills'),'acc',true);{const mn=$('mName');if(mn&&!$('kindWho')){const e=document.createElement('span');e.id='kindWho';e.className='kwho';mn.after(e);}const e=$('kindWho');if(e){e.textContent=lbl;e.title='Konto tüüp: '+lbl.toLowerCase();}}mk('kindHdr',$('avatarBtn'),'khdr');}
+  if(p&&!$('settings').hidden){const cur=document.querySelector('.stabs [aria-current="true"]');if(cur&&FIRM_TABS.includes(cur.dataset.tab))show('settings','profile');}}
+window.v3dApplyKind=applyKind;
+
+async function setKind(k,silent){acct.kind=k==='private'?'private':'firm';acct.kindSet=1;save();applyKind();try{renderAcct();}catch(_){}
+  if(!$('home').hidden)renderHome();
+  try{if(typeof CL!=='undefined'&&CL&&CL.sb&&CL.uid)await CL.sb.auth.updateUser({data:{account_type:acct.kind}});}catch(_){}
+  if(!silent)toast(acct.kind==='private'?'Konto tüüp: eraisik':'Konto tüüp: firma');}
+
+/* registreerimine: valik vormi alguses */
+(()=>{const up=$('upFields');if(!up||$('lKind'))return;
+  const w=document.createElement('div');w.className='fl';w.id='lKindW';w.style.gap='8px';
+  w.innerHTML='<span>Kuidas kasutad Vaade3D-d?</span>'+segHtml('lKind');up.insertBefore(w,up.firstChild);
+  let sel=null;const compL=document.querySelector('label[for="lComp"]'),nicheL=document.querySelector('label[for="lNiche"]');
+  const sync=()=>{segSet($('lKind'),sel);const p=sel==='private';if(compL)compL.hidden=p;if(nicheL)nicheL.hidden=p;
+    $('lEmail').placeholder=p?'mari@gmail.com':'mari@firma.ee';};
+  $('lKind').querySelectorAll('button').forEach(b=>b.onclick=()=>{sel=b.dataset.k;store.set('v3d_kind_pending',sel);sync();$('lErr').textContent='';});
+  $('lSubmit').addEventListener('click',e=>{if(!signUp)return;
+    if(!sel){e.preventDefault();e.stopImmediatePropagation();$('lErr').style.color='';$('lErr').textContent='Vali, kas kasutad Vaade3D-d eraisikuna või firmana.';return;}
+    acct.kind=sel;acct.kindSet=1;
+    if(sel==='private'){if(!$('lComp').value.trim())$('lComp').value=$('lName').value.trim();if(!$('lNiche').value)$('lNiche').value='other';}},true);
+  sync();})();
+
+/* seaded → profiil: konto tüübi vahetus */
+(()=>{const pane=document.querySelector('.spane[data-pane="profile"]'),f=$('profF');if(!pane||!f||$('pKind'))return;
+  const c=document.createElement('div');c.className='card';c.style.cssText='display:flex;flex-direction:column;gap:10px';
+  c.innerHTML='<div class="tag">Konto tüüp</div>'+segHtml('pKind')+'<small class="fhint">Eraisiku vaates pole firma andmeid, vidinat ega päringuid. Saad igal ajal tagasi vahetada.</small>';
+  pane.insertBefore(c,f);
+  $('pKind').querySelectorAll('button').forEach(b=>b.onclick=()=>{if(b.dataset.k!==acct.kind)setKind(b.dataset.k);});})();
+
+/* esimesel sisenemisel küsi, kui tüüp on teadmata */
+function askKind(){if($('kindDlg')||acct.kindSet)return;const d=document.createElement('div');d.className='kdlg';d.id='kindDlg';d.setAttribute('role','dialog');d.setAttribute('aria-modal','true');
+  d.innerHTML='<div><h2>Kuidas sa Vaade3D-d kasutad?</h2><p>Näitame sulle õigeid tööriistu. Seadetes saad hiljem vahetada.</p>'+segHtml('dKind')+'</div>';
+  document.body.appendChild(d);d.querySelectorAll('#dKind button').forEach(b=>b.onclick=()=>{d.remove();setKind(b.dataset.k,true);});
+  setTimeout(()=>{const b=d.querySelector('button');if(b)b.focus();},50);}
+
+const _enter=enter;enter=function(){const r=_enter.apply(this,arguments);applyKind();if(!acct.kindSet)setTimeout(askKind,300);return r;};
+const _show=show;show=function(view,tab){if(view==='settings'&&isPriv()&&FIRM_TABS.includes(tab))tab='profile';return _show.call(this,view,tab);};
+
+const _rh=renderHome;renderHome=function(){const r=_rh.apply(this,arguments);applyKind();
+  if(isPriv()){const ck=document.querySelector('.check');if(ck)ck.hidden=true;const g=document.querySelector('.hgrid');if(g)g.classList.add('full');}return r;};
+
+const _rt=renderTpls;renderTpls=function(){const r=_rt.apply(this,arguments);
+  if(isPriv()){document.querySelectorAll('#tGrid .tcard').forEach(b=>{const T=tplById(b.dataset.t);if(!T)return;if(T.pname)b.querySelector('b').textContent=T.pname;if(T.pdesc)b.querySelector('p').textContent=T.pdesc;});
+    const T=tplById(acct.activeTpl);if(T&&T.input==='addr')$('homeIn').placeholder='Sinu aadress, nt Silva tee 28, Viimsi vald';}
+  return r;};
+
+const _th=stTheme;stTheme=function(id){const th=_th.apply(this,arguments);if(isPriv()&&th&&th.T&&th.T.pname&&th.need==='addr')return {...th,t:th.T.pname,s:(th.T.pdesc||th.s)};return th;};
+
+if(typeof clLoad==='function'){const _cl=clLoad;clLoad=async function(){const ok=await _cl.apply(this,arguments);if(!ok)return ok;
+  try{const {data:{user}}=await CL.sb.auth.getUser();const mk=user&&user.user_metadata&&user.user_metadata.account_type,pend=store.get('v3d_kind_pending',null);
+    if(pend){acct.kind=pend==='private'?'private':'firm';acct.kindSet=1;store.del('v3d_kind_pending');if(mk!==acct.kind)CL.sb.auth.updateUser({data:{account_type:acct.kind}}).catch(()=>{});}
+    else if(mk){acct.kind=mk==='private'?'private':'firm';acct.kindSet=1;}
+    else{/* vanad kontod (enne 22.10.2026) on firmad: ei küsi, märgime vaikselt */
+      const old=user&&user.created_at&&Date.parse(user.created_at)<Date.parse('2026-10-22T07:00:00Z');
+      if(old){acct.kind='firm';acct.kindSet=1;CL.sb.auth.updateUser({data:{account_type:'firm'}}).catch(()=>{});}else acct.kindSet=0;}
+    if(typeof clRaw==='function')clRaw('oai_acct',acct);}catch(_){}
+  return ok;};}
+
+const _ra=renderAcct;renderAcct=function(){const r=_ra.apply(this,arguments);
+  if(isPriv()){$('avComp').textContent=acct.name||acct.email;const av=$('avIni');if(!acct.logo)av.textContent=initials(acct.name||acct.email||'?');
+    const pm=$('phMeta');if(pm)pm.textContent='Eraisik';}return r;};
+
+applyKind();
+})();
+
+/* ---------- 22.10: LOD2 katused (Maa- ja Ruumiamet, hoonete ruumiandmed 2026) ---------- */
+(()=>{
+let L2=null;
+RTN.lod2='päris katus (LOD2)';
+const DIRS=['põhi','kirre','ida','kagu','lõuna','edel','lääs','loe'],dirName=b=>DIRS[Math.round(b/45)%8];
+function newell(P){let nx=0,ny=0,nz=0;for(let i=0;i<P.length;i++){const a=P[i],b=P[(i+1)%P.length];nx+=(a[1]-b[1])*(a[2]+b[2]);ny+=(a[2]-b[2])*(a[0]+b[0]);nz+=(a[0]-b[0])*(a[1]+b[1]);}
+  const L=Math.hypot(nx,ny,nz);return L?{n:[nx/L,ny/L,nz/L],a:L/2}:null;}
+function l2Of(h){const raw=L2&&L2[h.ehr];if(!raw)return null;
+  const th=(h.north||0)*Math.PI/180,ct=Math.cos(th),st=Math.sin(th);
+  const polys=raw.map(f=>{const P=[];for(let k=0;k<f.length;k+=3){const dx=f[k],dy=f[k+1];P.push([+(dx*ct-dy*st).toFixed(3),+(dx*st+dy*ct).toFixed(3),f[k+2]]);}return P;});
+  const faces=[];let area=0,top=0;
+  polys.forEach((P,i)=>{const r=newell(P);if(!r)return;let n=r.n;if(n[2]<0)n=n.map(c=>-c);
+    const slope=Math.acos(Math.min(1,Math.abs(n[2])))*180/Math.PI;
+    const wx=n[0]*ct+n[1]*st,wy=-n[0]*st+n[1]*ct,bear=(Math.atan2(wx,wy)*180/Math.PI+360)%360;   /* allapoole kalde suund maailmas */
+    faces.push({i,P,n,a:r.a,slope,bear});area+=r.a;P.forEach(p=>{if(p[2]>top)top=p[2];});});
+  if(!faces.length)return null;
+  /* välisservad: serv, mida jagab ainult üks katusepind */
+  const key=(a,b)=>{const s=p=>p.map(c=>Math.round(c*10)).join(',');const A=s(a),B=s(b);return A<B?A+'|'+B:B+'|'+A;},cnt={};
+  faces.forEach(f=>f.P.forEach((a,k)=>{const K=key(a,f.P[(k+1)%f.P.length]);cnt[K]=(cnt[K]||0)+1;}));
+  const outer=[];faces.forEach(f=>f.P.forEach((a,k)=>{const b=f.P[(k+1)%f.P.length];if(Math.hypot(b[0]-a[0],b[1]-a[1])<.05)return;if(cnt[key(a,b)]===1)outer.push([a,b]);}));
+  let eave=Math.min(...outer.flatMap(([a,b])=>[a[2],b[2]]));if(!isFinite(eave))eave=h.eave0;eave=Math.max(1.6,eave);
+  const fills=outer.filter(([a,b])=>a[2]>eave+.05||b[2]>eave+.05);
+  const fillA=fills.reduce((s,[a,b])=>s+Math.hypot(b[0]-a[0],b[1]-a[1])*((a[2]-eave)+(b[2]-eave))/2,0);
+  const main=faces.filter(f=>f.a>=2&&f.slope>=5).map(f=>Math.round(f.slope));
+  const slopeTxt=main.length?(Math.min(...main)===Math.max(...main)?Math.min(...main)+'°':Math.min(...main)+'–'+Math.max(...main)+'°'):'0° (lame)';
+  return{faces:faces.sort((x,y)=>y.a-x.a),outer,fills,eave:+eave.toFixed(2),top:+top.toFixed(2),area:+area.toFixed(1),fillA,slopeTxt};}
+function attach(h){if(!h||h.l2||!L2||!L2[h.ehr])return false;const r=l2Of(h);if(!r)return false;h.l2=r;h.h1=h.height;
+  if(!(acct.roofTypes&&acct.roofTypes[h.ehr]))h.roofType='lod2';return true;}
+window.v3dL2=()=>L2;
+
+const _mh=makeHouse;makeHouse=function(){const h=_mh.apply(this,arguments);attach(h);return h;};
+const _art=applyRoofType;applyRoofType=function(h){
+  if(h&&h.roofType==='lod2'&&!h.l2)h.roofType='gable';
+  if(h&&h.l2&&h.roofType==='lod2'){const L=h.l2;h.eave=L.eave;h.height=L.top;h.roof=L.area;h.wall=+(h.perimeter*L.eave+L.fillA).toFixed(1);return;}
+  if(h&&h.h1!=null)h.height=h.h1;return _art.apply(this,arguments);};
+const _rf=roofFaces;roofFaces=function(h){if(!(h&&h.l2&&h.roofType==='lod2'))return _rf.apply(this,arguments);
+  return h.l2.faces.filter(f=>f.a>=.5).map((f,k)=>({tahk:f.slope<5?`lame osa ${k+1}`:`tahk ${k+1} · ${dirName(f.bear)}`,pind_m2:+f.a.toFixed(1),pind_koos_raastaga_m2:+(f.a*1.08).toFixed(1),kalle_kraadi:Math.round(f.slope),suund_kraadi:f.slope<5?null:Math.round(f.bear)}));};
+const _sf=sunFace;sunFace=function(h){if(!(h&&h.l2&&h.roofType==='lod2'))return _sf.apply(this,arguments);
+  const F=h.l2.faces.filter(f=>f.slope>=5&&f.a>=2),flat=h.l2.faces.filter(f=>f.slope<5).reduce((s,f)=>s+f.a,0);
+  const S=F.filter(f=>f.bear>=112.5&&f.bear<=247.5);
+  if(!S.length)return flat>4?{area:flat,txt:'Lame osa: paneelid alusraamil, LOD2 andmed'}:{area:0,txt:'Lõunapoolset tahku pole (LOD2)'};
+  const best=S.reduce((m,f)=>f.a*Math.cos((f.bear-180)*Math.PI/180)>m.a*Math.cos((m.bear-180)*Math.PI/180)?f:m,S[0]);
+  const grp=S.filter(f=>Math.abs(f.bear-best.bear)<=25),a=grp.reduce((s,f)=>s+f.a,0);
+  return{area:a,txt:`Suund ~${Math.round(best.bear)}° (${dirName(best.bear)}), kalle ${Math.round(best.slope)}°, LOD2 andmed`};};
+
+/* 3D: päris katusepinnad + viilud, karniisist kõrgemale */
+function addL2(h,grp){const L=h.l2;M.wall.side=THREE.DoubleSide;M.wall.needsUpdate=true;
+  L.faces.forEach(f=>{const n=f.n,ax=Math.abs(n[0])>Math.abs(n[2])&&Math.abs(n[0])>=Math.abs(n[1])?0:Math.abs(n[1])>Math.abs(n[2])?1:2;
+    const c2=f.P.map(p=>ax===2?new THREE.Vector2(p[0],p[1]):ax===1?new THREE.Vector2(p[0],p[2]):new THREE.Vector2(p[1],p[2]));
+    let T;try{T=THREE.ShapeUtils.triangulateShape(c2,[]);}catch(_){T=[];}if(!T.length)return;
+    const hd=Math.hypot(n[0],n[1]),d=hd>1e-3?[-n[0]/hd,-n[1]/hd]:[0,1],t=[-d[1],d[0]];
+    const pos=[],uv=[];T.forEach(tr=>tr.forEach(ix=>{const p=f.P[ix];pos.push(...v(p[0],p[1],p[2]+.02));const along=(p[0]*d[0]+p[1]*d[1])/Math.max(.2,Math.abs(n[2]||1));uv.push((p[0]*t[0]+p[1]*t[1])/3,along/3);}));
+    const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));g.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2));g.computeVertexNormals();
+    const m=new THREE.Mesh(g,M.roof);m.name='roofpart';m.castShadow=m.receiveShadow=true;grp.add(m);});
+  L.fills.forEach(([a,b])=>{const len=Math.hypot(b[0]-a[0],b[1]-a[1]),e=L.eave;
+    const w=quad(v(a[0],a[1],e),v(b[0],b[1],e),v(b[0],b[1],Math.max(e,b[2])),v(a[0],a[1],Math.max(e,a[2])),M.wall,[[0,0],[len/3,0],[len/3,(b[2]-e)/3],[0,(a[2]-e)/3]]);
+    w.name='l2wall';grp.add(w);});
+  const ls=[];L.faces.forEach(f=>f.P.forEach((a,k)=>{const b=f.P[(k+1)%f.P.length];ls.push(...v(a[0],a[1],a[2]+.03),...v(b[0],b[1],b[2]+.03));}));
+  const lg=new THREE.BufferGeometry();lg.setAttribute('position',new THREE.Float32BufferAttribute(ls,3));
+  const ln=new THREE.LineSegments(lg,new THREE.LineBasicMaterial({color:0x2A2622,transparent:true,opacity:.45}));ln.name='l2edge';grp.add(ln);}
+const _gr=gableRoof;gableRoof=function(w,eave,grp){const h=HOUSES[cur];
+  if(h&&h.l2&&h.roofType==='lod2'){if(!grp.userData.l2done){grp.userData.l2done=1;addL2(h,grp);}return;}return _gr.apply(this,arguments);};
+const _ah=applyHi;applyHi=function(){const r=_ah.apply(this,arguments);try{group.getObjectByName('house').traverse(o=>{if(o.name==='l2wall')o.material=hi==='wall'?M.hi:M.wall;});}catch(_){}return r;};
+
+/* katuse tüübi valik: LOD2 nupp ja selgitus */
+const seg=$('rtSeg');if(seg&&!seg.querySelector('[data-rt="lod2"]')){const b=document.createElement('button');b.type='button';b.dataset.rt='lod2';b.textContent='Päris (LOD2)';seg.insertBefore(b,seg.firstChild);
+  b.onclick=()=>{const h=HOUSES[cur];if(!h.l2)return;h.roofType='lod2';try{acct.roofTypes=Object.assign(acct.roofTypes||{},{[h.ehr]:'lod2'});save();}catch(_){}build();renderPanel();toast('Katus: riigi LOD2 andmetest');};}
+const _srt=syncRT;syncRT=function(){const r=_srt.apply(this,arguments);const h=HOUSES[cur],b=seg&&seg.querySelector('[data-rt="lod2"]');if(b)b.hidden=!h.l2;
+  const hint=seg&&seg.nextElementSibling;if(hint&&hint.classList.contains('fhint'))hint.textContent=h.l2?(h.roofType==='lod2'?'Katuse kuju ja kalded on riigi LOD2 andmetest. Kui see ei klapi, vali käsitsi.':'Selle maja kohta on LOD2 mudel olemas. Vali „Päris (LOD2)“, et näha päris katust.'):'Selle maja kohta pole LOD2 mudelit. Vali, milline katus päriselt on, ja pinnad arvutatakse ümber.';return r;};
+
+/* andmed tulevad eraldi failist, et leht laeks kiiresti */
+fetch('lod2-viimsi.json').then(r=>r.ok?r.json():Promise.reject(r.status)).then(d=>{L2=d;let any=false;HOUSES.forEach(h=>{if(attach(h))any=true;});
+  if(any&&typeof build==='function'&&!$('body').hidden){build();renderPanel();}else if(any){try{applyRoofType(HOUSES[cur]);}catch(_){}}}).catch(()=>{});
+})();
+
+/* ---------- 22.10: 3D-mudeli allalaadimine eri formaatides (GLB, USDZ, OBJ, STL) ---------- */
+const P3FMT=[['glb','GLB','veeb, e-pood, mängud, Blender'],['usdz','USDZ','iPhone ja iPad AR (Quick Look)'],['obj','OBJ','3D-programmid, ilma tekstuurita'],['stl','STL','3D-printimine, 10 cm suurune']];
+const P3LIB='vendor/three/',P3LIBP={};
+function p3Lib(path){return P3LIBP[path]||(P3LIBP[path]=new Promise((res,rej)=>{const s=document.createElement('script');s.src=P3LIB+path;s.onload=res;s.onerror=()=>{delete P3LIBP[path];rej(new Error('lib'));};document.head.appendChild(s);}));}
+function p3Gltf(url){return new Promise((res,rej)=>{const ld=new THREE.GLTFLoader();if(window.MeshoptDecoder)ld.setMeshoptDecoder(MeshoptDecoder);ld.load(url,g=>res(g.scene),undefined,rej);});}
+async function p3Download(url,fmt,btn){const base='3d-mudel';
+  if(fmt==='glb'){try{const r=await fetch(url);if(!r.ok)throw 0;await saveFile(base+'.glb',await r.blob());}catch(_){const a=document.createElement('a');a.href=url+(url.includes('?')?'&':'?')+'download='+base+'.glb';a.download=base+'.glb';document.body.appendChild(a);a.click();a.remove();}return;}
+  const t0=btn&&btn.innerHTML;if(btn){btn.disabled=true;btn.innerHTML='<b>Teen faili…</b><small>Mõni sekund</small>';}
+  try{if(fmt==='usdz'){await p3Lib('libs/fflate.min.js');await p3Lib('exporters/USDZExporter.js');}
+    else await p3Lib(fmt==='obj'?'exporters/OBJExporter.js':'exporters/STLExporter.js');
+    const o=await p3Gltf(url);o.updateMatrixWorld(true);let blob;
+    if(fmt==='usdz'){o.traverse(m=>{if(m.isMesh&&Array.isArray(m.material))m.material=m.material[0];if(m.isMesh&&m.material&&!m.material.isMeshStandardMaterial)m.material=new THREE.MeshStandardMaterial({color:(m.material.color||new THREE.Color(0xcccccc)),map:m.material.map||null});});
+      const ab=await new THREE.USDZExporter().parse(o);blob=new Blob([ab],{type:'model/vnd.usdz+zip'});}
+    else if(fmt==='obj'){blob=new Blob([new THREE.OBJExporter().parse(o)],{type:'text/plain'});}
+    else{const bb=new THREE.Box3().setFromObject(o),sz=bb.getSize(new THREE.Vector3()),k=100/(Math.max(sz.x,sz.y,sz.z)||1),c=bb.getCenter(new THREE.Vector3());
+      const g=new THREE.Group();g.add(o);o.position.set(-c.x,-bb.min.y,-c.z);g.scale.setScalar(k);g.rotation.x=Math.PI/2;g.updateMatrixWorld(true);   /* mm, Z üles */
+      const dv=new THREE.STLExporter().parse(g,{binary:true});blob=new Blob([dv],{type:'model/stl'});}
+    await saveFile(base+'.'+fmt,blob);toast(base+'.'+fmt+' salvestatud');}
+  catch(e){toast('Seda formaati ei õnnestunud teha. Proovi GLB-d.');}
+  finally{if(btn){btn.disabled=false;btn.innerHTML=t0;}}}
+window.v3dDownload3d=p3Download;
+function p3DlHtml(url){return `<b>Lae alla</b>${P3FMT.map(([k,n,d])=>`<button type="button" class="sz p3fmt" data-p3fmt="${k}" data-u="${stEsc(url)}"><b>.${k}</b> <small>${d}</small></button>`).join('')}<span class="fhint">Mudel jääb sinu omaks: kasuta seda kodulehel, e-poes, AR-is või prindi välja.</span>`;}
+document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('[data-p3dl]');if(!b)return;e.preventDefault();const u=b.dataset.p3dl;if(!safeUrl(u))return;
+  const r=b.getBoundingClientRect(),inPop=!!b.closest('#stPopEl');const pop=inPop?stPop(p3DlHtml(u),null,{x:r.left,y:r.top}):stPop(p3DlHtml(u),b);pop.classList.add('p3dlpop');});
+document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('[data-p3fmt]');if(!b)return;e.preventDefault();const u=b.dataset.u;if(!safeUrl(u))return;p3Download(u,b.dataset.p3fmt,b);});
+{const st=document.createElement('style');st.textContent='.p3dlpop .p3fmt{display:flex;flex-direction:column;align-items:flex-start;gap:1px;text-align:left}.p3dlpop .p3fmt b{font:700 13px var(--mono)}.p3dlpop .p3fmt small{color:var(--muted);font-size:11.5px;font-weight:500}.p3dlpop .p3fmt[disabled]{opacity:.6}';document.head.appendChild(st);}
 
 restoreRT();renderList();renderPanel();build();updFotos();chatReset();setTab(false);renderAcct();
   if(CLOUD)clBoot();else if(!startFromHash()){if(DEV_AUTOLOGIN||store.get('oai_session',null))enter();else $('login').hidden=false;}tick();}

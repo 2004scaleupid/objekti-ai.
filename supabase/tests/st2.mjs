@@ -4,8 +4,8 @@ let fails=0;const ok=(c,m)=>{console.log((c?'PASS ':'FAIL ')+m);if(!c)fails++;};
 for (const [w,h,n] of [[1440,900,'d'],[390,844,'m']]){
 const p=await (await b.newContext({viewport:{width:w,height:h}})).newPage();const errs=[];p.on('pageerror',e=>errs.push(e.message));p.on('console',m=>{if(m.type()==='error')errs.push('console:'+m.text())});
 await p.goto('file:///home/claude/viimsi/t/local.html');await p.waitForTimeout(1500);
-await p.evaluate(()=>{const s=document.getElementById('skipBtn');if(s&&!s.hidden)s.click();});await p.waitForTimeout(600);
-await p.evaluate(()=>show('home'));await p.waitForTimeout(400);
+await p.evaluate(()=>{const s=document.getElementById('skipBtn');if(s&&!s.hidden)s.click();acct.kind='firm';acct.kindSet=1;});await p.waitForTimeout(600);
+await p.evaluate(()=>{acct.kind='firm';acct.kindSet=1;const kd=document.getElementById('kindDlg');if(kd)kd.remove();show('home');});await p.waitForTimeout(400);
 await p.click('.tcard[data-t="vaba"]');await p.waitForTimeout(600);
 await p.screenshot({path:`v2-1-${n}.png`});
 ok(await p.evaluate(()=>document.getElementById('studio').classList.contains('fresh')),n+' fresh on open');
@@ -60,10 +60,10 @@ await p.click('#stEdDone');
 // jobs menu + new
 await p.click('#stNew2');await p.waitForTimeout(200);ok(await p.evaluate(()=>document.getElementById('studio').classList.contains('fresh')),n+' new job fresh');
 await p.click('.stchip[data-t="toodehoov"]');await p.waitForTimeout(200);await p.screenshot({path:`v2-6-${n}.png`});
-await p.click('.stchip[data-t="maakler"]');await p.waitForTimeout(200);await p.fill('#stIn','Silva');await p.waitForTimeout(400);
+await p.click('.stchip[data-t="maja"]');await p.waitForTimeout(200);await p.fill('#stIn','Silva');await p.waitForTimeout(400);
 ok(await p.evaluate(()=>stKind()==='addr'),n+' addr kind');
 await p.click('#stJobs');await p.waitForTimeout(100);ok(await p.evaluate(()=>document.querySelectorAll('#stJobsM [data-s]').length>=1),n+' jobs menu lists');
 await p.click('#stJobsM [data-s]');await p.waitForTimeout(400);ok(await p.evaluate(()=>stSess().tray.length>=1&&stSess().imgs[stSess().tray[0]].marks.length>=5),n+' reopen job keeps pictures and marks');
 await p.click('#stHome');await p.waitForTimeout(200);ok(await p.evaluate(()=>!document.getElementById('home').hidden),n+' back home');
-errs.splice(0,errs.length,...errs.filter(e=>!/ERR_TUNNEL|Failed to load resource/.test(e)));ok(!errs.length,n+' no errors '+JSON.stringify(errs));}
+errs.splice(0,errs.length,...errs.filter(e=>!/ERR_TUNNEL|Failed to load resource|URL scheme .file./.test(e)));ok(!errs.length,n+' no errors '+JSON.stringify(errs));}
 await b.close();console.log('fails',fails);

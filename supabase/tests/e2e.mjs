@@ -31,7 +31,7 @@ ok(await ev(()=>!document.getElementById('upFields').hidden&&document.getElement
 await page.goto('https://app.vaade3d.ee/#ref='+CODE.toLowerCase());await W(2500);
 ok(await ev(()=>!document.getElementById('login').hidden&&document.getElementById('skipBtn').hidden),'avaneb sisselogimine, demo nupp peidus');
 await ev(()=>setTab(true));await page.fill('#lEmail','mari@katus.ee');await page.fill('#lPass','parool123');await page.fill('#lName','Mari Maasikas');await page.fill('#lComp','Katus OÜ');await page.selectOption('#lNiche',{index:1});await page.selectOption('#lSrc',{index:1});ok(await ev(()=>!document.getElementById('lRefW').hidden&&document.getElementById('lRef').readOnly&&document.getElementById('lRef').value),'partneri lingiga: kood lisatud ja lukus');
-await page.click('#lSubmit');ok(await until(()=>!document.getElementById('home').hidden,20000),'konto loodud ja töölaud avanes',await ev(()=>document.getElementById('lErr').textContent));
+ok(await ev(()=>!!document.querySelector('#lKind button[data-k="firm"]')),'registreerimisel konto tüübi valik');await page.click('#lKind button[data-k="firm"]');await page.click('#lSubmit');ok(await until(()=>!document.getElementById('home').hidden,20000),'konto loodud ja töölaud avanes',await ev(()=>document.getElementById('lErr').textContent));
 const cid=sql(`select company_id from profiles where email='mari@katus.ee'`);const dbBal=()=>+sql(`select coalesce(sum(delta),0) from credit_ledger where company_id='${cid}'`);
 ok(await ev(()=>acct.credits)===30&&dbBal()===30,'saldo 30 tuleb serverist');
 ok(await ev(()=>acct.promo&&acct.promo.left===20),'müüja kood: 20 soodustusega kasutust');

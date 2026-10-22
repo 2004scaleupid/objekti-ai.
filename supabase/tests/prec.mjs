@@ -4,7 +4,7 @@ const b=await chromium.launch({executablePath:'/opt/pw-browsers/chromium_headles
 let fails=0;const ok=(c,m)=>{console.log((c?'PASS ':'FAIL ')+m);if(!c)fails++;};
 const p=await (await b.newContext({viewport:{width:1440,height:900}})).newPage();const errs=[];p.on('pageerror',e=>errs.push(e.message));
 await p.goto('file:///home/claude/viimsi/t/local.html');await p.waitForTimeout(1500);
-await p.evaluate(()=>{const s=document.getElementById('skipBtn');if(s&&!s.hidden)s.click();show('home');});await p.waitForTimeout(400);
+await p.evaluate(()=>{const s=document.getElementById('skipBtn');if(s&&!s.hidden)s.click();acct.kind='firm';acct.kindSet=1;const kd=document.getElementById('kindDlg');if(kd)kd.remove();show('home');});await p.waitForTimeout(400);
 await p.click('.tcard[data-t="vaba"]');await p.waitForTimeout(500);
 await p.click('#stDemo');await p.waitForTimeout(400);await p.click('#stFiles [data-ed]');await p.waitForTimeout(600);
 let box=await p.locator('#stImg').boundingBox();
@@ -59,7 +59,7 @@ await p.screenshot({path:'prec.png'});
 // telefon: puude suurem nurk
 const q=await (await b.newContext({viewport:{width:390,height:844},hasTouch:true,isMobile:true})).newPage();
 await q.goto('file:///home/claude/viimsi/t/local.html');await q.waitForTimeout(1500);
-await q.evaluate(()=>{const s=document.getElementById('skipBtn');if(s&&!s.hidden)s.click();show('home');});await q.waitForTimeout(300);
+await q.evaluate(()=>{const s=document.getElementById('skipBtn');if(s&&!s.hidden)s.click();acct.kind='firm';acct.kindSet=1;const kd=document.getElementById('kindDlg');if(kd)kd.remove();show('home');});await q.waitForTimeout(300);
 await q.click('.tcard[data-t="vaba"]');await q.waitForTimeout(400);await q.click('#stDemo');await q.waitForTimeout(300);await q.click('#stFiles [data-ed]');await q.waitForTimeout(500);
 const r=await q.evaluate(()=>{const s=stSess();s.marks.push({t:'arrow',c:'#E5482D',a:[.2,.2],b:[.6,.6]});STU.tool='arrow';STU.sel=0;STU.touch=true;stRenderMarks();const h=document.querySelector('#stSvg .hd');return h.getBoundingClientRect().width;});
 ok(r>=20,'touch handles are at least 20 px ('+Math.round(r)+')');
