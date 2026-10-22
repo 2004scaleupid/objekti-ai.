@@ -123,3 +123,9 @@ Uus mall saab 3D lihtsalt seadistusega (nt `photo3d:{subject:'object',from:'imag
 - Piirang: ETAK-is pole eraõuede sissesõite ega teid (õu = kogu hoov), seega sillutis on ainult tänavatel/liiklusaladel.
 - Ajad: konsoolis `[aed] kokku … ms {server, meta, andmed, puud, mudel}` ja serveri `Server-Timing`.
 - Andmeallikate viide: „Kataster, teed, piirded, maakatte kõrgusmudel, hooned: Maa- ja Ruumiamet 2026“.
+
+## Registreerimise kaitse
+
+- Tervituskrediidid tulevad alles e-posti kinnitamisel (päästik `on_auth_user_welcome`, üks kord firma kohta).
+- Auth hook „Before user created“ = `public.hook_before_user_created` (Dashboard → Authentication → Hooks; sisse lülitatud Management API kaudu): ajutised e-posti domeenid (`blocked_email_domains`, 9913 domeeni, ka alamdomeenid) ja max 3 kontot IP kohta ööpäevas (`rate_limits`, võti `signup:ip:<ip>`). Admin API kutsel IP puudub -> ei piira.
+- Testid päris baasis (kõik veeretatakse tagasi, õnnestumine = viga `TESTS_OK`): `supabase/tests/sql/*.sql`, käivita SQL Editoris või Management API `database/query` kaudu.
