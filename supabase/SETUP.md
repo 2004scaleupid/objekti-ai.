@@ -145,3 +145,24 @@ Ilma võtmeta töötab kõik nagu enne (vidinat pole). Järjekord on oluline: ku
 4. Kontroll: logi välja ja uuesti sisse. Kui midagi läheb valesti, lülita punktis 3 captcha välja (äpp töötab edasi ka tokeniga).
 
 Testvõtmed (Cloudflare): site `1x00000000000000000000AA` (alati läbi), `3x00000000000000000000FF` (nõuab klõpsu); secret `1x0000000000000000000000000000000AA`. Päris Supabase'i vastu jooksvad testid (`supabase/tests/*.mjs`) vajavad captcha sisselülitamisel testvõtmeid või captcha väljalülitamist testi ajaks.
+
+## Varukoopia (andmebaas, iga öö)
+
+Tasuta paketil Supabase varukoopiaid ei tee. Öine GitHub Action teeb andmebaasist (rollid, skeem, andmed; **mitte** failihoidla faile) krüpteeritud koopia ja hoiab 14 viimast **privaatse** repo release'ides.
+
+Seadistamine (üks kord):
+1. Tee GitHubis privaatne repo, nt `vaade3d-backups` (README-ga, et oleks vähemalt üks commit).
+2. Kopeeri `supabase/backup/db-backup.yml` sinna: `.github/workflows/db-backup.yml`.
+3. Võti (oma arvutis, `brew install age`): `age-keygen -o vaade3d-backup.key`. Fail `vaade3d-backup.key` on **privaatne võti**: hoia see paroolihalduris või mujal turvaliselt, ilma selleta koopiat avada ei saa. Rida `# public key: age1…` on avalik võti.
+4. Privaatse repo saladused (Settings → Secrets and variables → Actions):
+   - `SUPABASE_DB_URL` = `postgresql://postgres.twubqebmjuvwypeduqqq:<andmebaasi parool>@aws-1-eu-central-1.pooler.supabase.com:5432/postgres` (Session pooler, port 5432; parool: Supabase → Project Settings → Database, vajadusel „Reset database password“).
+   - `AGE_RECIPIENT` = avalik võti `age1…`.
+5. Actions → „DB varukoopia“ → Run workflow (esimene proov). Rikke korral saadab GitHub e-kirja.
+
+Taastamine (uude või samasse projekti):
+```bash
+gh release download <tag> --repo <omanik>/vaade3d-backups
+age -d -i vaade3d-backup.key vaade3d-db-<aeg>.tar.gz.age | tar -xzf -
+psql --single-transaction --variable ON_ERROR_STOP=1 --file roles.sql --file schema.sql --command 'SET session_replication_role = replica' --file data.sql --dbname "<uue projekti Session pooleri URL>"
+```
+Seejärel: migratsioonid on juba skeemis; funktsioonid ja saladused uuesti (`supabase functions deploy …`, `supabase secrets set …`), LOD2 kaust uuesti `scripts/lod2_upload.py`-ga, kasutajate failid (uploads, renders, models) varukoopias **ei ole**.

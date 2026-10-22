@@ -1,0 +1,60 @@
+# Öine andmebaasi varukoopia (Supabase'i tasuta paketil varukoopiaid pole).
+# See fail käib PRIVAATSESSE repo'sse (nt vaade3d-backups) kausta .github/workflows/, mitte siia avalikku repo'sse.
+# Teeb: roles.sql + schema.sql + data.sql (Supabase CLI, sama mis Supabase'i juhendis), pakib, krüpteerib age'iga
+# sinu avaliku võtmega ja paneb release'i failina. Hoiab alles 14 viimast. Failihoidla faile EI kopeeri.
+# Saladused (private repo -> Settings -> Secrets and variables -> Actions):
+#   SUPABASE_DB_URL  postgresql://postgres.twubqebmjuvwypeduqqq:<DB parool>@aws-1-eu-central-1.pooler.supabase.com:5432/postgres
+#   AGE_RECIPIENT    age1... (avalik võti; privaatne võti jääb ainult sulle)
+# Taastamine: supabase/SETUP.md, peatükk "Varukoopia".
+name: DB varukoopia
+on:
+  schedule:
+    - cron: "17 1 * * *" # iga öö 01:17 UTC (04:17 Eesti suveajal)
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency: db-backup
+jobs:
+  backup:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: supabase/setup-cli@v1
+        with:
+          version: 2.110.0
+      - name: age
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq age
+      - name: Dump
+        env:
+          DB: ${{ secrets.SUPABASE_DB_URL }}
+        run: |
+          set -euo pipefail
+          test -n "$DB" || { echo "SUPABASE_DB_URL puudub"; exit 1; }
+          mkdir -p out
+          supabase db dump --db-url "$DB" -f out/roles.sql --role-only
+          supabase db dump --db-url "$DB" -f out/schema.sql
+          supabase db dump --db-url "$DB" -f out/data.sql --use-copy --data-only
+          ls -la out
+          # tühi või poolik dump = viga (töö ebaõnnestub ja GitHub saadab e-kirja)
+          test "$(stat -c %s out/schema.sql)" -gt 10000
+          grep -Eq 'COPY "?public"?\."?companies' out/data.sql
+      - name: Krüpteeri
+        env:
+          AGE_RECIPIENT: ${{ secrets.AGE_RECIPIENT }}
+        run: |
+          set -euo pipefail
+          case "$AGE_RECIPIENT" in age1*) ;; *) echo "AGE_RECIPIENT peab algama age1"; exit 1;; esac
+          F="vaade3d-db-$(date -u +%Y%m%d-%H%M).tar.gz.age"
+          tar -C out -czf - roles.sql schema.sql data.sql | age -r "$AGE_RECIPIENT" -o "$F"
+          rm -rf out
+          echo "F=$F" >> "$GITHUB_ENV"
+          ls -la "$F"
+      - name: Release ja vanade kustutamine
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          T="db-$(date -u +%Y%m%d-%H%M)"
+          gh release create "$T" "$F" --repo "$GITHUB_REPOSITORY" --title "$T" --notes "Krüpteeritud (age). Taastamine: objekti-ai supabase/SETUP.md -> Varukoopia."
+          gh release list --repo "$GITHUB_REPOSITORY" --limit 200 --json tagName,createdAt --jq 'sort_by(.createdAt) | reverse | .[14:] | .[].tagName' |
+            while read -r old; do gh release delete "$old" --repo "$GITHUB_REPOSITORY" --yes --cleanup-tag; done
