@@ -3469,18 +3469,16 @@ async function editTpl(i){const isNew=i<0,t=isNew?{id:'',on:true,name:'',niche:'
 $('tAdd').onclick=()=>editTpl(-1);
 document.addEventListener('change',e=>{if(e.target&&e.target.id==='teIn'){const ph=e.target.value==='photo';$('teShowW').hidden=ph;$('teQW').hidden=ph;$('teStW').hidden=!ph;}});
 $('fbF').onchange=renderFeedback;
-/* tasuta paketi piirid: failihoidla > 800 MB või kuu liiklus (hinnang) läheneb 5 GB-le -> hoiatus */
-const QUOTA={storage:800e6,db:400e6,egress:4};
+/* tasuta paketi piirid: failihoidla > 800 MB või andmebaas > 400 MB -> hoiatus. Liiklust (egress) API ei anna: link Supabase'i Usage lehele. */
+const QUOTA={storage:800e6,db:400e6};
 async function renderQuota(){const el=$('quota');if(!el)return;if(!(CLOUD&&CL.sb&&CL.admin)){el.hidden=true;return;}el.hidden=false;el.innerHTML='<span class="fhint">Laadin mahtu…</span>';
-  const [q,st]=await Promise.all([CL.sb.rpc('admin_quota'),svcData&&svcData.egress?Promise.resolve(svcData):clFn('admin-stats').catch(()=>null)]);if(st&&!st.err){svcData=st;svcAt=Date.now();}
-  if(q.error){el.innerHTML=`<span class="fhint">Mahtu ei saanud lugeda: ${stEsc(clErr(q.error))}</span>`;return;}
-  const d=q.data||{},mb=b=>fmt(b/1e6,0)+' MB',eg=st&&st.egress,warn=[];
+  const q=await CL.sb.rpc('admin_quota');if(q.error){el.innerHTML=`<span class="fhint">Mahtu ei saanud lugeda: ${stEsc(clErr(q.error))}</span>`;return;}
+  const d=q.data||{},mb=b=>fmt(b/1e6,0)+' MB',warn=[],ref=(CLOUD.url.match(/https:\/\/([a-z0-9]+)\./)||[])[1];
   if(d.storage_bytes>QUOTA.storage)warn.push(`Failihoidla on ${mb(d.storage_bytes)} (tasuta pakett 1 GB)`);if(d.db_bytes>QUOTA.db)warn.push(`Andmebaas on ${mb(d.db_bytes)} (tasuta pakett 500 MB)`);
-  if(eg&&eg.ok&&eg.month_gb_est>QUOTA.egress)warn.push(`Kuu liiklus hinnanguliselt ${fmt(eg.month_gb_est,1)} GB (tasuta pakett 5 GB)`);
   el.style.borderColor=warn.length?'var(--accent)':'';
   el.innerHTML=(warn.length?`<b style="color:var(--accent)">⚠ ${warn.map(stEsc).join(' · ')}</b><br>`:'<b>Tasuta paketi piirid: korras</b><br>')+
-    `<span class="fhint">Failihoidla ${mb(d.storage_bytes)} / 1 GB (${(d.buckets||[]).map(b=>stEsc(b.bucket)+' '+mb(b.bytes)).join(', ')}) · andmebaas ${mb(d.db_bytes)} / 500 MB · liiklus ${eg&&eg.ok?`~${fmt(eg.month_gb_est,1)} GB kuus (hinnang: ${eg.storage_requests_7d} failipäringut 7 päevaga × ${eg.avg_kb} KB)`:'teadmata (lisa saladus SUPABASE_MGMT_TOKEN)'} / 5 GB.</span>`+
-    (eg&&eg.dash?` <a href="${stEsc(eg.dash)}" target="_blank" rel="noopener">Täpne kasutus Supabase'is</a>`:'');}
+    `<span class="fhint">Failihoidla ${mb(d.storage_bytes)} / 1 GB (${(d.buckets||[]).map(b=>stEsc(b.bucket)+' '+mb(b.bytes)).join(', ')}) · andmebaas ${mb(d.db_bytes)} / 500 MB. Liiklus (5 GB kuus) on näha ainult Supabase'is.</span>`+
+    (ref?` <a href="https://supabase.com/dashboard/project/${ref}/settings/usage" target="_blank" rel="noopener">Vaata liiklust (Usage)</a>`:'');}
 async function renderErrors(){renderQuota();const body=$('errRows');if(!(CLOUD&&CL.sb&&CL.admin)){body.innerHTML='<tr><td colspan="6" class="fhint">Vead on nähtavad päris äpis admin-kontoga.</td></tr>';$('errCount').textContent='';return;}
   body.innerHTML='<tr><td colspan="6" class="fhint">Laadin…</td></tr>';const {data,error}=await CL.sb.rpc('admin_client_errors',{p_days:7});
   if(error){body.innerHTML=`<tr><td colspan="6">${stEsc(clErr(error))}</td></tr>`;return;}const R=data||[];
