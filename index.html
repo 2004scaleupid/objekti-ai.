@@ -1369,6 +1369,7 @@ input[type=checkbox]{accent-color:var(--accent)}
       <button type="button" data-atab="roi">Kulud ja ROI</button>
       <button type="button" data-atab="tpls">Mallid ja nišid</button>
       <button type="button" data-atab="feedback">Tagasiside</button>
+      <button type="button" data-atab="errors">Vead</button>
       <button type="button" data-atab="sources">Kust tullakse</button>
       <button type="button" data-atab="rules">Programmi reeglid</button>
     </nav>
@@ -1449,6 +1450,11 @@ input[type=checkbox]{accent-color:var(--accent)}
         </div>
         <div class="tbl card" style="padding:0"><table><thead><tr><th>Mall</th><th>Sisend</th><th>Niš</th><th>Kasutusi</th><th>Kasutajaid</th><th>Tulu (hinnang)</th><th>Nähtav</th><th></th></tr></thead><tbody id="tRows"></tbody></table></div>
         <span class="fhint">Mall määrab, mis küsimused objekti loomisel tulevad, millised mõõdud paneelis on, kuidas AI-abiline räägib ja mis prompt läheb pildimudelile. Uue niši lisamiseks pole koodi vaja.</span>
+      </section>
+      <section class="apane" data-apane="errors" hidden>
+        <div class="ahead"><h2>Vead</h2><span class="fhint" id="errCount"></span><button type="button" class="ghost" id="errReload" style="margin-left:auto">Värskenda</button></div>
+        <span class="fhint">Viimased 7 päeva, sama viga rühmitatud. Brauser (web) ja serveri funktsioonid (fn:…). Isikuandmeid peale kasutaja id ei salvestata.</span>
+        <div class="tbl card" style="padding:0"><table><thead><tr><th>Viimati</th><th>Allikas</th><th>Viga</th><th>Kordi</th><th>Kasutajaid</th><th>Koht</th></tr></thead><tbody id="errRows"></tbody></table></div>
       </section>
       <section class="apane" data-apane="feedback" hidden>
         <div class="ahead"><h2>Tagasiside</h2><span class="fhint" id="fbCount"></span></div>
@@ -1711,6 +1717,19 @@ input[type=checkbox]{accent-color:var(--accent)}
 <script>
 /* Serveri seaded: index.html annab window.V3D_CONFIG={url,key}. Ilma nendeta töötab rakendus demo-režiimis. */
 const CLOUD=(window.V3D_CONFIG&&window.V3D_CONFIG.url&&window.V3D_CONFIG.key)?window.V3D_CONFIG:null;
+/* Vigade jälgimine -> client_errors (admin „Vead“): brauseri vead, käsitlemata lubadused, ebaõnnestunud päringud (5xx/võrk).
+   Isikuandmeid ei saadeta: ainult kasutaja id (sessioonist), tekstist eemaldatud e-postid, päringuparameetrid ja pikad tokenid. Max 15 lehe laadimise kohta. */
+const ERR={n:0,seen:new Set(),f:window.fetch.bind(window)};
+const errScrub=t=>String(t||'').replace(/[\w.+-]+@[\w-]+\.[\w.-]+/g,'[e-post]').replace(/\?[^\s"']*/g,'').replace(/[A-Za-z0-9_\-]{32,}/g,'…');
+async function errLog(kind,msg,stack,url,status){if(!CLOUD)return;msg=errScrub(msg).slice(0,500);const k=kind+msg;if(!msg||msg==='Script error.'||ERR.seen.has(k)||++ERR.n>15)return;ERR.seen.add(k);
+  try{const h={'Content-Type':'application/json',apikey:CLOUD.key,Authorization:'Bearer '+CLOUD.key};
+    if(CL.sb){const {data}=await CL.sb.auth.getSession();if(data.session)h.Authorization='Bearer '+data.session.access_token;}
+    await ERR.f(CLOUD.url+'/rest/v1/rpc/log_client_error',{method:'POST',headers:h,keepalive:true,body:JSON.stringify({p_kind:kind,p_message:msg,p_stack:stack?errScrub(stack).slice(0,2000):null,p_url:errScrub(url||location.pathname).slice(0,300),p_status:status||null})});}catch(_){}}
+addEventListener('error',e=>{if(e.target&&e.target!==window)return;errLog('error',e.message,e.error&&e.error.stack,(e.filename||'').replace(/^https?:\/\/[^/]+/,'')+':'+e.lineno);});
+addEventListener('unhandledrejection',e=>{const r=e.reason;errLog('rejection',r&&r.message||String(r),r&&r.stack);});
+window.fetch=async function(u,o){const p=String(u&&u.url||u).replace(/^https?:\/\/[^/]+/,'');
+  try{const r=await ERR.f(u,o);if(r.status>=500)errLog('fetch','HTTP '+r.status+' '+p.split('?')[0],null,p,r.status);return r;}
+  catch(e){if(e&&e.name!=='AbortError'&&navigator.onLine!==false)errLog('fetch',(e&&e.message||'fetch')+' '+p.split('?')[0],null,p);throw e;}};
 /* turvalisus: kõik väljast tulev tekst ja lingid puhastatakse enne lehele panemist */
 const stripT=v=>String(v??'').replace(/[<>"'`]/g,'').slice(0,300);
 function safeUrl(u){u=String(u||'');if(/^https:\/\/[^\s"'<>`]+$/.test(u))return u;if(/^data:image\/(png|jpeg|jpg|webp);base64,[A-Za-z0-9+/=]+$/.test(u))return u;return '';}
@@ -3286,9 +3305,17 @@ async function editTpl(i){const isNew=i<0,t=isNew?{id:'',on:true,name:'',niche:'
 $('tAdd').onclick=()=>editTpl(-1);
 document.addEventListener('change',e=>{if(e.target&&e.target.id==='teIn'){const ph=e.target.value==='photo';$('teShowW').hidden=ph;$('teQW').hidden=ph;$('teStW').hidden=!ph;}});
 $('fbF').onchange=renderFeedback;
+async function renderErrors(){const body=$('errRows');if(!(CLOUD&&CL.sb&&CL.admin)){body.innerHTML='<tr><td colspan="6" class="fhint">Vead on nähtavad päris äpis admin-kontoga.</td></tr>';$('errCount').textContent='';return;}
+  body.innerHTML='<tr><td colspan="6" class="fhint">Laadin…</td></tr>';const {data,error}=await CL.sb.rpc('admin_client_errors',{p_days:7});
+  if(error){body.innerHTML=`<tr><td colspan="6">${stEsc(clErr(error))}</td></tr>`;return;}const R=data||[];
+  $('errCount').textContent=R.length?`${R.length} erinevat viga · ${R.reduce((a,r)=>a+Number(r.n),0)} korda`:'';
+  body.innerHTML=R.length?R.map(r=>`<tr><td style="white-space:nowrap">${new Date(r.last_at).toLocaleString('et-EE',{day:'numeric',month:'numeric',hour:'2-digit',minute:'2-digit'})}</td><td>${stEsc(r.source)}<br><small class="fhint">${stEsc(r.kind)}</small></td>
+    <td style="max-width:420px"><details><summary style="cursor:pointer;word-break:break-word">${stEsc(r.message)}</summary>${r.stack?`<pre style="white-space:pre-wrap;font-size:11.5px;margin:6px 0 0">${stEsc(r.stack)}</pre>`:'<small class="fhint">Pinu puudub</small>'}<small class="fhint">Esimest korda ${new Date(r.first_at).toLocaleString('et-EE')}</small></details></td>
+    <td><b>${r.n}</b></td><td>${r.users}</td><td style="word-break:break-all"><small>${stEsc(r.url||'')}${r.status?' · '+r.status:''}</small></td></tr>`).join(''):'<tr><td colspan="6" class="fhint">Viimase 7 päeva jooksul vigu pole.</td></tr>';}
+document.addEventListener('click',e=>{if(e.target&&e.target.id==='errReload')renderErrors();});
 function renderAdmin(tab){tab=tab||document.querySelector('[data-atab][aria-current="true"]').dataset.atab;if(typeof CLOUD!=='undefined'&&CLOUD&&CL.admin&&(!ADM||Date.now()-admAt>60000))loadAdm();
   document.querySelectorAll('[data-atab]').forEach(b=>b.setAttribute('aria-current',b.dataset.atab===tab));document.querySelectorAll('.apane').forEach(p=>p.hidden=p.dataset.apane!==tab);
-  ({tpls:renderTplAdmin,roi:renderRoi,feedback:renderFeedback,sources:renderSources,overview:renderOverview,users:renderUsers,partners:renderPartners,payouts:renderPayouts,activity:renderActivity,rules:renderRules})[tab]();}
+  ({errors:renderErrors,tpls:renderTplAdmin,roi:renderRoi,feedback:renderFeedback,sources:renderSources,overview:renderOverview,users:renderUsers,partners:renderPartners,payouts:renderPayouts,activity:renderActivity,rules:renderRules})[tab]();}
 document.querySelectorAll('[data-atab]').forEach(b=>b.onclick=()=>renderAdmin(b.dataset.atab));
 document.querySelectorAll('#rng button').forEach(b=>b.onclick=()=>{admRange=+b.dataset.d;document.querySelectorAll('#rng button').forEach(x=>x.setAttribute('aria-pressed',x===b));renderOverview();});
 $('uQ').addEventListener('input',renderUsers);$('uF').onchange=renderUsers;$('aF').onchange=renderActivity;$('admBack').onclick=()=>show('home');

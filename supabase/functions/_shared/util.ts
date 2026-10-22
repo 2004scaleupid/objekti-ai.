@@ -14,6 +14,31 @@ export const env = (k: string, d = "") => Deno.env.get(k) || d;
 export const admin = (): SupabaseClient =>
   createClient(env("SUPABASE_URL"), env("SUPABASE_SERVICE_ROLE_KEY"), { auth: { persistSession: false } });
 
+/** Tekst vealogi jaoks: ilma e-postide, päringuparameetrite ja pikkade tokeniteta. */
+export const scrub = (t: string) => t.replace(/[\w.+-]+@[\w-]+\.[\w.-]+/g, "[e-post]").replace(/\?[^\s"']*/g, "").replace(/[A-Za-z0-9_\-]{32,}/g, "…");
+
+// Edge Functionite vead -> client_errors (admin "Vead"): iga console.error, max 20 minutis ühe isolaadi kohta. Testides (EdgeRuntime puudub) välja lülitatud.
+// deno-lint-ignore no-explicit-any
+const RT = (globalThis as any).EdgeRuntime;
+if (RT && env("SUPABASE_URL")) {
+  const fnName = (Deno.mainModule.match(/\/([a-z0-9-]+)\/index\.ts$/) || [])[1] || "unknown";
+  const orig = console.error.bind(console);
+  let win = 0, n = 0;
+  console.error = (...a: unknown[]) => {
+    orig(...a);
+    try {
+      if (Date.now() - win > 60_000) { win = Date.now(); n = 0; }
+      if (++n > 20) return;
+      const msg = scrub(a.map((x) => x instanceof Error ? x.message : typeof x === "string" ? x : JSON.stringify(x)).join(" ")).slice(0, 500);
+      const st = a.find((x) => x instanceof Error) as Error | undefined;
+      const job = admin().from("client_errors").insert({ source: "fn:" + fnName, kind: "fn", message: msg || "?", stack: st?.stack ? scrub(st.stack).slice(0, 2000) : null
+      }).then(() => {}, () => {});
+      RT.waitUntil?.(job);
+    } catch { /* logimine ei tohi kunagi funktsiooni katki teha */ }
+  };
+  globalThis.addEventListener("unhandledrejection", (e) => console.error("käsitlemata viga:", (e as PromiseRejectionEvent).reason));
+}
+
 /** Serveri saladus: kõigepealt Edge Functioni Secrets, siis andmebaasi krüpteeritud vault (ainult service_role). */
 const secretCache = new Map<string, string>();
 export async function secret(name: string, envKey: string): Promise<string> {
