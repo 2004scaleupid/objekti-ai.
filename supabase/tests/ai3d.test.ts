@@ -287,3 +287,17 @@ Deno.test("ühe pildi tõend ei kehti tavarežiimis ja vastupidi (ese)", async (
   assertEquals((await call({ subject: "object", photos: one, check: normal })).status, 200);
   assertEquals((await call({ subject: "object", single: true, photos: one, check: single })).status, 200);
 });
+
+Deno.test("hoone EHR kood salvestub 3D-töö juurde, vigane või muu subjekt -> null", async () => {
+  W.balance = 100; W.tripo = "processing"; W.kieFail = false;
+  const run = async (subject: string, photos: string[], ehr: unknown) => {
+    W.check = subject === "building" ? good() : good("object", 1);
+    const c = await call({ action: "check", subject, photos });
+    const s = await call({ subject, photos, check: c.j.token, ehr });
+    assertEquals(s.status, 200, JSON.stringify(s.j));
+    return W.renders.find((r) => r.id === s.j.id)!.ehr;
+  };
+  assertEquals(await run("building", P4, "120656418"), "120656418");
+  assertEquals(await run("building", [4, 5, 6, 7].map(photo), "12a; drop"), null);
+  assertEquals(await run("object", [photo(7)], "120656418"), null);
+});

@@ -338,13 +338,15 @@ export async function handler(req: Request): Promise<Response> {
     const { data: p } = await db.from("products").select("id").eq("id", b.product_id).eq("company_id", me.companyId).maybeSingle();
     productId = p?.id ?? null;
   }
+  // hoone aadress (EHR kood) -> ametlikud mõõdud ja automaatne mõõtkava (Maa-ameti LOD2)
+  const ehr = subject === "building" && typeof b.ehr === "string" && /^\d{5,12}$/.test(b.ehr) ? b.ehr : null;
   const label = String(b.label || "Fotod → 3D-mudel").slice(0, 120);
   const prompt = cleanPrompt(subject);
   const id = crypto.randomUUID();
   let credits: number;
   try { credits = await spend(me.companyId, "3d", label, id); }
   catch (e) { const m = (e as Error).message; return fail(m, m === "insufficient_credits" ? 402 : 400); }
-  await db.from("renders").insert({ id, company_id: me.companyId, object_id: objectId, kind: "3d", product_id: productId, tpl: b.tpl ? String(b.tpl).slice(0, 40) : null, prompt: `[${subject}${single ? " 1 pilt" : ""}] ${prompt}`, stage: "cleaning" });
+  await db.from("renders").insert({ id, company_id: me.companyId, object_id: objectId, kind: "3d", product_id: productId, ehr, tpl: b.tpl ? String(b.tpl).slice(0, 40) : null, prompt: `[${subject}${single ? " 1 pilt" : ""}] ${prompt}`, stage: "cleaning" });
   try {
     const ins = await Promise.all(photos.map((u, i) => uploadDataUrl(u, `${me.companyId}/in/${id}-${i}`)));
     // puhastused paralleelselt; tulemus meie kausta ILMA firma logota (logo ei tohi mudeli tekstuuri sattuda)
