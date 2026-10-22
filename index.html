@@ -4825,7 +4825,7 @@ function attach(h){if(!h||h.l2||!L2||!L2[h.ehr])return false;const r=l2Of(h);if(
   if(!(acct.roofTypes&&acct.roofTypes[h.ehr]))h.roofType='lod2';return true;}
 window.v3dL2=()=>L2;
 
-const _mh=makeHouse;makeHouse=function(){const h=_mh.apply(this,arguments);attach(h);return h;};
+const _mh=makeHouse;makeHouse=function(){const h=_mh.apply(this,arguments);if(!attach(h))setTimeout(()=>need(h),0);return h;};
 const _art=applyRoofType;applyRoofType=function(h){
   if(h&&h.roofType==='lod2'&&!h.l2)h.roofType='gable';
   if(h&&h.l2&&h.roofType==='lod2'){const L=h.l2;h.eave=L.eave;h.height=L.top;h.roof=L.area;h.wall=+(h.perimeter*L.eave+L.fillA).toFixed(1);return;}
@@ -4865,9 +4865,20 @@ const seg=$('rtSeg');if(seg&&!seg.querySelector('[data-rt="lod2"]')){const b=doc
 const _srt=syncRT;syncRT=function(){const r=_srt.apply(this,arguments);const h=HOUSES[cur],b=seg&&seg.querySelector('[data-rt="lod2"]');if(b)b.hidden=!h.l2;
   const hint=seg&&seg.nextElementSibling;if(hint&&hint.classList.contains('fhint'))hint.textContent=h.l2?(h.roofType==='lod2'?'Katuse kuju ja kalded on riigi LOD2 andmetest. Kui see ei klapi, vali käsitsi.':'Selle maja kohta on LOD2 mudel olemas. Vali „Päris (LOD2)“, et näha päris katust.'):'Selle maja kohta pole LOD2 mudelit. Vali, milline katus päriselt on, ja pinnad arvutatakse ümber.';return r;};
 
-/* andmed tulevad eraldi failist, et leht laeks kiiresti */
-fetch('lod2-viimsi.json').then(r=>r.ok?r.json():Promise.reject(r.status)).then(d=>{L2=d;let any=false;HOUSES.forEach(h=>{if(attach(h))any=true;});
-  if(any&&typeof build==='function'&&!$('body').hidden){build();renderPanel();}else if(any){try{applyRoofType(HOUSES[cur]);}catch(_){}}}).catch(()=>{});
+/* andmed: sama LOD2 allikas mis mõõtudel (data/lod2/NN.json kilud, loadLod2). Uue omavalitsuse andmed lisanduvad sinna
+   ja katused tulevad kõikjal, kus kild olemas, mitte ainult Viimsis. Kild laetakse alles siis, kui maja avatakse. */
+function l2Raw(m){if(!m||!m.f||!m.f.length)return null;let cx=0,cy=0;const g=m.g&&m.g[0];
+  /* kilu punktid on hoone kõigi punktide keskmest; 3D-maja keskpunkt on põhiplaani raskuskese */
+  if(g&&g.length>=6){let A=0,X=0,Y=0;for(let i=0;i<g.length;i+=2){const x0=g[i],y0=g[i+1],x1=g[(i+2)%g.length],y1=g[(i+3)%g.length],c=x0*y1-x1*y0;A+=c;X+=(x0+x1)*c;Y+=(y0+y1)*c;}
+    if(Math.abs(A)>1e-6){cx=X/(3*A);cy=Y/(3*A);}}
+  return m.f.map(f=>{const P=f[3],o=[];for(let i=0;i<P.length;i+=3)o.push(+(P[i]-cx).toFixed(2),+(P[i+1]-cy).toFixed(2),P[i+2]);return o;});}
+L2={};const L2W={};
+function need(h){if(!h||!h.ehr||h.l2)return;const e=String(h.ehr);
+  if(Array.isArray(L2[e])){if(attach(h))l2Refresh(h);return;}
+  (L2W[e]=L2W[e]||[]).push(h);if(L2[e]===null)return;L2[e]=null;
+  loadLod2(e).then(m=>{const raw=l2Raw(m);if(!raw){L2[e]=false;delete L2W[e];return;}L2[e]=raw;const W=L2W[e]||[];delete L2W[e];W.forEach(x=>{if(attach(x))l2Refresh(x);});}).catch(()=>{delete L2[e];});}
+function l2Refresh(h){if(HOUSES[cur]===h&&typeof build==='function'&&!$('body').hidden){build();renderPanel();}else{try{applyRoofType(h);}catch(_){}}}
+HOUSES.forEach(need);
 })();
 
 /* ---------- 22.10: 3D-mudeli allalaadimine eri formaatides (GLB, USDZ, OBJ, STL) ---------- */
