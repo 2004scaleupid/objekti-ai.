@@ -191,14 +191,20 @@ export async function uploadDataUrl(dataUrl: string, path: string): Promise<stri
 }
 
 /** E-kiri Resendi kaudu. */
-export async function sendMail(to: string[], subject: string, html: string, replyTo?: string) {
+export async function sendMail(to: string[], subject: string, html: string, replyTo?: string, fromName?: string) {
   const key = env("RESEND_API_KEY");
+  // saatja nimi: "Firma via Vaade3D <paringud@…>" (aadress jääb meie kinnitatud domeenile)
+  let from = env("MAIL_FROM", "Vaade3D <paringud@vaade3d.ee>");
+  const nm = String(fromName || "").replace(/[^\p{L}\p{N} .&'-]/gu, "").trim().slice(0, 60);
+  if (nm) from = `${nm} via Vaade3D <${(from.match(/<([^>]+)>/) || [, from])[1]}>`;
   if (!key || !to.length) return { skipped: true };
   try {
     const r = await tfetch(env("RESEND_API_URL", "https://api.resend.com") + "/emails", {
       method: "POST", headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ from: env("MAIL_FROM", "Vaade3D <paringud@vaade3d.ee>"), to: to.slice(0, 5), subject: subject.slice(0, 200), html, reply_to: replyTo }),
+      body: JSON.stringify({ from, to: to.slice(0, 5), subject: subject.slice(0, 200), html, reply_to: replyTo }),
     }, 10000);
+    // Resendi põhjus funktsiooni logisse (nt domeen kinnitamata), ilma kirja sisuta
+    if (!r.ok) console.error("resend", r.status, (await r.text().catch(() => "")).slice(0, 300));
     return { ok: r.ok, status: r.status };
   } catch { return { ok: false, status: 0 }; }
 }
