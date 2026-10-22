@@ -1106,7 +1106,7 @@ body.p3emb{background:transparent;margin:0;padding:0;overflow:hidden}body.p3emb 
           <div class="sw" id="roofSw">Katus</div>
           <div class="sw" id="wallSw">Sein</div>
         </div>
-        <span class="src">Hoonete 3D-mudelid: Maa- ja Ruumiamet 2025</span>
+        <span class="src">Hoonete 3D-mudelid: Maa- ja Ruumiamet 2026</span>
         </div>
       </div>
     </section>
@@ -1734,7 +1734,7 @@ $('dlSheet').onclick=()=>{const src=snap(),h=HOUSES[cur],W=1800,H=1100,c=documen
   {let y=860;g.fillStyle='#16130F';g.font='600 16px "Inter Tight",Arial';if((acct.services||[]).length){g.fillText('Teenused',x,y);g.font='400 14px "Inter Tight",Arial';g.fillStyle='#4A443E';
     let line='';(acct.services||[]).join(' · ').split(' ').forEach(w=>{if(g.measureText(line+w).width>W-40-x){g.fillText(line,x,y+=22);line='';}line+=w+' ';});g.fillText(line,x,y+=22);y+=34;}
    g.fillStyle='#16130F';g.font='500 14px "Inter Tight",Arial';const ct=[acct.warranty?`Garantii ${acct.warranty} a`:'',acct.cphone,acct.cmail].filter(Boolean).join(' · ');if(ct)g.fillText(ct,x,y);}
-  ['* hinnang (30° viilkatus), aknad maha arvamata.','Mõõdud umbkaudsed, lõplik mõõt enne lepingut.','Hoonete 3D-mudelid: Maa- ja Ruumiamet 2025'].forEach((t,i)=>g.fillText(t,x,740+i*24));
+  ['* hinnang (30° viilkatus), aknad maha arvamata.','Mõõdud umbkaudsed, lõplik mõõt enne lepingut.','Hoonete 3D-mudelid: Maa- ja Ruumiamet 2026'].forEach((t,i)=>g.fillText(t,x,740+i*24));
   g.fillStyle='#E5482D';g.fillRect(x,H-120,W-40-x,3);
   c.toBlob(b=>b&&saveFile(slug()+'-objekti-leht.png',b),'image/png');};
 
@@ -4266,30 +4266,42 @@ function m3Fit(V,L){if(!V||!V.model||!L||!L.g||!L.g.length||!(L.ridge>0))return 
   if(T.length<6||!(y1>y0))return null;const Hm=y1-y0;
   // pealtvaade rastriks
   let a=Infinity,b=Infinity,A=-Infinity,B=-Infinity;for(let i=0;i<T.length;i+=2){a=Math.min(a,T[i]);A=Math.max(A,T[i]);b=Math.min(b,T[i+1]);B=Math.max(B,T[i+1]);}
-  const c=Math.max(A-a,B-b)/120,W=Math.floor((A-a)/c)+1,H=Math.floor((B-b)/c)+1,G=new Uint8Array(W*H),ci=x=>Math.min(W-1,Math.floor((x-a)/c)),cj=y=>Math.min(H-1,Math.floor((y-b)/c));
+  const c=Math.max(A-a,B-b)/120,W=Math.floor((A-a)/c)+1,H=Math.floor((B-b)/c)+1,G=new Uint8Array(W*H),HT=new Float32Array(W*H).fill(-Infinity),ci=x=>Math.min(W-1,Math.floor((x-a)/c)),cj=y=>Math.min(H-1,Math.floor((y-b)/c));
   const cr=(x0,y0_,x1,y1_,px,py)=>(x1-x0)*(py-y0_)-(y1_-y0_)*(px-x0);
   // seinte lõiked: kolmnurk lõikab tasandit y = ys -> 2 punkti
   const er=Math.min(.95,(L.eave>0?L.eave:L.ridge*.6)/L.ridge),cut=[.3,.5,.7].map(f=>y0+f*er*Hm),S=[];
   for(let t=0;t+5<T.length;t+=6){const X=[T[t],T[t+2],T[t+4]],Z=[T[t+1],T[t+3],T[t+5]],YY=[Y[t/2],Y[t/2+1],Y[t/2+2]];
-    for(let k=0;k<3;k++)G[cj(Z[k])*W+ci(X[k])]=1;
+    for(let k=0;k<3;k++){const q=cj(Z[k])*W+ci(X[k]);G[q]=1;if(YY[k]>HT[q])HT[q]=YY[k];}
     const i0=ci(Math.min(...X)),i1=ci(Math.max(...X)),j0=cj(Math.min(...Z)),j1=cj(Math.max(...Z));
     if(i1>i0||j1>j0)for(let j=j0;j<=j1;j++)for(let i=i0;i<=i1;i++){const px=a+(i+.5)*c,py=b+(j+.5)*c,s1=cr(X[0],Z[0],X[1],Z[1],px,py),s2=cr(X[1],Z[1],X[2],Z[2],px,py),s3=cr(X[2],Z[2],X[0],Z[0],px,py);
-      if((s1>=0&&s2>=0&&s3>=0)||(s1<=0&&s2<=0&&s3<=0))G[j*W+i]=1;}
+      if((s1>=0&&s2>=0&&s3>=0)||(s1<=0&&s2<=0&&s3<=0)){const q=j*W+i,sm=s1+s2+s3;G[q]=1;if(sm){const y=(s2*YY[0]+s3*YY[1]+s1*YY[2])/sm;if(y>HT[q])HT[q]=y;}}}
     for(const ys of cut)for(let k=0;k<3;k++){const q=(k+1)%3,ya=YY[k],yb=YY[q];if((ya<ys)!==(yb<ys)){const u=(ys-ya)/(yb-ya);S.push([X[k]+u*(X[q]-X[k]),Z[k]+u*(Z[q]-Z[k])]);}}}
   // LOD2 jalajälg rastriks (meetrites)
   const PL=L.g.map(f=>{const r=[];for(let i=0;i+1<f.length;i+=2)r.push([f[i],f[i+1]]);return r;}),FP=[].concat(...PL);
   let la=Infinity,lb=Infinity,lA=-Infinity,lB=-Infinity;FP.forEach(p=>{la=Math.min(la,p[0]);lA=Math.max(lA,p[0]);lb=Math.min(lb,p[1]);lB=Math.max(lB,p[1]);});
   const lc=Math.max(.1,Math.max(lA-la,lB-lb)/150),LW=Math.floor((lA-la)/lc)+1,LH=Math.floor((lB-lb)/lc)+1,LG=new Uint8Array(LW*LH);
-  for(let j=0;j<LH;j++)for(let i=0;i<LW;i++){const q=[la+(i+.5)*lc,lb+(j+.5)*lc];if(PL.some(r=>pip(q,r)))LG[j*LW+i]=1;}
+  const RF=(L.f||[]).map(F=>{const c=F[3],R=[];for(let k=0;k+2<c.length;k+=3)R.push([c[k],c[k+1],c[k+2]]);let nx=0,ny=0,nz=0;
+    R.forEach((p,k)=>{const q=R[(k+1)%R.length];nx+=(p[1]-q[1])*(p[2]+q[2]);ny+=(p[2]-q[2])*(p[0]+q[0]);nz+=(p[0]-q[0])*(p[1]+q[1]);});return {R,nx,ny,nz};}).filter(F=>Math.abs(F.nz)>1e-9),
+    LZ=new Float32Array(LW*LH).fill(NaN);
+  for(let j=0;j<LH;j++)for(let i=0;i<LW;i++){const q=[la+(i+.5)*lc,lb+(j+.5)*lc];if(PL.some(r=>pip(q,r)))LG[j*LW+i]=1;
+    RF.forEach(F=>{if(!pip(q,F.R))return;const z=F.R[0][2]-(F.nx*(q[0]-F.R[0][0])+F.ny*(q[1]-F.R[0][1]))/F.nz;if(!(z<=LZ[j*LW+i]))LZ[j*LW+i]=z;});}
   const M=m3Mom(G,W,H,c,a,b),LM=m3Mom(LG,LW,LH,lc,la,lb);if(!M.n||!LM.n)return null;
   // mõõtkava: seinte lõigete ümbris vs jalajälje ümbris; kui lõikeid pole, siis kogu pealtvaade
   const hm=S.length>=8?m3Hull(S):0,s=hm>0?Math.sqrt(m3Hull(FP)/hm):Math.sqrt(LM.n*lc*lc/(M.n*c*c)),sh=L.ridge/Hm;
-  let best=null;for(let k=0;k<4;k++){const th=LM.ang-M.ang+k*Math.PI/2,co=Math.cos(th),si=Math.sin(th);let hit=0;
+  const iouAt=th=>{const co=Math.cos(th),si=Math.sin(th);let hit=0,he=0,hn=0;
     for(let j=0;j<H;j++)for(let i=0;i<W;i++)if(G[j*W+i]){const dx=(a+(i+.5)*c-M.mx)*s,dy=(b+(j+.5)*c-M.my)*s,X=dx*co-dy*si+LM.mx,Z=dx*si+dy*co+LM.my,ii=Math.floor((X-la)/lc),jj=Math.floor((Z-lb)/lc);
-      if(ii>=0&&jj>=0&&ii<LW&&jj<LH&&LG[jj*LW+ii])hit++;}
-    const inter=hit*c*c*s*s,iou=inter/(M.n*c*c*s*s+LM.n*lc*lc-inter);if(!best||iou>best.iou)best={iou,th};}
-  const err=Math.abs(sh/s-1),ok=best.iou>=.7&&err<=.15;
-  return {s:+s.toPrecision(5),rot:+(best.th*180/Math.PI).toFixed(1),mc:[+M.mx.toFixed(4),+M.my.toFixed(4)],lc:[+LM.mx.toFixed(2),+LM.my.toFixed(2)],y0:+y0.toFixed(4),iou:+best.iou.toFixed(2),err:+err.toFixed(3),ok,v:1};}
+      if(ii>=0&&jj>=0&&ii<LW&&jj<LH&&LG[jj*LW+ii]){hit++;const z=LZ[jj*LW+ii],y=HT[j*W+i];if(z===z&&y>-Infinity){he+=Math.abs((y-y0)*s-z);hn++;}}}
+    const inter=hit*c*c*s*s;return {iou:inter/(M.n*c*c*s*s+LM.n*lc*lc-inter),th,hz:hn?he/hn:Infinity};};
+  // 4 suunda: kuju kattuvus, viigi korral (±0,03) katuse kõrguste kokkulangevus
+  const C=[0,1,2,3].map(k=>iouAt(LM.ang-M.ang+k*Math.PI/2)),top=Math.max(...C.map(r=>r.iou));
+  let best=C.filter(r=>r.iou>=top-.03).sort((p,q)=>p.hz-q.hz)[0];const alt=C[(C.indexOf(best)+2)%4];
+  // peatelg on peaaegu ruudukujulisel majal ebatäpne: täpsusta nurka ±10° (1°), siis ±1° (0,2°)
+  for(const [w,st] of [[10,1],[1,.2]]){const t0=best.th;for(let d=-w;d<=w;d+=st){const r=iouAt(t0+d*Math.PI/180);if(r.iou>best.iou)best=r;}}
+  // pööratud 180° on sama hea -> põhjasuunda ei tea (sümmeetriline maja)
+  const sym=alt.iou>=best.iou-.03&&Math.abs(alt.hz-best.hz)<.15;
+  // lävendid: stressitest (scripts/lod2_tiles.py hooned, juhuslik mõõtkava/pööre/üleulatus/müra): õige maja IoU >= 0,88, kõrgus <= 2,6%; sarnane vale maja IoU 0,82, kõrgus 11,7%
+  const err=Math.abs(sh/s-1),ok=best.iou>=.8&&err<=.08;
+  return {s:+s.toPrecision(5),rot:+(best.th*180/Math.PI).toFixed(1),mc:[+M.mx.toFixed(4),+M.my.toFixed(4)],lc:[+LM.mx.toFixed(2),+LM.my.toFixed(2)],y0:+y0.toFixed(4),iou:+best.iou.toFixed(2),err:+err.toFixed(3),ok,sym,v:1};}
 /* Ametlik tahk: klõps mudelil -> LOD2 koordinaadid (sobituse kaudu) -> lähim katusetahk/sein, esile tõstetud. Ainult kindla sobitusega. */
 function m3FaceOn(){const s=stSess(),m=s&&s.model;return !!(m&&m3AutoOn(m)&&M3L2[m.ehr]);}
 function m3ToL(f,p){const th=f.rot*Math.PI/180,dx=(p.x-f.mc[0])*f.s,dy=(-p.z-f.mc[1])*f.s;return [dx*Math.cos(th)-dy*Math.sin(th)+f.lc[0],dx*Math.sin(th)+dy*Math.cos(th)+f.lc[1],(p.y-f.y0)*f.s];}
@@ -4313,7 +4325,7 @@ function m3Face(V,m,e,at){const f=m.fit,L=M3L2[m.ehr];if(!m3AutoOn(m)||!L)return
   rc.setFromCamera(new THREE.Vector2((e.clientX-b.left)/b.width*2-1,-(e.clientY-b.top)/b.height*2+1),V.cam);const h=rc.intersectObject(V.model,true)[0];if(!h){toast('Klõpsa mudelil');return;}
   const nr=h.face?h.face.normal.clone().transformDirection(h.object.matrixWorld):null,c=m3FaceAt(L,m3ToL(f,h.point),!!nr&&Math.abs(nr.y)<.45);
   if(!c){m3FaceClear();toast('Selles kohas Maa-ameti tahku ei leitud');return;}
-  let txt,Q;if(c.kind==='roof'){const F=L.f[c.i];Q=c.R;txt=`Katusetahk ${c.i+1}: ${fmt(F[0])} m² · ${lod2Face(F)}`;}
+  let txt,Q;if(c.kind==='roof'){const F=L.f[c.i];Q=c.R;txt=`Katusetahk ${c.i+1}: ${fmt(F[0])} m² · ${f.sym&&F[2]!=null?fmt(F[1],0)+'° kalle':lod2Face(F)}`;}
   else{Q=[[c.a[0],c.a[1],0],[c.b[0],c.b[1],0],[c.b[0],c.b[1],L.eave],[c.a[0],c.a[1],L.eave]];txt=`Sein: pikkus ${fmt(c.len,2)} m · kõrgus räästani ~${fmt(L.eave,1)} m`;}
   m3FaceShow(V,f,Q);stPop(`<b>${stEsc(txt)}</b><span class="fhint">Ametlik mõõt · ${LOD2_SRC}</span><div class="row"><button type="button" class="sz" id="m3FN">Lisa märkmena</button></div>`,null,at);
   $('m3FN').onclick=()=>{m.items.push({t:'note',p:[m3r(h.point)],txt:(txt+' (Maa-amet)').slice(0,120)});stPopClose();m3Changed();};}
