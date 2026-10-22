@@ -16,10 +16,10 @@ const pub = (path: string) => {
   return u;
 };
 
-/** LOD2 keskpunkt (EPSG:3301) äpi andmetest: data/lod2/NN.json */
+/** LOD2 keskpunkt (EPSG:3301) äpi andmetest: data/lod2/NNN.json (EHR 3 viimast numbrit) */
 async function centre(ehr: string): Promise<[number, number] | null> {
   const base = env("APP_DATA_BASE", "https://app.vaade3d.ee/").replace(/\/?$/, "/");
-  const r = await tfetch(`${base}data/lod2/${ehr.slice(-2)}.json`, {}, 15000);
+  const r = await tfetch(`${base}data/lod2/${ehr.slice(-3)}.json`, {}, 15000);
   if (!r.ok) return null;
   const d = await r.json().catch(() => ({}));
   const c = d?.[ehr]?.c;

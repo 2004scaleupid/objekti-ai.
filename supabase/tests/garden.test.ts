@@ -12,7 +12,7 @@ globalThis.fetch = async (input: string | URL | Request, init: RequestInit = {})
   const req = input instanceof Request ? input : new Request(String(input), init);
   const u = new URL(req.url), p = u.pathname;
   W.calls.push(u.host + p + (u.searchParams.get("layers") ? "?" + u.searchParams.get("layers") : ""));
-  if (u.origin + "/" === APP && p === "/data/lod2/18.json") return res({ "120656418": { c: [545000.5, 6597000.25] } });
+  if (u.origin + "/" === APP && p === "/data/lod2/418.json") return res({ "120656418": { c: [545000.5, 6597000.25] } });
   if (u.host === "kaart.maaamet.ee") {
     assertEquals(u.searchParams.get("crs"), "EPSG:3301");
     assertEquals(u.searchParams.get("bbox"), "6596936.25,544936.5,6597064.25,545064.5"); // põhi, ida ±64 m
