@@ -575,7 +575,7 @@ body.cvm .panel>*:not(#cvPanel){display:none!important}
 .stf .x:hover{background:rgba(22,19,15,.9)}.stf .bl{position:absolute;left:4px;bottom:4px;font:600 9.5px var(--mono);background:rgba(22,19,15,.72);color:#fff;border-radius:999px;padding:2px 6px}
 #stIn{width:100%;box-sizing:border-box;border:0;background:transparent;resize:none;font:400 16px/1.5 var(--display);color:var(--ink);padding:2px 4px;min-height:26px;max-height:240px;outline:none}
 #stIn::placeholder{color:var(--muted)}
-.stbar{display:flex;align-items:center;gap:6px}.stsp{flex:1}
+.stbar{display:flex;align-items:center;gap:6px}.stgo{display:inline-flex;align-items:center;gap:6px;flex:none}.stsp{flex:1}
 .sticon{width:34px;height:34px;border-radius:10px;border:0;background:none;color:var(--muted);display:grid;place-items:center;cursor:pointer}
 .sticon:hover{background:var(--soft);color:var(--ink)}
 .stsel{position:relative}
@@ -842,6 +842,8 @@ body:not(.cvm) #mSeg{display:none}
 .ghost.dz{color:#C2410C;border-color:rgba(194,65,12,.45)}.ghost.dz:hover{background:rgba(194,65,12,.08)}#gdprC .fhint a{color:inherit}
 .capw{min-height:0}.capw iframe{max-width:100%}
 .m3cf{color:var(--ok);font-weight:600}
+.stwarn{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:9px 12px;border-radius:12px;background:var(--soft);border:1px solid var(--line);font-size:13.5px;width:100%}.stwarn span{flex:1 1 220px}.stwarn .sw{background:var(--accent);color:#fff;border:0;border-radius:9px;padding:6px 11px;font:700 12.5px var(--display);cursor:pointer}.stwarn .no{background:none;border:0;color:var(--muted);text-decoration:underline;font:600 12.5px var(--display);cursor:pointer}
+@media (max-width:560px){.stbar{flex-wrap:wrap;row-gap:8px}.stbar .stgo{margin-left:auto}.stbar .stcost{display:none}.stbar #stProdW{min-width:0;max-width:150px}.stbar #stProdW>button{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}}
 .lform .err{min-height:36px}.lterms{align-items:flex-start;line-height:1.4}.lterms input{margin-top:1px;flex:none}.lterms a{color:var(--accent);font-weight:600}.lrem{display:flex;gap:8px;align-items:center;font-size:13.5px;margin-top:-6px;cursor:pointer;align-self:flex-start}.lrem input{width:16px;height:16px;accent-color:var(--accent)}
 .lspin{display:inline-block;width:14px;height:14px;margin-right:8px;vertical-align:-2px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:lspin .7s linear infinite}@keyframes lspin{to{transform:rotate(360deg)}}
 .boot{position:fixed;inset:0;z-index:500;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;background:var(--bg);transition:opacity .35s ease;padding:16px;text-align:center}
@@ -1367,8 +1369,8 @@ input[type=checkbox]{accent-color:var(--accent)}
             <div class="stsel" id="stProdW" hidden><button type="button" class="stpick" id="stProd" aria-haspopup="listbox"><span id="stProdT">Vali toode</span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button><div class="stmenu" id="stProdM" role="listbox" hidden></div></div>
             <span class="stsp"></span>
             <div class="stsel" id="stStyleW"><button type="button" class="stpick" id="stStyle" aria-haspopup="listbox"><span id="stStyleT">Fotorealistlik</span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button><div class="stmenu up" id="stStyleM" role="listbox" hidden></div></div>
-            <button type="button" class="stgen" id="stGenBtn" title="Tee pilt"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2l1.8 5.6L19.5 9l-5.7 1.6L12 16l-1.8-5.4L4.5 9l5.7-1.4z"/><path d="M19 14l.9 2.6 2.6.9-2.6.9L19 21l-.9-2.6-2.6-.9 2.6-.9z" opacity=".7"/></svg><span>Genereeri</span><span class="stcost" id="stCost"></span></button>
-            <button type="button" class="stsend" id="stSend" aria-label="Saada" disabled><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button>
+            <span class="stgo"><button type="button" class="stgen" id="stGenBtn" title="Tee pilt"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2l1.8 5.6L19.5 9l-5.7 1.6L12 16l-1.8-5.4L4.5 9l5.7-1.4z"/><path d="M19 14l.9 2.6 2.6.9-2.6.9L19 21l-.9-2.6-2.6-.9 2.6-.9z" opacity=".7"/></svg><span>Genereeri</span><span class="stcost" id="stCost"></span></button>
+            <button type="button" class="stsend" id="stSend" aria-label="Saada" disabled><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button></span>
           </div>
         </div>
         <div class="stchips" id="stChips" role="group" aria-label="Vali töö"></div>
@@ -3954,11 +3956,58 @@ function stRenderMk(){const s=stSess(),box=$('stMk');if(!s||!s.base||STU.edit==n
 function stInsert(t){const i=$('stIn'),a=i.selectionStart??i.value.length,b=i.selectionEnd??i.value.length,pre=i.value.slice(0,a),post=i.value.slice(b);
   const ins=(pre&&!/\s$/.test(pre)?' ':'')+t+(post&&!/^\s/.test(post)?' ':'');i.value=pre+ins+post;const p=(pre+ins).length;i.focus();i.setSelectionRange(p,p);stAuto();stSync();}
 function stRenderLegend(){stRenderPanel();}
+/* ---------- Kontekstipõhised soovitused: foto stseen (photo-scene, Claude Haiku, tasuta, vahemälu räsi järgi) ---------- */
+const SC_ROOM={
+  bedroom:['Skandinaavia stiil, heledad puitpinnad','Uus voodi ja tekstiilid, rahulikud toonid','Värvi seinad salveiroheliseks','Lisa riiulisein ja öölambid'],
+  living:['Skandinaavia stiil, heledad puitpinnad','Uus diivan ja suur pehme vaip','Värvi seinad sooja beežiks','Lisa taimi, raamatuid ja hubast valgust'],
+  kitchen:['Mustad käepidemed, valge tööpind','Puidust tasapinnad ja avariiulid','Köögikapid salveiroheliseks','Lisa köögisaar ja rippvalgustid'],
+  bathroom:['Suured hallid plaadid, must segisti','Puidust valamukapp ja ümar peegel','Lisa walk-in dušš klaasseinaga','Heledad toonid ja soe valgustus'],
+  sauna:['Termopuidust lavad ja LED-valgus','Must kivisein kerise taha','Klaasuks ja kaasaegne keris','Tumedad seinad, soe kaudne valgus'],
+  office:['Uus kirjutuslaud ja hea tool','Riiulisein raamatute ja kaustadega','Värvi seinad tumesiniseks','Lisa taimi ja head töövalgust'],
+  kids:['Heledad toonid ja mänguala','Nari ja palju hoiuruumi','Mänguline tapeet ühele seinale','Pehme vaip ja lugemisnurk'],
+  hall:['Nagi, pink ja suur peegel','Heledad seinad ja uus põrand','Kinnised kapid jalanõudele','Soe valgus ja seinavalgustid'],
+  room:['Skandinaavia stiil, heledad pinnad','Värvi seinad salveiroheliseks','Vaheta mööbel moodsama vastu','Lisa taimi ja soojemat valgust']};
+const SC_SCENE={
+  exterior_house:['Lisa maja katusele päikesepaneelid','Fassaad tumehalliks, raamid mustaks','Lisa hoovi saun ja puidust terrass','Uus tumehall plekk-katus'],
+  facade_closeup:['Värvi fassaad tumehalliks','Aknad mustade raamidega','Hele horisontaalne puitlaudis','Uus välisuks ja seinavalgustid'],
+  roof:['Uus tumehall plekk-katus','Lisa katusele päikesepaneelid','Punane kivikatus','Lisa katuseaknad'],
+  garden_yard:['Lisa puidust terrass','Lisa saun hoovi','Uus muru, hekk ja kiviplaadid','Lillepeenrad ja aiavalgustid'],
+  vehicle:['Värvi auto matt mustaks','Kleebi auto firma värvidesse','Tumedad veljed ja toonitud aknad','Taustaks linn õhtuvalguses'],
+  product_object:['Taustaks valge stuudio','Pane ese hubasesse elutuppa','Proovi teist värvi ja materjali','Lisa pehme stuudiovalgus'],
+  neutral:['Tee pilt heledamaks ja soojemaks','Eemalda pildilt segavad esemed','Proovi teist värvilahendust','Lisa pehme õhtune valgus']};
+// tuvastatud asjad -> konkreetne soovitus (sise- ja välisvaates eraldi)
+const SC_FEAT_IN={diivan:'Vaheta diivan nurgadiivani vastu',voodi:'Uus voodi ja tekstiilid, rahulikud toonid','köögikapid':'Köögikapid salveiroheliseks',kapid:'Kapid valgeks, mustad käepidemed',kamin:'Kamin valgeks krohviks',lavad:'Termopuidust lavad ja LED-valgus',keris:'Kaasaegne keris ja kivisein taha',aknad:'Suuremad aknad, heledad kardinad','põrand':'Vaheta põrand tammeparketi vastu',laud:'Uus puidust laud ja toolid',tool:'Vaheta tool moodsama vastu',vann:'Vabalt seisev valge vann',riiul:'Riiulisein laeni'};
+const SC_FEAT_OUT={aknad:'Aknad mustade raamidega',uks:'Uus välisuks tumedast puidust',terrass:'Laienda terrassi, lisa pergola',muru:'Uus muru, hekk ja kiviplaadid',hekk:'Pügatud hekk ja aiavalgustid',piirdeaed:'Uus piirdeaed tumedast metallist',katus:'Uus tumehall plekk-katus',fassaad:'Fassaad tumehalliks, raamid mustaks',auto:'Eemalda auto pildilt',aed:'Lillepeenrad ja aiavalgustid'};
+// milliseid stseene mall ootab (vaba võtab kõik)
+const SC_TPL={sisek:['interior_room'],toodehoov:['garden_yard','exterior_house'],varv:['exterior_house','facade_closeup','roof'],aed:['garden_yard','exterior_house'],auto:['vehicle'],toode:['product_object'],ese:['product_object','interior_room']};
+const SC_LBL={interior_room:'toa pilt',exterior_house:'maja välisvaade',facade_closeup:'fassaadi lähivaade',roof:'katuse pilt',garden_yard:'aia või hoovi pilt',vehicle:'auto pilt',product_object:'eseme pilt'};
+const SC_ROOMLBL={bedroom:'magamistoa pilt',living:'elutoa pilt',kitchen:'köögi pilt',bathroom:'vannitoa pilt',sauna:'sauna pilt',office:'kabineti pilt',kids:'lastetoa pilt',hall:'esiku pilt'};
+const SC_PART={sisek:'Sisekujundust',vaba:'Vaba ideed'},SC_NAME={sisek:'Sisekujundus',vaba:'Vaba idee'};
+function stMainImg(s){const T=stTrayImgs(s);if(!T.length)return null;if(STU.edit!=null&&s.imgs[STU.edit])return s.imgs[STU.edit];return T.find(im=>(im.marks||[]).length)||T[0];}
+const SCQ=new Set();
+function stScene(s){const im=s&&stMainImg(s);if(!im)return null;if(im.scene)return im.scene;stSceneLoad(s,im);return {pending:true};}
+async function stSceneLoad(s,im){if(SCQ.has(im.src))return;SCQ.add(im.src);let r=null;
+  try{const th=await stThumb(im.src,512),h=[...new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(th)))].map(b=>b.toString(16).padStart(2,'0')).join('');
+    const C=store.get('v3d_scene',{});if(C[h])r=C[h];
+    else if(CLOUD&&CL.cid){const j=await clFn('photo-scene',{hash:h,image:th});r={scene:j.scene,room_type:j.room_type||null,features:j.features||[]};const K=Object.keys(C);if(K.length>200)delete C[K[0]];C[h]=r;store.set('v3d_scene',C);}
+    else r={scene:'none',features:[]};}
+  catch(e){r={scene:'none',features:[],err:1};}
+  im.scene=r;SCQ.delete(im.src);stSave();if(!$('studio').hidden&&stSess()===s)stRenderSugg();}
+function stSceneChips(tpl,sc){const N=SC_SCENE.neutral;if(!sc||sc.pending||!sc.scene||sc.scene==='none'||sc.scene==='other')return N;
+  const ok=SC_TPL[tpl];if(ok&&!ok.includes(sc.scene))return N;
+  const inside=sc.scene==='interior_room';
+  if(tpl==='toodehoov'){const L=['Pane toode muru keskele','Pane toode aia äärde','Pane toode maja ette','Pane toode puude alla varju'];if((sc.features||[]).includes('terrass'))L.unshift('Pane toode terrassi kõrvale');return L.slice(0,4);}
+  const base=inside?(SC_ROOM[sc.room_type]||SC_ROOM.room):(SC_SCENE[sc.scene]||N),F=inside?SC_FEAT_IN:['vehicle','product_object'].includes(sc.scene)?{}:SC_FEAT_OUT; // auto/ese: ainult stseeni soovitused
+  const feat=(sc.features||[]).map(x=>F[x]).filter(Boolean).slice(0,2),out=[];[...feat,...base].forEach(x=>{if(!out.includes(x)&&out.length<4)out.push(x);});return out;}
+function stSceneWarn(tpl,sc){const ok=SC_TPL[tpl];if(!ok||!sc||!sc.scene||['none','other'].includes(sc.scene)||ok.includes(sc.scene))return null;
+  const to=sc.scene==='interior_room'?'sisek':'vaba';if(to===tpl)return null;
+  return {to,txt:`See tundub ${(sc.scene==='interior_room'&&SC_ROOMLBL[sc.room_type])||SC_LBL[sc.scene]||'teistsugune pilt'}. Kas soovid ${SC_PART[to]}?`};}
 function stSuggList(){const th=stTheme(STU.tpl),s=stSess();if(!s||(!s.base&&!s.msgs.length))return th.sugg||[];if(STU.busy)return [];
-  if(!s.base||!s.marks.length)return s.msgs.length?(th.follow||[]):(th.sugg||[]);const L=stLabels(s.marks),P=prodList(),out=[];
+  const sc=stTrayImgs(s).length?stScene(s):null,inside=STU.tpl==='sisek'||(sc&&sc.scene==='interior_room');
+  if(!s.base||!s.marks.length)return s.msgs.length?(th.follow||[]):(stTrayImgs(s).length&&th.need!=='addr'&&!th.p3?stSceneChips(STU.tpl,sc):(th.sugg||[]));const L=stLabels(s.marks),P=prodList(),out=[];
   const areas=s.marks.map((m,i)=>isArea(m)?L[i]:null).filter(Boolean),pts=s.marks.map((m,i)=>m.t==='point'?L[i]:null).filter(Boolean),pr=s.marks.filter(m=>m.t==='prod'&&m.pid);
   if(pr.length){const k=P.findIndex(p=>p.id===pr[0].pid);if(k>=0)out.push(`Pane toode ${k+1} märgitud kohta`,`Pane toode ${k+1} märgitud kohta, õhtune valgus`);}
-  if(areas.length){const a=areas[0];if(STU.tpl==='sisek')out.push(`Vaheta alal ${a} mööbel moodsama vastu`,`Värvi ala ${a} salveiroheliseks`,`Eemalda alalt ${a} kõik esemed`);
+  if(areas.length){const a=areas[0];if(inside)out.push(`Vaheta alal ${a} mööbel moodsama vastu`,`Värvi ala ${a} salveiroheliseks`,`Eemalda alalt ${a} kõik esemed`);
     else out.push(`Pane alale ${a} päikesepaneelid`,`Värvi ala ${a} punaseks`,`Eemalda alalt ${a} kõik`,`Tee alale ${a} muru ja lillepeenar`);
     if(areas.length>1)out.push(`Tee ala ${areas[1]} samasuguseks nagu ala ${a}`);}
   if(pts.length>1)out.push(`Tee punktist ${pts[0]} punkti ${pts[1]} kivisillutisega tee`,`Pane punktist ${pts[0]} punkti ${pts[1]} madal hekk`);
@@ -3966,9 +4015,12 @@ function stSuggList(){const th=stTheme(STU.tpl),s=stSess();if(!s||(!s.base&&!s.m
   if(s.marks.some(m=>m.t==='arrow'))out.push('Lisa noole kohale uus aken');
   return out.length?out.slice(0,6):(th.follow||[]);}
 function stRenderSugg(){const th=stTheme(STU.tpl),s=stSess(),fresh=!s||(!s.base&&!s.msgs.length),L=stSuggList();
-  let html=L.map(x=>`<button type="button" class="stsug" data-s="${stEsc(x)}"><i>↗</i><span>${stEsc(x)}</span></button>`).join('');
+  const im=s&&stMainImg(s),w=im&&!im.sceneOk&&!th.p3&&th.need!=='addr'?stSceneWarn(STU.tpl,im.scene):null;
+  let html=(w?`<div class="stwarn" role="status"><span>${stEsc(w.txt)}</span><button type="button" class="sw" data-swtpl="${w.to}">Vaheta: ${stEsc(SC_NAME[w.to]||w.to)}</button><button type="button" class="no" data-swno="1">Jätkan nii</button></div>`:'')+L.map(x=>`<button type="button" class="stsug" data-s="${stEsc(x)}"><i>↗</i><span>${stEsc(x)}</span></button>`).join('');
   if(fresh&&STU.tpl==='vaba'&&typeof EXIMG!=='undefined'&&EXIMG.maja)html=`<button type="button" class="stsug demo" id="stDemo"><img src="${EXIMG.maja}" alt=""><span><b>Proovi näidisega</b><br>Maja foto · märgi katus ja ütle „päikesepaneelid“</span></button>`+html;
   $('stSugg').innerHTML=html;
+  $('stSugg').querySelectorAll('[data-swtpl]').forEach(b=>b.onclick=()=>{const t=b.dataset.swtpl,s2=stSess();STU.tpl=t;acct.activeTpl=t;if(s2)s2.tpl=t;stSave();stRender();toast('Töö on nüüd: '+stTheme(t).t);});
+  $('stSugg').querySelectorAll('[data-swno]').forEach(b=>b.onclick=()=>{const m=stMainImg(stSess());if(m){m.sceneOk=1;stSave();}stRenderSugg();});
   $('stSugg').querySelectorAll('[data-s]').forEach(b=>b.onclick=()=>{const v=b.dataset.s,i=$('stIn');if(th.need==='addr'){i.value=v;stSync();stSend();return;}i.value=v;stAuto();stSync();i.focus();});
   const d=$('stDemo');if(d)d.onclick=()=>{stAddPic(EXIMG.maja,'up',true);$('stIn').value='Lisa maja katusele päikesepaneelid';stAuto();stRender();toast('Näidisfoto on pilt 1. Klõpsa pildil, et katus märkida, või vajuta kohe Genereeri.');};}
 function stRenderStyle(){const L=stStyles(),th=stTheme(STU.tpl);if(!STU.style||!L.includes(STU.style))STU.style=L[0];
