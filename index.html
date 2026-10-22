@@ -1303,11 +1303,11 @@ input[type=checkbox]{accent-color:var(--accent)}
         <div class="tag">Päris maja 3D</div>
         <button class="ghost" type="button" id="p3Btn" style="align-self:flex-start">Tee päris majast 3D (4 fotot)</button>
         <div id="p3ObjM" style="display:flex;flex-direction:column;gap:6px"></div>
-        <span class="fhint">Pildista maja neljast küljest. AI kontrollib ja puhastab fotod ning teeb neist pööratava 3D-mudeli.</span>
+        <span class="fhint">Pildista maja maapinnalt neljast küljest. AI kontrollib ja puhastab fotod ning teeb neist pööratava 3D-mudeli. Õhu- ja kaldfotod 3D-mudeliks ei sobi.</span>
       </div>
       <div class="fotos">
         <div class="tag">Fotod</div>
-        <a class="fbtn" id="kald" href="#" target="_blank" rel="noopener">Ava Maa-ameti kaldfotod (4 suunda) ↗</a>
+        <a class="fbtn" id="kald" href="#" target="_blank" rel="noopener" title="Ainult vaatamiseks, 3D-mudeliks ei sobi">Vaata katust Maa-ameti kaldfotodelt ↗</a>
         <label class="fbtn" for="photoIn">+ Lisa kliendi foto seinale</label>
         <input id="photoIn" type="file" accept="image/*" hidden>
         <div class="thumbs" id="thumbs"></div>
@@ -4198,7 +4198,7 @@ const P3D={
   object:{n:'Ese/toode',min:1,max:4,slots:['Eest','Vasakult','Tagant','Paremalt'],tips:['Rohkem fotosid igast küljest = AI valib parimad (kuni 12).','Üks foto sobib, 4 fotot eri külgedelt annab parema mudeli.','Kogu ese peab olema kaadris, ükski osa ei tohi ära lõigatud olla.','Hele ühtlane valgus, ilma tugevate varjude ja peegeldusteta.','Lihtne taust aitab, aga AI eemaldab tausta ise.']},
   vehicle:{n:'Sõiduk',min:4,max:4,slots:['Eest','Vasakult','Tagant','Paremalt'],tips:['Rohkem fotosid igast küljest = AI valib parimad (kuni 12).','Tee igast küljest eraldi foto.','Astu nii kaugele, et kogu sõiduk koos ratastega on kaadris.','Ära pildista vastu päikest.','Teised autod ja inimesed ees on okei, kui need ei peida suurt osa.']}};
 const P3TIPS0=['Rohkem fotosid igast küljest = AI valib parimad (kuni 12).','Vali, mis fotodel on, või lisa esimene foto: AI tunneb ise ära.','Iga külg eraldi foto, kogu asi kaadris.','Ära pildista vastu päikest.'];
-const P3ISS={wrong_subject:'vale asi',different_objects:'fotodel on erinevad asjad',cut_off:'pole tervikuna kaadris',duplicate_side:'sama külg kaks korda',wrong_side:'vale külg',backlit:'vastu päikest',too_dark:'liiga tume',blurry:'udune',occluded:'suur osa on varjatud',too_close:'liiga lähedal',too_far:'liiga kaugel',unsupported:'ei sobi 3D-mudeliks',missing:'foto puudub'};
+const P3ISS={aerial:'õhufoto – pildista maapinnalt',wrong_subject:'vale asi',different_objects:'fotodel on erinevad asjad',cut_off:'pole tervikuna kaadris',duplicate_side:'sama külg kaks korda',wrong_side:'vale külg',backlit:'vastu päikest',too_dark:'liiga tume',blurry:'udune',occluded:'suur osa on varjatud',too_close:'liiga lähedal',too_far:'liiga kaugel',unsupported:'ei sobi 3D-mudeliks',missing:'foto puudub'};
 function p3Cloud(){return !!(CLOUD&&CL.cid);}
 function p3New(o){o=o||{};const T=tplById(STU.tpl)||{},fix=(T.photo3d||{}).subject;const sub=P3D[o.subject]?o.subject:P3D[fix]?fix:null;
   const pool=(o.photos||[]).filter(Boolean).slice(0,P3MAXPOOL);

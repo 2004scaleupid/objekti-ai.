@@ -164,6 +164,21 @@ Deno.test("vale subjekt ja toetamata asi blokeerivad", async () => {
   assertEquals(u.j.ok, false); assert(u.j.photos[0].issues.includes("unsupported"));
 });
 
+Deno.test("hoone õhu- või kaldfoto blokeerib (ka 'Jätka ikkagi'), esemel mitte", async () => {
+  W.check = good(); (W.check.photos as { issues: string[] }[]).forEach((p) => (p.issues = ["aerial", "wrong_side"]));
+  const c = await call({ action: "check", subject: "building", photos: P4 });
+  assertEquals(c.j.ok, false);
+  assertEquals(c.j.soft, false);
+  assert(c.j.photos.every((p: { issues: string[]; tip: string }) => p.issues.includes("aerial") && p.tip.startsWith("Pildista maapinnalt")));
+  assert(c.j.summary.includes("maapinnalt"));
+  const s = await call({ subject: "building", photos: P4, check: c.j.token, force: true });
+  assertEquals(s.status, 409);
+  // esemel (nt toode ülalt) pole "aerial" viga
+  W.check = good("object", 1); (W.check.photos as { issues: string[] }[])[0].issues = ["aerial"];
+  const o = await call({ action: "check", subject: "object", photos: [P4[0]] });
+  assertEquals(o.j.ok, true);
+});
+
 Deno.test("subjekti tuvastus 1 fotost ja ese 1 fotoga → image-to-3d", async () => {
   W.check = good("object", 1);
   const c = await call({ action: "check", photos: [photo(1)] });

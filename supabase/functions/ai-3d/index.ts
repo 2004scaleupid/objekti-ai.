@@ -31,7 +31,7 @@ const BASE_PROMPT = "Clean this exact photo for 3D reconstruction of the {SUBJEC
 export const cleanPrompt = (s: Subject) => BASE_PROMPT.replaceAll("{SUBJECT}", SUBJECTS[s].word) + " " + SUBJECTS[s].extra;
 
 // Fotokontrolli vead. Kerged vead lubavad „Jätka ikkagi“, ülejäänud blokeerivad.
-const ISSUES = ["wrong_subject", "different_objects", "cut_off", "duplicate_side", "wrong_side", "backlit", "too_dark", "blurry", "occluded", "too_close", "too_far", "unsupported"];
+const ISSUES = ["wrong_subject", "different_objects", "cut_off", "duplicate_side", "wrong_side", "backlit", "too_dark", "blurry", "occluded", "too_close", "too_far", "unsupported", "aerial"];
 // Ainult need blokeerivad: fotodest ei saa üldse üht 3D-mudelit teha. Kõik muu on hoiatus ja kasutaja võib jätkata.
 const SOFT = new Set(["cut_off", "wrong_side", "backlit", "too_dark", "blurry", "occluded", "too_close", "too_far"]);
 const SIDES = ["front", "left", "back", "right"];
@@ -140,6 +140,7 @@ Check each photo and all photos together:
 4. light and sharpness: "backlit" (against the sun or blown-out glare), "too_dark", "blurry" (out of focus or motion blur).
 5. "occluded" only if more than ~30% of the thing is hidden (trees, cars, people in front). Small occlusion is fine, it gets cleaned.
 6. "too_close" (clearly only part of the thing in frame), "too_far" (thing is tiny in the photo), heavy tilt counts as "wrong_side".
+7. "aerial" (buildings only): the photo is clearly taken from the air - drone, plane, satellite or oblique aerial photo looking down at the roof and yard. Ground-level photos (also from a window, balcony or slope) are NOT aerial.
 Be lenient: the photos are cleaned by AI and reconstructed afterwards, normal phone photos of the whole thing are good enough. Flag an issue only when it would clearly ruin the 3D model. When in doubt, do NOT flag. Ordinary phone photos with small imperfections must pass with "ok": true.
 Allowed issues: ${ISSUES.join(", ")}.
 Answer ONLY with JSON, no other text:
@@ -185,6 +186,19 @@ async function aiCheck(photos: string[], want: Subject | null, pool = false, sin
   return { a, inT, outT, model: String(j.model || "").slice(0, 60) };
 }
 
+// Õhu- ja kaldfotod: hoonel blokeeriv (mudel tuleb vale kujuga, seinad on lühenenud), muul subjektil ei loe.
+const AERIAL_TIP = "Pildista maapinnalt: seisa maja ees nii, et terve külg ja katus on kaadris.";
+const AERIAL_SUM = "Need on õhu- või kaldfotod. 3D-mudeli jaoks pildista maja maapinnalt neljast küljest.";
+function aerial(photos: { issues: string[]; ok: boolean; tip?: string }[], kind: Subject | null) {
+  let any = false;
+  photos.forEach((p) => {
+    if (!p.issues.includes("aerial")) return;
+    if (kind !== "building") { p.issues = p.issues.filter((x) => x !== "aerial"); p.ok = p.issues.length === 0; if (p.ok) p.tip = undefined; return; }
+    any = true; p.tip = AERIAL_TIP;
+  });
+  return any;
+}
+
 // AI vastus puhtaks: ainult lubatud väärtused; ok arvutab server ise (AI „ok“ üksi ei loe)
 function normalize(a: Record<string, unknown>, n: number, want: Subject | null) {
   const subject = isSubject(a.subject) ? a.subject : a.subject === "unsupported" ? "unsupported" : (want ?? "unsupported");
@@ -197,8 +211,9 @@ function normalize(a: Record<string, unknown>, n: number, want: Subject | null) 
   }
   if (subject === "unsupported") photos.forEach((p) => { if (!p.issues.includes("unsupported")) { p.issues.push("unsupported"); p.ok = false; } });
   else if (want && subject !== want) photos.forEach((p) => { if (!p.issues.includes("wrong_subject")) { p.issues.push("wrong_subject"); p.ok = false; } });
+  const air = aerial(photos, want ?? (isSubject(subject) ? subject : null));
   const all = photos.flatMap((p) => p.issues);
-  return { subject, photos, ok: all.length === 0, soft: all.length > 0 && all.every((x) => SOFT.has(x)), summary: typeof a.summary === "string" ? a.summary.slice(0, 400) : "" };
+  return { subject, photos, ok: all.length === 0, soft: all.length > 0 && all.every((x) => SOFT.has(x)), summary: air ? AERIAL_SUM : typeof a.summary === "string" ? a.summary.slice(0, 400) : "" };
 }
 
 // Valikurežiimi vastus puhtaks: indeksid lubatud ja kordumatud, puuduv külg = blokeeriv viga koos juhisega
@@ -222,12 +237,13 @@ export function normalizePool(a: Record<string, unknown>, n: number, want: Subje
   });
   if (subject === "unsupported") photos.forEach((p) => { if (!p.issues.includes("unsupported")) { p.issues.push("unsupported"); p.ok = false; } });
   else if (want && subject !== want) photos.forEach((p) => { if (!p.issues.includes("wrong_subject")) { p.issues.push("wrong_subject"); p.ok = false; } });
+  const air = aerial(photos, kind);
   const reasons = new Map<number, string>();
   (Array.isArray(a.unused) ? a.unused : []).forEach((u: Record<string, unknown>) => { const i = Number(u?.index); if (Number.isInteger(i) && i >= 0 && i < n && !used.has(i)) reasons.set(i, typeof u.reason === "string" ? u.reason.slice(0, 80) : ""); });
   const unused = [...Array(n).keys()].filter((i) => !used.has(i)).map((i) => ({ index: i, reason: reasons.get(i) || "" }));
   const all = photos.flatMap((p) => p.issues);
   const ok = all.length === 0 && !missing.length;
-  return { mode: "pool", subject, selected, photos, missing, unused, ok, soft: !ok && !missing.length && all.every((x) => SOFT.has(x)), summary: typeof a.summary === "string" ? a.summary.slice(0, 400) : "" };
+  return { mode: "pool", subject, selected, photos, missing, unused, ok, soft: !ok && !missing.length && all.every((x) => SOFT.has(x)), summary: air ? AERIAL_SUM : typeof a.summary === "string" ? a.summary.slice(0, 400) : "" };
 }
 
 export async function handler(req: Request): Promise<Response> {
