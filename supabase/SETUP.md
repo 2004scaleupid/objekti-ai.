@@ -16,7 +16,7 @@ Brauser ei näe ühtegi salajast võtit ja ei saa hinda ega saldot muuta.
 
 Kõik AI-pildid saavad firma logo alla paremale (kui firmal on logo ja seadetes „Logo AI-piltidel“ sees). Originaal ilma logota salvestatakse kõrvale (`…-raw.jpg`).
 | `ehr` | `functions/ehr` | ehitisregistri andmed EHR-koodi järgi |
-| `checkout` | `functions/checkout` | krediidipaketi ost Stripe'iga (50 € / 100 € / 250 €) |
+| `checkout` | `functions/checkout` | krediidipaketi ost Stripe'iga (50 € / 100 € / 250 €). Klient kutsub `?forceFunctionRegion=eu-central-1` (andmebaasi kõrval), eelsoojendus `{warm:true}` ostunupul/modaalis; JWT kontroll kohapeal (ES256, JWKS), firma + kiiruspiirang ühe ringiga; vastuses `Server-Timing` (auth, db, stripe, total), brauseri konsoolis `[checkout]` rida |
 | `stripe-webhook` | `functions/stripe-webhook` | makse õnnestus → krediidid kontole (sama makse ainult üks kord) |
 | `ai-3d` | `functions/ai-3d` | fotod → 3D-mudel (vt allpool). `check` (AI fotokontroll), `start` (puhastus + Tripo, võtab krediidid `price_3d`), `status` (kopeerib .glb kausta `models`) |
 

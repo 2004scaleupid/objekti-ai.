@@ -47,6 +47,39 @@ export const isPhoto = (u: unknown) => typeof u === "string" && /^data:image\/(j
 /** Katkenud (ajapiirangu tõttu) piltide krediidid tagasi. */
 export const refundStale = (companyId: string) => admin().rpc("refund_stale_renders", { p_company: companyId }).then(() => {}, () => {});
 
+/** Kasutaja id JWT-st ilma võrgupäringuta: ES256 allkiri projekti avaliku võtmega (JWKS). Muu allkiri -> auth.getUser.
+ *  NB: väljalogitud, aga aegumata token kehtib kuni exp-ni (max 1 h); kasutada seal, kus see on ohutu (nt makselehe avamine). */
+let jwks: Promise<JsonWebKey[]> | null = null;
+const b64u = (t: string) => Uint8Array.from(atob(t.replace(/-/g, "+").replace(/_/g, "/").padEnd(Math.ceil(t.length / 4) * 4, "=")), (c) => c.charCodeAt(0));
+function loadJwks(): Promise<JsonWebKey[]> {
+  if (!jwks) {
+    const e = env("SUPABASE_JWKS");
+    const fromEnv = (() => { try { const j = JSON.parse(e); return Array.isArray(j) ? j : Array.isArray(j?.keys) ? j.keys : null; } catch { return null; } })();
+    jwks = fromEnv ? Promise.resolve(fromEnv) : tfetch(env("SUPABASE_URL") + "/auth/v1/.well-known/jwks.json", {}, 5000).then((r) => r.json()).then((j) => j.keys || [])
+      .catch(() => { jwks = null; return []; });
+  }
+  return jwks;
+}
+export async function jwtUid(token: string): Promise<string | null> {
+  const [h, p, sig] = token.split(".");
+  if (!h || !p || !sig) return null;
+  try {
+    const head = JSON.parse(new TextDecoder().decode(b64u(h)));
+    if (head.alg === "ES256") {
+      const k = (await loadJwks()).find((x) => (x as { kid?: string }).kid === head.kid && x.kty === "EC");
+      if (k) {
+        const key = await crypto.subtle.importKey("jwk", { kty: "EC", crv: k.crv, x: k.x, y: k.y }, { name: "ECDSA", namedCurve: "P-256" }, false, ["verify"]);
+        const ok = await crypto.subtle.verify({ name: "ECDSA", hash: "SHA-256" }, key, b64u(sig), new TextEncoder().encode(h + "." + p));
+        if (!ok) return null;
+        const c = JSON.parse(new TextDecoder().decode(b64u(p)));
+        return c.role === "authenticated" && typeof c.sub === "string" && Number(c.exp) * 1000 > Date.now() ? c.sub : null;
+      }
+    }
+  } catch { return null; }
+  const { data, error } = await admin().auth.getUser(token);
+  return error || !data.user ? null : data.user.id;
+}
+
 /** Sisselogitud kasutaja ja tema firma (JWT päisest). */
 export async function userCompany(req: Request): Promise<{ userId: string; companyId: string } | null> {
   const token = (req.headers.get("Authorization") || "").replace(/^Bearer\s+/i, "");

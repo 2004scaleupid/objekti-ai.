@@ -996,6 +996,15 @@ input[type=checkbox]{accent-color:var(--accent)}
 /* sektsioonide sildid seadetes: sama vahe üleval/all */
 #profF>.tag{margin-top:10px}#profF>.tag:first-child{margin-top:0}
 
+
+/* lõigatud valik (väike valikute hulk): sama kõrgus ja ääris nagu väljadel */
+.seg2{display:flex;gap:3px;height:var(--ctl-h);padding:3px;box-sizing:border-box;border:1px solid var(--line);border-radius:8px;background:var(--paper)}
+.seg2 button{flex:1 1 0;min-width:0;border:0;border-radius:6px;background:none;color:var(--muted);font:600 14px var(--display);cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:0 8px;transition:background .15s,color .15s}
+.seg2 button:hover:not([aria-checked="true"]){color:var(--ink);background:var(--soft)}
+.seg2 button[aria-checked="true"]{background:var(--ink);color:var(--paper)}
+.seg2 button:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.seg2sel{position:absolute!important;width:1px!important;height:1px!important;opacity:0;pointer-events:none;overflow:hidden}
+@media (max-width:640px){.seg2 button{font-size:15px}}
 /* Avalehe liikumine ja sügavus (paigutus, suurused, tekstid, värvid samad; ainult absoluutsed kaunistused) */
 @keyframes hUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
 @keyframes hDrift{from{transform:translate(0,0)}to{transform:translate(-120px,-40px)}}
@@ -2338,12 +2347,24 @@ function numStep(inp,unit,min,max){if(!inp||inp.closest('.numf'))return;const w=
   w.querySelectorAll('button').forEach(b=>b.onclick=e=>{e.preventDefault();set((parseFloat(inp.value)||0)+(+b.dataset.d));});
   inp.addEventListener('change',()=>{if(inp.value!=='')set(parseFloat(inp.value)||0);});}
 numStep($('pWasteR'),'%',0,50);numStep($('pWasteW'),'%',0,50);
+// väike valik -> lõigatud nupud; <select> jääb andmete hoidjaks (salvestus ja täitmine samad)
+function seg2(sel){if(!sel||sel.dataset.seg)return;sel.dataset.seg=1;const lab=sel.closest('label'),txt=lab?lab.firstChild.textContent.trim():'';
+  const g=document.createElement('div');g.className='seg2';g.setAttribute('role','radiogroup');g.setAttribute('aria-label',txt);
+  const ex=t=>String(t).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+  g.innerHTML=[...sel.options].map(o=>`<button type="button" role="radio" data-v="${ex(o.value)}">${ex(o.text)}</button>`).join('');
+  sel.classList.add('seg2sel');sel.tabIndex=-1;sel.setAttribute('aria-hidden','true');sel.after(g);
+  if(lab){lab.removeAttribute('for');lab.addEventListener('click',e=>{if(!e.target.closest('.seg2'))e.preventDefault();});}
+  const B=[...g.children],pick=(b,focus)=>{if(sel.value!==b.dataset.v){sel.value=b.dataset.v;sel.dispatchEvent(new Event('change',{bubbles:true}));}seg2Sync(sel);if(focus)b.focus();};
+  B.forEach((b,i)=>{b.onclick=()=>pick(b);b.onkeydown=e=>{const d={ArrowRight:1,ArrowDown:1,ArrowLeft:-1,ArrowUp:-1}[e.key];if(!d)return;e.preventDefault();pick(B[(i+d+B.length)%B.length],true);};});
+  seg2Sync(sel);}
+function seg2Sync(sel){const g=sel&&sel.nextElementSibling;if(!g||!g.classList.contains('seg2'))return;[...g.children].forEach(b=>{const on=b.dataset.v===sel.value;b.setAttribute('aria-checked',on);b.tabIndex=on?0:-1;});}
+['pLang','pStart','pView'].forEach(id=>seg2($(id)));
 const PREF={pLang:'lang',pRoof:'defRoof',pWasteR:'wasteR',pWasteW:'wasteW',pStart:'start',pView:'defView'},NOTI={nLow:'nLow',nGen:'nGen',nInv:'nInv',nRef:'nRef',nNews:'nNews'};
 function renderProfHead(){const ini=initials(acct.name);$('pavIn').outerHTML=acct.avatar?`<img id="pavIn" src="${acct.avatar}" alt="">`:`<span id="pavIn">${ini}</span>`;
   $('phName').textContent=acct.name||'—';$('phMeta').textContent=[acct.role,acct.company].filter(Boolean).join(' · ');$('phObj').textContent=HOUSES.length+' objekti';$('phCred').textContent=acct.credits+' krediiti';
   $('phSince').textContent='Liige alates '+(acct.hist[0]?acct.hist[0].d.slice(5,7)+'.'+acct.hist[0].d.slice(0,4):'—');}
 $('avIn').addEventListener('change',e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{const im=new Image();im.onload=()=>{const c=document.createElement('canvas'),z=Math.min(im.width,im.height);c.width=c.height=200;c.getContext('2d').drawImage(im,(im.width-z)/2,(im.height-z)/2,z,z,0,0,200,200);acct.avatar=c.toDataURL('image/jpeg',.85);save();renderProfHead();toast('Profiilipilt uuendatud');};im.src=r.result;};r.readAsDataURL(f);e.target.value='';});
-function fillForms(){Object.entries(PREF).forEach(([id,k])=>$(id).value=acct[k]??$(id).value);Object.entries(NOTI).forEach(([id,k])=>$(id).checked=!!acct[k]);renderProfHead();renderPromo();Object.entries(CF).forEach(([id,k])=>$(id).value=acct[k]||'');renderChips();['Name','Email','Phone','Role'].forEach(k=>$('p'+k).value=acct[k.toLowerCase()]||'');$('cName').value=acct.company||'';$('cReg').value=acct.reg||'';$('cVat').value=acct.vat||'';$('cWeb').value=acct.web||'';$('cAddr').value=acct.addr||'';}
+function fillForms(){Object.entries(PREF).forEach(([id,k])=>{$(id).value=acct[k]??$(id).value;seg2Sync($(id));});Object.entries(NOTI).forEach(([id,k])=>$(id).checked=!!acct[k]);renderProfHead();renderPromo();Object.entries(CF).forEach(([id,k])=>$(id).value=acct[k]||'');renderChips();['Name','Email','Phone','Role'].forEach(k=>$('p'+k).value=acct[k.toLowerCase()]||'');$('cName').value=acct.company||'';$('cReg').value=acct.reg||'';$('cVat').value=acct.vat||'';$('cWeb').value=acct.web||'';$('cAddr').value=acct.addr||'';}
 /* dialog */
 function ask2(title,text,yes,extra){return new Promise(res=>{$('dT').textContent=title;$('dP').textContent=text;$('dExtra').innerHTML=extra||'';if(extra&&typeof pwEyes==='function')pwEyes($('dExtra'));$('dYes').textContent=yes||'Kinnita';$('dlg').hidden=false;
   const done=v=>{$('dlg').hidden=true;$('dYes').onclick=$('dNo').onclick=null;res(v);};$('dYes').onclick=()=>done(true);$('dNo').onclick=()=>done(false);});}
@@ -2391,7 +2412,7 @@ function cuDraw(){const n=cuRead(),ok=n>=10&&n<=2000;$('cuPer').textContent=eurT
 $('cuCr').addEventListener('input',cuDraw);$('cuCr').addEventListener('keydown',e=>{if(e.key==='Enter')$('cuBuy').click();});
 $('cuBuy').onclick=async()=>{const n=cuRead();if(!(n>=10&&n<=2000)){toast('Vali 10–2000 krediiti');return;}const eu=cuPrice(n);
   if(!await ask2(`Osta ${n} krediiti`,`Summa ${eurTxt(eu)} (sisaldab käibemaksu). ${CLOUD&&CL.cid?"Avaneb turvaline Stripe'i makseleht: kaart, Apple Pay, Google Pay.":"Demo: päris äpis avaneb siin Stripe'i makseleht."}`,`Maksa ${eurTxt(eu)}`))return;
-  if(CLOUD&&CL.cid){clBuy(n,true).catch(e=>toast(clErr(e)));return;}
+  if(CLOUD&&CL.cid){const undo=buyBusy($('cuBuy'));clBuy(n,true).catch(e=>{undo();toast(clErr(e));});return;}
   acct.credits=+(acct.credits+n).toFixed(2);acct.hist.push({d:today(),t:`Ostetud ${n} krediiti`,c:n,e:eurTxt(eu)});save();renderAcct();toast(`+${n} krediiti lisatud`);};
 cuDraw();
 
@@ -2790,7 +2811,7 @@ function startFromHash(){const h=location.hash||'';if(h==='#loo-konto'||h==='#si
 function wHash(h){const o={};h.slice(1).split('&').forEach(kv=>{const i=kv.indexOf('=');if(i>0)o[kv.slice(0,i)]=decodeURIComponent(kv.slice(i+1));});return o;}
 /* out of credits */
 const PACKS=[[100,50,''],[220,100,'Populaarseim'],[600,250,'Parim hind']];
-function needCredits(need,label){return new Promise(res=>{const bal=acct.credits,lack=+(need-bal).toFixed(2),p=basePrice('obj');let sel=PACKS.findIndex(x=>x[0]>=lack&&x[2]);if(sel<0)sel=PACKS.findIndex(x=>x[0]>=lack);if(sel<0)sel=2;if(sel===0&&lack<=100)sel=1;
+function needCredits(need,label){coWarm();return new Promise(res=>{const bal=acct.credits,lack=+(need-bal).toFixed(2),p=basePrice('obj');let sel=PACKS.findIndex(x=>x[0]>=lack&&x[2]);if(sel<0)sel=PACKS.findIndex(x=>x[0]>=lack);if(sel<0)sel=2;if(sel===0&&lack<=100)sel=1;
   // valikud: täpselt puuduv kogus (vähemalt 10) + paketid
   const cx=Math.max(10,Math.ceil(lack)),OPTS=PACKS.map(([cr,eu,tg])=>({cr,eu,tg}));if(cx<100){OPTS.unshift({cr:cx,eu:cuPrice(cx),tg:'Täpselt vajalik',custom:true});sel++;}
   $('ocT').textContent=bal<p?'Krediidid said otsa':'Krediiti ei jätku';
@@ -2802,7 +2823,7 @@ function needCredits(need,label){return new Promise(res=>{const bal=acct.credits
   const done=v=>{$('oc').hidden=true;document.removeEventListener('keydown',esc,true);res(v);},esc=e=>{if(e.key==='Escape'&&!$('oc').hidden){e.stopPropagation();done(false);}};document.addEventListener('keydown',esc,true);
   $('ocX').onclick=()=>done(false);$('oc').onclick=e=>{if(e.target===$('oc'))done(false);};
   $('ocAll').onclick=()=>{done(false);show('settings','billing');};
-  $('ocPay').onclick=()=>{const {cr,eu,custom}=OPTS[sel];$('ocPay').disabled=true;$('ocPay').textContent=CLOUD&&CL.cid?'Avan makselehe…':'Makse kinnitamine…';if(CLOUD&&CL.cid){clBuy(cr,custom).catch(er=>{toast(clErr(er));$('ocPay').disabled=false;draw();});return;}
+  $('ocPay').onclick=()=>{if($('ocPay').disabled)return;const {cr,eu,custom}=OPTS[sel];if(CLOUD&&CL.cid){buyBusy($('ocPay'));clBuy(cr,custom).catch(er=>{toast(clErr(er));$('ocPay').disabled=false;$('ocPay').removeAttribute('aria-busy');draw();});return;}$('ocPay').disabled=true;$('ocPay').textContent='Makse kinnitamine…';
     setTimeout(()=>{$('ocPay').disabled=false;acct.credits=+(acct.credits+cr).toFixed(2);acct.hist.push({d:today(),t:`Ostetud ${cr} krediiti`,c:cr,e:eurTxt(eu)});save();renderAcct();if(!$('home').hidden)renderHome();toast(`+${cr} krediiti lisatud · saldo ${acct.credits}`);done(acct.credits>=need);},900);};});}
 /* esituspilt generation */
 async function startGen(skipAsk){if(acct.gen[HOUSES[cur].ehr]){setRen(true);return;}
@@ -3441,8 +3462,19 @@ function clLoginUi(){
   $('logoutM').onclick=()=>out();$('logoutS').onclick=()=>out();
   $('outAll').onclick=async()=>{if(await ask2('Logi välja kõigist seadmetest?','Kõik seansid lõpetatakse, ka see.','Logi välja'))out('global');};
   // krediitide ost: Stripe makseleht
-  document.querySelectorAll('.pack').forEach(b=>b.onclick=async()=>{const cr=+b.dataset.cr,eu=+b.dataset.eur;if(await ask2(`Osta ${cr} krediiti`,`Summa ${eu} € (sisaldab käibemaksu). Avaneb turvaline Stripe'i makseleht: kaart, Apple Pay, Google Pay.`,`Maksa ${eu} €`))clBuy(cr).catch(e=>toast(clErr(e)));});}
-async function clBuy(cr,custom){const pack=custom?'custom':{100:'100',220:'220',600:'600'}[cr];if(!pack)throw new Error('Tundmatu pakett');const r=await clFn('checkout',custom?{pack,credits:cr,return_url:appBase()}:{pack,return_url:appBase()});location.href=r.url;}
+  document.querySelectorAll('.pack').forEach(b=>b.onclick=()=>{if(b.disabled)return;const cr=+b.dataset.cr,undo=buyBusy(b);clBuy(cr).catch(e=>{undo();toast(clErr(e));});});}
+// checkout jookseb andmebaasi kõrval (Frankfurt), mitte kasutajale lähimas regioonis
+const CO_Q='?forceFunctionRegion=eu-central-1';
+async function clBuy(cr,custom){const pack=custom?'custom':{100:'100',220:'220',600:'600'}[cr];if(!pack)throw new Error('Tundmatu pakett');const t0=performance.now();
+  const r=await clFn('checkout',custom?{pack,credits:cr,return_url:appBase()}:{pack,return_url:appBase()},{q:CO_Q});
+  try{const e=performance.getEntriesByType('resource').filter(x=>x.name.includes('/checkout')).pop();console.info('[checkout] klõps -> makselehe link',Math.round(performance.now()-t0)+' ms',e&&e.serverTiming?e.serverTiming.map(x=>x.name+'='+Math.round(x.duration)).join(' '):'');}catch(_){}
+  location.assign(r.url);}
+// nupp kohe "Avan makselehe…" + spinner, topeltklõps välistatud; tagastab taastaja (vea korral)
+function buyBusy(btn){const h=btn.innerHTML;btn.disabled=true;btn.setAttribute('aria-busy','true');btn.innerHTML='<span class="lspin" aria-hidden="true"></span>Avan makselehe…';
+  return()=>{btn.disabled=false;btn.removeAttribute('aria-busy');btn.innerHTML=h;};}
+// eelsoojendus: funktsioon käima juba siis, kui ostu nupp/modaal paistab (max kord minutis)
+let coWarmT=0;function coWarm(){if(!(CLOUD&&CL.cid)||Date.now()-coWarmT<60e3)return;coWarmT=Date.now();clFn('checkout',{warm:true},{q:CO_Q}).catch(()=>{});}
+['pointerover','focusin'].forEach(ev=>document.addEventListener(ev,e=>{if(e.target.closest&&e.target.closest('#stBuy,.pack,#cuBuy,#ocPay,[data-go="billing"]'))coWarm();},{passive:true}));
 async function clPaid(){const sid=(location.hash.match(/#paid=(cs_[A-Za-z0-9_]+)/)||[])[1];history.replaceState(null,'',location.pathname+location.search);toast('Makse õnnestus, krediidid lisatakse kontole…');
   // Stripe teatab serverile tavaliselt enne, kui klient siia tagasi jõuab: vaatame, kas just see makse on kontol
   for(let k=0;k<12;k++){const {data}=sid?await CL.sb.from('credit_ledger').select('delta').eq('kind','purchase').eq('ref',sid).limit(1):{data:null};
