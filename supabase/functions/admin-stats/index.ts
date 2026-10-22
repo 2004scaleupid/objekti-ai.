@@ -38,6 +38,22 @@ async function anthropicReport() {
   } catch { return { ok: false, error: "Anthropic ei vastanud" }; }
 }
 
+/** Väljaminev liiklus (egress) hinnanguliselt: failihoidla päringud 7 päeva (Management API) × keskmine vastus.
+ *  Täpset baitide arvu Supabase API ei anna (ainult armatuurlaua Usage leht). Vajab saladust SUPABASE_MGMT_TOKEN. */
+export async function egress() {
+  const tok = env("SUPABASE_MGMT_TOKEN"), ref = (env("SUPABASE_URL").match(/https:\/\/([a-z0-9]+)\./) || [])[1];
+  const dash = ref ? `https://supabase.com/dashboard/project/${ref}/settings/usage` : null;
+  if (!tok || !ref) return { ok: false, dash, error: "SUPABASE_MGMT_TOKEN puudub" };
+  try {
+    const r = await tfetch(`https://api.supabase.com/v1/projects/${ref}/analytics/endpoints/usage.api-counts?interval=7day`, { headers: { Authorization: `Bearer ${tok}` } }, 8000);
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok || !Array.isArray(j.result)) return { ok: false, dash, error: `Supabase vastas ${r.status}` };
+    const req7 = j.result.reduce((a: number, x: { total_storage_requests?: number }) => a + Number(x.total_storage_requests || 0), 0);
+    const kb = Number(env("EGRESS_AVG_KB", "120")); // LOD2 kild ~95 KB, ruut 1-20 KB, .glb mitu MB
+    return { ok: true, dash, storage_requests_7d: req7, avg_kb: kb, month_gb_est: Math.round(req7 / 7 * 30 * kb / 1e6 * 100) / 100, limit_gb: 5 };
+  } catch { return { ok: false, dash, error: "Supabase ei vastanud" }; }
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
   const me = await userCompany(req);
@@ -55,12 +71,13 @@ Deno.serve(async (req) => {
     if (error) return fail("salvestamine ebaõnnestus", 500);
   }
 
-  const [k, rep, month, today, topup, imgs] = await Promise.all([
+  const [k, rep, month, today, topup, imgs, eg] = await Promise.all([
     kie(), anthropicReport(),
     db.from("ai_usage").select("cost_usd,input_tokens,output_tokens").gte("created_at", monthStart()).limit(100000),
     db.from("ai_usage").select("cost_usd").gte("created_at", dayStart()).limit(100000),
     db.from("service_topups").select("amount_usd,created_at").eq("service", "anthropic").order("created_at", { ascending: false }).limit(1).maybeSingle(),
     db.from("renders").select("id", { count: "exact", head: true }).eq("status", "done").gte("created_at", monthStart()),
+    egress(),
   ]);
   let sinceTopup: Record<string, unknown> | null = null;
   if (topup.data) {
@@ -76,6 +93,7 @@ Deno.serve(async (req) => {
       month: { chats: m.length, input_tokens: m.reduce((a, r) => a + (r.input_tokens || 0), 0), output_tokens: m.reduce((a, r) => a + (r.output_tokens || 0), 0), cost_usd: sum(m) },
       today_usd: sum(today.data), since_topup: sinceTopup, report: rep,
     },
+    egress: eg,
     at: new Date().toISOString(),
   });
 });
