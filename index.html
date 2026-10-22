@@ -8,7 +8,7 @@
 <meta property="og:description" content="Sisesta aadress ja maja kerkib 3D-s koos mõõtudega. Objektile ei pea sõitma.">
 <meta property="og:type" content="website">
 <meta name="theme-color" content="#16130F">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; connect-src 'self' https://*.supabase.co https://livekluster.ehr.ee data: blob:; worker-src 'self' blob:; frame-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; connect-src 'self' https://*.supabase.co https://challenges.cloudflare.com https://livekluster.ehr.ee data: blob:; worker-src 'self' blob:; frame-src 'self' https://challenges.cloudflare.com; object-src 'none'; base-uri 'none'; form-action 'self'">
 <meta name="robots" content="noindex, nofollow">
 <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A//www.w3.org/2000/svg%27%20viewBox%3D%270%200%2032%2032%27%3E%3Cpath%20d%3D%27M4%2014%2016%2021v9L4%2023z%27%20fill%3D%27%23C9381F%27/%3E%3Cpath%20d%3D%27M16%2021l6-9.5%206%202.5v9l-12%207z%27%20fill%3D%27%239E2C17%27/%3E%3Cpath%20d%3D%27M10%204.5%2016%207l12%207-6-2.5z%27%20fill%3D%27%23F28468%27/%3E%3Cpath%20d%3D%27M4%2014%2010%204.5l12%207L16%2021z%27%20fill%3D%27%23E5482D%27/%3E%3C/svg%3E">
 <style>[hidden]{display:none!important}</style>
@@ -838,6 +838,7 @@ body:not(.cvm) #mSeg{display:none}
 .err{color:var(--accent);font-size:13px;min-height:18px;margin:0}
 /* sisselogimine: käivitusekraan, tervitus, „Jäta mind meelde“ */
 .ghost.dz{color:#C2410C;border-color:rgba(194,65,12,.45)}.ghost.dz:hover{background:rgba(194,65,12,.08)}#gdprC .fhint a{color:inherit}
+.capw{min-height:0}.capw iframe{max-width:100%}
 .lform .err{min-height:36px}.lterms{align-items:flex-start;line-height:1.4}.lterms input{margin-top:1px;flex:none}.lterms a{color:var(--accent);font-weight:600}.lrem{display:flex;gap:8px;align-items:center;font-size:13.5px;margin-top:-6px;cursor:pointer;align-self:flex-start}.lrem input{width:16px;height:16px;accent-color:var(--accent)}
 .lspin{display:inline-block;width:14px;height:14px;margin-right:8px;vertical-align:-2px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:lspin .7s linear infinite}@keyframes lspin{to{transform:rotate(360deg)}}
 .boot{position:fixed;inset:0;z-index:500;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;background:var(--bg);transition:opacity .35s ease;padding:16px;text-align:center}
@@ -1130,6 +1131,7 @@ input[type=checkbox]{accent-color:var(--accent)}
     <label class="fl" for="lPass">Parool<input id="lPass" type="password" autocomplete="current-password" placeholder="••••••••"></label>
     <label class="lrem lterms" id="lTermsW" hidden><input type="checkbox" id="lTerms"> <span>Nõustun <a href="tingimused/" target="_blank" rel="noopener">tingimuste</a> ja <a href="privaatsus/" target="_blank" rel="noopener">privaatsuspoliitikaga</a></span></label>
     <label class="lrem"><input type="checkbox" id="lRem" checked> Jäta mind meelde</label>
+    <div class="capw" id="capL" hidden></div>
     <p class="err" id="lErr"></p>
     <button type="button" class="linkbtn" id="forgotL" style="align-self:flex-start;margin-top:-8px">Unustasid parooli?</button>
     <button class="send" type="submit" id="lSubmit">Logi sisse</button>
@@ -1685,7 +1687,7 @@ input[type=checkbox]{accent-color:var(--accent)}
         <label class="fl" for="sOld">Praegune parool<input id="sOld" type="password" autocomplete="current-password"></label>
         <label class="fl" for="sNew">Uus parool<input id="sNew" type="password" autocomplete="new-password"><small>Vähemalt 8 märki</small></label>
         <label class="fl" for="sNew2">Uus parool uuesti<input id="sNew2" type="password" autocomplete="new-password"></label>
-      </div><p class="err" id="secErr"></p><div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap"><button class="apply" type="submit">Muuda parool</button><button type="button" class="linkbtn" id="forgotS">Ei mäleta praegust parooli?</button></div></form>
+      </div><div class="capw" id="capS" hidden></div><p class="err" id="secErr"></p><div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap"><button class="apply" type="submit">Muuda parool</button><button type="button" class="linkbtn" id="forgotS">Ei mäleta praegust parooli?</button></div></form>
       <div class="card"><div class="tag">Sisselogimine</div>
         <div class="tgl"><div>Google'i konto<small id="gState">Ühendamata</small></div><button type="button" class="ghost" id="gLink">Ühenda</button></div>
         <div class="tgl"><div>Aktiivsed seansid<small>See seade · viimati aktiivne praegu</small></div><button type="button" class="ghost" id="outAll">Logi välja kõigist</button></div></div>
@@ -1738,6 +1740,16 @@ input[type=checkbox]{accent-color:var(--accent)}
 <script>
 /* Serveri seaded: index.html annab window.V3D_CONFIG={url,key}. Ilma nendeta töötab rakendus demo-režiimis. */
 const CLOUD=(window.V3D_CONFIG&&window.V3D_CONFIG.url&&window.V3D_CONFIG.key)?window.V3D_CONFIG:null;
+/* Cloudflare Turnstile (Supabase Auth captcha): sisse, kui V3D_CONFIG.turnstile (site key) on olemas. Ilma võtmeta töötavad vormid nagu enne.
+   Hallatud režiim: vidin ilmub ainult siis, kui Cloudflare tahab kinnitust. Iga token kehtib ühe päringu jaoks. */
+const CAP={key:(window.V3D_CONFIG&&window.V3D_CONFIG.turnstile)||'',p:null,w:{}};
+function capLoad(){return CAP.p||(CAP.p=new Promise((res,rej)=>{const sc=document.createElement('script');sc.src='https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';sc.async=true;
+  sc.onload=()=>res(window.turnstile);sc.onerror=()=>{CAP.p=null;rej(new Error('Turvakontroll ei laadinud. Kontrolli internetti ja proovi uuesti.'));};document.head.appendChild(sc);}));}
+async function capPrep(id){if(!CAP.key||CAP.w[id])return CAP.w[id];const ts=await capLoad(),el=$(id);if(CAP.w[id])return CAP.w[id];const w=CAP.w[id]={tok:'',wait:[]};el.hidden=false;
+  w.id=ts.render(el,{sitekey:CAP.key,appearance:'interaction-only',theme:'auto',language:'et',callback:t=>{w.tok=t;w.wait.splice(0).forEach(f=>f(t));},'expired-callback':()=>{w.tok='';},'error-callback':()=>{w.tok='';}});return w;}
+async function capToken(id){if(!CAP.key)return undefined;const w=await capPrep(id),ts=window.turnstile;
+  const t=w.tok||ts.getResponse(w.id)||await new Promise((res,rej)=>{w.wait.push(res);setTimeout(()=>rej(new Error('Turvakontroll võttis liiga kaua. Proovi uuesti.')),45000);});
+  w.tok='';try{ts.reset(w.id);}catch(_){}return t;}
 /* Vigade jälgimine -> client_errors (admin „Vead“): brauseri vead, käsitlemata lubadused, ebaõnnestunud päringud (5xx/võrk).
    Isikuandmeid ei saadeta: ainult kasutaja id (sessioonist), tekstist eemaldatud e-postid, päringuparameetrid ja pikad tokenid. Max 15 lehe laadimise kohta. */
 const ERR={n:0,seen:new Set(),f:window.fetch.bind(window)};
@@ -3415,6 +3427,7 @@ function clErr(e){if(e&&e.status===402)return '';const m=String(e&&e.message||e|
   if(/Invalid login/i.test(m))return 'Vale e-post või parool.';
   if(/already registered|already exists/i.test(m))return 'Selle e-postiga konto on juba olemas. Logi sisse.';
   if(/not confirmed/i.test(m))return 'Kinnita esmalt oma e-post: vaata postkasti ja vajuta lingil.';
+  if(/captcha/i.test(m))return 'Turvakontroll ebaõnnestus. Proovi uuesti.';
   if(/rate|too many/i.test(m))return 'Liiga palju katseid. Proovi mõne minuti pärast uuesti.';
   if(/fetch|network|Failed/i.test(m))return 'Ühendus serveriga ebaõnnestus. Kontrolli internetti ja proovi uuesti.';
   return m||'Midagi läks valesti. Proovi uuesti.';}
@@ -3528,18 +3541,20 @@ function clLoginUi(){
     try{await clInit();
       if(meta){if(meta.ref){const {data:ok}=await CL.sb.rpc('ref_code_ok',{p_code:meta.ref});if(!ok){$('lRef').value='';$('lRefW').hidden=true;meta.ref='';er.textContent='Partneri link on aegunud või vigane. Vajuta uuesti „Loo konto“, et jätkata ilma soodustuseta.';return;}}
         acct.niche=meta.niche;acct.activeTpl=null;acct.source=meta.source;
-        const {data,error}=await CL.sb.auth.signUp({email:em,password:pw,options:{emailRedirectTo:appBase(),data:meta}});if(error)throw error;
+        const {data,error}=await CL.sb.auth.signUp({email:em,password:pw,options:{emailRedirectTo:appBase(),data:meta,captchaToken:await capToken('capL')}});if(error)throw error;
         if(!data.session){er.style.color='var(--ok)';er.textContent='Peaaegu valmis! Saatsime aadressile '+em+' kinnituslingi. Vajuta sellel ja oled sees'+(acct.welcome>0?' – siis lisanduvad ka '+acct.welcome+' tervituskrediiti.':'.');return;}}
-      else{const {error}=await CL.sb.auth.signInWithPassword({email:em,password:pw});if(error)throw error;}
+      else{const {error}=await CL.sb.auth.signInWithPassword({email:em,password:pw,options:{captchaToken:await capToken('capL')}});if(error)throw error;}
       if(await clLoad()){$('lPass').value='';store.set('v3d_email',em);await clWelcome(true,!!meta||clIsNew());clIntoApp(true);}else er.textContent='Konto andmeid ei leitud. Kirjuta info@vaade3d.ee';
     }catch(err){er.textContent=clErr(err);}finally{btn.disabled=false;btn.removeAttribute('aria-busy');btn.textContent=t0;}};
+  if(CAP.key)capPrep('capL').catch(()=>{}); // turvakontroll valmis enne, kui vajutatakse „Logi sisse“
   try{if(sessionStorage.getItem('v3d_deleted')){sessionStorage.removeItem('v3d_deleted');$('lErr').style.color='var(--ok)';$('lErr').textContent='Konto ja andmed kustutati. Aitäh, et proovisid Vaade3D-d.';}}catch(_){}
   $('gBtn').onclick=async()=>{if(!termsOk())return;if(signUp)sessionStorage.setItem('v3d_terms',TERMS_V);try{await clInit();const {error}=await CL.sb.auth.signInWithOAuth({provider:'google',options:{redirectTo:appBase()}});if(error)throw error;}catch(e){$('lErr').textContent=clErr(e);}};
   $('forgotL').onclick=async()=>{const em=$('lEmail').value.trim();if(!/^\S+@\S+\.\S+$/.test(em)){$('lErr').textContent='Sisesta ülal oma e-post, siis saadame parooli taastamise lingi.';return;}
-    try{await clInit();const {error}=await CL.sb.auth.resetPasswordForEmail(em,{redirectTo:appBase()});if(error)throw error;$('lErr').style.color='var(--ok)';$('lErr').textContent='Saatsime parooli taastamise lingi aadressile '+em+'.';}catch(e){$('lErr').textContent=clErr(e);}};
-  if($('forgotS'))$('forgotS').onclick=async()=>{const {error}=await CL.sb.auth.resetPasswordForEmail(acct.email,{redirectTo:appBase()});toast(error?clErr(error):'Saatsime parooli taastamise lingi aadressile '+acct.email);};
+    try{await clInit();const {error}=await CL.sb.auth.resetPasswordForEmail(em,{redirectTo:appBase(),captchaToken:await capToken('capL')});if(error)throw error;$('lErr').style.color='var(--ok)';$('lErr').textContent='Saatsime parooli taastamise lingi aadressile '+em+'.';}catch(e){$('lErr').textContent=clErr(e);}};
+  if($('forgotS'))$('forgotS').onclick=async()=>{const {error}=await capToken('capS').then(t=>CL.sb.auth.resetPasswordForEmail(acct.email,{redirectTo:appBase(),captchaToken:t})).catch(e=>({error:e}));toast(error?clErr(error):'Saatsime parooli taastamise lingi aadressile '+acct.email);};
   $('secF').onsubmit=async e=>{e.preventDefault();const n=$('sNew').value;if(n.length<8){$('secErr').textContent='Uus parool peab olema vähemalt 8 märki.';return;}if(n!==$('sNew2').value){$('secErr').textContent='Uued paroolid ei kattu.';return;}
-    const {error:e1}=await CL.sb.auth.signInWithPassword({email:acct.email,password:$('sOld').value});if(e1){$('secErr').textContent='Praegune parool on vale.';return;}
+    let ct;try{ct=await capToken('capS');}catch(x){$('secErr').textContent=x.message;return;}
+    const {error:e1}=await CL.sb.auth.signInWithPassword({email:acct.email,password:$('sOld').value,options:{captchaToken:ct}});if(e1){$('secErr').textContent=/captcha/i.test(e1.message||'')?clErr(e1):'Praegune parool on vale.';return;}
     const {error}=await CL.sb.auth.updateUser({password:n});if(error){$('secErr').textContent=clErr(error);return;}$('secErr').textContent='';$('sOld').value=$('sNew').value=$('sNew2').value='';toast('Parool muudetud');};
   const out=async(scope)=>{try{await CL.sb.auth.signOut(scope?{scope}:undefined);}catch(_){}['oai_acct','v3d_leads','oai_session'].forEach(k=>{try{localStorage.removeItem(k);}catch(_){}});location.href=appBase();};
   $('logoutM').onclick=()=>out();$('logoutS').onclick=()=>out();

@@ -129,3 +129,14 @@ Uus mall saab 3D lihtsalt seadistusega (nt `photo3d:{subject:'object',from:'imag
 - Tervituskrediidid tulevad alles e-posti kinnitamisel (päästik `on_auth_user_welcome`, üks kord firma kohta).
 - Auth hook „Before user created“ = `public.hook_before_user_created` (Dashboard → Authentication → Hooks; sisse lülitatud Management API kaudu): ajutised e-posti domeenid (`blocked_email_domains`, 9913 domeeni, ka alamdomeenid) ja max 3 kontot IP kohta ööpäevas (`rate_limits`, võti `signup:ip:<ip>`). Admin API kutsel IP puudub -> ei piira.
 - Testid päris baasis (kõik veeretatakse tagasi, õnnestumine = viga `TESTS_OK`): `supabase/tests/sql/*.sql`, käivita SQL Editoris või Management API `database/query` kaudu.
+
+## Turnstile (Cloudflare captcha) — sisselogimine, registreerimine, parooli taastamine ja muutmine
+
+Ilma võtmeta töötab kõik nagu enne (vidinat pole). Järjekord on oluline: kui Supabase'is lülitad captcha sisse enne, kui äpp saadab tokenit, ei saa keegi sisse logida.
+
+1. Cloudflare → Turnstile → Add widget: domeenid `app.vaade3d.ee` (ja vajadusel `localhost`), Widget Mode **Managed**.
+2. **Site key** → `index.html`, rida `<script>window.V3D_CONFIG={...}</script>`: lisa `"turnstile": "0x4AAAA…"` (nt `{"url": "…", "key": "…", "turnstile": "0x4AAAA…"}`). Commit + push, oota kuni GitHub Pages on uuendatud (~1 min).
+3. **Secret key** → Supabase Dashboard → Authentication → Attack Protection → Enable Captcha protection → Provider **Cloudflare Turnstile** → Captcha secret → Save.
+4. Kontroll: logi välja ja uuesti sisse. Kui midagi läheb valesti, lülita punktis 3 captcha välja (äpp töötab edasi ka tokeniga).
+
+Testvõtmed (Cloudflare): site `1x00000000000000000000AA` (alati läbi), `3x00000000000000000000FF` (nõuab klõpsu); secret `1x0000000000000000000000000000000AA`. Päris Supabase'i vastu jooksvad testid (`supabase/tests/*.mjs`) vajavad captcha sisselülitamisel testvõtmeid või captcha väljalülitamist testi ajaks.
