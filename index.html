@@ -490,6 +490,11 @@ body.cvm .panel>*:not(#cvPanel){display:none!important}
 /* header buttons + menu */
 .credbtn{font:600 12px var(--mono);padding:7px 11px;border-radius:999px;background:var(--soft);border:0;cursor:pointer;white-space:nowrap;color:var(--ink)}
 .credbtn b{color:var(--accent)}
+.credbtn.low{background:var(--accent);color:#fff}.credbtn.low b{color:#fff}
+.crlink{border:0;background:none;color:var(--accent);font:600 12.5px var(--display);text-decoration:underline;text-underline-offset:3px;cursor:pointer;padding:4px 2px;white-space:nowrap}
+@media (max-width:520px){.crlink{display:none}}
+.wsub{display:block;margin-top:8px;font:500 15px/1.4 var(--display);color:var(--muted)}.lwel .wsub{margin:0;max-width:320px}
+.ocp.pop{border-color:var(--accent)}
 .firm{border:0;background:none;cursor:pointer;color:var(--ink);font:600 14px var(--display);padding:4px;border-radius:8px}
 .firm:hover{background:var(--soft)}
 .menuwrap{position:relative}
@@ -1157,7 +1162,7 @@ input[type=checkbox]{accent-color:var(--accent)}
     </label>
     <div class="menuwrap"><button type="button" class="bell" id="bellBtn" aria-label="Teavitused" aria-haspopup="true" aria-expanded="false"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/><path d="M8.5 11h7M8.5 14.5h4"/></svg><i class="bdot" id="bellDot" hidden>0</i></button>
       <div class="menu npop" id="bellPop" hidden><div class="nph"><b>Teavitused</b><button type="button" class="lnk" id="bellAll">Kõik päringud</button></div><div id="bellList"></div></div></div>
-    <button type="button" class="credbtn" id="hdrCred"><b id="hdrBal">30</b> krediiti</button>
+    <button type="button" class="credbtn" id="hdrCred"><b id="hdrBal">0</b> krediiti</button><button type="button" class="crlink" id="hdrAdd" hidden>Lisa krediite</button>
     <div class="menuwrap"><button type="button" class="firm" id="avatarBtn" aria-haspopup="true" aria-expanded="false"><b id="avIni">FT</b><span id="avComp">Fassaaditööd OÜ</span></button>
       <div class="menu" id="menu" hidden><div class="who"><span id="mName">Mari Maasikas</span><small id="mEmail">mari@firma.ee</small></div>
         <button type="button" data-go="profile">Profiil</button><button type="button" data-go="company">Ettevõte</button><button type="button" data-go="billing">Krediidid ja maksed</button><button type="button" data-go="seller">Teeni müüjana</button><button type="button" id="fbM">Anna tagasisidet</button><button type="button" id="admM">Admin · analüütika</button><button type="button" id="logoutM">Logi välja</button></div></div>
@@ -1186,7 +1191,7 @@ input[type=checkbox]{accent-color:var(--accent)}
       <div class="stat"><b id="stObj">2</b><small>Objekti kontol</small><svg class="hspark" viewBox="0 0 90 30" aria-hidden="true"><path class="f" d="M0 26 L18 24 36 25 54 18 72 19 90 8 90 30 0 30z"/><path class="l" d="M0 26 L18 24 36 25 54 18 72 19 90 8"/></svg></div>
       <div class="stat"><b id="stMonth">0</b><small>Objektivaadet sel kuul</small></div>
       <div class="stat"><b id="stGen">0</b><small>Esituspilti</small></div>
-      <div class="stat cr"><div><b id="stCred">30</b><small>Krediiti saldo</small></div><button class="ghost" type="button" id="stBuy">Osta</button><i class="cmeter" aria-hidden="true"><b id="stMeter"></b></i></div>
+      <div class="stat cr"><div><b id="stCred">0</b><small>Krediiti saldo</small></div><button class="ghost" type="button" id="stBuy">Osta</button><i class="cmeter" aria-hidden="true"><b id="stMeter"></b></i></div>
     </div>
     <div class="hgrid">
       <div style="display:flex;flex-direction:column;gap:12px;min-width:0"><div class="ohead"><div class="tag">Viimased objektid</div><label class="osrch" id="oSrchW" hidden><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input id="oSrch" type="search" placeholder="Otsi objekti" aria-label="Otsi objekti"></label></div><div class="ocards" id="ocards"></div><div class="fhint" id="oNone" hidden>Sellist objekti ei leitud.</div><div id="dWrap" hidden style="display:flex;flex-direction:column;gap:12px;margin-top:10px"><div class="tag">Disainid pildist</div><div class="ocards" id="dcards"></div></div></div>
@@ -1269,7 +1274,7 @@ input[type=checkbox]{accent-color:var(--accent)}
         <span class="fhint">Klient näeb oma maja 3D-s sinu ettevõtte nimega ja saab värve proovida. Sisselogimist pole vaja.</span></div>
       <div style="display:flex;flex-direction:column;gap:8px">
         <div class="tag">Esituspilt</div>
-        <div class="ccard"><div><small>Saldo</small><b><span id="cBal">30</span> <small style="font-size:13px">krediiti</small></b></div><button class="ghost" type="button" data-go="billing">Osta krediite</button></div>
+        <div class="ccard"><div><small>Saldo</small><b><span id="cBal">0</span> <small style="font-size:13px">krediiti</small></b></div><button class="ghost" type="button" data-go="billing">Osta krediite</button></div>
         <button class="send" type="button" id="genBtn">Genereeri esituspilt · 4 krediiti</button>
         <div class="prog" id="genProg" hidden><i></i></div>
         <div class="fhint" id="genMsg">Fotorealistlik pilt 3D-mudelist kliendile näitamiseks. Valmib umbes 30 sekundiga.</div>
@@ -1427,7 +1432,7 @@ input[type=checkbox]{accent-color:var(--accent)}
             <label class="fl" for="cObj">Server ja 3D arvutus objekti kohta €<input id="cObj" type="number" min="0" step="0.001"><small>Maa-ameti 3D andmed on tasuta, see on serveri ja salvestuse kulu</small></label>
             <label class="fl" for="cFeeP">Makseteenuse tasu %<input id="cFeeP" type="number" min="0" step="0.01"><small>Stripe EU kaardid ~1,5%</small></label>
             <label class="fl" for="cFeeF">Makseteenuse tasu tehingu kohta €<input id="cFeeF" type="number" min="0" step="0.01"><small>Stripe ~0,25 € iga ostu kohta</small></label>
-            <label class="fl" for="cWel">Tervituskrediidid arvestatakse kuluks<select id="cWel"><option value="1">Jah, AI kulu läheb arvesse</option><option value="0">Ei</option></select><small>30 tasuta krediiti uuel kasutajal</small></label>
+            <label class="fl" for="cWel">Tervituskrediidid arvestatakse kuluks<select id="cWel"><option value="1">Jah, AI kulu läheb arvesse</option><option value="0">Ei</option></select><small id="cWelN">Tervituskrediidid uuel kasutajal</small></label>
           </div>
           <div class="tag" style="margin:18px 0 8px">Püsikulud kuus €</div>
           <div class="fgrid" id="fixF"></div>
@@ -1497,7 +1502,7 @@ input[type=checkbox]{accent-color:var(--accent)}
       <h2>Profiil</h2><p class="lead">Sinu andmed, eelistused ja teavitused.</p>
       <div class="phead"><label class="pav" for="avIn" title="Muuda pilti" style="cursor:pointer"><span id="pavIn">MM</span></label><input id="avIn" type="file" accept="image/*" hidden>
         <div style="min-width:0"><div class="pn" id="phName">Mari Maasikas</div><div class="pm" id="phMeta">Projektijuht · Fassaaditööd OÜ</div>
-          <div class="pills"><span id="phSince">Liige alates 10.2026</span><span id="phObj">2 objekti</span><span class="acc" id="phCred">30 krediiti</span></div></div>
+          <div class="pills"><span id="phSince">Liige alates 10.2026</span><span id="phObj">2 objekti</span><span class="acc" id="phCred">0 krediiti</span></div></div>
         <label class="ghost" for="avIn" style="margin-left:auto;cursor:pointer">Muuda pilti</label></div>
       <form class="card" id="profF"><div class="tag">Isikuandmed</div><div class="fgrid">
         <label class="fl" for="pName">Nimi<input id="pName" type="text" autocomplete="name"></label>
@@ -1558,7 +1563,7 @@ input[type=checkbox]{accent-color:var(--accent)}
     </div>
     <div class="spane" data-pane="billing" hidden>
       <h2>Krediidid ja maksed</h2><p class="lead">1 krediit = 0,50 €. Krediidid ei aegu. Suuremad paketid annavad boonuskrediite.</p>
-      <div class="card"><div class="bal"><div><small class="fhint" style="display:block;margin-bottom:6px">Saldo</small><b id="sBal">30 <span>krediiti</span></b></div><span class="fhint" id="sBalEur">≈ 15 € väärtuses</span></div>
+      <div class="card"><div class="bal"><div><small class="fhint" style="display:block;margin-bottom:6px">Saldo</small><b id="sBal">0 <span>krediiti</span></b></div><span class="fhint" id="sBalEur">≈ 15 € väärtuses</span></div>
         <div class="rates r3"><div class="rate"><b>3D-objektivaade</b><span>10 krediiti · 5 €</span><small class="fhint" style="display:block;margin-top:4px">Aadressist 3D-mudel, mõõdud, kaugused, AI-abiline</small></div>
         <div class="rate"><b>Esituspilt</b><span>4 krediiti · 2 €</span><small class="fhint" style="display:block;margin-top:4px">Fotorealistlik AI-pilt objekti 3D-mudelist</small></div>
         <div class="rate"><b>Disain pildist</b><span>2 krediiti · 1 €</span><small class="fhint" style="display:block;margin-top:4px">Oma fotost 2 AI varianti mis tahes mallis</small></div></div></div>
@@ -1663,11 +1668,10 @@ input[type=checkbox]{accent-color:var(--accent)}
 <div class="dlg" id="oc" hidden role="dialog" aria-modal="true" aria-labelledby="ocT"><div class="ocbox">
   <button type="button" class="ocx" id="ocX" aria-label="Sulge">×</button>
   <div class="ochd"><div class="ocic"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M14.8 9.2c-.5-.8-1.6-1.4-2.8-1.4-1.7 0-3 .9-3 2.1 0 2.9 6 1.4 6 4.3 0 1.2-1.3 2.1-3 2.1-1.2 0-2.3-.6-2.8-1.4M12 6v1.8M12 16.2V18"/></svg></div>
-    <div><h3 id="ocT">Krediidid said otsa</h3><p id="ocP"></p></div></div>
-  <div class="ocbar"><div><small>Saldo</small><b id="ocBal">0</b></div><div><small>Vaja</small><b id="ocNeed">10</b></div><div><small>Puudu</small><b class="acc" id="ocLack">10</b></div></div>
+    <div><h3 id="ocT">Krediidid on otsas</h3><p id="ocP"></p></div></div>
   <div class="ocpacks" id="ocPacks"></div>
   <button type="button" class="apply ocpay" id="ocPay">Maksa</button>
-  <div class="ocfoot"><span class="fhint">🔒 Stripe · kaart, pangalink, Apple Pay · arve e-postile. Krediidid ei aegu.</span><button type="button" class="lnk" id="ocAll">Kõik paketid ja ajalugu</button></div>
+  <div class="ocfoot"><span class="fhint"><b>Krediidid ei aegu.</b> 🔒 Stripe · kaart, pangalink, Apple Pay · arve e-postile.</span><button type="button" class="lnk" id="ocAll">Kõik paketid ja ajalugu</button></div>
 </div></div>
 <div class="dlg" id="dlg" hidden role="dialog" aria-modal="true" aria-labelledby="dT"><div class="dbox"><h3 id="dT"></h3><p id="dP"></p><div id="dExtra"></div><div class="btns"><button type="button" class="ghost" id="dNo">Loobu</button><button type="button" class="apply" id="dYes">Kinnita</button></div></div></div>
 <div class="toast" id="toast" hidden></div>
@@ -2294,7 +2298,7 @@ Object.entries(acct.roofTypes||{}).forEach(([e,t])=>{});
 function toast(t){const el=$('toast');el.textContent=t;el.hidden=false;clearTimeout(toast.t);toast.t=setTimeout(()=>el.hidden=true,2600);}
 function initials(n){return (n||'?').split(/\s+/).filter(Boolean).slice(0,2).map(w=>w[0]).join('').toUpperCase();}
 function today(){return new Date().toISOString().slice(0,10);}
-function renderAcct(){try{renderPlans();}catch(e){}try{if($('studio')&&!$('studio').hidden){stSync();stRenderPanel();}}catch(e){}try{if($('cuCr'))cuDraw();}catch(e){}$('hdrBal').textContent=acct.credits;$('cBal').textContent=acct.credits;$('sBal').innerHTML=acct.credits+' <span>krediiti</span>';$('sBalEur').textContent='≈ '+(acct.credits/2).toFixed(2).replace('.',',').replace(',00','')+' € väärtuses';
+function renderAcct(){try{renderPlans();}catch(e){}try{if($('studio')&&!$('studio').hidden){stSync();stRenderPanel();}}catch(e){}try{if($('cuCr'))cuDraw();}catch(e){}$('hdrBal').textContent=acct.credits;{const low=acct.credits<price('obj')&&!planCovers('obj');$('hdrCred').classList.toggle('low',low);$('hdrAdd').hidden=!low;}$('cBal').textContent=acct.credits;$('sBal').innerHTML=acct.credits+' <span>krediiti</span>';$('sBalEur').textContent='≈ '+(acct.credits/2).toFixed(2).replace('.',',').replace(',00','')+' € väärtuses';
   $('avComp').textContent=acct.company||acct.name;$('mName').textContent=acct.name;$('mEmail').textContent=acct.email;
   const av=$('avIni');av.innerHTML=acct.logo?`<img src="${acct.logo}" alt="" style="width:100%;height:100%;object-fit:contain;border-radius:50%;background:#fff">`:initials(acct.company||acct.name);
   $('logoPrev').innerHTML=acct.logo?`<img src="${acct.logo}" alt="Logo">`:initials(acct.company||acct.name);try{renderLgPrev();}catch(_){}
@@ -2378,7 +2382,9 @@ document.querySelector('.body').id='body';
 document.querySelectorAll('[data-go]').forEach(b=>b.addEventListener('click',()=>show('settings',b.dataset.go)));
 document.querySelectorAll('.stabs [data-tab]').forEach(b=>b.onclick=()=>show('settings',b.dataset.tab));
 $('backBtn').onclick=()=>show('home');
-$('hdrCred').onclick=()=>show('settings','billing');
+// madal saldo (ei jätku järgmiseks objektiks): pill aktsendiga, klõps avab ostu
+$('hdrCred').onclick=()=>{if($('hdrCred').classList.contains('low'))canPay(price('obj'),'Järgmine objektivaade');else show('settings','billing');};
+$('hdrAdd').onclick=()=>canPay(price('obj'),'Järgmine objektivaade');
 $('avatarBtn').onclick=e=>{e.stopPropagation();const m=$('menu');m.hidden=!m.hidden;$('avatarBtn').setAttribute('aria-expanded',!m.hidden);};
 document.addEventListener('click',e=>{if(!$('menu').hidden&&!e.target.closest('.menuwrap'))$('menu').hidden=true;});
 function logout(){store.del('oai_session');$('app').hidden=true;$('login').hidden=false;$('lPass').value='';}
@@ -2737,7 +2743,7 @@ function plPrompt(sel){const lines=['Image 1 is the customer\'s photo (the scene
   return {prompt:lines.join('\n'),imgs};}
 async function plGenerate(){if(!plReady())return;const firm=PS.mode==='firm',P=prodList(),sel=PS.sel.map(id=>P.find(x=>x.id===id)).filter(Boolean),C=PS.cfg;
   if(!firm&&C.lead_first&&!PS.lead){const l=await plSubmitLead(true);if(!l)return;}
-  if(firm&&acct.credits<price('design')&&!await needCredits(price('design'),'Toode kliendi juures'))return;
+  if(firm&&!await canPay(price('design'),'Toode kliendi juures'))return;
   const st=$('plStage'),pg=document.createElement('div');pg.className='plprog';pg.innerHTML=`<span>${plt('wait')}</span><div class="bar"><i></i></div><small style="font-weight:500;opacity:.8">${plt('secs')}</small>`;st.appendChild(pg);
   $('plGo').disabled=true;let t=0;const iv=setInterval(()=>{t=Math.min(95,t+2);const i=pg.querySelector('i');if(i)i.style.width=t+'%';},350);
   const label='Toode kliendi juures · '+sel.map(x=>x.name).join(' + ');
@@ -2814,24 +2820,31 @@ function startFromHash(){const h=location.hash||'';if(h==='#loo-konto'||h==='#si
 function wHash(h){const o={};h.slice(1).split('&').forEach(kv=>{const i=kv.indexOf('=');if(i>0)o[kv.slice(0,i)]=decodeURIComponent(kv.slice(i+1));});return o;}
 /* out of credits */
 const PACKS=[[100,50,''],[220,100,'Populaarseim'],[600,250,'Parim hind']];
-function needCredits(need,label){coWarm();return new Promise(res=>{const bal=acct.credits,lack=+(need-bal).toFixed(2),p=basePrice('obj');let sel=PACKS.findIndex(x=>x[0]>=lack&&x[2]);if(sel<0)sel=PACKS.findIndex(x=>x[0]>=lack);if(sel<0)sel=2;if(sel===0&&lack<=100)sel=1;
-  // valikud: täpselt puuduv kogus (vähemalt 10) + paketid
-  const cx=Math.max(10,Math.ceil(lack)),OPTS=PACKS.map(([cr,eu,tg])=>({cr,eu,tg}));if(cx<100){OPTS.unshift({cr:cx,eu:cuPrice(cx),tg:'Täpselt vajalik',custom:true});sel++;}
-  $('ocT').textContent=bal<p?'Krediidid said otsa':'Krediiti ei jätku';
-  $('ocP').textContent=`${label} vajab ${crTxt(need)}. Vali pakett ja jätkame kohe sealt, kus pooleli jäid.`;
-  $('ocBal').textContent=String(bal).replace('.',',');$('ocNeed').textContent=String(need).replace('.',',');$('ocLack').textContent=String(lack).replace('.',',');
-  const draw=()=>{$('ocPacks').innerHTML=OPTS.map(({cr,eu,tg,custom},i)=>{const per=eu/(cr/10),bonus=Math.round(cr-eu/crEur());return `<button type="button" class="ocp" data-k="${i}" aria-pressed="${i===sel}"><span class="rd"></span><span><b>${cr} krediiti</b>${tg?`<span class="tg">${tg}</span>`:''}<small>${custom?'Ainult see, mis puudu':`≈ ${Math.floor(cr/p)} objektivaadet`} · ${per.toFixed(2).replace('.',',')} € tükk${bonus>0?` · +${bonus} boonust`:''}</small></span><span class="pr">${eurTxt(eu)}<small>saldo pärast ${String(+(cr+bal).toFixed(2)).replace('.',',')}</small></span></button>`;}).join('');
-    $('ocPacks').querySelectorAll('.ocp').forEach(b=>b.onclick=()=>{sel=+b.dataset.k;draw();});$('ocPay').textContent=`Maksa ${eurTxt(OPTS[sel].eu)} ja jätka`;};
+// tasuline töö: piisab saldost -> kohe; muidu "Krediidid on otsas" (sama hinnaallikas). Jätame meelde, kus kasutaja oli (makse järel "Jätka tööd").
+let LASTPAY=null;
+function resumeCtx(){if($('studio')&&!$('studio').hidden)return {v:'studio',sid:STU.sid};if(!$('body').hidden)return {v:'app',ehr:(HOUSES[cur]||{}).ehr};return {v:'home',addr:($('homeIn')||{}).value||''};}
+async function canPay(need,label){LASTPAY={need,label,ctx:resumeCtx()};if(acct.credits>=need)return true;return needCredits(need,label);}
+function resumeWork(c){if(!c)return;if(c.v==='studio'&&(acct.studio||[]).some(x=>x.id===c.sid)){stOpenSession(c.sid);return;}
+  if(c.v==='app'){const i=HOUSES.findIndex(h=>h.ehr===c.ehr);if(i>=0){show('app');select(i);return;}}show('home');if(c.addr&&$('homeIn')){$('homeIn').value=c.addr;$('homeIn').focus();}}
+// server ütles "krediite pole" (saldo muutus mujal): värske saldo ja sama aken
+async function creditsOut(){try{if(typeof clRefresh==='function'&&CLOUD&&CL.cid)await clRefresh();}catch(_){}const L=LASTPAY||{};needCredits(L.need||basePrice('obj'),L.label||'See töö');}
+function needCredits(need,label){coWarm();return new Promise(res=>{const bal=acct.credits,lack=+(need-bal).toFixed(2),p=basePrice('obj');
+  // 3 paketti; vaikimisi populaarseim, kui sellest jätkub
+  const OPTS=PACKS.map(([cr,eu,tg])=>({cr,eu,tg}));let sel=OPTS.findIndex(o=>o.tg==='Populaarseim'&&o.cr>=lack);if(sel<0)sel=OPTS.findIndex(o=>o.cr>=lack);if(sel<0)sel=OPTS.length-1;
+  $('ocT').textContent=bal>0?'Krediite jääb puudu':'Krediidid on otsas';
+  $('ocP').textContent=`${label}: see töö maksab ${crTxt(need)}, sul on ${String(+bal.toFixed(2)).replace('.',',')}.`;
+  const draw=()=>{$('ocPacks').innerHTML=OPTS.map(({cr,eu,tg,custom},i)=>{const per=eu/(cr/10),bonus=Math.round(cr-eu/crEur());return `<button type="button" class="ocp${tg==='Populaarseim'?' pop':''}" data-k="${i}" aria-pressed="${i===sel}"><span class="rd"></span><span><b>${cr} krediiti</b>${tg?`<span class="tg">${tg}</span>`:''}<small>≈ ${Math.floor(cr/p)} objektivaadet · ${per.toFixed(2).replace('.',',')} € tükk${bonus>0?` · +${bonus} boonust`:''}</small></span><span class="pr">${eurTxt(eu)}<small>saldo pärast ${String(+(cr+bal).toFixed(2)).replace('.',',')}</small></span></button>`;}).join('');
+    $('ocPacks').querySelectorAll('.ocp').forEach(b=>b.onclick=()=>{sel=+b.dataset.k;draw();});$('ocPay').textContent='Osta krediite';};
   draw();$('oc').hidden=false;setTimeout(()=>$('ocPay').focus(),50);
   const done=v=>{$('oc').hidden=true;document.removeEventListener('keydown',esc,true);res(v);},esc=e=>{if(e.key==='Escape'&&!$('oc').hidden){e.stopPropagation();done(false);}};document.addEventListener('keydown',esc,true);
   $('ocX').onclick=()=>done(false);$('oc').onclick=e=>{if(e.target===$('oc'))done(false);};
   $('ocAll').onclick=()=>{done(false);show('settings','billing');};
-  $('ocPay').onclick=()=>{if($('ocPay').disabled)return;const {cr,eu,custom}=OPTS[sel];if(CLOUD&&CL.cid){buyBusy($('ocPay'));clBuy(cr,custom).catch(er=>{toast(clErr(er));$('ocPay').disabled=false;$('ocPay').removeAttribute('aria-busy');draw();});return;}$('ocPay').disabled=true;$('ocPay').textContent='Makse kinnitamine…';
+  $('ocPay').onclick=()=>{if($('ocPay').disabled)return;const {cr,eu,custom}=OPTS[sel];if(CLOUD&&CL.cid){buyBusy($('ocPay'));try{sessionStorage.setItem('v3d_resume',JSON.stringify({...(LASTPAY&&LASTPAY.ctx||{}),label,t:Date.now()}));}catch(_){}clBuy(cr,custom).catch(er=>{toast(clErr(er));$('ocPay').disabled=false;$('ocPay').removeAttribute('aria-busy');draw();});return;}$('ocPay').disabled=true;$('ocPay').textContent='Makse kinnitamine…';
     setTimeout(()=>{$('ocPay').disabled=false;acct.credits=+(acct.credits+cr).toFixed(2);acct.hist.push({d:today(),t:`Ostetud ${cr} krediiti`,c:cr,e:eurTxt(eu)});save();renderAcct();if(!$('home').hidden)renderHome();toast(`+${cr} krediiti lisatud · saldo ${acct.credits}`);done(acct.credits>=need);},900);};});}
 /* esituspilt generation */
 async function startGen(skipAsk){if(acct.gen[HOUSES[cur].ehr]){setRen(true);return;}
   if(!isR(cur)){$('genMsg').textContent='Demos on esituspilt valmis ainult Tammekännu tee 44 jaoks. Päris äpis genereeritakse see iga objekti jaoks.';return;}
-  if(acct.credits<price('pic')&&!await needCredits(price('pic'),'Esituspilt'))return;
+  if(!await canPay(price('pic'),'Esituspilt'))return;
   if(!skipAsk&&!await ask2('Genereeri esituspilt?',`${HOUSES[cur].short} · ${priceTxt('pic')}. Pilt tehakse 3D-mudelist, naabrid ja aed jäävad samadesse kohtadesse.`,'Genereeri · '+priceTxt('pic')))return;
   charge('Esituspilt · '+HOUSES[cur].short,'pic');renderAcct();
   const pg=$('genProg'),bar=pg.querySelector('i');pg.hidden=false;$('genBtn').disabled=true;let t=0;$('genMsg').textContent='Genereerin esituspilti…';
@@ -2846,7 +2859,7 @@ async function openAddress(q,input){const m=findAddr(q);
   if(!m.length){toast('Aadressi ei leitud. Demos on kogu Viimsi valla hooned.');return;}
   if(m.length>1&&norm(m[0][0])!==norm(q)){toast(`Leidsin ${m.length} aadressi, vali nimekirjast täpne aadress`);if(input){input.value=m[0][0].replace(/,.*$/,'');}return;}
   const a=m[0],ex=HOUSES.findIndex(h=>h.ehr===a[1]);if(ex>=0){show('app');select(ex);toast('Objekt on juba olemas, avasin selle');return;}
-  if(acct.credits<price('obj')&&!await needCredits(price('obj'),'Objektivaade'))return;
+  if(!await canPay(price('obj'),'Objektivaade'))return;
   const Q={work:[['katus','Katus'],['fassaad','Fassaad'],['molemad','Mõlemad'],['juurde','Juurdeehitus']],
     katus:['Uus katus','Katuse vahetus','Remont','Pesemine','Värvimine','Plekitööd / rennid'],fassaad:['Soojustus','Krohvimine','Värvimine','Pesemine','Voodrilaud','Akende vahetus'],
     roof:[['gable','Viilkatus'],['hip','Kelpkatus'],['flat','Lamekatus'],['auto','Ei tea']]};
@@ -2863,7 +2876,7 @@ async function openAddress(q,input){const m=findAddr(q);
   qx.querySelectorAll('.qchips').forEach(g=>g.querySelectorAll('button').forEach(b=>b.onclick=()=>{if(!multi[g.dataset.q])g.querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed','false'));b.setAttribute('aria-pressed',b.getAttribute('aria-pressed')!=='true');upd();}));
   if(!TA)qx.querySelector('[data-q="work"] button').click();else TA.q.forEach((x,qi)=>{if(!x[2])qx.querySelector(`[data-q="t${qi}"] button`).click();});const rq=qx.querySelector('[data-q="roof"] [data-v="auto"]');if(rq)rq.click();
   const okQ=await pr;if(!okQ)return;
-  if(acct.credits<PL[plan]&&!await needCredits(PL[plan],plan==='pres'?'Esitlusega objekt':'Objektivaade'))return;
+  if(!await canPay(PL[plan],plan==='pres'?'Esitlusega objekt':'Objektivaade'))return;
   const sel=k=>[...qx.querySelectorAll(`[data-q="${k}"] [aria-pressed="true"]`)].map(b=>b.dataset.v);const job=TA?{tpl:TA.id,ans:TA.q.flatMap((x,qi)=>sel('t'+qi)),work:TA.id==='fassaad'?'fassaad':'katus',katus:[],fassaad:[],roof:sel('roof')[0]||'auto'}:{work:sel('work')[0]||'katus',katus:sel('katus'),fassaad:sel('fassaad'),roof:sel('roof')[0]||'auto'};
   const paid=charge('Objektivaade · '+a[0].replace(/,.*$/,'')+(TA?' · '+TA.name:''));const h=makeHouse(a);h.job=job;if(TA){h.tpl=TA.id;acct.htpl=Object.assign(acct.htpl||{},{[a[1]]:TA.id});acct.tplUse=acct.tplUse||[];acct.tplUse.push({d:today(),t:TA.id});}showAllRows=false;if(job.roof==='auto'&&acct.defRoof&&acct.defRoof!=='auto')h.roofType=acct.defRoof;if(job.roof!=='auto')h.roofType=job.roof;acct.jobs=Object.assign(acct.jobs||{},{[h.ehr]:job});if(job.roof!=='auto')acct.roofTypes=Object.assign(acct.roofTypes||{},{[h.ehr]:job.roof});acct.objects=[...(acct.objects||[]),a[1]];save();
   HOUSES.push(h);if(input)input.value='';renderAcct();show('app');select(HOUSES.length-1);{const hv=TA?(['katus','paike'].includes(TA.id)?'hiRoof':TA.id==='fassaad'?'hiWall':null):job.work==='katus'?'hiRoof':job.work==='fassaad'?'hiWall':null;if(hv)setTimeout(()=>$(hv).click(),900);}toast('3D-vaade valmis · −'+String(paid).replace('.',',')+' krediiti');
@@ -2974,7 +2987,7 @@ function shrink0(file,m=1100,q=.78){return new Promise((res,rej)=>{const fr=new 
 async function startDesign(file){if(!file||!/^image\//.test(file.type)){toast('Vali pildifail (JPG, PNG, HEIC)');return;}
   {const T3=tplById(acct.activeTpl);if(T3&&T3.photo3d&&T3.input!=='addr'){openStudio(T3.id,[file]);return;}}
   let img;try{img=await shrink(file);}catch(e){toast('Pilti ei õnnestunud avada');return;}
-  if(acct.credits<price('design')&&!await needCredits(price('design'),'Disain pildist'))return;
+  if(!await canPay(price('design'),'Disain pildist'))return;
   const chips=(k,arr,multi)=>`<div class="qchips" data-q="${k}" ${multi?'data-multi="1"':''}>`+arr.map(o=>{const [v,l]=Array.isArray(o)?o:[o,o];return `<button type="button" data-v="${v}" aria-pressed="false">${l}</button>`;}).join('')+'</div>';
   const TP=(tplById(acct.activeTpl)||{}).input==='photo'?tplById(acct.activeTpl):null,styles=TP?TP.styles:DSTYLES;
   const pr=ask2(TP?TP.name:'Disain pildist',(TP&&TP.out==='3d'?'AI teeb fotol olevast esemest pööratava 3D-mudeli (GLB). Parim tulemus tuleb, kui ese on pildil tervikuna ja taust on lihtne.':TP&&TP.free?'Kirjelda oma sõnadega, mida sellest fotost teha. AI teeb 2 varianti.':'AI teeb fotost 2 varianti. Hoone, ruumi või eseme kuju ja vaatenurk jäävad samaks, muutub ainult see, mida soovid.'),'Tee disain · '+priceTxt('design'),
@@ -3219,7 +3232,7 @@ function renderRoi(){const c=C(),D=days(roiRange),L=costLedger(D),sum=a=>a.reduc
   $('aiSvc').innerHTML=svc('pic','Esituspilt',PICM,c.picModel,c.pic,'pic','€ pildi kohta',`<label>Katseid pildi kohta<input type="number" min="1" step="0.1" data-ai="picTries" value="${c.picTries}"></label>`,mPic,c.picBud,c.picOn)
     +svc('chat','AI-abiline',CHATM,c.chatModel,c.chatMsg,'chatMsg','€ sõnumi kohta',`<label>Sõnumeid objekti kohta<input type="number" min="0" step="0.5" data-ai="chatPer" value="${c.chatPer}"></label>`,mChat,c.chatBud,c.chatOn);
   document.querySelectorAll('[data-ai]').forEach(el=>el.onchange=()=>{const k=el.dataset.ai;if(el.type==='checkbox')c[k]=el.checked;else if(el.tagName==='SELECT'){c[k]=el.value;if(k==='picModel')c.pic=PICM[el.value][1];if(k==='chatModel')c.chatMsg=CHATM[el.value][1];}else c[k]=Math.max(0,+el.value||0);save();renderRoi();toast('AI seadistus salvestatud');});
-  $('cObj').value=c.obj;$('cFeeP').value=c.feeP;$('cFeeF').value=c.feeF;$('cWel').value=String(+c.wel);
+  $('cObj').value=c.obj;$('cFeeP').value=c.feeP;$('cFeeF').value=c.feeF;$('cWel').value=String(+c.wel);$('cWelN').textContent=(acct.welcome||10)+' tasuta krediiti uuel kasutajal';
   $('fixF').innerHTML=Object.entries(FIXN).map(([k,l])=>`<label class="fl" for="fx_${k}">${l}<input id="fx_${k}" data-fx="${k}" type="number" min="0" step="1" value="${c.fixed[k]||0}"></label>`).join('');
   $('mktF').innerHTML=SOURCES.filter(([v])=>v!=='partner').map(([v,l])=>`<label class="fl" for="mk_${v}">${l}<input id="mk_${v}" data-mk="${v}" type="number" min="0" step="1" value="${c.mkt[v]||0}"></label>`).join('');}
 $('costF').onsubmit=e=>{e.preventDefault();const c=C(),n=id=>Math.max(0,+$(id).value||0);c.obj=n('cObj');c.feeP=n('cFeeP');c.feeF=n('cFeeF');c.wel=+$('cWel').value;
@@ -3320,10 +3333,13 @@ function clShowLogin(){const B=$('boot'),L=$('login');if(!L.hidden&&B.hidden)ret
   if(!B.hidden){B.classList.add('out');setTimeout(()=>{B.hidden=true;B.classList.remove('out','wel');},350);}}
 function clIsNew(){const c=CL.user&&Date.parse(CL.user.created_at);return !!c&&Date.now()-c<15*60e3;}
 // tervitus ~1 s (klõps jätab vahele), siis sujuvalt äppi; kokku alla 1,8 s
+function welcomeTxt(){const n=acct.welcome||10,k=Math.floor(n/basePrice('obj'));return `Sul on ${n} krediiti, millest piisab ${k<=1?'ühe maja':k+' maja'} 3D-vaateks.`;}
 function clWelcome(fromForm,isNew){return new Promise(res=>{const nm=String(acct.name||'').trim().split(/\s+/)[0]||acct.company||'',t=(isNew?'Tere tulemast':'Tere tulemast tagasi')+(nm?', '+nm:'')+'!';
   let done=false;const fin=()=>{if(done)return;done=true;document.removeEventListener('click',fin,true);res();};document.addEventListener('click',fin,true);
-  if(fromForm){const L=$('login');let w=L.querySelector('.lwel');if(!w){w=document.createElement('div');w.className='lwel';w.innerHTML='<span class="stlogo blogo" aria-hidden="true"></span><h2></h2>';L.querySelector('.lform').appendChild(w);}w.querySelector('h2').textContent=t;L.classList.add('wel');}
-  else{$('bootT').textContent=t;$('boot').classList.add('wel');}
+  if(fromForm){const L=$('login');let w=L.querySelector('.lwel');if(!w){w=document.createElement('div');w.className='lwel';w.innerHTML='<span class="stlogo blogo" aria-hidden="true"></span><h2></h2><p class="wsub"></p>';L.querySelector('.lform').appendChild(w);}w.querySelector('h2').textContent=t;w.querySelector('.wsub').textContent=isNew?welcomeTxt():'';L.classList.add('wel');}
+  else{$('bootT').innerHTML=stEsc(t)+(isNew?`<small class="wsub">${stEsc(welcomeTxt())}</small>`:'');$('boot').classList.add('wel');}
+  // uus konto: tervituskrediidid ka äpis (tervitus on lühike)
+  if(isNew)setTimeout(()=>toast(welcomeTxt()),1600);
   setTimeout(fin,1050);});}
 function clIntoApp(fromForm,after){const L=$('login'),B=$('boot');(fromForm?L:B).classList.add('out');
   setTimeout(()=>{B.hidden=true;B.classList.remove('out','wel');L.classList.remove('wel','out');const a=$('app');a.classList.add('appin');enter();
@@ -3335,8 +3351,8 @@ async function clFn(name,body,opt){opt=opt||{};const h={'Content-Type':'applicat
   else if(/^eyJ/.test(CLOUD.key))h.Authorization='Bearer '+CLOUD.key;
   const r=await fetch(CL.fn+name+(opt.q||''),{method:body===undefined?'GET':'POST',headers:h,body:body===undefined?undefined:JSON.stringify(body)});
   let j={};try{j=await r.json();}catch(_){}
-  if(!r.ok){const e=new Error(r.status===402||j.error==='insufficient_credits'?'Krediite pole piisavalt':j.error||('Viga '+r.status));e.status=r.status;throw e;}return j;}
-function clErr(e){const m=String(e&&e.message||e||'');
+  if(!r.ok){const out=r.status===402||j.error==='insufficient_credits';const e=new Error(out?'Krediite pole piisavalt':j.error||('Viga '+r.status));e.status=out?402:r.status;if(out)creditsOut();throw e;}return j;}
+function clErr(e){if(e&&e.status===402)return '';const m=String(e&&e.message||e||'');
   if(/Invalid login/i.test(m))return 'Vale e-post või parool.';
   if(/already registered|already exists/i.test(m))return 'Selle e-postiga konto on juba olemas. Logi sisse.';
   if(/not confirmed/i.test(m))return 'Kinnita esmalt oma e-post: vaata postkasti ja vajuta lingil.';
@@ -3357,7 +3373,7 @@ function clSnap(){return JSON.stringify({co:[acct.company,acct.cphone,acct.web,a
   pr:(acct.products||[]).map(p=>[p.id,p.sid,p.name,p.cat,p.imgs,p.W,p.L,p.H,p.cap,p.price,p.desc,p.link,p.pl||'ground',p.inW!==false]),iban:(acct.partners.find(x=>x.cloud)||{}).iban||'',fb:(acct.feedback||[]).length,ar:CL.admin?acct.admRules:null});}
 async function clLoad(){const sb=CL.sb;const {data:{user}}=await sb.auth.getUser();CL.user=user;if(!user)return false;
   const [{data:pr},{data:st}]=await Promise.all([sb.from('profiles').select('*').eq('user_id',user.id).single(),sb.from('settings').select('*').eq('id',1).single()]);
-  if(!pr||!pr.company_id||!st)return false;CL.uid=user.id;CL.cid=pr.company_id;CL.st=st;CL.admin=pr.is_admin;
+  if(!pr||!pr.company_id||!st)return false;CL.uid=user.id;CL.cid=pr.company_id;CL.st=st;acct.welcome=+st.welcome_credits||10;CL.admin=pr.is_admin;
   const cid=CL.cid;
   const [{data:co},{data:led},{data:obj},{data:prods},{data:w0},{data:pt},{data:rn}]=await Promise.all([
     sb.from('companies').select('*').eq('id',cid).single(),
@@ -3478,10 +3494,13 @@ function buyBusy(btn){const h=btn.innerHTML;btn.disabled=true;btn.setAttribute('
 // eelsoojendus: funktsioon käima juba siis, kui ostu nupp/modaal paistab (max kord minutis)
 let coWarmT=0;function coWarm(){if(!(CLOUD&&CL.cid)||Date.now()-coWarmT<60e3)return;coWarmT=Date.now();clFn('checkout',{warm:true},{q:CO_Q}).catch(()=>{});}
 ['pointerover','focusin'].forEach(ev=>document.addEventListener(ev,e=>{if(e.target.closest&&e.target.closest('#stBuy,.pack,#cuBuy,#ocPay,[data-go="billing"]'))coWarm();},{passive:true}));
+// makse õnnestus: kui kasutaja oli töö pooleli (krediidid otsas), paku sinna tagasi minekut
+async function clResume(){let c=null;try{c=JSON.parse(sessionStorage.getItem('v3d_resume')||'null');sessionStorage.removeItem('v3d_resume');}catch(_){}if(!c||Date.now()-c.t>3*3600e3)return;
+  if(await ask2('Makse õnnestus',`Saldo on nüüd ${crTxt(acct.credits)}. ${c.label||'Töö'} ootab sind.`,'Jätka tööd'))resumeWork(c);}
 async function clPaid(){const sid=(location.hash.match(/#paid=(cs_[A-Za-z0-9_]+)/)||[])[1];history.replaceState(null,'',location.pathname+location.search);toast('Makse õnnestus, krediidid lisatakse kontole…');
   // Stripe teatab serverile tavaliselt enne, kui klient siia tagasi jõuab: vaatame, kas just see makse on kontol
   for(let k=0;k<12;k++){const {data}=sid?await CL.sb.from('credit_ledger').select('delta').eq('kind','purchase').eq('ref',sid).limit(1):{data:null};
-    if(data&&data.length){await clRefresh();toast('+'+data[0].delta+' krediiti lisatud · saldo '+acct.credits);return;}await new Promise(r=>setTimeout(r,2500));}
+    if(data&&data.length){await clRefresh();toast('+'+data[0].delta+' krediiti lisatud · saldo '+acct.credits);clResume();return;}await new Promise(r=>setTimeout(r,2500));}
   await clRefresh();toast('Makse on töötlemisel. Krediidid ilmuvad kontole mõne minuti jooksul.');}
 
 /* AI: esituspilt, disain pildist, toode hoovis */
@@ -3499,7 +3518,7 @@ function dzFig(d,k){const u=d.out&&safeUrl(d.out[k]);if(u)return `<a href="${u}"
 if(CLOUD){
   const _startGen=startGen;startGen=async function(skipAsk){if(!CL.cid)return _startGen(skipAsk);const h=HOUSES[cur];
     if(acct.gen[h.ehr]&&(acct.genUrl||{})[h.ehr]){setRen(true);return;}
-    if(acct.credits<price('pic')&&!await needCredits(price('pic'),'Esituspilt'))return;
+    if(!await canPay(price('pic'),'Esituspilt'))return;
     if(!skipAsk&&!await ask2('Genereeri esituspilt?',`${h.short} · ${priceTxt('pic')}. Pilt tehakse 3D-mudelist, naabrid ja aed jäävad samadesse kohtadesse.`,'Genereeri · '+priceTxt('pic')))return;
     setRen(false);const shot=clShot();charge('Esituspilt · '+h.short,'pic');renderAcct();
     const pg=$('genProg'),bar=pg.querySelector('i');pg.hidden=false;$('genBtn').disabled=true;$('genMsg').textContent='Genereerin esituspilti, umbes 20 sekundit…';let t=0;const iv=setInterval(()=>{t=Math.min(95,t+2);bar.style.width=t+'%';},400);
@@ -4057,7 +4076,7 @@ function stRenderThread(){const s=stSess(),box=$('stThread');if(!s||box.hidden){
 /* Genereeri: teeb pildi nummerdatud piltidest, märkidest ja tekstist */
 async function stGenerate(){const gen=$('stGenBtn');if(gen.disabled||gen.hidden)return;const th=stTheme(STU.tpl),T=th.T,text=$('stIn').value.trim(),kind=stKind();
   if(th.soon){toast('See töö tuleb peagi. Krediite ei võetud.');return;}
-  const pk=stPriceKind();if(acct.credits<price(pk)&&!await needCredits(price(pk),T&&T.id!=='vaba'?T.name:'Vaba idee'))return;
+  const pk=stPriceKind();if(!await canPay(price(pk),T&&T.id!=='vaba'?T.name:'Vaba idee'))return;
   let s=stSess();if(!s)s=stNewSession();stWB();
   const pics=kind==='pic'?[]:stTrayImgs(s),prods=kind==='place'?stProdRefs(text,s):[],roles=[],legend=[],images=[];
   const first=!(s.imgs||[]).some(x=>x.k==='ai'),n=kind==='design'&&first?2:1,nm=pics.reduce((a,im)=>a+(im.marks||[]).length,0);
@@ -4146,7 +4165,7 @@ async function p3Check(mode){const P=STU.p3,g=P.gen,sub=P.subject;
   catch(e){if(P.gen===g)P.err=clErr(e);}
   finally{if(P.gen===g){P.checking=0;stSave();if(!$('studio').hidden)stRender();}}}
 async function p3Start(){if(!p3CanSend())return;const P=STU.p3,L=p3List(),c=p3ChkFor(),sub=P.subject;
-  if(acct.credits<price('3d')&&!await needCredits(price('3d'),'Fotod → 3D-mudel'))return;
+  if(!await canPay(price('3d'),'Fotod → 3D-mudel'))return;
   const s=p3Sess();let object_id;
   if(P.ehr&&CL.sb){try{const {data}=await CL.sb.from('objects').select('id').eq('company_id',CL.cid).eq('ehr',P.ehr).is('deleted_at',null).maybeSingle();object_id=data&&data.id||undefined;}catch(_){}}
   s.p3job={status:'pending',stage:'cleaning',subject:sub,t:Date.now()};P.starting=1;stSave();stRender();
