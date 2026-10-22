@@ -193,8 +193,8 @@ export async function uploadDataUrl(dataUrl: string, path: string): Promise<stri
 /** E-kiri Resendi kaudu. */
 export async function sendMail(to: string[], subject: string, html: string, replyTo?: string, fromName?: string) {
   const key = env("RESEND_API_KEY");
-  // saatja nimi: "Firma via Vaade3D <paringud@…>" (aadress jääb meie kinnitatud domeenile)
-  let from = env("MAIL_FROM", "Vaade3D <paringud@vaade3d.ee>");
+  // saatja nimi: "Firma via Vaade3D <info@…>" (aadress jääb meie kinnitatud domeenile)
+  let from = env("MAIL_FROM", "Vaade3D <info@vaade3d.ee>");
   const nm = String(fromName || "").replace(/[^\p{L}\p{N} .&'-]/gu, "").trim().slice(0, 60);
   if (nm) from = `${nm} via Vaade3D <${(from.match(/<([^>]+)>/) || [, from])[1]}>`;
   if (!key || !to.length) return { skipped: true };

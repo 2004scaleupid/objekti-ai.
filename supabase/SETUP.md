@@ -83,7 +83,7 @@ Uus mall saab 3D lihtsalt seadistusega (nt `photo3d:{subject:'object',from:'imag
    | `STRIPE_SECRET_KEY` | Stripe → Developers → API keys (alguses `sk_test_…`) |
    | `STRIPE_WEBHOOK_SECRET` | Stripe → Webhooks → lisa `https://<ref>.supabase.co/functions/v1/stripe-webhook`, sündmused `checkout.session.completed`, `checkout.session.async_payment_succeeded`, `charge.refunded`, `charge.dispute.created` |
    | `APP_ORIGINS` (valikuline) | lehed, kuhu makse järel tagasi suunatakse; vaikimisi `https://app.vaade3d.ee,https://2004scaleupid.github.io` |
-   | `MAIL_FROM` (valikuline) | vaikimisi `Vaade3D <paringud@vaade3d.ee>` |
+   | `MAIL_FROM` (valikuline) | vaikimisi `Vaade3D <info@vaade3d.ee>` |
    | `KIE_MODEL` (valikuline) | vaikimisi `nano-banana-2-1` |
    | `ANTHROPIC_MODEL` (valikuline) | vaikimisi `claude-haiku-5-5` |
 
