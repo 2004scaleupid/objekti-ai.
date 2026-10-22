@@ -1,6 +1,6 @@
 # Öine andmebaasi varukoopia (Supabase'i tasuta paketil varukoopiaid pole).
 # See fail käib PRIVAATSESSE repo'sse (nt vaade3d-backups) kausta .github/workflows/, mitte siia avalikku repo'sse.
-# Teeb: roles.sql + schema.sql + data.sql (Supabase CLI, sama mis Supabase'i juhendis), pakib, krüpteerib age'iga
+# Teeb: roles.sql + schema.sql + data.sql (Supabase CLI, sama mis Supabase'i juhendis) + storage_objects.csv (failide metaandmed ilma lod2-ta), pakib, krüpteerib age'iga
 # sinu avaliku võtmega ja paneb release'i failina. Hoiab alles 14 viimast. Failihoidla faile EI kopeeri.
 # Saladused (private repo -> Settings -> Secrets and variables -> Actions):
 #   SUPABASE_DB_URL  postgresql://postgres.twubqebmjuvwypeduqqq:<DB parool>@aws-1-eu-central-1.pooler.supabase.com:5432/postgres
@@ -23,7 +23,7 @@ jobs:
         with:
           version: 2.110.0
       - name: age
-        run: sudo apt-get update -qq && sudo apt-get install -y -qq age
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq age postgresql-client
       - name: Dump
         env:
           DB: ${{ secrets.SUPABASE_DB_URL }}
@@ -33,11 +33,14 @@ jobs:
           mkdir -p out
           supabase db dump --db-url "$DB" -f out/roles.sql --role-only
           supabase db dump --db-url "$DB" -f out/schema.sql
-          supabase db dump --db-url "$DB" -f out/data.sql --use-copy --data-only
+          # storage.objects eraldi ja ilma lod2 kaustata: ~100 000 rida (35 MB), andmed on allikast taastatavad (SETUP.md)
+          supabase db dump --db-url "$DB" -f out/data.sql --use-copy --data-only -x storage.objects
+          psql "$DB" -v ON_ERROR_STOP=1 -c "\copy (select * from storage.objects where bucket_id <> 'lod2') to 'out/storage_objects.csv' with csv header"
           ls -la out
           # tühi või poolik dump = viga (töö ebaõnnestub ja GitHub saadab e-kirja)
           test "$(stat -c %s out/schema.sql)" -gt 10000
           grep -Eq 'COPY "?public"?\."?companies' out/data.sql
+          if grep -q ',lod2,' out/storage_objects.csv; then echo 'lod2 read koopias'; exit 1; fi
       - name: Krüpteeri
         env:
           AGE_RECIPIENT: ${{ secrets.AGE_RECIPIENT }}
@@ -45,7 +48,7 @@ jobs:
           set -euo pipefail
           case "$AGE_RECIPIENT" in age1*) ;; *) echo "AGE_RECIPIENT peab algama age1"; exit 1;; esac
           F="vaade3d-db-$(date -u +%Y%m%d-%H%M).tar.gz.age"
-          tar -C out -czf - roles.sql schema.sql data.sql | age -r "$AGE_RECIPIENT" -o "$F"
+          tar -C out -czf - roles.sql schema.sql data.sql storage_objects.csv | age -r "$AGE_RECIPIENT" -o "$F"
           rm -rf out
           echo "F=$F" >> "$GITHUB_ENV"
           ls -la "$F"

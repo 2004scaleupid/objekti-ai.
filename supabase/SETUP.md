@@ -163,6 +163,7 @@ Taastamine (uude või samasse projekti):
 ```bash
 gh release download <tag> --repo <omanik>/vaade3d-backups
 age -d -i vaade3d-backup.key vaade3d-db-<aeg>.tar.gz.age | tar -xzf -
-psql --single-transaction --variable ON_ERROR_STOP=1 --file roles.sql --file schema.sql --command 'SET session_replication_role = replica' --file data.sql --dbname "<uue projekti Session pooleri URL>"
+psql --single-transaction --variable ON_ERROR_STOP=1 --file roles.sql --file schema.sql --command 'SET session_replication_role = replica' --file data.sql --command "\copy storage.objects from 'storage_objects.csv' with csv header" --dbname "<uue projekti Session pooleri URL>"
 ```
+Koopias on kõik andmebaasi tabelid (sh `auth` kasutajad) ja kasutajate failide metaandmed (`storage.objects`), **välja arvatud `lod2` kausta read** (~100 000 rida, 35 MB): LOD2 andmed tulevad Maa-ameti avaandmetest ja taastatakse skriptidega (`lod2_tiles.py` + `lod2_upload.py`, ülal), mis loovad ka read uuesti.
 Seejärel: migratsioonid on juba skeemis; funktsioonid ja saladused uuesti (`supabase functions deploy …`, `supabase secrets set …`), LOD2 kaust uuesti `scripts/lod2_upload.py`-ga, kasutajate failid (uploads, renders, models) varukoopias **ei ole**.
