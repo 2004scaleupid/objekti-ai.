@@ -1,1 +1,3 @@
 .claude/settings.local.json
+# Maa-ameti LOD2 andmed elavad Supabase failihoidlas (lod2/v1/), mitte gitis. Ära lisa neid tagasi (scripts/lod2_upload.py).
+data/lod2/

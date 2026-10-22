@@ -2533,9 +2533,14 @@ function renderEhr(h){const box=$('ehrBox');if(!box)return;const link=`https://l
   .catch(()=>{if(HOUSES[cur]!==h)return;box.innerHTML=`<div class="tag">Ehitisregister</div><div class="fhint" style="padding:8px 0">Ehitusaasta, materjalid ja küte tulevad ehitisregistrist. Selles vaates ei saanud andmeid laadida.</div><a class="ghost" href="${link}" target="_blank" rel="noopener" style="align-self:flex-start;text-decoration:none;display:inline-block">Ava ehitisregistris ↗</a>`;});}
 /* Maa-ameti LOD2: ametlikud mõõdud failidest data/lod2/NNN.json, kogu Eesti (vt scripts/lod2_tiles.py) */
 const LOD2C={},LOD2_SRC='Hoonete 3D-mudelid: Maa- ja Ruumiamet 2026',DIR8=['põhja','kirdesse','itta','kagusse','lõunasse','edelasse','läände','loodesse'];
-/* kogu Eesti: data/lod2/NNN.json (EHR 3 viimast numbrit, scripts/lod2_tiles.py). Kui seda kildu pole (nt demos), proovib vana 2-numbrilist. */
+/* LOD2 andmed elavad Supabase'i avalikus kaustas lod2/<LOD2_VER>/ (gzip, vahemälu 1 aasta), mitte gitis. Ilma serverita (kohalik demo) data/lod2/. */
+const LOD2_VER='v1',LOD2_BASE=(window.V3D_CONFIG&&window.V3D_CONFIG.data)||(CLOUD?CLOUD.url+'/storage/v1/object/public/lod2/'+LOD2_VER+'/':'data/lod2/'),LOD2_GZ=/^https?:/.test(LOD2_BASE)?'.gz':'';
+async function lod2Get(p){const r=await fetch(LOD2_BASE+p+LOD2_GZ);if(!r.ok){if(r.status===400||r.status===404)return {};throw new Error('lod2 '+r.status);}
+  const b=new Uint8Array(await r.arrayBuffer());if(b[0]!==0x1f||b[1]!==0x8b)return JSON.parse(new TextDecoder().decode(b));
+  return JSON.parse(await new Response(new Blob([b]).stream().pipeThrough(new DecompressionStream('gzip'))).text());}
+window.lod2Get=lod2Get;
 function loadLod2(ehr){ehr=String(ehr||'');if(!/^\d{3,}$/.test(ehr))return Promise.resolve(null);const k=ehr.slice(-3);
-  LOD2C[k]=LOD2C[k]||fetch('data/lod2/'+k+'.json').then(r=>r.ok?r.json():fetch('data/lod2/'+k.slice(-2)+'.json').then(r2=>r2.ok?r2.json():{})).catch(()=>{delete LOD2C[k];return {};});
+  LOD2C[k]=LOD2C[k]||lod2Get(k+'.json').catch(()=>{delete LOD2C[k];return {};});
   return LOD2C[k].then(d=>d[ehr]||null);}
 function lod2Face(f){return f[2]==null?'lame':`${fmt(f[1],0)}° kalle, vaatab ${DIR8[Math.round(f[2]/45)%8]}`;}
 function lod2Ctx(m){return m?{pohiplaan_m2:m.fp,perimeeter_m:m.per,korgeim_punkt_m:m.ridge,raasta_korgus_m:m.eave,katus_kokku_m2:m.roof,seinad_kokku_m2_aknad_sees:m.wall,

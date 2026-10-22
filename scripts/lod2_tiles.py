@@ -3,7 +3,10 @@
 
 Kasutus:  python3 -I scripts/lod2_tiles.py <hooned_lod2-eesti-citygml.zip | ...gml> [väljundkaust=data/lod2]
           (kogu Eesti: ~5 min, 480 000 hoonet EHR koodiga; vanad kildud kustuta enne, kui teed kõik uuesti)
+          python3 -I scripts/lod2_tiles.py --geo-from-shards [kaust]   (geo/ ruudustik olemasolevatest kildudest, ainult EHR-iga hooned)
+          python3 -I scripts/lod2_tiles.py --geo-extra <zip> [kaust]   (lisab geo/ ruudustikku EHR-ita hooned: saun, kuur, garaaž; kilde ei puutu)
           python3 -I scripts/lod2_tiles.py --selftest
+Andmed elavad Supabase'i failihoidlas (kaust lod2/v1/), mitte gitis: pärast tegemist scripts/lod2_upload.py.
 Uue omavalitsuse fail liidetakse olemasolevate kildudega (sama EHR kirjutatakse üle).
 Lisaks data/lod2/geo/GX_GY.json: hooned 250 m ruutude kaupa (aia vaates naabrid).
 
@@ -131,6 +134,32 @@ def parse(path):
 KLEN = 3  # kildude võti: EHR koodi viimased numbrid (app: loadLod2)
 
 
+def write_geo(allb, out):
+    """asukoharuudustik naabrite jaoks: <out>/geo/GX_GY.json (250 m), kompaktne kuju (0,1 m); liidetakse olemasolevaga"""
+    geo = {}
+    r1 = lambda a: [round(v, 1) for v in a]
+    for key, m in allb:
+        k = f"{int(m['c'][0] // GEO)}_{int(m['c'][1] // GEO)}"
+        geo.setdefault(k, {})[key] = {'c': m['c'], 'g': [r1(g) for g in m['g']], 'f': [r1(f[3]) for f in m['f']], 'e': m['eave'], 'r': m['ridge'],
+                                      'fp': m['fp'], 'ro': m['roof']}
+    os.makedirs(os.path.join(out, 'geo'), exist_ok=True)
+    for k, sh in geo.items():
+        fn = os.path.join(out, 'geo', k + '.json')
+        old = json.load(open(fn)) if os.path.exists(fn) else {}
+        old.update(sh)
+        with open(fn, 'w') as f:
+            json.dump(old, f, separators=(',', ':'), sort_keys=True)
+    return len(geo)
+
+
+def shard_items(out):
+    """olemasolevad kildud <out>/NNN.json -> (ehr, mõõdud)"""
+    for fn in sorted(os.listdir(out)):
+        if len(fn) == 8 and fn.endswith('.json') and fn[:3].isdigit():
+            with open(os.path.join(out, fn)) as f:
+                yield from json.load(f).items()
+
+
 def write(items, out):
     os.makedirs(out, exist_ok=True)
     shards, extra = {}, {}
@@ -158,21 +187,7 @@ def write(items, out):
         else:
             sh[ehr] = m
     n = 0
-    # asukoharuudustik naabrite jaoks: data/lod2/geo/GX_GY.json (250 m), kompaktne kuju (0,1 m)
-    geo = {}
-    r1 = lambda a: [round(v, 1) for v in a]
-    allb = [(e, m) for sh in shards.values() for e, m in sh.items()] + list(extra.items())
-    for key, m in allb:
-        k = f"{int(m['c'][0] // GEO)}_{int(m['c'][1] // GEO)}"
-        geo.setdefault(k, {})[key] = {'c': m['c'], 'g': [r1(g) for g in m['g']], 'f': [r1(f[3]) for f in m['f']], 'e': m['eave'], 'r': m['ridge'],
-                                      'fp': m['fp'], 'ro': m['roof']}
-    os.makedirs(os.path.join(out, 'geo'), exist_ok=True)
-    for k, sh in geo.items():
-        fn = os.path.join(out, 'geo', k + '.json')
-        old = json.load(open(fn)) if os.path.exists(fn) else {}
-        old.update(sh)
-        with open(fn, 'w') as f:
-            json.dump(old, f, separators=(',', ':'), sort_keys=True)
+    write_geo([(e, m) for sh in shards.values() for e, m in sh.items()] + list(extra.items()), out)
     for key, sh in shards.items():
         fn = os.path.join(out, key + '.json')
         old = {}
@@ -211,6 +226,13 @@ def selftest():
 if __name__ == '__main__':
     if sys.argv[1:] == ['--selftest']:
         selftest()
+    elif sys.argv[1:2] == ['--geo-from-shards']:
+        out = sys.argv[2] if len(sys.argv) > 2 else os.path.join(os.path.dirname(__file__), '..', 'data', 'lod2')
+        print('ruute:', write_geo(shard_items(out), out))
+    elif sys.argv[1:2] == ['--geo-extra'] and len(sys.argv) >= 3:
+        out = sys.argv[3] if len(sys.argv) > 3 else os.path.join(os.path.dirname(__file__), '..', 'data', 'lod2')
+        ex = {'x' + gid.replace('etak_', '').replace('_hooned', ''): dict(m, t=upd) for ehr, m, upd, gid in parse(sys.argv[2]) if not ehr}
+        print('EHR-ita hooneid:', len(ex), '· ruute:', write_geo(ex.items(), out))
     elif len(sys.argv) >= 2:
         out = sys.argv[2] if len(sys.argv) > 2 else os.path.join(os.path.dirname(__file__), '..', 'data', 'lod2')
         n, x = write(parse(sys.argv[1]), out)

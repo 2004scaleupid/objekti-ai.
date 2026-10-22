@@ -2,8 +2,8 @@
 // Käivita: deno test -A --no-config --node-modules-dir=none supabase/tests/garden.test.ts
 import { assert, assertEquals } from "jsr:@std/assert@1";
 
-const SB = "http://sb.test", APP = "http://app.test/";
-Object.entries({ SUPABASE_URL: SB, SUPABASE_SERVICE_ROLE_KEY: "service-role-key-for-tests-only-123456", APP_DATA_BASE: APP }).forEach(([k, v]) => Deno.env.set(k, v));
+const SB = "http://sb.test";
+Object.entries({ SUPABASE_URL: SB, SUPABASE_SERVICE_ROLE_KEY: "service-role-key-for-tests-only-123456" }).forEach(([k, v]) => Deno.env.set(k, v));
 const b64u = (s: string) => btoa(s).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
 const TOK = b64u(JSON.stringify({ alg: "HS256" })) + "." + b64u(JSON.stringify({ sub: "u1" })) + ".sig";
 const W = { calls: [] as string[], store: new Map<string, string>(), uploads: [] as string[] };
@@ -12,7 +12,10 @@ globalThis.fetch = async (input: string | URL | Request, init: RequestInit = {})
   const req = input instanceof Request ? input : new Request(String(input), init);
   const u = new URL(req.url), p = u.pathname;
   W.calls.push(u.host + p + (u.searchParams.get("layers") ? "?" + u.searchParams.get("layers") : ""));
-  if (u.origin + "/" === APP && p === "/data/lod2/418.json") return res({ "120656418": { c: [545000.5, 6597000.25] } });
+  if (u.origin === SB && p === "/storage/v1/object/public/lod2/v1/418.json.gz") {
+    const gz = new Response(new Blob([JSON.stringify({ "120656418": { c: [545000.5, 6597000.25] } })]).stream().pipeThrough(new CompressionStream("gzip")));
+    return res(new Uint8Array(await gz.arrayBuffer()), 200, "application/gzip");
+  }
   if (u.host === "kaart.maaamet.ee") {
     assertEquals(u.searchParams.get("crs"), "EPSG:3301");
     assertEquals(u.searchParams.get("bbox"), "6596936.25,544936.5,6597064.25,545064.5"); // põhi, ida ±64 m

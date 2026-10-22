@@ -16,12 +16,15 @@ const pub = (path: string) => {
   return u;
 };
 
-/** LOD2 keskpunkt (EPSG:3301) äpi andmetest: data/lod2/NNN.json (EHR 3 viimast numbrit) */
+/** LOD2 keskpunkt (EPSG:3301): avalik kaust lod2/v1/NNN.json.gz (EHR 3 viimast numbrit, gzip), sama mis äpis */
+export const LOD2_VER = "v1";
 async function centre(ehr: string): Promise<[number, number] | null> {
-  const base = env("APP_DATA_BASE", "https://app.vaade3d.ee/").replace(/\/?$/, "/");
-  const r = await tfetch(`${base}data/lod2/${ehr.slice(-3)}.json`, {}, 15000);
-  if (!r.ok) return null;
-  const d = await r.json().catch(() => ({}));
+  const base = env("LOD2_BASE", `${env("SUPABASE_URL")}/storage/v1/object/public/lod2/${LOD2_VER}/`).replace(/\/?$/, "/");
+  const r = await tfetch(`${base}${ehr.slice(-3)}.json.gz`, {}, 15000);
+  if (!r.ok || !r.body) return null;
+  const txt = await new Response(r.body.pipeThrough(new DecompressionStream("gzip"))).text().catch(() => "");
+  let d: Record<string, { c?: number[] }> = {};
+  try { d = JSON.parse(txt); } catch { /* vigane kild */ }
   const c = d?.[ehr]?.c;
   return Array.isArray(c) && c.length === 2 && c.every(Number.isFinite) ? [c[0], c[1]] : null;
 }
