@@ -33,7 +33,7 @@ ok(pr.c>3000&&/Area 1/.test(pr.txt)&&/picture 1/.test(pr.p)&&/"pilt 1"/.test(pr.
 await p.screenshot({path:`s3-3-${n}.png`});
 await p.click('#stGenBtn');await p.waitForTimeout(300);
 ok(await E(()=>!!document.querySelector('#stThread .stph')),n+' generating shows in thread');
-await p.waitForTimeout(2200);
+await p.waitForFunction(()=>document.querySelector('#stThread .stv img'),null,{timeout:20000}).catch(()=>{});await p.waitForTimeout(300);
 r=await E(()=>{const s=stSess();return {cr:acct.credits,t0k:s.imgs[s.tray[0]].k,tray:s.tray.length,out:!!document.querySelector('#stThread .stv img'),res:document.getElementById('stRes').textContent,u:s.msgs.filter(m=>m.gen).length};});
 ok(r.cr===28&&r.t0k==='ai'&&r.tray===2&&r.out&&r.res.includes('−2 krediiti')&&r.u===2,n+' generated: result is pilt 1, credits −2 '+JSON.stringify(r));
 await p.screenshot({path:`s3-4-${n}.png`});
