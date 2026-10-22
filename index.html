@@ -4456,13 +4456,14 @@ function m3Pm(f){return Math.max(2,Math.round((f&&f.err||0)*100));}
 function m3AutoOn(m){return !!(m.fit&&m.fit.ok&&m.scale&&Math.abs(m.scale/m.fit.s-1)<1e-6);}
 function m3ScaleTxt(m){if(m.fit&&m.fit.src==='lod2')return 'Ametlik Maa-ameti kuju, mõõdud meetrites';if(m3AutoOn(m))return `Mõõtkava: automaatne, Maa-ameti andmetest (±${m3Pm(m.fit)}%)`;if(m.scale)return 'Mõõtkava: kasutaja seadistatud';
   if(m.fit&&!m.fit.ok)return `Automaatne mõõtkava jäi ebakindlaks (±${m3Pm(m.fit)}%). Seadista käsitsi: mõõda üks teadaolev pikkus`;return 'Mõõtkava pole, väärtused on suhtelised';}
+const m3Yr=L=>L&&/^\d{4}/.test(L.t||'')?'Maa-amet, '+L.t.slice(0,4):'Maa-amet';
 function m3OffHtml(m){if(!p3Cloud())return '';const L=m.ehr&&M3L2[m.ehr];
   if(!m.ehr)return `<div class="stcard"><h3>Ametlikud mõõdud (Maa-amet)</h3><p>Seo mudel maja aadressiga: siis tulevad ametlikud mõõdud ja mõõtkava riigi 3D-andmetest.</p><button type="button" class="ghost" data-m3="addr" style="align-self:flex-start">Lisa aadress</button></div>`;
   const chg=/^lod2:/.test(m.url)?'':` · <button type="button" class="linkbtn" data-m3="addr">Muuda</button>`;
   if(!L)return `<div class="stcard"><h3>Ametlikud mõõdud (Maa-amet)</h3><span class="fhint">${stEsc(m3AddrTxt(m.ehr))}${chg}</span><p>${L===null?'Selle hoone kohta pole Maa-ameti 3D-mudelit.':'Laadin…'}</p></div>`;
   const R=[['Ehitisealune pind',fmt(L.fp)+' m²'],['Perimeeter',fmt(L.per)+' m'],['Kõrgeim punkt',fmt(L.ridge,2)+' m'],['Räästa kõrgus',fmt(L.eave,1)+' m'],['Katuse pind',fmt(L.roof)+' m²'],['Seinte pind',fmt(L.wall)+' m²']];
   const tg=m3AutoOn(m)?`<div class="tgl"><div>Näita katuse ja seinte mõõte<small>Iga tahu ametlik pind mudelil</small></div><span class="sw2"><input type="checkbox" data-m3="off" ${m.offOn!==false?'checked':''} aria-label="Näita katuse ja seinte mõõte"><i></i></span></div>`:'';
-  return `<div class="stcard"><h3>Ametlikud mõõdud (Maa-amet)</h3><span class="fhint">${stEsc(m3AddrTxt(m.ehr))}${chg}</span>${tg}${m3GardenHtml(m)}${R.map(r=>`<div class="row"><div class="k"><span>${r[0]}</span></div><b>${r[1]}</b></div>`).join('')}<span class="fhint">${LOD2_SRC}</span></div>`;}
+  return `<div class="stcard"><h3>Ametlikud mõõdud (${m3Yr(L)})</h3><span class="fhint">${stEsc(m3AddrTxt(m.ehr))}${chg}</span>${tg}${m3GardenHtml(m)}${R.map(r=>`<div class="row"><div class="k"><span>${r[0]}</span></div><b>${r[1]}</b></div>`).join('')}<span class="fhint">${LOD2_SRC}</span></div>`;}
 function m3Lod2(m){if(!m||!m.ehr)return;if(m.ehr in M3L2){m3AutoFit();return;}loadLod2(m.ehr).then(L=>{M3L2[m.ehr]=L;m3AutoFit();if(!$('studio').hidden)stRenderPanel();});}
 // automaatne mõõtkava: ainult kui kasutaja pole ise seadistanud ja selle aadressiga pole veel arvutatud
 function m3AutoFit(){const s=stSess(),m=s&&s.model,V=P3V,L=m&&m.ehr&&M3L2[m.ehr];if(!L||!V||!V.ok||V.url!==m.url)return;
@@ -4636,17 +4637,17 @@ const M3PILL={font:"600 12px 'Inter Tight',Arial,sans-serif",small:"600 11px 'In
 function m3TW(t,small){const k=(small?'s':'n')+t;if(M3TW.has(k))return M3TW.get(k);const c=m3TW.c||(m3TW.c=document.createElement('canvas').getContext('2d'));c.font=small?M3PILL.small:M3PILL.font;const w=c.measureText(t).width;M3TW.set(k,w);return w;}
 /* Aed ja ümbrus: andmed garden-funktsioonist (vahemälu aadressi kaupa), stseen js/garden.js; ainult kindla sobitusega */
 const GARDEN_SRC='Kataster, teed, piirded, maakatte kõrgusmudel, hooned: Maa- ja Ruumiamet 2026';
-function m3GardenHtml(m){if(!m3AutoOn(m)||!p3Cloud())return '';m.gopt=m.gopt||{};const V=P3V,G=V&&V.garden,on=!!m.garden;
+function m3GardenHtml(m){if(!m.fit||!m.ehr||!p3Cloud())return '';m.gopt=m.gopt||{};const V=P3V,G=V&&V.garden,on=!!m.garden;
   let h=`<div class="tgl"><div>Aed ja ümbrus<small>Krunt, kõrvalhooned, teed, piirded, puud ja naabrid Maa-ameti andmetest</small></div><span class="sw2"><input type="checkbox" data-m3="garden" ${on?'checked':''} aria-label="Aed ja ümbrus"><i></i></span></div>`;
   if(!on)return h;
   h+=`<div class="gchips">${[['aed','Aed'],['puud','Puud'],['naabrid','Naabrid'],['krunt','Krundi piir']].map(([k,l])=>`<button type="button" class="chip" data-gk="${k}" aria-pressed="${m.gopt[k]!==false}">${l}</button>`).join('')}</div>`
    +`<div class="seg2 gtime" role="radiogroup" aria-label="Kellaaeg (päikese suund)">${[['h','Hommik'],['p','Päev'],['o','Õhtu']].map(([k,l])=>`<button type="button" role="radio" data-gt="${k}" aria-checked="${(m.gopt.time||'p')===k}">${l}</button>`).join('')}</div>`;
-  const P=G&&G.parcel;h+=`<span class="fhint">${V&&V.gErr?stEsc(V.gErr):G?`${G.trees.length} olulist puud · ${G.neighbours} naabrit`:'Laadin krundi mudelit…'}</span>`;
-  if(P&&P.a)h+=`<div class="row"><div class="k"><span>Krunt</span><small>${stEsc(P.a)} · ${stEsc(P.t)}</small></div><b>${fmt(P.p,0)} m²</b></div>`;
+  const P=G&&G.parcel;if(G&&G.ghost)h+=`<span class="fhint" style="color:#C2410C">Sobitus on ebakindel (±${m3Pm(m.fit)}%): oranž kontuur on Maa-ameti maja, 3D-mudeli asukoht on ligikaudne.</span>`;h+=`<span class="fhint">${V&&V.gErr?stEsc(V.gErr):G?`${G.trees.length} olulist puud (Maa-amet, 2020–2023) · ${G.neighbours} naabrit`:'Laadin krundi mudelit…'}</span>`;
+  if(P&&P.a)h+=`<div class="row"><div class="k"><span>Krunt</span><small>${stEsc(P.a)} · ${stEsc(P.t)} · Maa-amet${/^\d{4}/.test(P.d||'')?', '+P.d.slice(0,4):''}</small></div><b>${fmt(P.p,0)} m²</b></div>`;
   if(G&&G.own.length)h+=`<div class="row"><div class="k"><span>Kõrvalhooned: ${G.own.length}</span><small>${G.own.map(o=>fmt(o.fp)+' m²').join(', ')}</small></div><b>${fmt(G.own.reduce((a,o)=>a+o.fp,0))} m²</b></div>`;
   return h+`<span class="fhint">${GARDEN_SRC}</span>`;}
 async function m3GardenSync(){const s=stSess(),m=s&&s.model,V=P3V;if(!m||!V||!V.ok)return;m.gopt=m.gopt||{};
-  const want=!!m.garden&&m3AutoOn(m)&&!!M3L2[m.ehr];
+  const want=!!m.garden&&!!m.fit&&!!M3L2[m.ehr];
   if(!want){if(V.garden){V.garden.off();V.garden=null;}return;}if(V.garden||V.gLoading)return;V.gLoading=1;V.gErr=null;const t0=performance.now(),T={};
   try{if(!window.V3DGarden){await new Promise((res,rej)=>{const sc=document.createElement('script');sc.src='js/garden.js';sc.onload=res;sc.onerror=()=>rej(new Error('garden.js'));document.head.appendChild(sc);});}
     const r=await clFn('garden',/^lod2:/.test(m.url)?{ehr:m.ehr}:{ref:m.ref},{q:CO_Q});T.server=Math.round(performance.now()-t0);

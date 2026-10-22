@@ -3,7 +3,7 @@
 import { admin, env, tfetch } from "./util.ts";
 
 export const GARDEN_R = 64; // maja keskpunktist ±64 m
-export const GARDEN_V = 3; // 3: krundi mudel vektorandmetest (teed aukudega)
+export const GARDEN_V = 4; // 3: krundi mudel vektorandmetest (teed aukudega); 4: krundi piiri muutmise kuupäev
 const MAX_AGE = 30 * 864e5;
 const BUCKET = "models";
 const SRC = "Kataster, teed, piirded, maakatte kõrgusmudel, hooned: Maa- ja Ruumiamet 2026";
@@ -39,7 +39,7 @@ async function bytes(url: string, kind: RegExp): Promise<Uint8Array> {
   return b;
 }
 
-type Parcel = { t: string; a: string; p: number; g: number[][] };
+type Parcel = { t: string; a: string; p: number; d: string; g: number[][] };
 async function parcels([x, y]: [number, number]): Promise<Parcel[]> {
   const R = GARDEN_R + 10;
   const u = "https://gsavalik.envir.ee/geoserver/kataster/ows?service=WFS&version=2.0.0&request=GetFeature&typeNames=kataster:ky_kehtiv" +
@@ -54,7 +54,7 @@ async function parcels([x, y]: [number, number]): Promise<Parcel[]> {
     for (const poly of polys) {
       const ring = poly[0] as number[][];
       if (!ring?.length) continue;
-      out.push({ t: String(P.tunnus || ""), a: String(P.l_aadress || ""), p: Number(P.pindala) || 0,
+      out.push({ t: String(P.tunnus || ""), a: String(P.l_aadress || ""), p: Number(P.pindala) || 0, d: String(P.geom_muudet || "").slice(0, 10),
         g: [ring.flatMap(([px, py]) => [+(px - x).toFixed(2), +(py - y).toFixed(2)])] });
     }
   }

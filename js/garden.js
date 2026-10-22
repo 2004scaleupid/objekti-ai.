@@ -110,6 +110,9 @@ async function show(V,m,meta,T){const R=meta.r,t=()=>performance.now();let t0=t(
   // hooned: krundi omad valged (nagu maja), naabrid hallid
   const edge=new THREE.LineBasicMaterial({color:0x8d877e,transparent:true,opacity:.55}),wallM=new THREE.MeshStandardMaterial({color:COL.wall,roughness:.95,side:THREE.DoubleSide}),roofM=new THREE.MeshStandardMaterial({color:COL.roof,roughness:.9,side:THREE.DoubleSide});
   own.sort((a,b)=>b.b.fp-a.b.fp).forEach((o,k)=>{o.info={nm:'Kõrvalhoone '+(k+1),fp:o.b.fp,h:o.b.r,roof:o.b.ro};grp.aed.add(building(o.b,o.dx,o.dy,wallM,roofM,edge,o.info));});
+  // ebakindel sobitus: Maa-ameti maja kummituskontuurina (näitab, kus maja tegelikult on); kindla sobituse korral peidus
+  if(!f.ok){const gm=new THREE.MeshBasicMaterial({color:0xC2410C,transparent:true,opacity:.1,depthWrite:false,side:THREE.DoubleSide}),gh=building({g:L.g,f:(L.f||[]).map(F=>F[3]),e:L.eave||L.ridge*.6},0,0,gm,gm,new THREE.LineBasicMaterial({color:0xC2410C,transparent:true,opacity:.85}),null);
+    gh.traverse(o=>{o.castShadow=o.receiveShadow=false;o.renderOrder=2;});grp.krunt.add(gh);}
   const nbM=new THREE.MeshStandardMaterial({color:COL.nb,roughness:.95,side:THREE.DoubleSide});nb.forEach(o=>grp.naabrid.add(building(o.b,o.dx,o.dy,nbM,nbM,null,{nm:'Naaberhoone',fp:o.b.fp,h:o.b.r,roof:o.b.ro})));
   // olulised puud: ≥ 5 m kõrgused, võra ≥ 2,5 m, krundil + 12 m varu, max 25
   const W=ndsm.width,mk=document.createElement('canvas');mk.width=mk.height=W;const mx=mk.getContext('2d',{willReadFrequently:true}),px=2*R/W;mx.fillStyle=mx.strokeStyle='#fff';mx.lineWidth=2/px;
@@ -162,7 +165,7 @@ async function show(V,m,meta,T){const R=meta.r,t=()=>performance.now();let t0=t(
   const off=()=>{V.r.toneMappingExposure=st.exp;V.sc.environment=st.env;if(hemi&&st.hemi){hemi.intensity=st.hemi[0];hemi.color.set(st.hemi[1]);hemi.groundColor.set(st.hemi[2]);}V.sc.remove(outer);V.sc.background=st.bg;V.sc.fog=st.fog;V.catcher.visible=st.catcher;
     V.sun.position.copy(st.sunPos);V.sun.intensity=st.sunI;V.sun.color.set(0xffffff);V.sun.shadow.radius=st.rad;Object.assign(sc,{left:st.cam.left,right:st.cam.right,top:st.cam.top,bottom:st.cam.bottom,near:st.cam.near,far:st.cam.far});sc.updateProjectionMatrix();
     V.cam.far=st.far;V.cam.updateProjectionMatrix();V.ct.maxDistance=st.maxD;V.gpick=null;V.m3S=null;outer.traverse(o=>{if(o.geometry)o.geometry.dispose();});gt.dispose();if(typeof m3Redraw==='function')m3Redraw();};
-  return {off,vis,setTime,trees,parcel:par,own:own.map(o=>o.info),neighbours:nb.length,fences:segs.length};}
+  return {off,vis,setTime,trees,ghost:!f.ok,parcel:par,own:own.map(o=>o.info),neighbours:nb.length,fences:segs.length};}
 async function nearby(meta){const [cx,cy]=meta.c,K=new Set();for(const dx of [-85,85])for(const dy of [-85,85])K.add(Math.floor((cx+dx)/250)+'_'+Math.floor((cy+dy)/250));
   const tiles=await Promise.all([...K].map(k=>GV.cache.get(k)||(GV.cache.set(k,fetch('data/lod2/geo/'+k+'.json').then(r=>r.ok?r.json():{}).catch(()=>({}))),GV.cache.get(k))));
   const out=[];tiles.forEach(T=>Object.entries(T).forEach(([e,b])=>{const dx=b.c[0]-cx,dy=b.c[1]-cy;if(Math.hypot(dx,dy)<80)out.push({e,b,dx,dy});}));return out;}

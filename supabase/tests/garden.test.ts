@@ -25,7 +25,7 @@ globalThis.fetch = async (input: string | URL | Request, init: RequestInit = {})
       ? { features: [{ properties: { laius: 4, nimetus: "Tammekännu tee" }, geometry: { type: "LineString", coordinates: [[545000.5, 6597050.25], [545040.5, 6597050.25]] } }] }
       : { features: [{ properties: {}, geometry: { type: "Polygon", coordinates: [[[545000.5, 6597060.25], [545010.5, 6597060.25], [545010.5, 6597070.25], [545000.5, 6597060.25]]] } }] });
   }
-  if (u.host === "gsavalik.envir.ee") return res({ features: [{ properties: { tunnus: "89001:001:1", l_aadress: "Tammekännu tee 44", pindala: 1200 },
+  if (u.host === "gsavalik.envir.ee") return res({ features: [{ properties: { tunnus: "89001:001:1", l_aadress: "Tammekännu tee 44", pindala: 1200, geom_muudet: "2020-10-29Z" },
     geometry: { type: "Polygon", coordinates: [[[545010.5, 6597010.25], [545020.5, 6597010.25], [545020.5, 6597020.25], [545010.5, 6597010.25]]] } }] });
   if (u.origin === SB) {
     if (p === "/auth/v1/user") return req.headers.get("authorization") === "Bearer " + TOK ? res({ id: "u1", aud: "authenticated" }) : res({}, 401);
@@ -61,7 +61,8 @@ Deno.test("esimene kord: 4 allikat paralleelselt, 4 faili, meta suhteliste krund
   assertEquals(meta.c, [545000.5, 6597000.25]);
   assertEquals(meta.parcels[0].p, 1200);
   assertEquals(meta.parcels[0].g[0].slice(0, 4), [10, 10, 20, 10]);
-  assertEquals(meta.v, 3);
+  assertEquals(meta.v, 4);
+  assertEquals(meta.parcels[0].d, "2020-10-29");
   assertEquals(meta.roads.l[0], { w: 4, n: "Tammekännu tee", g: [0, 50, 40, 50] });
   assertEquals(meta.roads.a[0][0].slice(0, 2), [0, 60]);
   assert(/auth;dur=\d+, cache;dur=\d+, lod2;dur=\d+, maaamet;dur=\d+, store;dur=\d+, total;dur=\d+/.test(r.timing), r.timing);
