@@ -95,7 +95,7 @@ def measure(polys, height=None):
 
 
 def parse(path):
-    """yield (ehr, measures, updated). path võib olla .gml või .zip (kogu Eesti fail ~6 GB loetakse voona, mälu ei kasva)."""
+    """yield (ehr või None, measures, updated, gml id) - ka EHR-ita hooned (saun, kuur, garaaž) ruudustiku jaoks. path võib olla .gml või .zip (kogu Eesti fail ~6 GB loetakse voona, mälu ei kasva)."""
     if path.endswith('.zip'):
         import zipfile
         z = zipfile.ZipFile(path)
@@ -120,11 +120,12 @@ def parse(path):
         h = el.findtext(BLDG + 'measuredHeight')
             # aadressipunkt on gml:pos, mitte posList, nii et see siia ei satu
         polys = [ring(pl.text) for pl in el.iter(GML + 'posList') if pl.text]
-        m = measure(polys, float(h) if h else None) if ehr and ehr.isdigit() else None
+        gid = el.get('{http://www.opengis.net/gml}id') or ''
+        m = measure(polys, float(h) if h else None)
         el.clear()
         root.clear()  # töödeldud hooned mälust välja
         if m:
-            yield ehr, m, upd
+            yield (ehr if ehr and ehr.isdigit() else None), m, upd, gid
 
 
 KLEN = 3  # kildude võti: EHR koodi viimased numbrid (app: loadLod2)
@@ -132,9 +133,12 @@ KLEN = 3  # kildude võti: EHR koodi viimased numbrid (app: loadLod2)
 
 def write(items, out):
     os.makedirs(out, exist_ok=True)
-    shards = {}
-    for ehr, m, upd in items:
+    shards, extra = {}, {}
+    for ehr, m, upd, gid in items:
         m['t'] = upd
+        if not ehr:
+            extra['x' + gid.replace('etak_', '').replace('_hooned', '')] = m
+            continue
         sh = shards.setdefault(ehr[-KLEN:].zfill(KLEN), {})
         if ehr in sh:
             # sama EHR mitmes osas: liidame pinnad, kujud kõrvuti (keskpunkt 1. osa järgi)
@@ -156,11 +160,12 @@ def write(items, out):
     n = 0
     # asukoharuudustik naabrite jaoks: data/lod2/geo/GX_GY.json (250 m), kompaktne kuju (0,1 m)
     geo = {}
-    for sh in shards.values():
-        for ehr, m in sh.items():
-            k = f"{int(m['c'][0] // GEO)}_{int(m['c'][1] // GEO)}"
-            r1 = lambda a: [round(v, 1) for v in a]
-            geo.setdefault(k, {})[ehr] = {'c': m['c'], 'g': [r1(g) for g in m['g']], 'f': [r1(f[3]) for f in m['f']], 'e': m['eave'], 'r': m['ridge']}
+    r1 = lambda a: [round(v, 1) for v in a]
+    allb = [(e, m) for sh in shards.values() for e, m in sh.items()] + list(extra.items())
+    for key, m in allb:
+        k = f"{int(m['c'][0] // GEO)}_{int(m['c'][1] // GEO)}"
+        geo.setdefault(k, {})[key] = {'c': m['c'], 'g': [r1(g) for g in m['g']], 'f': [r1(f[3]) for f in m['f']], 'e': m['eave'], 'r': m['ridge'],
+                                      'fp': m['fp'], 'ro': m['roof']}
     os.makedirs(os.path.join(out, 'geo'), exist_ok=True)
     for k, sh in geo.items():
         fn = os.path.join(out, 'geo', k + '.json')
@@ -178,7 +183,7 @@ def write(items, out):
         n += len(sh)
         with open(fn, 'w') as f:
             json.dump(old, f, separators=(',', ':'), sort_keys=True)
-    return n
+    return n, len(extra)
 
 
 def selftest():
@@ -208,6 +213,7 @@ if __name__ == '__main__':
         selftest()
     elif len(sys.argv) >= 2:
         out = sys.argv[2] if len(sys.argv) > 2 else os.path.join(os.path.dirname(__file__), '..', 'data', 'lod2')
-        print('hooneid:', write(parse(sys.argv[1]), out))
+        n, x = write(parse(sys.argv[1]), out)
+        print('hooneid EHR-iga:', n, '· EHR-ita (ainult ruudustikus):', x)
     else:
         print(__doc__)

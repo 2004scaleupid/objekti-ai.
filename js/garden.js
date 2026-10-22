@@ -1,17 +1,16 @@
-/* Vaade3D · Aed ja ümbrus (laetakse alles siis, kui aed sisse lülitatakse).
-   Maja ümbrus Maa-ameti avaandmetest: ortofoto maapinnaks (maja + vari kustutatud ja täidetud), puud maakatte kõrgusmudelist (nDSM),
-   piirded, naabrid (LOD2), krundi piir (kataster). Kõik ehitatakse LOD2 meetrites (x = ida, y = üles, z = -põhi) ja paigutatakse
-   mudeli raami sobituse kaudu (sama mis ametlikud mõõdud), nii et mõõtmine töötab ka aias. three r128. */
+/* Vaade3D · Aed ja ümbrus = krundi arhitektuurimudel (laetakse alles siis, kui see sisse lülitatakse).
+   Hele, täpne mudel Maa-ameti vektorandmetest: krunt (kataster) muruna + piirijoon + ametlik pindala, kõik krundi hooned (LOD2, ka EHR-ita
+   kõrvalhooned), teed (ETAK) asfaldina, piirded (etak_piirded), olulised puud (nDSM ≥ 5 m, võra ≥ 2,5 m, max 25), naabrid hallide kehadena.
+   Ehitatakse LOD2 meetrites (x = ida, y = üles, z = -põhi) ja paigutatakse mudeli raami sobituse kaudu (sama mis ametlikud mõõdud). three r128. */
 'use strict';
 (function(){
-const GV={trees:null,addons:null,cache:new Map()};
+const GV={cache:new Map()};
 const NDSM=[[58,127,0,4],[105,159,0,7.5],[162,195,0,10],[221,233,0,12],[253,231,0,14],[253,185,0,16],[253,144,0,18.5],[253,96,0,24],[253,33,0,30]];
-const TREES={maple:'tree-maple',tree2:'tree-tree2',birch:'tree-birch',fruit:'tree-fruit',bush:'tree-bush',spruce:'tree-spruce',pine:'tree-pine'};
+const COL={bg:0xE9E7E1,grass:'#B4CC97',road:'#A8A6A1',edge:0x5f5a52,fence:0xA39B8F,wall:0xF4F2EE,roof:0xD9D5CE,nb:0xDCDAD5,trunk:0x8B7D6E,crown:0xAAC690,conifer:0x88AA8B};
 const mob=()=>Math.min(innerWidth,innerHeight)<700||matchMedia('(pointer:coarse)').matches;
-const rm=()=>matchMedia('(prefers-reduced-motion: reduce)').matches;
 const img=u=>new Promise((res,rej)=>{const i=new Image();i.crossOrigin='anonymous';i.onload=()=>res(i);i.onerror=()=>rej(new Error('pilt: '+u));i.src=u;});
-const script=u=>new Promise((res,rej)=>{if(document.querySelector(`script[data-g="${u}"]`))return res();const s=document.createElement('script');s.src=u;s.dataset.g=u;s.onload=res;s.onerror=()=>rej(new Error(u));document.head.appendChild(s);});
-async function addons(){if(GV.addons)return GV.addons;GV.addons=(async()=>{await script('vendor/three128/Sky.js');})();return GV.addons;}
+const lin=h=>new THREE.Color(h).convertSRGBToLinear();
+const hex=h=>'#'+h.toString(16).padStart(6,'0');
 
 // ---------- päike Viimsis (NOAA lähend) ----------
 function sun(date){const lat=59.5*Math.PI/180,lon=24.85,d=(date-Date.UTC(2000,0,1,12))/864e5,g=(357.529+.98560028*d)*Math.PI/180,q=280.459+.98564736*d,
@@ -21,203 +20,152 @@ function sun(date){const lat=59.5*Math.PI/180,lon=24.85,d=(date-Date.UTC(2000,0,
 function sunAt(k){const n=new Date(),hh={h:9,p:13.5,o:19}[k]||13.5;const loc=new Date(n.toLocaleString('en-US',{timeZone:'Europe/Tallinn'})),off=loc-n;
   const t=new Date(n.getFullYear(),n.getMonth(),n.getDate(),Math.floor(hh),(hh%1)*60)-off;const s=sun(t);if(s.el<.06)s.el=.06;return s;}
 
-// ---------- abifunktsioonid ----------
+// ---------- geomeetria ----------
 const pip=(x,y,P)=>{let c=false;for(let i=0,j=P.length-1;i<P.length;j=i++){const a=P[i],b=P[j];if(((a[1]>y)!==(b[1]>y))&&(x<(b[0]-a[0])*(y-a[1])/(b[1]-a[1])+a[0]))c=!c;}return c;};
 const ring2=f=>{const P=[];for(let i=0;i+1<f.length;i+=2)P.push([f[i],f[i+1]]);return P;};
 const ring3=f=>{const P=[];for(let i=0;i+2<f.length;i+=3)P.push([f[i],f[i+1],f[i+2]]);return P;};
+const area2=P=>Math.abs(P.reduce((s,a,i)=>{const b=P[(i+1)%P.length];return s+a[0]*b[1]-b[0]*a[1];},0))/2;
+const cen2=P=>{let ax=0,ay=0,A=0;P.forEach((a,i)=>{const b=P[(i+1)%P.length],c=a[0]*b[1]-b[0]*a[1];A+=c;ax+=(a[0]+b[0])*c;ay+=(a[1]+b[1])*c;});return Math.abs(A)>1e-9?[ax/(3*A),ay/(3*A)]:P[0];};
+function segPt(p,a,b){const ex=b[0]-a[0],ey=b[1]-a[1],l2=ex*ex+ey*ey||1,t=Math.max(0,Math.min(1,((p[0]-a[0])*ex+(p[1]-a[1])*ey)/l2));return [a[0]+t*ex,a[1]+t*ey];}
+// kahe hulknurga (või hulknurga ja lõigu) lähimad punktid
+function closest(P,Q,qClosed=true){let best={d:1e9};const E=(R,closed)=>R.map((a,i)=>[a,R[(i+1)%R.length]]).slice(0,closed?R.length:R.length-1);
+  for(const [a,b] of E(P,true))for(const q of Q){const p=segPt(q,a,b),d=Math.hypot(p[0]-q[0],p[1]-q[1]);if(d<best.d)best={d,a:p,b:q};}
+  for(const [a,b] of E(Q,qClosed))for(const p of P){const q=segPt(p,a,b),d=Math.hypot(p[0]-q[0],p[1]-q[1]);if(d<best.d)best={d,a:p,b:q};}return best;}
 function roofH(roofs,x,y,dflt){let best=-1;for(const R of roofs){if(!pip(x,y,R))continue;const a=R[0],b=R[1];let n=null;
     for(let k=2;k<R.length&&!n;k++){const c=R[k],u=[b[0]-a[0],b[1]-a[1],b[2]-a[2]],v=[c[0]-a[0],c[1]-a[1],c[2]-a[2]],nn=[u[1]*v[2]-u[2]*v[1],u[2]*v[0]-u[0]*v[2],u[0]*v[1]-u[1]*v[0]];if(Math.abs(nn[2])>1e-6)n=nn;}
     if(!n)continue;const h=a[2]-(n[0]*(x-a[0])+n[1]*(y-a[1]))/n[2];if(h>best)best=h;}return best<0?dflt:best;}
-// ühe hoone kehad (naabrid): seinad kuni katuseni + katusetahud
-function building(b,dx,dy,wallM,roofM){const roofs=b.f.map(f=>ring3(f).map(q=>[q[0]+dx,q[1]+dy,q[2]])),pos=[],g=new THREE.Group();
+// hoone kehad: seinad kuni katuseni + katusetahud + puhtad servajooned
+function building(b,dx,dy,wallM,roofM,edgeM,info){const roofs=b.f.map(f=>ring3(f).map(q=>[q[0]+dx,q[1]+dy,q[2]])),pos=[],g=new THREE.Group();
   for(const r of b.g){const R=ring2(r).map(q=>[q[0]+dx,q[1]+dy]);for(let i=0;i<R.length;i++){const a=R[i],c=R[(i+1)%R.length],n=Math.max(1,Math.ceil(Math.hypot(c[0]-a[0],c[1]-a[1])/.7));
     for(let k=0;k<n;k++){const t0=k/n,t1=(k+1)/n,x0=a[0]+(c[0]-a[0])*t0,y0=a[1]+(c[1]-a[1])*t0,x1=a[0]+(c[0]-a[0])*t1,y1=a[1]+(c[1]-a[1])*t1;
       const nx=-(y1-y0),ny=x1-x0,L=Math.hypot(nx,ny)||1,h0=roofH(roofs,x0-nx/L*.05,y0-ny/L*.05,b.e),h1=roofH(roofs,x1-nx/L*.05,y1-ny/L*.05,b.e);
       pos.push(x0,0,-y0,x1,0,-y1,x1,h1,-y1,x0,0,-y0,x1,h1,-y1,x0,h0,-y0);}}}
-  const wg=new THREE.BufferGeometry();wg.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));wg.computeVertexNormals();const w=new THREE.Mesh(wg,wallM);w.castShadow=w.receiveShadow=true;g.add(w);
+  const wg=new THREE.BufferGeometry();wg.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));wg.computeVertexNormals();const w=new THREE.Mesh(wg,wallM);w.castShadow=w.receiveShadow=true;w.userData.bld=info;g.add(w);
   for(const R of roofs){if(R.length<3)continue;const P=R.map(q=>new THREE.Vector3(q[0],q[2]+.02,-q[1]));const geo=new THREE.BufferGeometry().setFromPoints(P);
-    geo.setIndex(THREE.ShapeUtils.triangulateShape(R.map(q=>new THREE.Vector2(q[0],q[1])),[]).flat());geo.computeVertexNormals();const m=new THREE.Mesh(geo,roofM);m.castShadow=m.receiveShadow=true;g.add(m);}
+    geo.setIndex(THREE.ShapeUtils.triangulateShape(R.map(q=>new THREE.Vector2(q[0],q[1])),[]).flat());geo.computeVertexNormals();const m=new THREE.Mesh(geo,roofM);m.castShadow=m.receiveShadow=true;m.userData.bld=info;g.add(m);
+    if(edgeM)g.add(new THREE.LineLoop(new THREE.BufferGeometry().setFromPoints(P),edgeM));}
+  if(edgeM)for(const r of b.g){ring2(r).forEach(q=>{const x=q[0]+dx,y=q[1]+dy,h=roofH(roofs,x,y,b.e);g.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(x,0,-y),new THREE.Vector3(x,h,-y)]),edgeM));});}
   return g;}
 
-// ---------- puud nDSM-ist ----------
-function treesFrom(ndsm,ortho,mask,R){const W=ndsm.width,px=2*R/W,c=document.createElement('canvas');c.width=c.height=W;const x=c.getContext('2d',{willReadFrequently:true});x.drawImage(ndsm,0,0,W,W);
+// ---------- olulised puud nDSM-ist ----------
+function treesFrom(ndsm,mask,R,keep=()=>true){const W=ndsm.width,px=2*R/W,c=document.createElement('canvas');c.width=c.height=W;const x=c.getContext('2d',{willReadFrequently:true});x.drawImage(ndsm,0,0,W,W);
   const D=x.getImageData(0,0,W,W).data,H=new Float32Array(W*W);
   for(let i=0;i<W*W;i++){if(D[i*4+3]<90||mask[i])continue;let bd=1e9,bh=0;for(const [r,g,b,h] of NDSM){const d=(D[i*4]-r)**2+(D[i*4+1]-g)**2+(D[i*4+2]-b)**2;if(d<bd){bd=d;bh=h;}}if(bd<2500)H[i]=bh;}
-  // silumine 2x 3x3
   let S=H;for(let pass=0;pass<2;pass++){const T=new Float32Array(W*W);for(let j=1;j<W-1;j++)for(let i=1;i<W-1;i++){let s=0;for(let b=-1;b<=1;b++)for(let a=-1;a<=1;a++)s+=S[(j+b)*W+i+a];T[j*W+i]=s/9;}S=T;}
-  const cand=[];for(let j=2;j<W-2;j++)for(let i=2;i<W-2;i++){const h=S[j*W+i];if(h<2.6)continue;let mx=true;for(let b=-2;b<=2&&mx;b++)for(let a=-2;a<=2;a++)if(S[(j+b)*W+i+a]>h){mx=false;break;}if(mx)cand.push([i,j,h]);}
-  cand.sort((p,q)=>q[2]-p[2]);const sup=4/px,out=[],cell=new Map(),ck=(a,b)=>a+','+b;
-  const oc=document.createElement('canvas');oc.width=oc.height=ortho.width;const ox=oc.getContext('2d',{willReadFrequently:true});ox.drawImage(ortho,0,0);const OW=ortho.width,OD=ox.getImageData(0,0,OW,OW).data;
-  const near=(i,j)=>{const ci=Math.floor(i/sup),cj=Math.floor(j/sup);for(let b=-1;b<=1;b++)for(let a=-1;a<=1;a++){const L=cell.get(ck(ci+a,cj+b));if(L&&L.some(t=>Math.hypot(t.i-i,t.j-j)<sup))return true;}return false;};
-  for(const [i,j,h0] of cand){if(near(i,j))continue;const h=Math.max(h0,H[j*W+i]);
+  const cand=[];for(let j=2;j<W-2;j++)for(let i=2;i<W-2;i++){const h=S[j*W+i];if(h<4.5)continue;let mx=true;for(let b=-2;b<=2&&mx;b++)for(let a=-2;a<=2;a++)if(S[(j+b)*W+i+a]>h){mx=false;break;}if(mx&&keep(-R+(i+.5)*px,R-(j+.5)*px))cand.push([i,j,h]);}
+  cand.sort((p,q)=>q[2]-p[2]);const sup=5/px,out=[];
+  for(const [i,j,h0] of cand){if(out.some(t=>Math.hypot(t.i-i,t.j-j)<sup))continue;const h=Math.max(h0,H[j*W+i]);
     let rs=0;for(let k=0;k<8;k++){const a=k*Math.PI/4;let d=1;for(;d<8/px;d++){const ii=Math.round(i+Math.cos(a)*d),jj=Math.round(j+Math.sin(a)*d);if(ii<0||jj<0||ii>=W||jj>=W||S[jj*W+ii]<h*.45)break;}rs+=d*px;}
-    const r=Math.max(.8,Math.min(7,rs/8,h*.42+.8)),oi=Math.round(i/W*OW),oj=Math.round(j/W*OW);let cr=0,cg=0,cb=0,n=0;
-    for(let b=-3;b<=3;b++)for(let a=-3;a<=3;a++){const ii=oi+a,jj=oj+b;if(ii<0||jj<0||ii>=OW||jj>=OW)continue;const k=(jj*OW+ii)*4;cr+=OD[k];cg+=OD[k+1];cb+=OD[k+2];n++;}cr/=n;cg/=n;cb/=n;
-    const t={i,j,x:-R+(i+.5)*px,y:R-(j+.5)*px,h,r,col:[cr,cg,cb]};out.push(t);const key=ck(Math.floor(i/sup),Math.floor(j/sup));(cell.get(key)||cell.set(key,[]).get(key)).push(t);}
+    out.push({i,j,x:-R+(i+.5)*px,y:R-(j+.5)*px,h,r:Math.max(.8,Math.min(4.5,rs/8,h*.38+.6))});}
   return out;}
-function kindOf(t,k){const [r,g,b]=t.col,lum=.3*r+.59*g+.11*b,ratio=t.r/t.h;
-  if(t.h<3.2)return 'bush';const con=(lum<75&&b>r*.8)||(ratio<.24&&t.h>7);if(con)return lum<62||t.h<11?'spruce':'pine';
-  if(t.h<7)return 'fruit';if(ratio<.33&&lum>85)return 'birch';return k%2?'maple':'tree2';}
-async function treeModels(){if(GV.trees)return GV.trees;GV.trees=(async()=>{const ld=new THREE.GLTFLoader();if(window.MeshoptDecoder)ld.setMeshoptDecoder(MeshoptDecoder);
-  const get=u=>new Promise((res,rej)=>ld.load(u,g=>res(g.scene),undefined,rej)),M={};
-  await Promise.all(Object.keys(TREES).map(async k=>{const hi=await get(`assets/trees/${k}.glb`);
-    // meshopt/quantization: asukohad võivad olla int16 -> enne teisendust float32 (muidu teisendus rikub kuju)
-    const toF=g=>{const o=new THREE.BufferGeometry();if(g.index)o.setIndex(Array.from(g.index.array));for(const [n,a] of Object.entries(g.attributes)){const it=a.itemSize,arr=new Float32Array(a.count*it),
-      A=a.isInterleavedBufferAttribute?a.data.array:a.array,mx=A instanceof Int8Array?127:A instanceof Uint8Array?255:A instanceof Int16Array?32767:A instanceof Uint16Array?65535:1,get=['getX','getY','getZ','getW'];
-      for(let i=0;i<a.count;i++)for(let k=0;k<it;k++){let v=a[get[k]](i);if(a.normalized&&mx>1)v=Math.max(v/mx,-1);arr[i*it+k]=v;}o.setAttribute(n,new THREE.BufferAttribute(arr,it));}
-      g.groups.forEach(gr=>o.addGroup(gr.start,gr.count,gr.materialIndex));return o;};
-    const parts=o=>{const P=[];o.updateMatrixWorld(true);o.traverse(m=>{if(m.isMesh){const g=toF(m.geometry);g.applyMatrix4(m.matrixWorld);const mats=Array.isArray(m.material)?m.material:[m.material];
-      if(g.groups.length>1)g.groups.forEach((gr,gi)=>{const gg=g.clone();gg.setIndex(Array.from(g.index.array.slice(gr.start,gr.start+gr.count)));gg.clearGroups();P.push({g:gg,m:mats[gr.materialIndex||0]});});else P.push({g,m:mats[0]});}});return P;};
-    const H=parts(hi),bb=new THREE.Box3();H.forEach(p=>{p.g.computeBoundingBox();bb.union(p.g.boundingBox);});const sz=bb.getSize(new THREE.Vector3());
-    M[k]={hi:H,lo:null,h:sz.y,r:Math.max(sz.x,sz.z)/2,y0:bb.min.y};}));return M;})();return GV.trees;}
-// kauge puu: kaks risti tasapinda puu pildiga (renderdatakse üks kord), lehtede lihtsustamine ei sobi (kaardid lagunevad ribadeks)
-function impostor(R,md){if(md.lo)return md.lo;const S=256,rt=new THREE.WebGLRenderTarget(S,S,{format:THREE.RGBAFormat}),sc=new THREE.Scene(),w=md.r*2,h=md.h,sz=Math.max(w,h);
-  // vaade kasutab physicallyCorrectLights: tugevused ~π korda suuremad
-  sc.add(new THREE.HemisphereLight(0xffffff,0x9a9a80,3.2));const dl=new THREE.DirectionalLight(0xffffff,3.4);dl.position.set(3,5,4);sc.add(dl);
-  md.hi.forEach(p=>{const m=p.m.clone();m.metalness=0;if(m.transparent){m.transparent=false;m.alphaTest=.5;m.side=THREE.DoubleSide;}else m.color=new THREE.Color(0x9a8676);sc.add(new THREE.Mesh(p.g,m));});
-  const cam=new THREE.OrthographicCamera(-sz/2,sz/2,md.y0+sz,md.y0,.1,100);cam.position.set(0,0,40);cam.lookAt(0,0,0);cam.position.set(0,0,40);cam.updateProjectionMatrix();
-  const cc=R.getClearColor(new THREE.Color()),ca=R.getClearAlpha(),pe=R.outputEncoding;R.setClearColor(0x000000,0);R.outputEncoding=THREE.LinearEncoding;R.setRenderTarget(rt);R.clear();R.render(sc,cam);R.setRenderTarget(null);R.setClearColor(cc,ca);R.outputEncoding=pe;
-  const a=new THREE.PlaneGeometry(sz,sz);a.translate(0,md.y0+sz/2,0);const b=a.clone();b.rotateY(Math.PI/2);const pos=[...a.attributes.position.array,...b.attributes.position.array],uv=[...a.attributes.uv.array,...b.attributes.uv.array],nrm=[];
-  for(let i=0;i<8;i++)nrm.push(0,1,0);const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));g.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2));g.setAttribute('normal',new THREE.Float32BufferAttribute(nrm,3));
-  g.setIndex([0,2,1,2,3,1,4,6,5,6,7,5]);const m=new THREE.MeshLambertMaterial({map:rt.texture,alphaTest:.45,side:THREE.DoubleSide});m.userData.leaf=true;m.userData.imp=true;
-  md.rt=rt;md.lo=[{g,m}];return md.lo;}
-function leafMat(m,birch,U){const mm=m.clone();mm.metalness=0;mm.roughness=.92;const leaf=/leaf|leav|needle|pine|fol/i.test(m.name||'')||m.transparent||m.alphaMode==='BLEND';
-  if(leaf){mm.transparent=false;mm.alphaTest=.5;mm.side=THREE.DoubleSide;mm.depthWrite=true;
-    if(!rm())mm.onBeforeCompile=sh=>{sh.uniforms.uT=U;sh.vertexShader='uniform float uT;\n'+sh.vertexShader.replace('#include <begin_vertex>',
-      '#include <begin_vertex>\n#ifdef USE_INSTANCING\nfloat ph=instanceMatrix[3].x*.31+instanceMatrix[3].z*.17;\n#else\nfloat ph=0.;\n#endif\nfloat sw=max(position.y,0.)*.012;transformed.x+=sin(uT*1.7+ph+position.y*.6)*sw;transformed.z+=cos(uT*1.3+ph)*sw;');};}
-  else if(birch){mm.map=null;mm.color=new THREE.Color(0xE8E3DA);}
-  else mm.color=new THREE.Color(0x9a8676);
-  mm.userData.leaf=leaf;return mm;}
 
-// ---------- piirded rastrist ----------
+// ---------- piirded rastrist (peenendus + jälgimine + lihtsustus) ----------
 function fencesFrom(im,R){const W=768,px=2*R/W,c=document.createElement('canvas');c.width=c.height=W;const x=c.getContext('2d',{willReadFrequently:true});x.drawImage(im,0,0,W,W);
   const D=x.getImageData(0,0,W,W).data,B=new Uint8Array(W*W);for(let i=0;i<W*W;i++)B[i]=D[i*4+3]>60?1:0;
-  // Zhang-Suen peenendus
   const at=(i,j)=>i<0||j<0||i>=W||j>=W?0:B[j*W+i];let ch=true,it=0;
   while(ch&&it++<20){ch=false;for(const st of [0,1]){const del=[];for(let j=1;j<W-1;j++)for(let i=1;i<W-1;i++){if(!B[j*W+i])continue;
     const p=[at(i,j-1),at(i+1,j-1),at(i+1,j),at(i+1,j+1),at(i,j+1),at(i-1,j+1),at(i-1,j),at(i-1,j-1)],b=p.reduce((s,v)=>s+v,0);if(b<2||b>6)continue;
     let a=0;for(let k=0;k<8;k++)if(!p[k]&&p[(k+1)%8])a++;if(a!==1)continue;
     if(st===0?(p[0]*p[2]*p[4]===0&&p[2]*p[4]*p[6]===0):(p[0]*p[2]*p[6]===0&&p[0]*p[4]*p[6]===0))del.push(j*W+i);}del.forEach(k=>B[k]=0);if(del.length)ch=true;}}
-  // ahelad otstest + RDP
   const seen=new Uint8Array(W*W),nb=(i,j)=>{const o=[];for(let b=-1;b<=1;b++)for(let a=-1;a<=1;a++)if((a||b)&&at(i+a,j+b))o.push([i+a,j+b]);return o;},segs=[];
   const rdp=(P,e)=>{if(P.length<3)return P;let d=0,k=0;const [a,b]=[P[0],P[P.length-1]],L=Math.hypot(b[0]-a[0],b[1]-a[1])||1;
     for(let i=1;i<P.length-1;i++){const dd=Math.abs((b[0]-a[0])*(a[1]-P[i][1])-(a[0]-P[i][0])*(b[1]-a[1]))/L;if(dd>d){d=dd;k=i;}}return d>e?rdp(P.slice(0,k+1),e).slice(0,-1).concat(rdp(P.slice(k),e)):[a,b];};
   const walk=(i,j)=>{const P=[[i,j]];seen[j*W+i]=1;for(;;){const n=nb(i,j).find(([a,b])=>!seen[b*W+a]);if(!n)break;[i,j]=n;seen[j*W+i]=1;P.push([i,j]);}return P;};
   for(const pass of [0,1])for(let j=0;j<W;j++)for(let i=0;i<W;i++){if(!B[j*W+i]||seen[j*W+i])continue;if(pass===0&&nb(i,j).length!==1)continue;
-    const P=rdp(walk(i,j),1.6);for(let k=1;k<P.length;k++){const a=P[k-1],b=P[k];const L=Math.hypot(b[0]-a[0],b[1]-a[1])*px;if(L>=.8)segs.push([-R+a[0]*px,R-a[1]*px,-R+b[0]*px,R-b[1]*px]);}}
+    const P=rdp(walk(i,j),1.6);for(let k=1;k<P.length;k++){const a=P[k-1],b=P[k];if(Math.hypot(b[0]-a[0],b[1]-a[1])*px>=.8)segs.push([-R+a[0]*px,R-a[1]*px,-R+b[0]*px,R-b[1]*px]);}}
   return segs;}
 
-// ---------- maapind: ortofoto, maja + vari kustutatud ja täidetud ----------
-function groundTex(ortho,main,trees,R,ridge){const N=ortho.width,px=2*R/N,c=document.createElement('canvas');c.width=c.height=N;const x=c.getContext('2d',{willReadFrequently:true});x.drawImage(ortho,0,0);
-  const toPx=(X,Y)=>[(X+R)/px,(R-Y)/px];
-  // mask: jalajälg + 1,2 m
-  const mc=document.createElement('canvas');mc.width=mc.height=N;const m=mc.getContext('2d',{willReadFrequently:true});m.fillStyle=m.strokeStyle='#fff';m.lineJoin='round';
-  main.forEach(r=>{const P=ring2(r);m.beginPath();P.forEach((q,k)=>{const [a,b]=toPx(q[0],q[1]);k?m.lineTo(a,b):m.moveTo(a,b);});m.closePath();m.fill();m.lineWidth=2.4/px;m.stroke();});
-  const img=x.getImageData(0,0,N,N),D=img.data,M=m.getImageData(0,0,N,N).data,mask=new Uint8Array(N*N);for(let i=0;i<N*N;i++)mask[i]=M[i*4+3]>10?1:0;
-  // vari: tumedad pikslid maja ümber (kuni ~harja kõrgus) heledusest < 62% ümbruse mediaanist
-  const lum=i=>.3*D[i*4]+.59*D[i*4+1]+.11*D[i*4+2],near=new Uint8Array(N*N),rr=Math.ceil(Math.max(3,ridge)*1.1/px);
-  {const bc=document.createElement('canvas');bc.width=bc.height=N;const b=bc.getContext('2d',{willReadFrequently:true});b.strokeStyle='#fff';b.fillStyle='#fff';b.lineJoin='round';
-    main.forEach(r=>{const P=ring2(r);b.beginPath();P.forEach((q,k)=>{const [a,bb]=toPx(q[0],q[1]);k?b.lineTo(a,bb):b.moveTo(a,bb);});b.closePath();b.fill();b.lineWidth=rr*2;b.stroke();});
-    const B=b.getImageData(0,0,N,N).data;for(let i=0;i<N*N;i++)near[i]=B[i*4+3]>10?1:0;}
-  const ringL=[];for(let i=0;i<N*N;i+=7)if(near[i]&&!mask[i])ringL.push(lum(i));ringL.sort((a,b)=>a-b);const med=ringL[ringL.length>>1]||120;
-  for(let i=0;i<N*N;i++)if(near[i]&&!mask[i]&&lum(i)<med*.62)mask[i]=1;
-  // puude küpsetatud varjud: tumedad pikslid võra ümber heledamaks
-  {const tc=document.createElement('canvas');tc.width=tc.height=N;const tx=tc.getContext('2d',{willReadFrequently:true});tx.fillStyle='#fff';
-    for(const t of trees){const [ci,cj]=toPx(t.x,t.y);tx.beginPath();tx.arc(ci,cj,Math.min(14,t.r*1.8)/px,0,7);tx.fill();}
-    const TD=tx.getImageData(0,0,N,N).data;for(let k=0;k<N*N;k++){if(!TD[k*4+3]||mask[k])continue;const l=lum(k);if(l<med*.7){const f=Math.min(1.45,med*.8/Math.max(l,1));D[k*4]=Math.min(255,D[k*4]*f);D[k*4+1]=Math.min(255,D[k*4+1]*f);D[k*4+2]=Math.min(255,D[k*4+2]*f);}}}
-  // täide: push-pull püramiid ümbritsevatest pikslitest
-  const lv=[{w:N,c:new Float32Array(N*N*3),a:new Float32Array(N*N)}];for(let i=0;i<N*N;i++)if(!mask[i]){lv[0].c[i*3]=D[i*4];lv[0].c[i*3+1]=D[i*4+1];lv[0].c[i*3+2]=D[i*4+2];lv[0].a[i]=1;}
-  while(lv[lv.length-1].w>2){const p=lv[lv.length-1],w=p.w>>1,c=new Float32Array(w*w*3),a=new Float32Array(w*w);
-    for(let j=0;j<w;j++)for(let i=0;i<w;i++){let s=0,r=0,g=0,b=0;for(const [di,dj] of [[0,0],[1,0],[0,1],[1,1]]){const k=(j*2+dj)*p.w+i*2+di,aa=p.a[k];s+=aa;r+=p.c[k*3]*aa;g+=p.c[k*3+1]*aa;b+=p.c[k*3+2]*aa;}
-      const k=j*w+i;if(s>0){c[k*3]=r/s;c[k*3+1]=g/s;c[k*3+2]=b/s;a[k]=Math.min(1,s);}}lv.push({w,c,a});}
-  for(let L=lv.length-2;L>=0;L--){const p=lv[L],q=lv[L+1];for(let j=0;j<p.w;j++)for(let i=0;i<p.w;i++){const k=j*p.w+i;if(p.a[k]>=1)continue;const kq=Math.min(q.w-1,j>>1)*q.w+Math.min(q.w-1,i>>1),t=p.a[k];
-    for(let ch=0;ch<3;ch++)p.c[k*3+ch]=p.c[k*3+ch]*t+q.c[kq*3+ch]*(1-t);p.a[k]=1;}}
-  for(let i=0;i<N*N;i++)if(mask[i]){const n=(Math.random()-.5)*14;D[i*4]=lv[0].c[i*3]+n;D[i*4+1]=lv[0].c[i*3+1]+n;D[i*4+2]=lv[0].c[i*3+2]+n*.6;}
-  x.putImageData(img,0,0);
-  // servad sulanduvad muruks (ruut 160 m, ortofoto keskel 128 m)
-  const S=2048,o=document.createElement('canvas');o.width=o.height=S;const g=o.getContext('2d'),inset=S*(1-R*2/160)/2;g.fillStyle='#6E7D4A';g.fillRect(0,0,S,S);g.drawImage(c,inset,inset,S-2*inset,S-2*inset);
-  const fade=document.createElement('canvas');fade.width=fade.height=S;const fx=fade.getContext('2d'),rg=fx.createRadialGradient(S/2,S/2,S*.33,S/2,S/2,S*.5);rg.addColorStop(0,'rgba(110,125,74,0)');rg.addColorStop(1,'rgba(110,125,74,1)');fx.fillStyle=rg;fx.fillRect(0,0,S,S);g.drawImage(fade,0,0);
-  return o;}
-function grassDetail(){const c=document.createElement('canvas');c.width=c.height=128;const x=c.getContext('2d'),d=x.createImageData(128,128);
-  for(let i=0;i<128*128;i++){const v=128+(Math.random()-.5)*70;d.data[i*4]=d.data[i*4+1]=d.data[i*4+2]=v;d.data[i*4+3]=255;}x.putImageData(d,0,0);const t=new THREE.CanvasTexture(c);t.wrapS=t.wrapT=THREE.RepeatWrapping;return t;}
+// ---------- maapind: krunt muruna, teed asfaldina, pehme kontaktvari hoonete all, servad sulanduvad taustaks ----------
+function groundTex(S,par,roads,feet){const N=2048,px=S/N,c=document.createElement('canvas');c.width=c.height=N;const x=c.getContext('2d'),P=(X,Y)=>[(X+S/2)/px,(S/2-Y)/px];
+  const path=(R,close=true)=>{x.beginPath();R.forEach((q,k)=>{const [a,b]=P(q[0],q[1]);k?x.lineTo(a,b):x.moveTo(a,b);});if(close)x.closePath();};
+  x.fillStyle=hex(COL.bg);x.fillRect(0,0,N,N);
+  if(par){x.fillStyle=COL.grass;path(par);x.fill();}
+  x.fillStyle=x.strokeStyle=COL.road;x.lineCap=x.lineJoin='round';
+  roads.a.forEach(poly=>{x.beginPath();poly.forEach(r=>ring2(r).forEach((q,k)=>{const [a,b]=P(q[0],q[1]);k?x.lineTo(a,b):x.moveTo(a,b);}));x.fill('evenodd');});roads.l.forEach(l=>{x.lineWidth=l.w/px;path(ring2(l.g),false);x.stroke();});
+  // kontaktvari (pehme AO) hoonete jalajälgede ümber: kujund ekraanist väljas, ainult vari jääb
+  x.save();x.translate(-N*2,0);x.shadowColor='rgba(60,52,40,.42)';x.shadowBlur=1.1/px;x.shadowOffsetX=N*2;x.fillStyle='#000';feet.forEach(R=>{path(R);x.fill();});x.restore();
+  const g=x.createRadialGradient(N/2,N/2,N*.3,N/2,N/2,N*.5);g.addColorStop(0,hex(COL.bg)+'00');g.addColorStop(1,hex(COL.bg));x.fillStyle=g;x.fillRect(0,0,N,N);
+  const t=new THREE.CanvasTexture(c);t.encoding=THREE.sRGBEncoding;return t;}
 
 // ---------- vaade ----------
 async function show(V,m,meta,T){const R=meta.r,t=()=>performance.now();let t0=t();
   const L=M3L2[m.ehr],f=m.fit;if(!L||!f)throw new Error('sobitus puudub');
-  const [ortho,ndsm,fen,M,neigh]=await Promise.all([img(meta.files.ortho),img(meta.files.ndsm),img(meta.files.fences),treeModels(),neighbours(meta),addons().catch(()=>null)]);
-  T.pildid=Math.round(t()-t0);t0=t();
+  const [ndsm,fen,geo]=await Promise.all([img(meta.files.ndsm),img(meta.files.fences),nearby(meta)]);
+  T.andmed=Math.round(t()-t0);t0=t();
+  const par=(meta.parcels||[]).find(p=>pip(0,0,ring2(p.g[0])))||null,PP=par?ring2(par.g[0]):null;
+  const own=[],nb=[];geo.forEach(o=>{if(o.e===meta.ehr)return;(PP&&pip(o.dx,o.dy,PP)?own:nb).push(o);});
   const outer=new THREE.Group(),G=new THREE.Group();outer.add(G);G.position.set(-f.lc[0],0,f.lc[1]);outer.rotation.y=-f.rot*Math.PI/180;outer.scale.setScalar(1/f.s);outer.position.set(f.mc[0],f.y0,-f.mc[1]);
-  // naabrite ja maja jalajälgede mask (puud nendest välja)
-  const W=ndsm.width,mk=document.createElement('canvas');mk.width=mk.height=W;const mx=mk.getContext('2d',{willReadFrequently:true}),px=2*R/W;mx.fillStyle=mx.strokeStyle='#fff';mx.lineWidth=2/px;
-  const foot=(rings,dx,dy)=>rings.forEach(r=>{const P=ring2(r);mx.beginPath();P.forEach((q,k)=>{const a=(q[0]+dx+R)/px,b=(R-q[1]-dy)/px;k?mx.lineTo(a,b):mx.moveTo(a,b);});mx.closePath();mx.fill();mx.stroke();});
-  foot(L.g||[],0,0);neigh.forEach(n=>foot(n.b.g,n.dx,n.dy));const MD=mx.getImageData(0,0,W,W).data,mask=new Uint8Array(W*W);for(let i=0;i<W*W;i++)mask[i]=MD[i*4+3]>10?1:0;
-  const trees=treesFrom(ndsm,ortho,mask,R);T.puud=Math.round(t()-t0);t0=t();
+  const grp={aed:new THREE.Group(),puud:new THREE.Group(),naabrid:new THREE.Group(),krunt:new THREE.Group()};Object.values(grp).forEach(g=>G.add(g));
   // maapind
-  const gc=groundTex(ortho,L.g||[],trees,R,L.ridge||8),gt=new THREE.CanvasTexture(gc);gt.encoding=THREE.sRGBEncoding;gt.anisotropy=V.r.capabilities.getMaxAnisotropy();
-  const det=grassDetail(),gm=new THREE.MeshStandardMaterial({map:gt,roughness:1,metalness:0});
-  gm.onBeforeCompile=sh=>{sh.uniforms.uDet={value:det};sh.fragmentShader='uniform sampler2D uDet;\n'+sh.fragmentShader.replace('#include <map_fragment>','#include <map_fragment>\ndiffuseColor.rgb*=mix(1.,texture2D(uDet,vUv*90.).r*2.,.22);');};
-  const ground=new THREE.Mesh(new THREE.PlaneGeometry(160,160),gm);ground.rotation.x=-Math.PI/2;ground.receiveShadow=true;ground.position.y=-.02;
-  const far=new THREE.Mesh(new THREE.CircleGeometry(700,48),new THREE.MeshStandardMaterial({color:0x6E7D4A,roughness:1}));far.rotation.x=-Math.PI/2;far.position.y=-.08;far.receiveShadow=true;
-  const grp={aed:new THREE.Group(),puud:new THREE.Group(),naabrid:new THREE.Group(),krunt:new THREE.Group()};grp.aed.add(ground,far);Object.values(grp).forEach(g=>G.add(g));
-  T.maapind=Math.round(t()-t0);t0=t();
-  // piirded
-  const segs=fencesFrom(fen,R);if(segs.length){const pos=[];segs.forEach(([x0,y0,x1,y1])=>pos.push(x0,0,-y0,x1,0,-y1,x1,1.15,-y1,x0,0,-y0,x1,1.15,-y1,x0,1.15,-y0));
-    const fg=new THREE.BufferGeometry();fg.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));fg.computeVertexNormals();const fm=new THREE.Mesh(fg,new THREE.MeshStandardMaterial({color:0x6b5a48,roughness:.9,side:THREE.DoubleSide}));fm.castShadow=true;grp.aed.add(fm);}
-  // naabrid
-  const wallM=new THREE.MeshStandardMaterial({color:0xE4E0DA,roughness:.95,side:THREE.DoubleSide}),roofM=new THREE.MeshStandardMaterial({color:0xB8B2AA,roughness:.85,side:THREE.DoubleSide});
-  neigh.forEach(n=>grp.naabrid.add(building(n.b,n.dx,n.dy,wallM,roofM)));
-  // krundi piir: katastriüksus, kuhu maja keskpunkt jääb
-  const par=(meta.parcels||[]).find(p=>pip(0,0,ring2(p.g[0])))||null;
-  if(par){const P=ring2(par.g[0]).map(q=>new THREE.Vector3(q[0],.08,-q[1]));const lg=new THREE.BufferGeometry().setFromPoints([...P,P[0]]);const ln=new THREE.Line(lg,new THREE.LineDashedMaterial({color:0xE5482D,dashSize:1.2,gapSize:.7,depthTest:true}));ln.computeLineDistances();grp.krunt.add(ln);}
-  // puud: instantsid tüübi ja osa kaupa, kõrge/madal detail kauguse järgi
-  const U={value:0},inst=[],byK={};trees.forEach((tr,k)=>{const kd=kindOf(tr,k);(byK[kd]=byK[kd]||[]).push(tr);});
-  for(const [kd,list] of Object.entries(byK)){const md=M[kd];impostor(V.r,md);for(const lvl of ['hi','lo'])md[lvl].forEach(p=>{const mat=p.m.userData.imp?p.m:leafMat(p.m,kd==='birch',U);const im=new THREE.InstancedMesh(p.g,mat,list.length);
-    // r128: setColorAt teeb puhvri praeguse count'i järgi -> loome täismahus enne count=0 (muidu tühi puhver ja WebGL ei joonista midagi)
-    im.instanceColor=new THREE.InstancedBufferAttribute(new Float32Array(list.length*3).fill(1),3);
-    im.castShadow=true;im.receiveShadow=!mat.userData.leaf;im.userData={kd,lvl,list,leaf:mat.userData.leaf};im.count=0;
-    // lehekaartide vari lõikemaski järgi (muidu iga kaart heidab täisristküliku varju ja võra on must)
-    if(mat.userData.leaf&&mat.map)im.customDepthMaterial=new THREE.MeshDepthMaterial({depthPacking:THREE.RGBADepthPacking,map:mat.map,alphaTest:.5});
-    inst.push(im);grp.puud.add(im);});}
-  const mtx=new THREE.Matrix4(),q=new THREE.Quaternion(),col=new THREE.Color(),camL=new THREE.Vector3();
-  const lod=()=>{camL.copy(V.cam.position);G.worldToLocal(camL);const far=mob()?28:48;
-    for(const im of inst){const {kd,lvl,list,leaf}=im.userData,md=M[kd];let n=0;list.forEach((tr,k)=>{const d=Math.hypot(camL.x-tr.x,camL.z+tr.y);if((lvl==='hi')!==(d<far))return;
-      const sy=tr.h/md.h,sx=sy*Math.max(.85,Math.min(1.2,(tr.r/md.r)/sy));q.setFromAxisAngle(new THREE.Vector3(0,1,0),((tr.i*7919+tr.j*104729)%628)/100);
-      mtx.compose(new THREE.Vector3(tr.x,-md.y0*sy,-tr.y),q,new THREE.Vector3(sx,sy,sx));im.setMatrixAt(n,mtx);
-      if(leaf&&kd!=='birch'){const [r,g,b]=tr.col;col.setRGB(.78+r/255*.3,.78+g/255*.3,.78+b/255*.3);}else col.setRGB(1,1,1);im.setColorAt(n,col);n++;});
-      im.count=n;im.instanceMatrix.needsUpdate=true;if(im.instanceColor)im.instanceColor.needsUpdate=true;}};
-  lod();T.objektid=Math.round(t()-t0);
-  V.sc.add(outer);
-  // valgus: päike, taevas, udu, varjud; mõõtmine ka aias (maapind + naabrid)
-  // aias: valgus päikesest + taevast (ruumi keskkonnavalgus lamendaks varjud ära)
+  const S=180,shift=o=>r=>ring2(r).map(q=>[q[0]+o.dx,q[1]+o.dy]),feet=[...(L.g||[]).map(ring2),...own.flatMap(o=>o.b.g.map(shift(o))),...nb.flatMap(o=>o.b.g.map(shift(o)))];
+  const gt=groundTex(S,PP,meta.roads||{a:[],l:[]},feet);gt.anisotropy=V.r.capabilities.getMaxAnisotropy();
+  const ground=new THREE.Mesh(new THREE.PlaneGeometry(S,S),new THREE.MeshLambertMaterial({map:gt}));ground.rotation.x=-Math.PI/2;ground.receiveShadow=true;ground.position.y=-.02;
+  const far=new THREE.Mesh(new THREE.CircleGeometry(900,48),new THREE.MeshBasicMaterial({color:lin(COL.bg)}));far.rotation.x=-Math.PI/2;far.position.y=-.06;
+  grp.aed.add(ground,far);
+  // krundi piir (õhuke joon)
+  if(PP){const P=PP.map(q=>new THREE.Vector3(q[0],.04,-q[1]));grp.krunt.add(new THREE.LineLoop(new THREE.BufferGeometry().setFromPoints(P),new THREE.LineBasicMaterial({color:COL.edge})));}
+  // piirded: õhukesed seinad 1,1 m
+  const segs=fencesFrom(fen,R);if(segs.length){const pos=[];segs.forEach(([x0,y0,x1,y1])=>pos.push(x0,0,-y0,x1,0,-y1,x1,1.1,-y1,x0,0,-y0,x1,1.1,-y1,x0,1.1,-y0));
+    const fg=new THREE.BufferGeometry();fg.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));fg.computeVertexNormals();const fm=new THREE.Mesh(fg,new THREE.MeshStandardMaterial({color:COL.fence,roughness:.9,side:THREE.DoubleSide}));fm.castShadow=true;grp.aed.add(fm);}
+  // hooned: krundi omad valged (nagu maja), naabrid hallid
+  const edge=new THREE.LineBasicMaterial({color:0x8d877e,transparent:true,opacity:.55}),wallM=new THREE.MeshStandardMaterial({color:COL.wall,roughness:.95,side:THREE.DoubleSide}),roofM=new THREE.MeshStandardMaterial({color:COL.roof,roughness:.9,side:THREE.DoubleSide});
+  own.sort((a,b)=>b.b.fp-a.b.fp).forEach((o,k)=>{o.info={nm:'Kõrvalhoone '+(k+1),fp:o.b.fp,h:o.b.r,roof:o.b.ro};grp.aed.add(building(o.b,o.dx,o.dy,wallM,roofM,edge,o.info));});
+  const nbM=new THREE.MeshStandardMaterial({color:COL.nb,roughness:.95,side:THREE.DoubleSide});nb.forEach(o=>grp.naabrid.add(building(o.b,o.dx,o.dy,nbM,nbM,null,{nm:'Naaberhoone',fp:o.b.fp,h:o.b.r,roof:o.b.ro})));
+  // olulised puud: ≥ 5 m kõrgused, võra ≥ 2,5 m, krundil + 12 m varu, max 25
+  const W=ndsm.width,mk=document.createElement('canvas');mk.width=mk.height=W;const mx=mk.getContext('2d',{willReadFrequently:true}),px=2*R/W;mx.fillStyle=mx.strokeStyle='#fff';mx.lineWidth=2/px;
+  feet.forEach(Rg=>{mx.beginPath();Rg.forEach((q,k)=>{const a=(q[0]+R)/px,b=(R-q[1])/px;k?mx.lineTo(a,b):mx.moveTo(a,b);});mx.closePath();mx.fill();mx.stroke();});
+  const MD=mx.getImageData(0,0,W,W).data,mask=new Uint8Array(W*W);for(let i=0;i<W*W;i++)mask[i]=MD[i*4+3]>10?1:0;
+  const box=PP?PP.reduce((b,q)=>[Math.min(b[0],q[0]),Math.min(b[1],q[1]),Math.max(b[2],q[0]),Math.max(b[3],q[1])],[1e9,1e9,-1e9,-1e9]):[-30,-30,30,30];
+  const inBox=(x,y)=>x>box[0]-12&&x<box[2]+12&&y>box[1]-12&&y<box[3]+12;
+  const trees=treesFrom(ndsm,mask,R,inBox).filter(tr=>tr.h>=5&&tr.r>=2.5).slice(0,25);
+  trees.forEach(tr=>{tr.con=tr.r/tr.h<.3;tr.own=!!PP&&pip(tr.x,tr.y,PP);});
+  T.puud=Math.round(t()-t0);t0=t();
+  const mtx=new THREE.Matrix4(),q=new THREE.Quaternion();
+  const kinds=[['trunk',new THREE.CylinderGeometry(.13,.18,1,7).translate(0,.5,0),COL.trunk,()=>true],['crown',new THREE.IcosahedronGeometry(1,1),COL.crown,tr=>!tr.con],['cone',new THREE.ConeGeometry(1,1,9).translate(0,.5,0),COL.conifer,tr=>tr.con]];
+  for(const [k,geom,c,ok] of kinds){const L2=trees.filter(ok);if(!L2.length)continue;const im=new THREE.InstancedMesh(geom,new THREE.MeshStandardMaterial({color:c,roughness:.95,flatShading:true}),L2.length);
+    im.castShadow=true;im.receiveShadow=true;im.userData.trees=L2;
+    L2.forEach((tr,i)=>{q.setFromAxisAngle(new THREE.Vector3(0,1,0),((tr.i*7919+tr.j*104729)%628)/100);let p,s;
+      if(k==='trunk'){p=[tr.x,0,-tr.y];s=[1+tr.r*.05,tr.con?tr.h*.3:tr.h-tr.r*1.1,1+tr.r*.05];}
+      else if(k==='crown'){const cr=tr.r*.9,ch=Math.min(cr*1.1,tr.h*.5);p=[tr.x,tr.h-ch,-tr.y];s=[cr,ch,cr];}
+      else{p=[tr.x,tr.h*.18,-tr.y];s=[tr.r*.82,tr.h*.82,tr.r*.82];}
+      mtx.compose(new THREE.Vector3(...p),q,new THREE.Vector3(...s));im.setMatrixAt(i,mtx);});im.instanceMatrix.needsUpdate=true;grp.puud.add(im);}
+  V.sc.add(outer);outer.updateMatrixWorld(true);
+  // krundi mõõdud sildikihile (maailma koordinaadid): pindala, servad, majast piirini, naabriteni, kõrvalhoonete pinnad
+  const w=(x,y,z=0)=>new THREE.Vector3(x,z,-y).applyMatrix4(G.matrixWorld),site=[],main=(L.g||[]).map(ring2)[0]||[];
+  // krundi silt vabasse kohta: krundi punkt, mis on majast ja piirist kõige kaugemal (keskpunkt jääb sageli maja alla)
+  const freeSpot=()=>{let best=null;for(let x0=box[0];x0<=box[2];x0+=1)for(let y0=box[1];y0<=box[3];y0+=1){if(!pip(x0,y0,PP))continue;
+    const dB=closest(PP,[[x0,y0]]).d,dH=main.length?(pip(x0,y0,main)?0:closest(main,[[x0,y0]]).d):99,sc=Math.min(dB*1.4,dH);if(!best||sc>best.s)best={s:sc,p:[x0,y0]};}return best?best.p:cen2(PP);};
+  if(PP){const c=freeSpot();site.push({k:'slab',P:[w(c[0],c[1],.2)],txt:`Krunt ${fmt(par.p||area2(PP),0)} m²`,pri:3});
+    PP.forEach((a,i)=>{const b=PP[(i+1)%PP.length],len=Math.hypot(b[0]-a[0],b[1]-a[1]);if(len>=2)site.push({k:'sedge',P:[w(a[0],a[1]),w(b[0],b[1])],txt:fmtM(len)+' m',pri:1});});
+    if(main.length)PP.forEach((a,i)=>{const b=PP[(i+1)%PP.length];if(Math.hypot(b[0]-a[0],b[1]-a[1])<2)return;const r=closest(main,[a,b],false);if(r.d<40)site.push({k:'sdim',P:[w(...r.a,.05),w(...r.b,.05)],txt:fmtM(r.d)+' m',pri:2});});}
+  if(main.length)nb.map(o=>({o,r:o.b.g.map(g=>closest(main,ring2(g).map(q=>[q[0]+o.dx,q[1]+o.dy]))).sort((p,q)=>p.d-q.d)[0]})).filter(x=>x.r.d<30).sort((p,q)=>p.r.d-q.r.d).slice(0,3)
+    .forEach(({r})=>site.push({k:'sdim',P:[w(...r.a,.05),w(...r.b,.05)],txt:fmtM(r.d)+' m naabrini',pri:2}));
+  own.forEach(o=>{const R0=ring2(o.b.g[0]).map(q=>[q[0]+o.dx,q[1]+o.dy]),c=cen2(R0);site.push({k:'slab',P:[w(c[0],c[1],o.b.r+.3)],txt:`${fmt(o.b.fp)} m²`,pri:2});});
+  V.m3S=site;V.m3Sv=m.gopt.krunt!==false;
+  // valgus: päike + taevavalgus (ruumi keskkonnavalgus lamendaks varjud), hele taust, kauge serv sulandub
   const hemi=V.sc.children.find(o=>o.isHemisphereLight);
-  const st={env:V.sc.environment,hemi:hemi&&[hemi.intensity,hemi.color.getHex(),hemi.groundColor.getHex()],bg:V.sc.background,fog:V.sc.fog,catcher:V.catcher.visible,sunPos:V.sun.position.clone(),sunI:V.sun.intensity,far:V.cam.far,maxD:V.ct.maxDistance,shadow:V.sun.shadow.mapSize.x,cam:V.sun.shadow.camera.clone()};
-  V.sc.environment=null;if(hemi){hemi.intensity=1.25;hemi.color.set(0xDDE8F5);hemi.groundColor.set(0x7A7860);}
-  V.catcher.visible=false;const s=f.s,shadowR=80/s,sc=V.sun.shadow.camera;sc.left=sc.bottom=-shadowR;sc.right=sc.top=shadowR;sc.near=1/s;sc.far=400/s;sc.updateProjectionMatrix();
+  const st={exp:V.r.toneMappingExposure,env:V.sc.environment,hemi:hemi&&[hemi.intensity,hemi.color.getHex(),hemi.groundColor.getHex()],bg:V.sc.background,fog:V.sc.fog,catcher:V.catcher.visible,sunPos:V.sun.position.clone(),sunI:V.sun.intensity,far:V.cam.far,maxD:V.ct.maxDistance,cam:V.sun.shadow.camera.clone(),rad:V.sun.shadow.radius};
+  // ACES tasandab heledad värvid hallikaks: aias väiksem säritus
+  V.r.toneMappingExposure=.78;V.sc.environment=null;if(hemi){hemi.intensity=1.05;hemi.color.set(0xF4F6F8);hemi.groundColor.set(0xB8B2A6);}
+  V.catcher.visible=false;const s=f.s,sc=V.sun.shadow.camera;sc.left=sc.bottom=-70/s;sc.right=sc.top=70/s;sc.near=1/s;sc.far=400/s;sc.updateProjectionMatrix();
   const ms=mob()?1024:2048;if(V.sun.shadow.mapSize.x!==ms){V.sun.shadow.mapSize.set(ms,ms);if(V.sun.shadow.map){V.sun.shadow.map.dispose();V.sun.shadow.map=null;}}
-  V.sun.shadow.bias=-.0004;V.sun.shadow.normalBias=.03/s;V.sun.shadow.radius=4;
-  let sky=null;if(THREE.Sky){sky=new THREE.Sky();sky.scale.setScalar(4000/s);V.sc.add(sky);const SU=sky.material.uniforms;SU.turbidity.value=4;SU.rayleigh.value=1.4;SU.mieCoefficient.value=.004;SU.mieDirectionalG.value=.85;}
-  else V.sc.background=new THREE.Color(0xCDD7DE);
-  V.sc.fog=new THREE.Fog(0xC9D3DA,95/s,210/s);V.cam.far=Math.max(V.cam.far,5000/s);V.cam.updateProjectionMatrix();V.ct.maxDistance=Math.max(V.ct.maxDistance,150/s);
+  V.sun.shadow.bias=-.0004;V.sun.shadow.normalBias=.03/s;V.sun.shadow.radius=5;
+  V.sc.background=lin(COL.bg);V.sc.fog=new THREE.Fog(lin(COL.bg),130/s,320/s);V.cam.far=Math.max(V.cam.far,3000/s);V.cam.updateProjectionMatrix();V.ct.maxDistance=Math.max(V.ct.maxDistance,160/s);
   const setTime=k=>{const p=sunAt(k),v=new THREE.Vector3(Math.sin(p.az)*Math.cos(p.el),Math.sin(p.el),-Math.cos(p.az)*Math.cos(p.el));
-    // LOD2 raami suund mudeli raami (sobituse pööre)
-    v.applyAxisAngle(new THREE.Vector3(0,1,0),-f.rot*Math.PI/180);
-    if(sky)sky.material.uniforms.sunPosition.value.copy(v);V.sun.position.copy(v).multiplyScalar(160/s).add(V.sun.target.position);V.sun.intensity=k==='p'?4.6:3.2;V.sun.color.set(k==='o'?0xFFB98A:k==='h'?0xFFE2C0:0xFFF3E2);};
+    v.applyAxisAngle(new THREE.Vector3(0,1,0),-f.rot*Math.PI/180);V.sun.position.copy(v).multiplyScalar(160/s).add(V.sun.target.position);V.sun.intensity=k==='p'?2.7:2.2;V.sun.color.set(k==='o'?0xFFD2B0:k==='h'?0xFFEBD6:0xFFFFFF);};
   setTime(m.gopt.time||'p');
-  // ümbritsev varjutus (SAO/GTAO) jäetud välja: r128 SAOPass annab väljundi ilma sRGB teisenduseta ja lehekaardid täisristkülikutena (vt SETUP: three uuendus)
-  // tuul + LOD (kaamera liikudes)
-  let last='';V.tick=()=>{U.value=performance.now()/1000;const k=V.cam.position.toArray().map(v=>v.toFixed(1)).join();if(k!==last){last=k;lod();}};
-  V.gpick=[ground,grp.naabrid];
-  const vis=()=>{for(const k in grp)grp[k].visible=m.gopt[k]!==false;};vis();
-  // kaamera: aed nähtavale
-  const sp=new THREE.Sphere(new THREE.Vector3(),0);new THREE.Box3().setFromObject(V.model).getBoundingSphere(sp);const dir=V.cam.position.clone().sub(V.ct.target);dir.y=0;dir.normalize();dir.y=.62;dir.normalize();
-  V.cam.position.copy(V.ct.target).addScaledVector(dir,Math.max(sp.radius*4.4,50/s));V.ct.update();
-  const off=()=>{V.sc.environment=st.env;if(hemi&&st.hemi){hemi.intensity=st.hemi[0];hemi.color.set(st.hemi[1]);hemi.groundColor.set(st.hemi[2]);}V.sc.remove(outer);if(sky)V.sc.remove(sky);V.sc.background=st.bg;V.sc.fog=st.fog;V.catcher.visible=st.catcher;V.sun.position.copy(st.sunPos);V.sun.intensity=st.sunI;V.sun.color.set(0xffffff);
-    Object.assign(sc,{left:st.cam.left,right:st.cam.right,top:st.cam.top,bottom:st.cam.bottom,near:st.cam.near,far:st.cam.far});sc.updateProjectionMatrix();V.cam.far=st.far;V.cam.updateProjectionMatrix();V.ct.maxDistance=st.maxD;
-    V.tick=null;V.gpick=null;outer.traverse(o=>{if(o.geometry)o.geometry.dispose();});gt.dispose();det.dispose();};
-  return {off,vis,setTime,trees,parcel:par,neighbours:neigh.length,fences:segs.length};}
-async function neighbours(meta){const [cx,cy]=meta.c,K=new Set();for(const dx of [-80,80])for(const dy of [-80,80])K.add(Math.floor((cx+dx)/250)+'_'+Math.floor((cy+dy)/250));
+  V.gpick=[ground,grp.aed,grp.naabrid];
+  const vis=()=>{for(const k in grp)grp[k].visible=m.gopt[k]!==false;V.m3Sv=m.gopt.krunt!==false;V.m3key=null;};vis();
+  const sp=new THREE.Sphere();new THREE.Box3().setFromObject(V.model).getBoundingSphere(sp);const dir=V.cam.position.clone().sub(V.ct.target);dir.y=0;dir.normalize();dir.y=.85;dir.normalize();
+  V.cam.position.copy(V.ct.target).addScaledVector(dir,Math.max(sp.radius*4.4,46/s)*Math.max(1,1/V.cam.aspect));V.ct.update(); // püstkaadris (telefon) kitsas vaade -> kaugemale
+  T.mudel=Math.round(t()-t0);if(typeof m3Redraw==='function')m3Redraw();
+  const off=()=>{V.r.toneMappingExposure=st.exp;V.sc.environment=st.env;if(hemi&&st.hemi){hemi.intensity=st.hemi[0];hemi.color.set(st.hemi[1]);hemi.groundColor.set(st.hemi[2]);}V.sc.remove(outer);V.sc.background=st.bg;V.sc.fog=st.fog;V.catcher.visible=st.catcher;
+    V.sun.position.copy(st.sunPos);V.sun.intensity=st.sunI;V.sun.color.set(0xffffff);V.sun.shadow.radius=st.rad;Object.assign(sc,{left:st.cam.left,right:st.cam.right,top:st.cam.top,bottom:st.cam.bottom,near:st.cam.near,far:st.cam.far});sc.updateProjectionMatrix();
+    V.cam.far=st.far;V.cam.updateProjectionMatrix();V.ct.maxDistance=st.maxD;V.gpick=null;V.m3S=null;outer.traverse(o=>{if(o.geometry)o.geometry.dispose();});gt.dispose();if(typeof m3Redraw==='function')m3Redraw();};
+  return {off,vis,setTime,trees,parcel:par,own:own.map(o=>o.info),neighbours:nb.length,fences:segs.length};}
+async function nearby(meta){const [cx,cy]=meta.c,K=new Set();for(const dx of [-85,85])for(const dy of [-85,85])K.add(Math.floor((cx+dx)/250)+'_'+Math.floor((cy+dy)/250));
   const tiles=await Promise.all([...K].map(k=>GV.cache.get(k)||(GV.cache.set(k,fetch('data/lod2/geo/'+k+'.json').then(r=>r.ok?r.json():{}).catch(()=>({}))),GV.cache.get(k))));
-  const out=[];tiles.forEach(T=>Object.entries(T).forEach(([e,b])=>{if(e===meta.ehr)return;const dx=b.c[0]-cx,dy=b.c[1]-cy;if(Math.hypot(dx,dy)<78)out.push({e,b,dx,dy});}));return out;}
+  const out=[];tiles.forEach(T=>Object.entries(T).forEach(([e,b])=>{const dx=b.c[0]-cx,dy=b.c[1]-cy;if(Math.hypot(dx,dy)<80)out.push({e,b,dx,dy});}));return out;}
 
-window.V3DGarden={show,sunAt,kindOf,treesFrom,fencesFrom,NDSM};
+window.V3DGarden={show,sunAt,treesFrom,fencesFrom,closest};
 })();

@@ -4359,7 +4359,7 @@ let P3V=null;
 function p3Dispose(){if(!P3V)return;P3V.stop();if(P3V.ro)P3V.ro.disconnect();if(P3V.env)P3V.env.dispose();P3V.r.dispose();P3V=null;}
 // Maa-ameti LOD2 maja kehana (meetrid; x = ida, y = üles, z = -põhi), katusetahud + seinad
 function lod2Mesh(L){const g=new THREE.Group(),EM=new THREE.LineBasicMaterial({color:0x2a2622,transparent:true,opacity:.35}),
-  RM=new THREE.MeshStandardMaterial({color:0x6f6861,roughness:.8,side:THREE.DoubleSide}),WM=new THREE.MeshStandardMaterial({color:0xD9D0C2,roughness:.92,side:THREE.DoubleSide});
+  RM=new THREE.MeshStandardMaterial({color:0xC9C4BC,roughness:.85,side:THREE.DoubleSide}),WM=new THREE.MeshStandardMaterial({color:0xF4F2EE,roughness:.92,side:THREE.DoubleSide});
   const add=(P,mat)=>{if(P.length<3)return;const n=new THREE.Vector3();P.forEach((a,k)=>{const b=P[(k+1)%P.length];n.x+=(a.y-b.y)*(a.z+b.z);n.y+=(a.z-b.z)*(a.x+b.x);n.z+=(a.x-b.x)*(a.y+b.y);});
     const ax=Math.abs(n.x),ay=Math.abs(n.y),az=Math.abs(n.z),[u,w]=ax>=ay&&ax>=az?['y','z']:ay>=az?['x','z']:['x','y'];
     const geo=new THREE.BufferGeometry().setFromPoints(P);geo.setIndex(THREE.ShapeUtils.triangulateShape(P.map(p=>new THREE.Vector2(p[u],p[w])),[]).flat());geo.computeVertexNormals();
@@ -4536,10 +4536,10 @@ function m3PinAt(e){const s=stSess(),m=s&&s.model,V=P3V;if(!m||!V)return;if(V.ga
   const nr=h.face?h.face.normal.clone().transformDirection(h.object.matrixWorld):null,k=m3FaceKey(M3L2[m.ehr],m3ToL(m.fit,h.point),!!nr&&Math.abs(nr.y)<.45);if(!k)return;
   const P=new Set(m.pin||[]);P.has(k)?P.delete(k):P.add(k);m.pin=[...P];stSave();m3Redraw();}
 function m3TreeAt(V,e){const b=V.r.domElement.getBoundingClientRect(),rc=new THREE.Raycaster();rc.setFromCamera(new THREE.Vector2((e.clientX-b.left)/b.width*2-1,-(e.clientY-b.top)/b.height*2+1),V.cam);
-  const h=rc.intersectObjects([V.model,...(V.gpick||[]),...V.sc.children.filter(o=>o.type==='Group')],true).find(x=>x.object.isMesh);if(!h||!h.object.isInstancedMesh||h.instanceId==null)return false;
-  const {list,kd}=h.object.userData,M=new THREE.Matrix4();h.object.getMatrixAt(h.instanceId,M);const p=new THREE.Vector3().setFromMatrixPosition(M);const t=list.reduce((a,x)=>Math.hypot(x.x-p.x,-x.y-p.z)<Math.hypot(a.x-p.x,-a.y-p.z)?x:a,list[0]);
-  const nm={spruce:'Kuusk',pine:'Mänd',birch:'Kask',fruit:'Viljapuu',bush:'Põõsas'}[kd]||'Lehtpuu';
-  stPop(`<b>${nm} · kõrgus ~${fmt(t.h,1)} m</b><span class="fhint">Võra Ø ~${fmt(t.r*2,1)} m · maakatte kõrgusmudelist (Maa-amet)</span>`,null,{x:e.clientX,y:e.clientY});return true;}
+  const h=rc.intersectObjects([V.model,...V.sc.children.filter(o=>o.type==='Group'&&o!==V.model)],true).find(x=>x.object.isMesh);if(!h)return false;const at={x:e.clientX,y:e.clientY};
+  const B=h.object.userData.bld;if(B){stPop(`<b>${stEsc(B.nm)}</b><span class="fhint">Põhiplaan ${fmt(B.fp)} m² · kõrgus ${fmt(B.h,1)} m · katus ${fmt(B.roof)} m² (Maa-amet LOD2)</span>`,null,at);return true;}
+  if(!h.object.isInstancedMesh||h.instanceId==null||!h.object.userData.trees)return false;const t=h.object.userData.trees[h.instanceId];
+  stPop(`<b>${t.con?'Okaspuu':'Lehtpuu'} · kõrgus ~${fmt(t.h,1)} m</b><span class="fhint">Võra Ø ~${fmt(t.r*2,1)} m · maakatte kõrgusmudelist (Maa-amet)</span>`,null,at);return true;}
 function m3FaceKey(L,P,vert){if(!vert){const r=m3FaceAt(L,P,false);if(r&&r.kind==='roof')return 'r'+r.i;}
   let best=null;(L.w||[]).forEach((W,i)=>{const c=W[2],Q=[];for(let k=0;k+2<c.length;k+=3)Q.push([c[k],c[k+1],c[k+2]]);const z0=Math.min(...Q.map(q=>q[2])),lo=Q.filter(q=>q[2]-z0<.06);
     for(let a=0;a<lo.length;a++)for(let b=a+1;b<lo.length;b++){const d=m3Seg2(P,lo[a],lo[b]).d;if(!best||d<best.d)best={d,i};}});
@@ -4635,14 +4635,15 @@ function m3FinishArea(){const s=stSess(),m=s&&s.model;if(!m||M3.pts.length<3)ret
 const M3PILL={font:"600 12px 'Inter Tight',Arial,sans-serif",small:"600 11px 'Inter Tight',Arial,sans-serif"},M3TW=new Map();
 function m3TW(t,small){const k=(small?'s':'n')+t;if(M3TW.has(k))return M3TW.get(k);const c=m3TW.c||(m3TW.c=document.createElement('canvas').getContext('2d'));c.font=small?M3PILL.small:M3PILL.font;const w=c.measureText(t).width;M3TW.set(k,w);return w;}
 /* Aed ja ümbrus: andmed garden-funktsioonist (vahemälu aadressi kaupa), stseen js/garden.js; ainult kindla sobitusega */
-const GARDEN_SRC='Ortofoto, maakatte kõrgusmudel, piirded, hooned: Maa- ja Ruumiamet 2026';
+const GARDEN_SRC='Kataster, teed, piirded, maakatte kõrgusmudel, hooned: Maa- ja Ruumiamet 2026';
 function m3GardenHtml(m){if(!m3AutoOn(m)||!p3Cloud())return '';m.gopt=m.gopt||{};const V=P3V,G=V&&V.garden,on=!!m.garden;
-  let h=`<div class="tgl"><div>Aed ja ümbrus<small>Maapind, puud, piirded, naabrid ja krunt Maa-ameti andmetest</small></div><span class="sw2"><input type="checkbox" data-m3="garden" ${on?'checked':''} aria-label="Aed ja ümbrus"><i></i></span></div>`;
+  let h=`<div class="tgl"><div>Aed ja ümbrus<small>Krunt, kõrvalhooned, teed, piirded, puud ja naabrid Maa-ameti andmetest</small></div><span class="sw2"><input type="checkbox" data-m3="garden" ${on?'checked':''} aria-label="Aed ja ümbrus"><i></i></span></div>`;
   if(!on)return h;
   h+=`<div class="gchips">${[['aed','Aed'],['puud','Puud'],['naabrid','Naabrid'],['krunt','Krundi piir']].map(([k,l])=>`<button type="button" class="chip" data-gk="${k}" aria-pressed="${m.gopt[k]!==false}">${l}</button>`).join('')}</div>`
    +`<div class="seg2 gtime" role="radiogroup" aria-label="Kellaaeg (päikese suund)">${[['h','Hommik'],['p','Päev'],['o','Õhtu']].map(([k,l])=>`<button type="button" role="radio" data-gt="${k}" aria-checked="${(m.gopt.time||'p')===k}">${l}</button>`).join('')}</div>`;
-  const P=G&&G.parcel;h+=`<span class="fhint">${V&&V.gErr?stEsc(V.gErr):G?`${G.trees.length} puud · ${G.neighbours} naabrit${P?` · krunt ${fmt(P.p,0)} m² (ametlik)`:''}`:'Laadin aeda…'}</span>`;
+  const P=G&&G.parcel;h+=`<span class="fhint">${V&&V.gErr?stEsc(V.gErr):G?`${G.trees.length} olulist puud · ${G.neighbours} naabrit`:'Laadin krundi mudelit…'}</span>`;
   if(P&&P.a)h+=`<div class="row"><div class="k"><span>Krunt</span><small>${stEsc(P.a)} · ${stEsc(P.t)}</small></div><b>${fmt(P.p,0)} m²</b></div>`;
+  if(G&&G.own.length)h+=`<div class="row"><div class="k"><span>Kõrvalhooned: ${G.own.length}</span><small>${G.own.map(o=>fmt(o.fp)+' m²').join(', ')}</small></div><b>${fmt(G.own.reduce((a,o)=>a+o.fp,0))} m²</b></div>`;
   return h+`<span class="fhint">${GARDEN_SRC}</span>`;}
 async function m3GardenSync(){const s=stSess(),m=s&&s.model,V=P3V;if(!m||!V||!V.ok)return;m.gopt=m.gopt||{};
   const want=!!m.garden&&m3AutoOn(m)&&!!M3L2[m.ehr];
@@ -4687,6 +4688,12 @@ function m3Frame(V,lab,force){if(!lab||lab.hidden||!V.m3A)return;const svg=lab.q
       if(Math.abs(A2)/2<300&&!pin)return;labs.push({x:m2.x,y:m2.y,a:0,txt:F.txt,pri:pin?7:2,cls:pin?'pin':'off',id:F.key,hid:()=>!pin&&hidden(F.key,c3,.06)});}
     else{const a=pr(F.a),b=pr(F.b),L2=Math.hypot(b.x-a.x,b.y-a.y);if(L2<60&&!pin)return;const ang=Math.atan2(b.y-a.y,b.x-a.x),mx=(a.x+b.x)/2,my=(a.y+b.y)/2,mid=F.a.clone().add(F.b).multiplyScalar(.5);
       labs.push({x:mx,y:my-14,a:up(ang),txt:F.txt,pri:pin?7:1,cls:pin?'pin':'off',id:F.key,small:!pin,hid:()=>!pin&&hidden(F.key,mid,.06)});}});
+  // krundi mudel: pindala, servade pikkused, kaugused piirini ja naabriteni, kõrvalhoonete pinnad
+  if(V.m3S&&V.m3Sv!==false)V.m3S.forEach((it,ix)=>{const Q=it.P.map(pr);if(!Q.every(q=>q.ok))return;const id='s'+ix;
+    if(it.k==='slab'){labs.push({x:Q[0].x,y:Q[0].y,a:0,txt:it.txt,pri:it.pri,cls:'off',id,hid:()=>hidden(id,it.P[0],.06)});return;}
+    const a=Q[0],b=Q[1],mid=it.P[0].clone().add(it.P[1]).multiplyScalar(.5);if(Math.hypot(b.x-a.x,b.y-a.y)<(it.k==='sedge'?60:24))return;
+    if(it.k==='sdim'){g+=`<line class="ln sd" x1="${a.x}" y1="${a.y}" x2="${b.x}" y2="${b.y}"/>`+tick(a,b,6).replace(/class="tk"/g,'class="tk sd"');}
+    labs.push({x:(a.x+b.x)/2,y:(a.y+b.y)/2,a:up(Math.atan2(b.y-a.y,b.x-a.x)),txt:it.txt,pri:it.pri,cls:'off',small:it.k==='sedge',id,hid:()=>hidden(id,mid,.06)});});
   V.m3A.forEach((it,ix)=>{const Q=it.P.map(pr);if(!Q.every(q=>q.ok))return;const id='u'+ix;
     if(it.k==='dist'||it.k==='h'||(it.k==='live'&&!it.area)){if(Q.length<2){g+=`<circle class="pt" cx="${Q[0].x}" cy="${Q[0].y}" r="4"/>`;return;}
       for(let k=1;k<Q.length;k++)g+=`<line class="ln${it.k==='live'?' lv':''}" x1="${Q[k-1].x}" y1="${Q[k-1].y}" x2="${Q[k].x}" y2="${Q[k].y}"/>`;
@@ -4708,7 +4715,7 @@ function m3Frame(V,lab,force){if(!lab||lab.hidden||!V.m3A)return;const svg=lab.q
   placed.forEach(({l,b,more})=>{const t=(l.n?`<tspan class="n">${l.n}</tspan>  `:'')+stEsc(l.txt);
     g+=`<g class="lb ${l.cls}" transform="translate(${b.x.toFixed(1)} ${b.y.toFixed(1)}) rotate(${l.a.toFixed(1)})"><rect x="${-b.tw/2}" y="${-b.th/2}" width="${b.tw}" height="${b.th}" rx="${b.th/2}"/><text${l.small?' class="s"':''} y="0.5">${t}</text>${more?`<g transform="translate(${b.tw/2+4} 0)"><rect class="mr" x="0" y="-9" width="${m3TW('+'+more,1)+10}" height="18" rx="9"/><text class="s mt" x="${(m3TW('+'+more,1)+10)/2}" y="0.5">+${more}</text></g>`:''}</g>`;});
   svg.setAttribute('viewBox',`0 0 ${w} ${h}`);svg.setAttribute('width',w);svg.setAttribute('height',h);svg.innerHTML=M3SVGCSS+g;}
-const M3SVGCSS=`<style>.ln{stroke:#E5482D;stroke-width:2}.ln.lv{stroke-dasharray:5 4}.tk{stroke:#E5482D;stroke-width:2}.pt{fill:#fff;stroke:#E5482D;stroke-width:2}.ar{fill:rgba(229,72,45,.14);stroke:none}
+const M3SVGCSS=`<style>.ln{stroke:#E5482D;stroke-width:2}.ln.lv{stroke-dasharray:5 4}.ln.sd,.tk.sd{stroke:#5f5a52;stroke-width:1.4}.tk{stroke:#E5482D;stroke-width:2}.pt{fill:#fff;stroke:#E5482D;stroke-width:2}.ar{fill:rgba(229,72,45,.14);stroke:none}
 .of{fill:none;stroke:rgba(229,72,45,.32);stroke-width:1}.of.pin{fill:rgba(229,72,45,.18);stroke:#E5482D;stroke-width:1.5}
 .lb rect{fill:#fff;stroke:rgba(22,19,15,.14)}.lb text{font:${M3PILL.font};fill:#16130F;text-anchor:middle;dominant-baseline:middle}.lb text.s{font:${M3PILL.small}}
 .lb .n{fill:#E5482D}.lb.off rect{fill:rgba(255,255,255,.88)}.lb.off text{fill:#4a433c}.lb.pin rect{fill:#E5482D;stroke:none}.lb.pin text{fill:#fff}.lb.lv rect{fill:#16130F;stroke:none}.lb.lv text{fill:#fff}
