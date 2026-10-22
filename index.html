@@ -962,6 +962,39 @@ body.p3emb{background:transparent;margin:0;padding:0;overflow:hidden}body.p3emb 
 .p3act{display:flex;flex-wrap:wrap;gap:10px;align-items:center}.p3act .send{text-decoration:none;display:inline-flex;padding:11px 16px}.p3act .fhint{flex:1;min-width:180px}
 .p3prods{display:flex;flex-direction:column;gap:6px;align-items:flex-start}.p3prods .ghost{padding:7px 11px;font-size:13px;text-align:left}
 .p3clean{display:flex;flex-direction:column;gap:6px}.p3clean b{font-size:13px}.p3clean div{display:flex;gap:8px;overflow-x:auto}.p3clean img{width:96px;height:72px;object-fit:cover;border-radius:8px;border:1px solid var(--line);background:#fff;flex:none}
+
+/* Ühine vormivälja stiil (input, select, number) kogu äpis */
+:root{--ctl-h:44px;--chev:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2377706A' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--chev:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23A39B92' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")}}
+:root[data-theme="dark"]{--chev:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23A39B92' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")}
+@media (max-width:640px){:root{--ctl-h:48px}}
+.fl input:where(:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=file]):not([type=color])),.fl select,.fl textarea,select,.afilters input{box-sizing:border-box;font:500 14px var(--display);border:1px solid var(--line);border-radius:8px;background-color:var(--paper);color:var(--ink);transition:border-color .15s,box-shadow .15s}
+.fl input:where(:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=file]):not([type=color])),.fl select,select,.afilters input{height:var(--ctl-h);padding:0 12px}
+.fl textarea{padding:11px 12px}
+.fl select,select{appearance:none;-webkit-appearance:none;padding-right:36px;background-image:var(--chev);background-repeat:no-repeat;background-position:right 12px center;background-size:12px;cursor:pointer}
+.fhint select{height:32px;font-size:13px;padding:0 30px 0 8px;background-position:right 9px center}
+.fl input:hover:not(:disabled):not(:focus),.fl select:hover:not(:disabled):not(:focus),.fl textarea:hover:not(:disabled):not(:focus),select:hover:not(:disabled):not(:focus),.afilters input:hover:not(:focus){border-color:color-mix(in srgb,var(--line),var(--ink) 22%)}
+.fl input:focus,.fl select:focus,.fl textarea:focus,select:focus,.afilters input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 20%,transparent)}
+.fl input:disabled,.fl select:disabled,.fl textarea:disabled,select:disabled{opacity:.55;cursor:not-allowed;background-color:var(--soft)}
+input[type=number]{-moz-appearance:textfield;appearance:textfield}
+input[type=number]::-webkit-inner-spin-button,input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
+input[type=checkbox]{accent-color:var(--accent)}
+.fl small{font-size:12px;line-height:1.4;margin-top:-1px}
+/* number: ühik + −/+ */
+.numf{position:relative;display:block}
+.numf input{width:100%;padding-right:104px!important}
+.numu{position:absolute;right:82px;top:50%;transform:translateY(-50%);color:var(--muted);font:500 14px var(--display);pointer-events:none}
+.nums{position:absolute;right:6px;top:50%;transform:translateY(-50%);display:flex;gap:4px}
+.nums button{width:32px;height:32px;border-radius:7px;border:1px solid var(--line);background:var(--bg);color:var(--ink);font:600 17px/1 var(--display);cursor:pointer;display:grid;place-items:center;padding:0;transition:border-color .15s,color .15s}
+.nums button:hover{border-color:var(--accent);color:var(--accent)}
+.nums button:active{transform:scale(.94)}
+@media (max-width:640px){.fl input,.fl select,.fl textarea,select{font-size:16px}.nums button{width:36px;height:36px}.numf input{padding-right:112px!important}.numu{right:90px}}
+/* lüliti: väljas-olek nähtavam, hover */
+.sw2 i{background:color-mix(in srgb,var(--line),var(--ink) 20%)}
+.sw2:hover input:not(:checked)+i{background:color-mix(in srgb,var(--line),var(--ink) 32%)}
+.sw2 input:disabled+i{opacity:.5}
+/* sektsioonide sildid seadetes: sama vahe üleval/all */
+#profF>.tag{margin-top:10px}#profF>.tag:first-child{margin-top:0}
 </style>
 </head>
 <body>
@@ -1375,15 +1408,15 @@ body.p3emb{background:transparent;margin:0;padding:0;overflow:hidden}body.p3emb 
         <label class="fl" for="pPhone">Telefon<input id="pPhone" type="tel" autocomplete="tel" placeholder="+372 5xxx xxxx"></label>
         <label class="fl" for="pRole">Amet<input id="pRole" type="text" placeholder="Projektijuht"></label>
       </div>
-      <div class="tag" style="margin-top:6px">Eelistused</div><div class="fgrid">
+      <div class="tag">Eelistused</div><div class="fgrid">
         <label class="fl" for="pLang">Keel<select id="pLang"><option value="et">Eesti</option><option value="en">English</option><option value="ru">Русский</option></select></label>
         <label class="fl" for="pRoof">Vaikimisi katuse tüüp<select id="pRoof"><option value="auto">Automaatne (põhiplaani järgi)</option><option value="gable">Viilkatus</option><option value="hip">Kelpkatus</option><option value="flat">Lamekatus</option></select></label>
-        <label class="fl" for="pWasteR">Katusematerjali varu %<input id="pWasteR" type="number" min="0" max="40" step="1"><small>AI-abiline lisab selle kogustele</small></label>
-        <label class="fl" for="pWasteW">Fassaadimaterjali varu %<input id="pWasteW" type="number" min="0" max="40" step="1"></label>
+        <label class="fl" for="pWasteR">Katusematerjali varu %<input id="pWasteR" type="number" min="0" max="50" step="1"><small>AI-abiline lisab selle kogustele</small></label>
+        <label class="fl" for="pWasteW">Fassaadimaterjali varu %<input id="pWasteW" type="number" min="0" max="50" step="1"></label>
         <label class="fl" for="pStart">Avaneb sisselogimisel<select id="pStart"><option value="home">Avaleht</option><option value="last">Viimane objekt</option></select></label>
         <label class="fl" for="pView">3D-vaate vaikimisi kaamera<select id="pView"><option value="persp">Perspektiiv</option><option value="top">Ülaltvaade</option></select></label>
       </div>
-      <div class="tag" style="margin-top:6px">Teavitused e-postile</div>
+      <div class="tag">Teavitused e-postile</div>
       <div>
         <div class="tgl"><div>Madal krediidisaldo<small>Kui saldo langeb alla 10 krediidi</small></div><span class="sw2"><input type="checkbox" id="nLow" aria-label="Madal krediidisaldo"><i></i></span></div>
         <div class="tgl"><div>Esituspilt valmis<small>Saadame lingi, kui pilt on genereeritud</small></div><span class="sw2"><input type="checkbox" id="nGen" aria-label="Esituspilt valmis"><i></i></span></div>
@@ -2211,6 +2244,13 @@ function renderPromo(){$('promoBox').innerHTML=promoHTML('promoIn');$('promoBox2
   document.querySelectorAll('[data-pf]').forEach(f=>f.onsubmit=e=>{e.preventDefault();const id=f.dataset.pf,err=applyPromo($(id).value);if(err)$(id+'Err').textContent=err;});
 }
 
+// numbriväli: ühik sees ja −/+ (samm 1, piirid); tippida ja nooleklahve kasutada saab endiselt
+function numStep(inp,unit,min,max){if(!inp||inp.closest('.numf'))return;const w=document.createElement('span');w.className='numf';inp.before(w);w.append(inp);inp.inputMode='numeric';
+  w.insertAdjacentHTML('beforeend',`<span class="numu" aria-hidden="true">${unit}</span><span class="nums"><button type="button" tabindex="-1" data-d="-1" aria-label="Vähenda">−</button><button type="button" tabindex="-1" data-d="1" aria-label="Suurenda">+</button></span>`);
+  const set=v=>{v=String(Math.min(max,Math.max(min,Math.round(v))));if(v!==inp.value){inp.value=v;inp.dispatchEvent(new Event('input',{bubbles:true}));inp.dispatchEvent(new Event('change',{bubbles:true}));}};
+  w.querySelectorAll('button').forEach(b=>b.onclick=e=>{e.preventDefault();set((parseFloat(inp.value)||0)+(+b.dataset.d));});
+  inp.addEventListener('change',()=>{if(inp.value!=='')set(parseFloat(inp.value)||0);});}
+numStep($('pWasteR'),'%',0,50);numStep($('pWasteW'),'%',0,50);
 const PREF={pLang:'lang',pRoof:'defRoof',pWasteR:'wasteR',pWasteW:'wasteW',pStart:'start',pView:'defView'},NOTI={nLow:'nLow',nGen:'nGen',nInv:'nInv',nRef:'nRef',nNews:'nNews'};
 function renderProfHead(){const ini=initials(acct.name);$('pavIn').outerHTML=acct.avatar?`<img id="pavIn" src="${acct.avatar}" alt="">`:`<span id="pavIn">${ini}</span>`;
   $('phName').textContent=acct.name||'—';$('phMeta').textContent=[acct.role,acct.company].filter(Boolean).join(' · ');$('phObj').textContent=HOUSES.length+' objekti';$('phCred').textContent=acct.credits+' krediiti';
