@@ -55,16 +55,21 @@ def measure(polys, height=None):
     cy = sum(q[1] for q in allp) / len(allp)
     loc = lambda p: [v for q in p for v in (round(q[0] - cx, 2), round(q[1] - cy, 2), round(q[2] - z0, 2))]
     fp = per = wall = roof = 0.0
-    ground, faces, ridge = [], [], 0.0
+    ground, faces, walls, ridge = [], [], [], 0.0
     for p in polys:
         nx, ny, nz = newell(p)
         area = 0.5 * math.sqrt(nx * nx + ny * ny + nz * nz)
         if area < 0.05:
             continue
         slope = math.degrees(math.acos(min(1.0, abs(nz) / (2 * area))))
+        zmin = min(q[2] for q in p)
         zmax = max(q[2] for q in p)
         if slope > 85:
             wall += area
+            # seina alumise serva pikkus: kaugeimad punktid seina madalaimal kõrgusel
+            lo = [q for q in p if q[2] - zmin < 0.05]
+            ln = max((math.hypot(a[0] - b[0], a[1] - b[1]) for a in lo for b in lo), default=0.0)
+            walls.append([round(area, 1), round(ln, 2), loc(p)])
         elif slope < 1 and zmax - z0 < 0.05:
             fp += area
             per += sum(math.hypot(p[i][0] - p[i - 1][0], p[i][1] - p[i - 1][1]) for i in range(len(p)))
@@ -79,11 +84,12 @@ def measure(polys, height=None):
     if fp <= 0:
         return None
     faces.sort(key=lambda f: -f[0])
+    walls.sort(key=lambda w: -w[0])
     # räästas = suurima katusetahu alumine serv (madal varikatus ei loe)
     eave = min(faces[0][3][2::3]) if faces else None
     return {'fp': round(fp, 1), 'per': round(per, 1), 'wall': round(wall, 1), 'roof': round(roof, 1),
             'eave': round(eave or 0, 2), 'ridge': round(ridge, 2), 'h': height,
-            'c': [round(cx, 2), round(cy, 2)], 'g': ground, 'f': faces}
+            'c': [round(cx, 2), round(cy, 2)], 'g': ground, 'f': faces, 'w': walls}
 
 
 def parse(path):
@@ -136,6 +142,8 @@ def write(items, out):
                 a['g'].append([round(v + (dx if i % 2 == 0 else dy), 2) for i, v in enumerate(g)])
             for f in m['f']:
                 a['f'].append(f[:3] + [[round(v + (dx, dy, 0)[i % 3], 2) for i, v in enumerate(f[3])]])
+            for w in m['w']:
+                a.setdefault('w', []).append(w[:2] + [[round(v + (dx, dy, 0)[i % 3], 2) for i, v in enumerate(w[2])]])
             for k in ('fp', 'per', 'wall', 'roof'):
                 a[k] = round(a[k] + m[k], 1)
             a['eave'] = min(a['eave'], m['eave'])
@@ -170,6 +178,9 @@ def selftest():
     assert m['eave'] == 3 and m['ridge'] == 5
     s = sorted(f[2] for f in m['f'])
     assert s == [0, 180], s  # üks tahk vaatab põhja, teine lõunasse
+    # 4 seina: 2 pikka (10 m, 30 m²) ja 2 viilu (6 m, 24 m²), polügoonid kohalikes koordinaatides
+    assert sorted((w[1], w[0]) for w in m['w']) == [(6.0, 24.0), (6.0, 24.0), (10.0, 30.0), (10.0, 30.0)], m['w']
+    assert len(m['w'][0][2]) % 3 == 0 and min(m['w'][0][2][2::3]) == 0
     assert abs(m['f'][0][1] - math.degrees(math.atan2(2, 3))) < 0.2
     # failis korduvad punktid ja suletud rõngas
     assert ring('1 2 3 1 2 3 4 5 6 7 8 9 1 2 3') == [(2.0, 1.0, 3.0), (5.0, 4.0, 6.0), (8.0, 7.0, 9.0)]
