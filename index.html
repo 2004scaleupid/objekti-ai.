@@ -208,7 +208,10 @@ body.cvm .panel>*:not(#cvPanel){display:none!important}
 .bell .bdot{position:absolute;top:-3px;right:-3px;min-width:18px;height:18px;border-radius:999px;background:var(--accent);color:#fff;font:700 10.5px/18px var(--display);font-style:normal;text-align:center;padding:0 4px;box-sizing:border-box;border:2px solid var(--paper)}
 .bell.ring{animation:ring .9s ease 2}@keyframes ring{0%,100%{transform:rotate(0)}20%{transform:rotate(-14deg)}40%{transform:rotate(12deg)}60%{transform:rotate(-8deg)}80%{transform:rotate(5deg)}}
 @media (prefers-reduced-motion:reduce){.bell.ring{animation:none}}
-.npop{width:340px;max-width:calc(100vw - 24px);padding:0}.nph{display:flex;justify-content:space-between;align-items:center;padding:12px 14px;border-bottom:1px solid var(--line)}
+.npop{width:340px;max-width:calc(100vw - 24px);padding:0}
+.hfaq{display:flex;flex-direction:column;padding:4px 14px}.hfaq details{border-bottom:1px solid var(--line);padding:10px 0}.hfaq summary{cursor:pointer;font-weight:600;font-size:14px;list-style-position:outside}.hfaq p{margin:8px 0 0;font-size:13.5px;line-height:1.5;color:var(--muted)}
+.hrow{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:10px 14px;font-size:13.5px}.hpop .hrow button.apply{background:var(--accent);color:var(--accent-ink);text-align:center;font-weight:700;padding:10px 14px;border-radius:8px}.hpop .hrow button.apply:hover{filter:brightness(1.05)}.hpop .hrow button.ghost{border:1px solid var(--line);background:var(--bg);padding:6px 11px;font-size:13px;font-weight:600}.hrow span{color:var(--muted)}.hrow a{font-weight:600;color:var(--ink)}.hrow .ghost{margin-left:auto}
+@media (max-width:560px){.menu.hpop{position:fixed;left:12px;right:12px;top:64px;width:auto;max-height:calc(100vh - 80px);overflow:auto}}.nph{display:flex;justify-content:space-between;align-items:center;padding:12px 14px;border-bottom:1px solid var(--line)}
 .ni{display:flex;gap:10px;padding:11px 14px;border-bottom:1px solid var(--line);text-align:left;background:none;border-left:0;border-right:0;border-top:0;width:100%;cursor:pointer;font:inherit;color:var(--ink)}.ni:hover{background:var(--bg)}.ni:last-child{border-bottom:0}
 .ni .nic{flex:none;width:32px;height:32px;border-radius:50%;background:#FBE9E4;color:var(--accent);display:grid;place-items:center}.ni.rd .nic{background:var(--soft);color:var(--muted)}
 .ni div{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}.ni b{font-size:13.5px}.ni span{font-size:12.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.ni time{font:500 11px var(--mono);color:var(--muted);white-space:nowrap}
@@ -1162,6 +1165,18 @@ input[type=checkbox]{accent-color:var(--accent)}
     </label>
     <div class="menuwrap"><button type="button" class="bell" id="bellBtn" aria-label="Teavitused" aria-haspopup="true" aria-expanded="false"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/><path d="M8.5 11h7M8.5 14.5h4"/></svg><i class="bdot" id="bellDot" hidden>0</i></button>
       <div class="menu npop" id="bellPop" hidden><div class="nph"><b>Teavitused</b><button type="button" class="lnk" id="bellAll">Kõik päringud</button></div><div id="bellList"></div></div></div>
+    <div class="menuwrap"><button type="button" class="bell" id="helpBtn" aria-label="Abi" aria-haspopup="true" aria-expanded="false" title="Abi"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9.6 9.3a2.5 2.5 0 0 1 4.8.9c0 1.7-2.4 2.2-2.4 3.6"/><path d="M12 17h.01"/></svg></button>
+      <div class="menu npop hpop" id="helpPop" hidden role="dialog" aria-label="Abi"><div class="nph"><b>Abi</b></div>
+        <div class="hfaq">
+          <details><summary>Mis on krediit ja palju töö maksab?</summary><p>Krediit on Vaade3D arvestusühik. Iga töö hind on näha enne alustamist ja krediite võetakse alles siis, kui töö algab. Ostetud krediidid ei aegu.</p></details>
+          <details><summary>Mis saab, kui töö ebaõnnestub?</summary><p>Krediidid tagastatakse automaatselt ja näed teates, mitu krediiti tagasi tuli. Kui ühendus katkes enne töö algust, tagastatakse need 25 minuti jooksul.</p></details>
+          <details><summary>Kust tulevad maja mõõdud?</summary><p>Maa- ja Ruumiameti riiklikust hoonete 3D-mudelist (LOD2) ja katastrist. Andmete aasta on näha mõõtude juures. Fotodest tehtud mudel sobitatakse nende järgi õigesse mõõtkavva.</p></details>
+          <details><summary>Millised fotod sobivad 3D-mudeliks?</summary><p>Neli fotot: eest, vasakult, tagant ja paremalt. Kogu maja peab kaadrisse mahtuma, päevavalgus, ilma suurte puude või autodeta ees. Enne töö algust kontrollib AI fotod tasuta üle.</p></details>
+          <details><summary>Kus mu andmeid hoitakse?</summary><p>Euroopa Liidus (Supabase), maksed käivad Stripe'i kaudu ja kaardiandmeid me ei näe. Profiilis saad oma andmed alla laadida või konto kustutada.</p></details>
+        </div>
+        <div class="hrow"><span>Kirjuta meile</span><a href="mailto:info@vaade3d.ee">info@vaade3d.ee</a><button type="button" class="ghost sm" id="helpCopy">Kopeeri</button></div>
+        <div class="hrow"><button type="button" class="apply sm" id="helpFb" style="width:100%">Saada tagasiside</button></div>
+      </div></div>
     <button type="button" class="credbtn" id="hdrCred"><b id="hdrBal">0</b> krediiti</button><button type="button" class="crlink" id="hdrAdd" hidden>Lisa krediite</button>
     <div class="menuwrap"><button type="button" class="firm" id="avatarBtn" aria-haspopup="true" aria-expanded="false"><b id="avIni">FT</b><span id="avComp">Fassaaditööd OÜ</span></button>
       <div class="menu" id="menu" hidden><div class="who"><span id="mName">Mari Maasikas</span><small id="mEmail">mari@firma.ee</small></div>
@@ -2611,6 +2626,11 @@ function renderHomeLeads(){const box=$('hLeads');if(!box)return;const {L,s}=lead
   box.innerHTML=`<h3>Päringud kodulehelt${nw?`<small>${nw} uus</small>`:''}</h3>${s?'<span class="fhint">Näidis. Kui vidin on sinu kodulehel, tulevad päringud siia ja sinu e-postile.</span>':''}`+L.slice(0,3).map((l,i)=>`<button type="button" class="hl" data-hl="${i}"><b>${leadIsNew(l)?'<span class="ldot" aria-hidden="true">●</span> ':''}${String(l.n).replace(/</g,'&lt;')} · ${String(l.m||'').replace(/</g,'&lt;')}</b><span>${String(l.a).replace(/,.*$/,'')} · ${(l.sv||[]).join(', ')||'päring'} · ${agoTxt(l.d)} tagasi</span></button>`).join('')+`<button type="button" class="ghost" id="hLeadsAll" style="align-self:flex-start">Kõik päringud</button>`;
   box.querySelectorAll('[data-hl]').forEach(b=>b.onclick=()=>{const l=L[+b.dataset.hl];l.seen=1;if(!s)store.set('v3d_leads',L);show('settings','widget');setTimeout(()=>showLeadMail(l),250);renderBell();});
   $('hLeadsAll').onclick=()=>show('settings','widget');}
+$('helpBtn').onclick=e=>{e.stopPropagation();const pop=$('helpPop'),open=pop.hidden;$('menu').hidden=true;$('bellPop').hidden=true;pop.hidden=!open;$('helpBtn').setAttribute('aria-expanded',open);};
+document.addEventListener('click',e=>{if(!e.target.closest('#helpPop')&&!e.target.closest('#helpBtn')){$('helpPop').hidden=true;$('helpBtn').setAttribute('aria-expanded','false');}});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('helpPop').hidden){$('helpPop').hidden=true;$('helpBtn').setAttribute('aria-expanded','false');$('helpBtn').focus();}});
+$('helpCopy').onclick=async()=>{try{await navigator.clipboard.writeText('info@vaade3d.ee');toast('E-posti aadress kopeeritud');}catch(_){toast('info@vaade3d.ee');}};
+$('helpFb').onclick=()=>{$('helpPop').hidden=true;openFb();};
 $('bellBtn').onclick=e=>{e.stopPropagation();const pop=$('bellPop'),open=pop.hidden;$('menu').hidden=true;pop.hidden=!open;$('bellBtn').setAttribute('aria-expanded',open);if(open)renderBell();};
 $('bellAll').onclick=()=>{$('bellPop').hidden=true;show('settings','widget');};
 document.addEventListener('click',e=>{if(!e.target.closest('#bellPop')&&!e.target.closest('#bellBtn'))$('bellPop').hidden=true;});
