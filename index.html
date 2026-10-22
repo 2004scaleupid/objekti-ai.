@@ -845,14 +845,24 @@ body:not(.cvm) #mSeg{display:none}
 .stwarn{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:9px 12px;border-radius:12px;background:var(--soft);border:1px solid var(--line);font-size:13.5px;width:100%}.stwarn span{flex:1 1 220px}.stwarn .sw{background:var(--accent);color:#fff;border:0;border-radius:9px;padding:6px 11px;font:700 12.5px var(--display);cursor:pointer}.stwarn .no{background:none;border:0;color:var(--muted);text-decoration:underline;font:600 12.5px var(--display);cursor:pointer}
 @media (max-width:560px){.stbar{flex-wrap:wrap;row-gap:8px}.stbar .stgo{margin-left:auto}.stbar .stcost{display:none}.stbar #stProdW{min-width:0;max-width:150px}.stbar #stProdW>button{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}}
 .stm .pics img,.stv img[data-z]{cursor:zoom-in}@media (max-width:560px){.stm .pics span{width:96px;height:72px}}
-.stlb{position:fixed;inset:0;z-index:160;background:rgba(10,9,8,.94);display:flex;align-items:center;justify-content:center;padding:56px 64px 28px;touch-action:pan-y}
-.stlb figure{margin:0;display:flex;flex-direction:column;align-items:center;gap:10px;max-width:100%;max-height:100%}.stlb img{max-width:100%;max-height:calc(100vh - 120px);object-fit:contain;border-radius:10px;box-shadow:0 20px 60px rgba(0,0,0,.5);user-select:none;-webkit-user-drag:none}
-.stlb figcaption{color:#cfc8bf;font-size:13px}.stlb .top{position:absolute;top:0;left:0;right:0;display:flex;align-items:center;gap:8px;padding:10px 12px}.stlb .sp{flex:1}.stlb .cnt{color:#e9e3dc;font:600 13px var(--mono);padding-left:4px}
-.stlb .act{background:rgba(255,255,255,.12);color:#fff;border:0;border-radius:10px;padding:8px 12px;font:600 13px var(--display);cursor:pointer}.stlb .act:hover{background:rgba(255,255,255,.2)}.stlb .act.pri{background:var(--accent)}
+.stlb{position:fixed;inset:0;z-index:160;background:rgba(10,9,8,.95);display:flex;flex-direction:column;touch-action:none;color:#fff}
+.stlb .top{display:flex;align-items:center;gap:8px;padding:10px 12px;flex:none;position:relative;z-index:3;background:rgba(10,9,8,.9)}.stlb .sp{flex:1}.stlb .cnt,.stlb .zl{color:#e9e3dc;font:600 13px var(--mono);padding:0 4px}
 .stlb .x{width:40px;height:40px;border-radius:50%;border:0;background:rgba(255,255,255,.12);color:#fff;font-size:24px;line-height:1;cursor:pointer}.stlb .x:hover{background:rgba(255,255,255,.22)}
-.stlb .nav{position:absolute;top:50%;transform:translateY(-50%);width:44px;height:44px;border-radius:50%;border:0;background:rgba(255,255,255,.14);color:#fff;font-size:28px;line-height:1;cursor:pointer}.stlb .nav:hover{background:rgba(255,255,255,.24)}.stlb .prev{left:12px}.stlb .next{right:12px}
+.stlb .stage{flex:1;min-height:0;position:relative;display:flex;align-items:center;justify-content:center;overflow:hidden;padding:0 64px;cursor:default}
+.stlb.zoomed .stage{cursor:grab}.stlb.zoomed .stage:active{cursor:grabbing}.stlb.cmp .stage{cursor:ew-resize}
+.stlb .cv{position:relative;transform-origin:center center;will-change:transform;max-width:100%;max-height:100%;display:flex}
+.stlb .af{display:block;max-width:calc(100vw - 128px);max-height:calc(100vh - 150px);object-fit:contain;border-radius:10px;box-shadow:0 20px 60px rgba(0,0,0,.5);user-select:none;-webkit-user-drag:none}
+.stlb .bf{position:absolute;inset:0;border-radius:10px;overflow:hidden;pointer-events:none}.stlb .bf img{width:100%;height:100%;object-fit:cover;display:block;user-select:none}
+.stlb .hd{position:absolute;top:0;bottom:0;width:calc(44px*var(--k,1));margin-left:calc(-22px*var(--k,1));cursor:ew-resize;display:flex;justify-content:center;touch-action:none}.stlb .hd::before{content:"";width:calc(2px*var(--k,1));background:#fff;box-shadow:0 0 6px rgba(0,0,0,.6)}
+.stlb .hd i{position:absolute;top:50%;width:34px;height:34px;margin-top:-17px;transform:scale(var(--k,1));border-radius:50%;background:#fff;box-shadow:0 2px 10px rgba(0,0,0,.4)}.stlb .hd i::before{content:"‹ ›";position:absolute;inset:0;color:#16130F;font:700 14px/34px var(--display);text-align:center}
+.stlb .tg{position:absolute;top:10px;transform:scale(var(--k,1));transform-origin:top left;background:rgba(0,0,0,.6);color:#fff;font:700 11.5px var(--display);padding:4px 8px;border-radius:999px;pointer-events:none}.stlb .tg.l{left:10px}.stlb .tg.r{right:10px;transform-origin:top right}
+.stlb .nav{position:absolute;top:50%;transform:translateY(-50%);z-index:2;width:44px;height:44px;border-radius:50%;border:0;background:rgba(255,255,255,.14);color:#fff;font-size:28px;line-height:1;cursor:pointer}.stlb .nav:hover{background:rgba(255,255,255,.24)}.stlb .prev{left:12px}.stlb .next{right:12px}
+.stlb .bot{flex:none;display:flex;flex-direction:column;align-items:center;gap:8px;padding:8px 12px 14px;position:relative;z-index:3;background:rgba(10,9,8,.9)}.stlb .cap{color:#cfc8bf;font-size:13px}
+.stlb .acts{display:flex;gap:6px;max-width:100%;overflow-x:auto;scrollbar-width:none;padding-bottom:2px}.stlb .acts::-webkit-scrollbar{display:none}
+.stlb .act{flex:none;background:rgba(255,255,255,.12);color:#fff;border:0;border-radius:10px;padding:8px 12px;font:600 13px var(--display);cursor:pointer;white-space:nowrap}.stlb .act:hover{background:rgba(255,255,255,.2)}.stlb .act.pri{background:var(--accent)}.stlb .act[aria-pressed="true"]{background:#fff;color:#16130F}
 .stlb :focus-visible{outline:2px solid #fff;outline-offset:2px}
-@media (max-width:560px){.stlb{padding:56px 8px 72px}.stlb .nav{top:auto;bottom:14px;transform:none}.stlb .prev{left:calc(50% - 56px)}.stlb .next{right:calc(50% - 56px)}.stlb .act{padding:7px 10px;font-size:12.5px}}
+@media (max-width:560px){.stlb .stage{padding:0 6px}.stlb .af{max-width:calc(100vw - 12px);max-height:calc(100vh - 190px)}.stlb .nav{width:36px;height:36px;font-size:22px;background:rgba(0,0,0,.45)}.stlb .prev{left:4px}.stlb .next{right:4px}.stlb .acts{justify-content:flex-start;width:100%}.stlb .act{padding:8px 10px;font-size:12.5px}}
+.stvsw{display:flex;align-items:center;gap:6px;margin:2px 0 8px}.stvsw button{border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:999px;padding:5px 12px;font:600 12.5px var(--display);cursor:pointer}.stvsw button[aria-selected="true"]{background:var(--ink);color:var(--paper);border-color:var(--ink)}.stvsw span{color:var(--muted);font:600 12px var(--mono);margin-left:4px}
 .lform .err{min-height:36px}.lterms{align-items:flex-start;line-height:1.4}.lterms input{margin-top:1px;flex:none}.lterms a{color:var(--accent);font-weight:600}.lrem{display:flex;gap:8px;align-items:center;font-size:13.5px;margin-top:-6px;cursor:pointer;align-self:flex-start}.lrem input{width:16px;height:16px;accent-color:var(--accent)}
 .lspin{display:inline-block;width:14px;height:14px;margin-right:8px;vertical-align:-2px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:lspin .7s linear infinite}@keyframes lspin{to{transform:rotate(360deg)}}
 .boot{position:fixed;inset:0;z-index:500;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;background:var(--bg);transition:opacity .35s ease;padding:16px;text-align:center}
@@ -4223,24 +4233,66 @@ async function stChat(text){if(!text)return;let s=stSess();if(!s)s=stNewSession(
   catch(e){am.err=clErr(e);}
   finally{delete am.pending;STU.chatting=false;stSave();if(!$('studio').hidden&&STU.sid===s.id){stRender();stScrollEnd();}}}
 function stScrollEnd(){const t=$('stThread');setTimeout(()=>{t.scrollTop=t.scrollHeight;},40);}
-/* Pildivaatur (nagu Claude/ChatGPT): kogu lõime pildid, nooled, Esc, pühkimine, allalaadimine, „Jätka sellega“ AI tulemusel */
+// topeltklõps: 100 % (tegelik suurus); kui pilt on juba vähemalt 100 % suurune, siis 2×
+const stFull=k=>k<.95?1/k:2;
+/* Pildivaatur (nagu Claude/ChatGPT): kogu lõime pildid, nooled, Esc, pühkimine; suum (ratas, näpud, topeltklõps = 100 %, lohistamine);
+   AI tulemusel „Enne / Pärast“ liuguriga; tööriistad: Kopeeri, Märgi, Tee 3D-ks, Jaga, Lae alla, Jätka sellega */
 function stZoomImg(u,list){const L=(list&&list.length?list:[{u}]).filter(x=>x&&x.u);let i=Math.max(0,L.findIndex(x=>x.u===u));const back=document.activeElement;
   const z=document.createElement('div');z.className='stlb';z.setAttribute('role','dialog');z.setAttribute('aria-modal','true');z.setAttribute('aria-label','Pildivaatur');
-  z.innerHTML=`<div class="top"><span class="cnt" aria-live="polite"></span><span class="sp"></span><button type="button" class="act" data-a="dl">Lae alla</button><button type="button" class="act pri" data-a="use" hidden>Jätka sellega</button><button type="button" class="x" data-a="x" aria-label="Sulge">×</button></div>
-    <button type="button" class="nav prev" data-a="prev" aria-label="Eelmine pilt">‹</button><figure><img alt=""><figcaption></figcaption></figure><button type="button" class="nav next" data-a="next" aria-label="Järgmine pilt">›</button>`;
-  const img=z.querySelector('img'),cap=z.querySelector('figcaption'),cnt=z.querySelector('.cnt'),use=z.querySelector('[data-a="use"]');
-  const show=()=>{const x=L[i];img.src=x.u;img.alt=x.cap||'Pilt';cap.textContent=x.cap||'';cnt.textContent=L.length>1?`${i+1} / ${L.length}`:'';use.hidden=!x.ai;z.querySelectorAll('.nav').forEach(b=>b.hidden=L.length<2);};
+  z.innerHTML=`<div class="top"><span class="cnt" aria-live="polite"></span><span class="sp"></span><span class="zl" aria-live="polite"></span><button type="button" class="x" data-a="x" aria-label="Sulge">×</button></div>
+    <button type="button" class="nav prev" data-a="prev" aria-label="Eelmine pilt">‹</button>
+    <div class="stage"><div class="cv"><img class="af" alt="" draggable="false"><div class="bf" hidden><img alt="Enne" draggable="false"></div><div class="hd" hidden role="slider" tabindex="0" aria-label="Enne / Pärast" aria-valuemin="0" aria-valuemax="100"><i></i></div><span class="tg l" hidden>Enne</span><span class="tg r" hidden>Pärast</span></div></div>
+    <button type="button" class="nav next" data-a="next" aria-label="Järgmine pilt">›</button>
+    <div class="bot"><span class="cap"></span><div class="acts"><button type="button" class="act" data-a="cmp" aria-pressed="false">Enne / Pärast</button><button type="button" class="act" data-a="copy">Kopeeri</button><button type="button" class="act" data-a="mark">Märgi</button><button type="button" class="act" data-a="3d">Tee 3D-ks</button><button type="button" class="act" data-a="share">Jaga</button><button type="button" class="act" data-a="dl">Lae alla</button><button type="button" class="act pri" data-a="use">Jätka sellega</button></div></div>`;
+  const stage=z.querySelector('.stage'),cv=z.querySelector('.cv'),img=z.querySelector('.af'),bf=z.querySelector('.bf'),bimg=bf.querySelector('img'),hd=z.querySelector('.hd'),cap=z.querySelector('.cap'),cnt=z.querySelector('.cnt'),zl=z.querySelector('.zl'),btn=k=>z.querySelector(`[data-a="${k}"]`);
+  let sc=1,tx=0,ty=0,cmp=false,cx=50;
+  const apply=()=>{cv.style.transform=`translate(${tx}px,${ty}px) scale(${sc})`;cv.style.setProperty('--k',1/sc);z.classList.toggle('zoomed',sc>1.01);zl.textContent=sc>1.01?Math.round(sc*fitK()*100)+' %':'';};
+  const fitK=()=>img.naturalWidth?img.getBoundingClientRect().width/sc/img.naturalWidth:1; // ekraanil sobitatud suurus / tegelik
+  const clamp=()=>{const r=stage.getBoundingClientRect(),w=img.offsetWidth*sc,h=img.offsetHeight*sc,mx=Math.max(0,(w-r.width)/2),my=Math.max(0,(h-r.height)/2);tx=Math.max(-mx,Math.min(mx,tx));ty=Math.max(-my,Math.min(my,ty));if(sc<=1.01){sc=1;tx=ty=0;}};
+  const zoomAt=(ns,px,py)=>{const r=stage.getBoundingClientRect(),ox=px-(r.left+r.width/2),oy=py-(r.top+r.height/2),max=Math.max(4,2/fitK());ns=Math.max(1,Math.min(max,ns));tx=ox-(ox-tx)*(ns/sc);ty=oy-(oy-ty)*(ns/sc);sc=ns;clamp();apply();};
+  const setCmp=on=>{cmp=on&&!!L[i].before;bf.hidden=hd.hidden=!cmp;z.querySelectorAll('.tg').forEach(t=>t.hidden=!cmp);btn('cmp').setAttribute('aria-pressed',cmp);z.classList.toggle('cmp',cmp);if(cmp){cx=50;setX(50);}};
+  const setX=x=>{cx=Math.max(0,Math.min(100,x));bf.style.clipPath=`inset(0 ${100-cx}% 0 0)`;hd.style.left=cx+'%';hd.setAttribute('aria-valuenow',Math.round(cx));};
+  const show=()=>{const x=L[i];sc=1;tx=ty=0;apply();if(/^https?:/.test(x.u)){img.crossOrigin='anonymous';bimg.crossOrigin='anonymous';}img.src=x.u;img.alt=x.cap||'Pilt';cap.textContent=x.cap||'';
+    cnt.textContent=L.length>1?`${i+1} / ${L.length}`:'';if(x.before)bimg.src=x.before;btn('cmp').hidden=!x.before;btn('use').hidden=!x.ai;setCmp(false);z.querySelectorAll('.nav').forEach(b=>b.hidden=L.length<2);};
   const go=d=>{if(L.length<2)return;i=(i+d+L.length)%L.length;show();};
   const close=()=>{z.remove();document.removeEventListener('keydown',key);document.body.style.overflow=ov;if(back&&back.focus)back.focus();};
-  const key=e=>{if(e.key==='Escape'){e.preventDefault();close();}else if(e.key==='ArrowRight')go(1);else if(e.key==='ArrowLeft')go(-1);};
-  z.addEventListener('click',async e=>{const a=e.target.closest('[data-a]');if(!a){if(e.target===z||e.target.tagName==='FIGURE')close();return;}const k=a.dataset.a;
-    if(k==='x')close();else if(k==='prev')go(-1);else if(k==='next')go(1);
-    else if(k==='use'){stUseAs1(L[i].u);toast('See pilt on nüüd pilt 1');close();}
-    else if(k==='dl'){try{const b=await (await fetch(L[i].u)).blob();await saveFile('vaade3d-pilt-'+(i+1)+(/png/.test(b.type)?'.png':'.jpg'),b);}catch(_){const l=document.createElement('a');l.href=L[i].u;l.download='vaade3d-pilt.jpg';document.body.appendChild(l);l.click();l.remove();}}});
-  let sx=null;z.addEventListener('pointerdown',e=>{sx=e.clientX;});z.addEventListener('pointerup',e=>{if(sx!=null&&Math.abs(e.clientX-sx)>50)go(e.clientX<sx?1:-1);sx=null;});
-  const ov=document.body.style.overflow;document.body.style.overflow='hidden';document.body.appendChild(z);document.addEventListener('keydown',key);show();z.querySelector('.x').focus();}
+  const key=e=>{if(e.key==='Escape'){e.preventDefault();if(sc>1.01){sc=1;clamp();apply();}else close();}else if(e.target===hd&&(e.key==='ArrowLeft'||e.key==='ArrowRight')){e.preventDefault();setX(cx+(e.key==='ArrowRight'?5:-5));}
+    else if(e.key==='ArrowRight')go(1);else if(e.key==='ArrowLeft')go(-1);else if(e.key==='+'||e.key==='=')zoomAt(sc*1.25,innerWidth/2,innerHeight/2);else if(e.key==='-')zoomAt(sc/1.25,innerWidth/2,innerHeight/2);};
+  // pilt PNG-blobiks (lõikelaud/jagamine): canvas, et ka JPEG/andme-URL toimiks
+  const pngBlob=async()=>{const c=document.createElement('canvas');c.width=img.naturalWidth;c.height=img.naturalHeight;c.getContext('2d').drawImage(img,0,0);return await new Promise(r=>c.toBlob(r,'image/png'));};
+  const act={x:close,prev:()=>go(-1),next:()=>go(1),cmp:()=>setCmp(!cmp),
+    use:()=>{stUseAs1(L[i].u);toast('See pilt on nüüd pilt 1');close();},
+    mark:()=>{const u=L[i].u;close();stUseAs1(u);const s2=stSess();if(s2&&s2.tray&&s2.tray.length)stEdit(s2.tray[0]);toast('Märgi pildil, mida muuta');},
+    '3d':()=>{const u=L[i].u;close();p3FromPicture(u,(stTheme(STU.tpl).T||{}).name||'Pilt');},
+    // lõikelauale kohe klõpsu ajal (Safari nõuab), pilt valmib lubaduse sees
+    copy:async()=>{try{await navigator.clipboard.write([new ClipboardItem({'image/png':pngBlob()})]);toast('Pilt kopeeritud');}
+      catch(_){if(/^https?:/.test(L[i].u)){try{await navigator.clipboard.writeText(L[i].u);toast('Pildi link kopeeritud');return;}catch(__){}}toast('Kopeerimine ei õnnestunud. Lae pilt alla.');}},
+    share:async()=>{const x=L[i];try{const b=await pngBlob(),f=new File([b],'vaade3d-pilt.png',{type:'image/png'});
+        if(navigator.canShare&&navigator.canShare({files:[f]})){await navigator.share({files:[f],title:'Vaade3D'});return;}
+        if(navigator.share&&/^https?:/.test(x.u)){await navigator.share({url:x.u,title:'Vaade3D'});return;}
+        if(/^https?:/.test(x.u)){await navigator.clipboard.writeText(x.u);toast('Jagamislink kopeeritud');return;}toast('Jagamiseks lae pilt alla.');}catch(e){if(e&&e.name!=='AbortError')toast('Jagamine ei õnnestunud');}},
+    dl:async()=>{try{const b=await (await fetch(L[i].u)).blob();await saveFile('vaade3d-pilt-'+(i+1)+(/png/.test(b.type)?'.png':'.jpg'),b);}catch(_){const l=document.createElement('a');l.href=L[i].u;l.download='vaade3d-pilt.jpg';document.body.appendChild(l);l.click();l.remove();}}};
+  z.addEventListener('click',e=>{const a=e.target.closest('[data-a]');if(a){act[a.dataset.a]&&act[a.dataset.a]();return;}if(moved)return;if((e.target===z||e.target===stage)&&sc<=1.01)close();});
+  // ratas = suum hiire kohas; topeltklõps/-puude = 100 % (või tagasi)
+  stage.addEventListener('wheel',e=>{e.preventDefault();zoomAt(sc*Math.exp(-e.deltaY*.0015),e.clientX,e.clientY);},{passive:false});
+  stage.addEventListener('dblclick',e=>{if(e.target.closest('.hd'))return;if(sc>1.01){sc=1;clamp();apply();}else zoomAt(stFull(fitK()),e.clientX,e.clientY);});
+  // näpud: 1 = pühkimine / pann / liugur, 2 = suum
+  const P=new Map();let g=null,moved=false,lastTap=0;
+  stage.addEventListener('pointerdown',e=>{P.set(e.pointerId,{x:e.clientX,y:e.clientY});moved=false;try{stage.setPointerCapture(e.pointerId);}catch(_){}
+    if(P.size===2){const [a,b]=[...P.values()];g={k:'pinch',d:Math.hypot(a.x-b.x,a.y-b.y),s:sc};return;}
+    const onHd=!!e.target.closest('.hd');g=cmp&&(onHd||sc<=1.01)?{k:'cmp'}:sc>1.01?{k:'pan',x:e.clientX,y:e.clientY,tx,ty}:{k:'swipe',x:e.clientX};if(g.k==='cmp')drag(e);});
+  const drag=e=>{const r=img.getBoundingClientRect();setX((e.clientX-r.left)/r.width*100);};
+  stage.addEventListener('pointermove',e=>{if(!P.has(e.pointerId)||!g)return;P.set(e.pointerId,{x:e.clientX,y:e.clientY});
+    if(g.k==='pinch'&&P.size===2){const [a,b]=[...P.values()];zoomAt(g.s*Math.hypot(a.x-b.x,a.y-b.y)/g.d,(a.x+b.x)/2,(a.y+b.y)/2);moved=true;}
+    else if(g.k==='pan'){tx=g.tx+e.clientX-g.x;ty=g.ty+e.clientY-g.y;clamp();apply();moved=true;}else if(g.k==='cmp'){drag(e);moved=true;}else if(g.k==='swipe'&&Math.abs(e.clientX-g.x)>8)moved=true;});
+  const up=e=>{if(!P.has(e.pointerId))return;P.delete(e.pointerId);if(g&&g.k==='swipe'&&Math.abs(e.clientX-g.x)>50&&sc<=1.01)go(e.clientX<g.x?1:-1);
+    if(e.pointerType==='touch'&&g&&g.k!=='pinch'&&!moved&&!e.target.closest('.hd')){const t=Date.now();if(t-lastTap<300){if(sc>1.01){sc=1;clamp();apply();}else zoomAt(stFull(fitK()),e.clientX,e.clientY);lastTap=0;}else lastTap=t;}
+    if(!P.size)g=null;else if(P.size===1&&g&&g.k==='pinch')g=null;setTimeout(()=>{moved=false;},0);};
+  stage.addEventListener('pointerup',up);stage.addEventListener('pointercancel',up);
+  const ov=document.body.style.overflow;document.body.style.overflow='hidden';document.body.appendChild(z);document.addEventListener('keydown',key);show();z.querySelector('.x').focus();
+  return z;}
 // lõime kõik pildid järjekorras: kasutaja fotod ja AI tulemused
-function stThreadImgs(box){return [...box.querySelectorAll('[data-z]')].map(el=>({u:el.dataset.z||el.src,ai:el.dataset.zai==='1',cap:el.dataset.zcap||''}));}
+function stThreadImgs(box){return [...box.querySelectorAll('[data-z]')].map(el=>({u:el.dataset.z||el.src,ai:el.dataset.zai==='1',cap:el.dataset.zcap||'',before:el.dataset.zbf||''}));}
 function stUseAs1(u){const s=stSess();if(!s)return;let i=s.imgs.findIndex(x=>x.src===u);if(i<0){s.imgs.push({src:u,k:'ai',marks:[]});i=s.imgs.length-1;}s.tray=s.tray||[];const j=s.tray.indexOf(i);if(j>0)s.tray.splice(j,1);if(j!==0){if(s.tray.length)s.tray[0]=i;else s.tray=[i];}STU.edit=null;stSave();stRender();}
 function stRenderThread(){const s=stSess(),box=$('stThread');if(!s||box.hidden){box.innerHTML='';return;}const t1=s.imgs[(s.tray||[])[0]];
   box.innerHTML=s.msgs.map((m,mi)=>{
@@ -4253,8 +4305,11 @@ function stRenderThread(){const s=stSess(),box=$('stThread');if(!s||box.hidden){
     if(m.offer)return `<div class="stm a">${head}<div class="stoffer"><b>Teen pildi? ${stEsc(priceTxt(m.pk||stPriceKind()))}</b><q>${stEsc(m.text)}</q><div class="row"><button type="button" class="gen" data-og="${mi}">Genereeri · ${stEsc(priceTxt(m.pk||stPriceKind()))}</button><button type="button" class="ask" data-oc="${mi}">Ainult küsin</button></div></div></div>`;
     if(m.pending)return `<div class="stm a">${head}<div class="stres ${m.n>1?'':'one'}">${Array.from({length:m.n||1},(_,k)=>`<div class="stv"><div class="stph"><span>AI teeb ${m.n>1?'varianti '+(k+1):'pilti'}…</span><div class="bar"><i></i></div><small style="font-weight:500">umbes 20 sekundit</small></div></div>`).join('')}</div></div>`;
     if(m.err)return `<div class="stm a">${head}<div class="sterr">${stEsc(m.err)}</div>${m.ref?`<span class="crl">${stEsc(stCrTxt(m))}</span>`:''}</div>`;
-    const out=(m.out||[]).map(stAiImg).filter(Boolean),trayU=stTrayImgs(s).map(x=>stAiImg(x.src));
-    return `<div class="stm a">${head}<div class="stres ${out.length>1?'':'one'}">${out.map((u,k)=>{const is1=t1&&stAiImg(t1.src)===u,tn=trayU.indexOf(u);return `<div class="stv ${is1?'sel':''}">${m.demo?'<span class="tg">demo</span>':''}<img src="${stEsc(u)}" alt="AI tulemus ${k+1}" data-z="${stEsc(u)}" data-zai="1" data-zcap="AI tulemus${out.length>1?' · variant '+(k+1):''}" role="button" tabindex="0"><div class="va">${is1?'<button type="button" class="pri" disabled>✓ See on pilt 1</button>':`<button type="button" class="pri" data-u1="${stEsc(u)}">Jätka sellega</button>`}<button type="button" data-mk="${stEsc(u)}">Märgi</button>${tn>0?`<button type="button" disabled>Pilt ${tn+1}</button>`:tn<0?`<button type="button" data-add="${stEsc(u)}">+ Lisa pildiks</button>`:''}<button type="button" data-to3d="${stEsc(u)}" data-lb="${stEsc((stTheme(STU.tpl).T||{}).name||'Pilt')}">Tee 3D-ks</button><a href="${stEsc(u)}" download="vaade3d-${mi}-${k+1}.jpg" target="_blank" rel="noopener">Laadi alla</a>${s.wreq&&/^https:/.test(u)?`<button type="button" class="pri" data-wsu="${stEsc(u)}">Saada kliendile</button>`:''}</div></div>`;}).join('')}</div>${m.cr!=null?`<span class="crl">${stEsc(stCrTxt(m))}</span>`:''}</div>`;}).join('');
+    const out=(m.out||[]).map(stAiImg).filter(Boolean),trayU=stTrayImgs(s).map(x=>stAiImg(x.src)),vi=Math.min(m.vi||0,Math.max(0,out.length-1));
+    // allikas „Enne / Pärast“ jaoks: sama töö kasutaja sõnumi pilt 1
+    const um=s.msgs[mi-1],bfu=um&&um.role==='u'&&um.pics&&um.pics[0]?stAiImg(um.pics[0]):'';
+    const vsw=out.length>1?`<div class="stvsw" role="tablist" aria-label="Variandid">${out.map((_,k)=>`<button type="button" role="tab" aria-selected="${k===vi}" data-vi="${mi}:${k}">Variant ${k+1}</button>`).join('')}<span>${vi+1} / ${out.length}</span></div>`:'';
+    return `<div class="stm a">${head}${vsw}<div class="stres one">${out.map((u,k)=>{const is1=t1&&stAiImg(t1.src)===u,tn=trayU.indexOf(u);return `<div class="stv ${is1?'sel':''}" ${k!==vi?'hidden':''}>${m.demo?'<span class="tg">demo</span>':''}<img src="${stEsc(u)}" alt="AI tulemus ${k+1}" data-z="${stEsc(u)}" data-zai="1" data-zbf="${stEsc(bfu&&bfu!==u?bfu:'')}" data-zcap="AI tulemus${out.length>1?' · variant '+(k+1):''}" role="button" tabindex="0"><div class="va">${is1?'<button type="button" class="pri" disabled>✓ See on pilt 1</button>':`<button type="button" class="pri" data-u1="${stEsc(u)}">Jätka sellega</button>`}<button type="button" data-mk="${stEsc(u)}">Märgi</button>${tn>0?`<button type="button" disabled>Pilt ${tn+1}</button>`:tn<0?`<button type="button" data-add="${stEsc(u)}">+ Lisa pildiks</button>`:''}<button type="button" data-to3d="${stEsc(u)}" data-lb="${stEsc((stTheme(STU.tpl).T||{}).name||'Pilt')}">Tee 3D-ks</button><a href="${stEsc(u)}" download="vaade3d-${mi}-${k+1}.jpg" target="_blank" rel="noopener">Laadi alla</a>${s.wreq&&/^https:/.test(u)?`<button type="button" class="pri" data-wsu="${stEsc(u)}">Saada kliendile</button>`:''}</div></div>`;}).join('')}</div>${m.cr!=null?`<span class="crl">${stEsc(stCrTxt(m))}</span>`:''}</div>`;}).join('');
   box.querySelectorAll('[data-wsu]').forEach(b=>b.onclick=async()=>{let r=WREQ.find(x=>x.id===s.wreq);if(!r){await wReqLoad();r=WREQ.find(x=>x.id===s.wreq);}if(!r){toast('Pildisoovi ei leitud');return;}wReqSend(r,b.dataset.wsu);});
   box.querySelectorAll('[data-juh]').forEach(b=>b.onclick=()=>stGenNow(b.dataset.juh));
   box.querySelectorAll('[data-jed]').forEach(b=>b.onclick=()=>{$('stIn').value=b.dataset.jed;stAuto();stSync();$('stIn').focus();});
@@ -4262,6 +4317,7 @@ function stRenderThread(){const s=stSess(),box=$('stThread');if(!s||box.hidden){
   const offerTake=i=>{const m=s.msgs[i];if(!m||!m.offer)return '';const t=m.text;s.msgs.splice(i,1);const u=s.msgs[i-1];if(u&&u.role==='u'&&!u.gen&&stSame(u.text,t))s.msgs.splice(i-1,1);stSave();return t;};
   box.querySelectorAll('[data-og]').forEach(b=>b.onclick=()=>{const t=offerTake(+b.dataset.og);if(t)stGenNow(t);});
   box.querySelectorAll('[data-oc]').forEach(b=>b.onclick=()=>{const t=offerTake(+b.dataset.oc);if(t)stChat(t);});
+  box.querySelectorAll('[data-vi]').forEach(b=>b.onclick=()=>{const [a,k]=b.dataset.vi.split(':').map(Number);if(s.msgs[a]){s.msgs[a].vi=k;stSave();stRenderThread();}});
   box.querySelectorAll('[data-z]').forEach(im=>{const open=()=>stZoomImg(im.dataset.z||im.src,stThreadImgs(box));im.onclick=open;im.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();open();}};});
   box.querySelectorAll('[data-u1]').forEach(b=>b.onclick=()=>{stUseAs1(b.dataset.u1);toast('See pilt on nüüd pilt 1');});
   box.querySelectorAll('[data-mk]').forEach(b=>b.onclick=()=>{stUseAs1(b.dataset.mk);const s2=stSess();stEdit(s2.tray[0]);});
