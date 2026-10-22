@@ -837,7 +837,7 @@ body:not(.cvm) #mSeg{display:none}
 .or{display:flex;align-items:center;gap:10px;color:var(--muted);font-size:12px}.or::before,.or::after{content:"";flex:1;height:1px;background:var(--line)}
 .err{color:var(--accent);font-size:13px;min-height:18px;margin:0}
 /* sisselogimine: käivitusekraan, tervitus, „Jäta mind meelde“ */
-.lform .err{min-height:36px}.lrem{display:flex;gap:8px;align-items:center;font-size:13.5px;margin-top:-6px;cursor:pointer;align-self:flex-start}.lrem input{width:16px;height:16px;accent-color:var(--accent)}
+.lform .err{min-height:36px}.lterms{align-items:flex-start;line-height:1.4}.lterms input{margin-top:1px;flex:none}.lterms a{color:var(--accent);font-weight:600}.lrem{display:flex;gap:8px;align-items:center;font-size:13.5px;margin-top:-6px;cursor:pointer;align-self:flex-start}.lrem input{width:16px;height:16px;accent-color:var(--accent)}
 .lspin{display:inline-block;width:14px;height:14px;margin-right:8px;vertical-align:-2px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:lspin .7s linear infinite}@keyframes lspin{to{transform:rotate(360deg)}}
 .boot{position:fixed;inset:0;z-index:500;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;background:var(--bg);transition:opacity .35s ease;padding:16px;text-align:center}
 .boot .blogo,.lwel .blogo{width:64px;height:64px;background-size:contain;background-repeat:no-repeat;background-position:center;animation:bootp 1.8s ease-in-out infinite}
@@ -1127,6 +1127,7 @@ input[type=checkbox]{accent-color:var(--accent)}
     </div>
     <label class="fl" for="lEmail">E-post<input id="lEmail" type="email" autocomplete="email" placeholder="mari@firma.ee"></label>
     <label class="fl" for="lPass">Parool<input id="lPass" type="password" autocomplete="current-password" placeholder="••••••••"></label>
+    <label class="lrem lterms" id="lTermsW" hidden><input type="checkbox" id="lTerms"> <span>Nõustun <a href="tingimused/" target="_blank" rel="noopener">tingimuste</a> ja <a href="privaatsus/" target="_blank" rel="noopener">privaatsuspoliitikaga</a></span></label>
     <label class="lrem"><input type="checkbox" id="lRem" checked> Jäta mind meelde</label>
     <p class="err" id="lErr"></p>
     <button type="button" class="linkbtn" id="forgotL" style="align-self:flex-start;margin-top:-8px">Unustasid parooli?</button>
@@ -2966,12 +2967,15 @@ $('lSrc').innerHTML='<option value="">Vali…</option>'+SOURCES.map(([v,l])=>`<o
 $('lNiche').innerHTML='<option value="">Vali…</option>'+NICHES.map(([v,l])=>`<option value="${v}">${l}</option>`).join('');
 $('lSrc').onchange=()=>{$('lSrcOw').hidden=$('lSrc').value!=='other';};
 let signUp=false;
-function setTab(up){signUp=up;$('tabIn').setAttribute('aria-pressed',!up);$('tabUp').setAttribute('aria-pressed',up);$('upFields').hidden=!up;$('lTitle').textContent=up?'Loo konto, 3 objekti tasuta':'Tere tulemast tagasi';$('lSubmit').textContent=up?'Loo konto':'Logi sisse';$('lErr').textContent='';$('lPass').autocomplete=up?'new-password':'current-password';$('forgotL').hidden=up;}
+const TERMS_V='2026-10-22'; // /tingimused ja /privaatsus versioon; muuda koos lehtedega
+const termsOk=()=>{if(!signUp||$('lTerms').checked)return true;$('lErr').textContent='Konto loomiseks nõustu tingimuste ja privaatsuspoliitikaga.';$('lTerms').focus();return false;};
+function setTab(up){signUp=up;$('tabIn').setAttribute('aria-pressed',!up);$('tabUp').setAttribute('aria-pressed',up);$('upFields').hidden=!up;$('lTermsW').hidden=!up;$('lTitle').textContent=up?'Loo konto, 3 objekti tasuta':'Tere tulemast tagasi';$('lSubmit').textContent=up?'Loo konto':'Logi sisse';$('lErr').textContent='';$('lPass').autocomplete=up?'new-password':'current-password';$('forgotL').hidden=up;}
 $('tabIn').onclick=()=>setTab(false);$('tabUp').onclick=()=>setTab(true);
 function enter(){setTimeout(()=>renderBell(true),400);store.set('oai_session',{email:acct.email,t:Date.now()});$('login').hidden=true;$('app').hidden=false;renderAcct();applyMatDefaults();show('home');maybeAskFb();}
 $('loginF').onsubmit=e=>{e.preventDefault();const em=$('lEmail').value.trim(),pw=$('lPass').value;
   if(!/^\S+@\S+\.\S+$/.test(em)){$('lErr').textContent='Sisesta korrektne e-posti aadress.';return;}
   if(pw.length<(signUp?8:1)){$('lErr').textContent=signUp?'Parool peab olema vähemalt 8 märki.':'Sisesta parool.';return;}
+  if(!termsOk())return;
   if(signUp){if(!$('lName').value.trim()||!$('lComp').value.trim()){$('lErr').textContent='Sisesta nimi ja ettevõte.';return;}if(!$('lNiche').value){$('lErr').textContent='Vali oma valdkond, siis näitame sulle õigeid malle.';return;}if(!$('lSrc').value){$('lErr').textContent='Vali, kust sa meist kuulsid.';return;}acct.niche=$('lNiche').value;acct.activeTpl=null;acct.source=$('lSrc').value;acct.sourceOther=$('lSrc').value==='other'?$('lSrcO').value.trim():'';acct.feedback=[];acct.name=$('lName').value.trim();acct.company=$('lComp').value.trim();{const rc=$('lRef').value.trim().toUpperCase();acct.promo=null;if(rc){const P=PROMOS[rc];if(P)acct.promo={code:rc,pct:P.pct,left:P.uses,total:P.uses};else{$('lErr').textContent='Sooduskoodi ei leitud. Jäta väli tühjaks või kontrolli koodi.';return;}}}acct.credits=30;acct.hist=[{d:today(),t:'Tervituskrediit (3 objekti)',c:30,e:'0 €'}];acct.gen={};}
   acct.email=em;save();enter();};
 $('gBtn').onclick=()=>{acct.email=acct.email||'mari@firma.ee';save();enter();};
@@ -3422,7 +3426,10 @@ function clSnap(){return JSON.stringify({co:[acct.company,acct.cphone,acct.web,a
   pr:(acct.products||[]).map(p=>[p.id,p.sid,p.name,p.cat,p.imgs,p.W,p.L,p.H,p.cap,p.price,p.desc,p.link,p.pl||'ground',p.inW!==false]),iban:(acct.partners.find(x=>x.cloud)||{}).iban||'',fb:(acct.feedback||[]).length,ar:CL.admin?acct.admRules:null});}
 async function clLoad(){const sb=CL.sb;const {data:{user}}=await sb.auth.getUser();CL.user=user;if(!user)return false;
   const [{data:pr},{data:st}]=await Promise.all([sb.from('profiles').select('*').eq('user_id',user.id).single(),sb.from('settings').select('*').eq('id',1).single()]);
-  if(!pr||!pr.company_id||!st)return false;CL.uid=user.id;CL.cid=pr.company_id;CL.st=st;acct.welcome=+st.welcome_credits||10;CL.admin=pr.is_admin;
+  if(!pr||!pr.company_id||!st)return false;
+  // Google'iga registreerumine: nõustumine märgiti enne suunamist
+  try{const tv=sessionStorage.getItem('v3d_terms');if(tv){sessionStorage.removeItem('v3d_terms');if(!pr.terms_accepted_at)sb.rpc('accept_terms',{p_version:tv}).then(()=>{},()=>{});}}catch(_){}
+  CL.uid=user.id;CL.cid=pr.company_id;CL.st=st;acct.welcome=+st.welcome_credits||10;CL.admin=pr.is_admin;
   const cid=CL.cid;
   const [{data:co},{data:led},{data:obj},{data:prods},{data:w0},{data:pt},{data:rn}]=await Promise.all([
     sb.from('companies').select('*').eq('id',cid).single(),
@@ -3508,8 +3515,9 @@ function clLoginUi(){
   $('loginF').onsubmit=async e=>{e.preventDefault();const em=$('lEmail').value.trim(),pw=$('lPass').value,er=$('lErr');er.style.color='';
     if(!/^\S+@\S+\.\S+$/.test(em)){er.textContent='Sisesta korrektne e-posti aadress.';return;}
     if(pw.length<(signUp?8:1)){er.textContent=signUp?'Parool peab olema vähemalt 8 märki.':'Sisesta parool.';return;}
+    if(!termsOk())return;
     let meta=null;if(signUp){if(!$('lName').value.trim()||!$('lComp').value.trim()){er.textContent='Sisesta nimi ja ettevõte.';return;}if(!$('lNiche').value){er.textContent='Vali oma valdkond, siis näitame sulle õigeid malle.';return;}if(!$('lSrc').value){er.textContent='Vali, kust sa meist kuulsid.';return;}
-      meta={name:$('lName').value.trim(),company:$('lComp').value.trim(),niche:$('lNiche').value,source:$('lSrc').value,source_other:$('lSrc').value==='other'?$('lSrcO').value.trim():'',ref:$('lRef').value.trim().toUpperCase()};}
+      meta={name:$('lName').value.trim(),company:$('lComp').value.trim(),niche:$('lNiche').value,source:$('lSrc').value,source_other:$('lSrc').value==='other'?$('lSrcO').value.trim():'',ref:$('lRef').value.trim().toUpperCase(),terms_v:TERMS_V};}
     const btn=$('lSubmit'),t0=btn.textContent;btn.disabled=true;btn.setAttribute('aria-busy','true');btn.innerHTML='<span class="lspin" aria-hidden="true"></span>'+stEsc(t0);er.textContent='';store.set('v3d_remember',$('lRem').checked);
     try{await clInit();
       if(meta){if(meta.ref){const {data:ok}=await CL.sb.rpc('ref_code_ok',{p_code:meta.ref});if(!ok){$('lRef').value='';$('lRefW').hidden=true;meta.ref='';er.textContent='Partneri link on aegunud või vigane. Vajuta uuesti „Loo konto“, et jätkata ilma soodustuseta.';return;}}
@@ -3519,7 +3527,7 @@ function clLoginUi(){
       else{const {error}=await CL.sb.auth.signInWithPassword({email:em,password:pw});if(error)throw error;}
       if(await clLoad()){$('lPass').value='';store.set('v3d_email',em);await clWelcome(true,!!meta||clIsNew());clIntoApp(true);}else er.textContent='Konto andmeid ei leitud. Kirjuta info@vaade3d.ee';
     }catch(err){er.textContent=clErr(err);}finally{btn.disabled=false;btn.removeAttribute('aria-busy');btn.textContent=t0;}};
-  $('gBtn').onclick=async()=>{try{await clInit();const {error}=await CL.sb.auth.signInWithOAuth({provider:'google',options:{redirectTo:appBase()}});if(error)throw error;}catch(e){$('lErr').textContent=clErr(e);}};
+  $('gBtn').onclick=async()=>{if(!termsOk())return;if(signUp)sessionStorage.setItem('v3d_terms',TERMS_V);try{await clInit();const {error}=await CL.sb.auth.signInWithOAuth({provider:'google',options:{redirectTo:appBase()}});if(error)throw error;}catch(e){$('lErr').textContent=clErr(e);}};
   $('forgotL').onclick=async()=>{const em=$('lEmail').value.trim();if(!/^\S+@\S+\.\S+$/.test(em)){$('lErr').textContent='Sisesta ülal oma e-post, siis saadame parooli taastamise lingi.';return;}
     try{await clInit();const {error}=await CL.sb.auth.resetPasswordForEmail(em,{redirectTo:appBase()});if(error)throw error;$('lErr').style.color='var(--ok)';$('lErr').textContent='Saatsime parooli taastamise lingi aadressile '+em+'.';}catch(e){$('lErr').textContent=clErr(e);}};
   if($('forgotS'))$('forgotS').onclick=async()=>{const {error}=await CL.sb.auth.resetPasswordForEmail(acct.email,{redirectTo:appBase()});toast(error?clErr(error):'Saatsime parooli taastamise lingi aadressile '+acct.email);};

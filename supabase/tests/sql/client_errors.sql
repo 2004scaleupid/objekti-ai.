@@ -27,6 +27,6 @@ begin
   select user_id into uid from profiles where is_admin limit 1;
   perform set_config('request.jwt.claims', json_build_object('sub', uid, 'role', 'authenticated')::text, true);
   select a.n into n from admin_client_errors(7) a where a.message like 'Viga %';
-  if n <> 29 then raise exception 'FAIL 4b: rühm %', n; end if;
+  if n is distinct from 29 then raise exception 'FAIL 4b: rühm %', n; end if;
   raise exception 'TESTS_OK';
 end $$;

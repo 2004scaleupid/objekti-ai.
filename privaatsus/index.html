@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="et">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Privaatsuspoliitika · Vaade3D</title>
+<meta name="description" content="Kuidas Vaade3D isikuandmeid töötleb ja kaitseb.">
+<link rel="icon" href="../logo.svg">
+<style>
+:root{--bg:#F6F3EE;--paper:#FFFDFA;--ink:#16130F;--muted:#6B635A;--line:#E4DDD3;--accent:#E5482D}
+@media (prefers-color-scheme:dark){:root{--bg:#141210;--paper:#1C1916;--ink:#F1ECE5;--muted:#A79E93;--line:#2E2A25;--accent:#F0603F}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.65 system-ui,-apple-system,"Segoe UI",sans-serif}
+main{max-width:760px;margin:0 auto;padding:32px 16px 64px}a{color:var(--accent)}
+.top{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:28px;font-size:14px}.top b{font-size:18px}.top b span{color:var(--accent)}
+h1{font-size:clamp(28px,6vw,40px);line-height:1.15;margin:0 0 6px}h2{font-size:20px;margin:34px 0 8px}.ver{color:var(--muted);font-size:14px;margin:0 0 22px}
+.card{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:18px 20px}
+table{width:100%;border-collapse:collapse;font-size:14.5px}th,td{text-align:left;vertical-align:top;padding:9px 8px;border-bottom:1px solid var(--line)}th{color:var(--muted);font-weight:600}
+.tbl{overflow-x:auto}ul{padding-left:20px}li{margin:4px 0}
+</style>
+</head>
+<body><main>
+<div class="top"><b>Vaade<span>3D</span></b><a href="../">← Tagasi Vaade3D-sse</a></div>
+<h1>Privaatsuspoliitika</h1>
+<p class="ver">Versioon 2026-10-22 · <a href="../tingimused/">Kasutustingimused</a></p>
+
+<div class="card"><p style="margin:0">Vaade3D teenust osutab <b>[ETTEVÕTE]</b> (registrikood [REGISTRIKOOD], aadress [AADRESS]), kes on sinu isikuandmete vastutav töötleja. Küsimuste korral kirjuta <a href="mailto:info@vaade3d.ee">info@vaade3d.ee</a>.</p></div>
+
+<h2>1. Milliseid andmeid töötleme</h2>
+<ul>
+<li><b>Konto:</b> nimi, e-post, ettevõtte nimi, valdkond, kust meist kuulsid, parooli räsi (parooli ennast me ei näe), tingimustega nõustumise aeg.</li>
+<li><b>Sinu tööd:</b> üles laaditud fotod, loodud pildid ja 3D-mudelid, objektid ja nende aadressid, mõõtmised ja märkmed, AI-abilisele kirjutatud sõnumid.</li>
+<li><b>Maksed:</b> ostetud krediidid, summad ja arved. Kaardi- ja pangaandmeid töötleb Stripe, meie neid ei näe.</li>
+<li><b>Kodulehe vidin:</b> kui sinu klient jätab vidinas päringu (nimi, e-post, aadress, foto), töötleme neid sinu nimel ja edastame sulle.</li>
+<li><b>Turvalisus ja vead:</b> registreerimisel IP-aadress (piirang 3 kontot ööpäevas, kustub 3 päeva jooksul); rakenduse vead koos kasutaja tunnusega, ilma e-posti ja muu isikuandmeta (kustuvad 30 päeva pärast).</li>
+</ul>
+
+<h2>2. Milleks ja mis alusel</h2>
+<ul>
+<li><b>Teenuse osutamine (leping):</b> konto, tööd, 3D-mudelid, mõõdud, krediidid ja klienditugi.</li>
+<li><b>Õigustatud huvi:</b> kuritarvituste ja pettuste vältimine, vigade leidmine ja parandamine, teenuse arendamine üldistatud kasutusandmete põhjal.</li>
+<li><b>Seadusest tulenev kohustus:</b> arved ja raamatupidamisandmed.</li>
+</ul>
+
+<h2>3. Kes andmeid meie nimel töötlevad</h2>
+<div class="tbl"><table>
+<thead><tr><th>Teenus</th><th>Milleks</th><th>Asukoht</th></tr></thead>
+<tbody>
+<tr><td>Supabase</td><td>Andmebaas, sisselogimine, failid, serveri funktsioonid</td><td>EL (Frankfurt)</td></tr>
+<tr><td>Stripe</td><td>Maksed ja arved</td><td>EL / USA</td></tr>
+<tr><td>Resend</td><td>Teenusega seotud e-kirjad (konto kinnitus, teavitused)</td><td>USA</td></tr>
+<tr><td>Anthropic</td><td>AI-abiline ja fotode kontroll enne 3D-mudelit</td><td>USA</td></tr>
+<tr><td>MuAPI</td><td>3D-mudeli tegemine fotodest (Tripo), fotode puhastus</td><td>väljaspool EL-i</td></tr>
+<tr><td>Kie.ai</td><td>Piltide loomine ja fotode puhastus</td><td>väljaspool EL-i</td></tr>
+<tr><td>Maa- ja Ruumiamet</td><td>Avaandmete allikas (hoonete 3D-mudelid, kataster, kaardid). Küsime andmeid aadressi või koordinaatide järgi, isikuandmeid neile ei edastata.</td><td>Eesti</td></tr>
+</tbody></table></div>
+<p>Kui andmeid töödeldakse väljaspool Euroopa Majanduspiirkonda, tugineb edastamine Euroopa Komisjoni kaitse piisavuse otsusele või standardlepingutingimustele.</p>
+
+<h2>4. Kui kaua hoiame</h2>
+<ul>
+<li>Konto ja tööd: kuni konto kustutamiseni.</li>
+<li>Arved ja maksete kanded: 7 aastat (raamatupidamise seadus), konto kustutamisel ilma nime ja e-postita.</li>
+<li>Vealogid: 30 päeva. Registreerimise IP-piirangu kirjed: kuni 3 päeva.</li>
+<li>Varukoopiatest kustuvad andmed nende tavapärase ringluse käigus.</li>
+</ul>
+
+<h2>5. Sinu õigused</h2>
+<ul>
+<li><b>Juurdepääs ja ülekandmine:</b> Profiil → „Lae alla minu andmed“ (JSON-fail koos failide nimekirjaga).</li>
+<li><b>Kustutamine:</b> Profiil → „Kustuta konto“. Kustutame konto, profiili ja sinu ettevõtte andmed ning failid; arved ja maksekanded jäävad alles ilma isikuandmeteta.</li>
+<li><b>Parandamine, piiramine ja vastuväide:</b> kirjuta <a href="mailto:info@vaade3d.ee">info@vaade3d.ee</a>.</li>
+<li><b>Kaebus:</b> Andmekaitse Inspektsioon, <a href="https://www.aki.ee" target="_blank" rel="noopener">www.aki.ee</a>.</li>
+</ul>
+
+<h2>6. Küpsised ja brauseri mälu</h2>
+<p>Me ei kasuta reklaami- ega jälgimisküpsiseid. Brauseri mälu (localStorage) hoiab sisselogimist ja sinu seadeid, nt heledat või tumedat teemat.</p>
+
+<h2>7. Muudatused</h2>
+<p>Olulistest muudatustest anname teada e-posti või rakenduse kaudu. Kehtiv versioon on alati sellel lehel.</p>
+</main></body>
+</html>
