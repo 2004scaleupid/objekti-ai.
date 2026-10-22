@@ -4,7 +4,7 @@
 // status: äpp küsib iga ~10 s; kui Tripo on valmis, kopeerime .glb meie 'models' kausta
 // Krediidid võetakse alguses; iga vea korral (ja 25 min ajapiirangul) tagastatakse.
 import { buildGarden } from "../_shared/garden.ts";
-import { cors, json, fail, userCompany, spend, refund, kieImage, storeImage, uploadDataUrl, admin, body, rateLimit, isPhoto, refundStale, secret, tfetch, env } from "../_shared/util.ts";
+import { cors, json, fail, failText, userCompany, spend, refund, kieImage, storeImage, uploadDataUrl, admin, body, rateLimit, isPhoto, refundStale, secret, tfetch, env } from "../_shared/util.ts";
 
 const MUAPI = () => env("MUAPI_API_BASE", "https://api.muapi.ai/api/v1");
 
@@ -246,6 +246,7 @@ export async function handler(req: Request): Promise<Response> {
     const { data: r } = await db.from("renders").select("id,status,stage,ext_id,output_url,error,input_urls,product_id,ehr,garden")
       .eq("id", id).eq("company_id", me.companyId).eq("kind", "3d").maybeSingle();
     if (!r) return fail("not found", 404);
+    if (r.status === "failed") { const n = await refund(id); return json({ ...view(r), error: failText(n), refunded: n }); }
     if (r.status !== "pending" || r.stage !== "modelling" || !r.ext_id) return json(view(r));
     try {
       const pr = await tfetch(`${MUAPI()}/predictions/${encodeURIComponent(r.ext_id)}/result`, { headers: { "x-api-key": await muKey() } }, 15000);
@@ -281,9 +282,9 @@ export async function handler(req: Request): Promise<Response> {
       if (r.product_id) await db.from("products").update({ model_url: url }).eq("id", r.product_id).eq("company_id", me.companyId).then(() => {}, () => {});
       return json({ id, status: "done", url, size: bytes.length, cleaned: r.input_urls, product_id: r.product_id ?? null });
     } catch (e) {
-      await refund(id);
+      const n = await refund(id);
       await db.from("renders").update({ status: "failed", stage: null, error: String((e as Error).message).slice(0, 500) }).eq("id", id);
-      return json({ id, status: "failed", error: "3D-mudeli tegemine ebaõnnestus, krediidid tagastati." });
+      return json({ id, status: "failed", error: failText(n), refunded: n });
     }
   }
 
@@ -371,16 +372,16 @@ export async function handler(req: Request): Promise<Response> {
     await db.from("ai_usage").insert({ company_id: me.companyId, kind: "3d", model: "nano-banana-2-1(" + [...new Set(vias)].join("/") + ")+" + tr.model, cost_usd: vias.reduce((a, v) => a + (v === "muapi" ? 0.03 : 0.02), 0) + tr.cost }).then(() => {}, () => {});
     return json({ id, status: "pending", stage: "modelling", cleaned, credits, subject, sides: S.slots });
   } catch (e) {
-    await refund(id);
+    const n = await refund(id);
     await db.from("renders").update({ status: "failed", stage: null, error: String((e as Error).message).slice(0, 500) }).eq("id", id);
-    return fail("Fotode töötlemine ebaõnnestus, krediidid tagastati.", 502);
+    return json({ error: failText(n), refunded: n }, 502);
   }
 }
 
 // deno-lint-ignore no-explicit-any
 function view(r: any) {
   return { id: r.id, status: r.status, stage: r.stage, url: r.output_url, cleaned: r.input_urls,
-    error: r.status === "failed" ? "3D-mudeli tegemine ebaõnnestus, krediidid tagastati." : undefined };
+    error: r.status === "failed" ? "Töö ebaõnnestus." : undefined };
 }
 
 Deno.serve(handler);

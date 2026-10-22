@@ -2775,7 +2775,7 @@ async function plGenerate(){if(!plReady())return;const firm=PS.mode==='firm',P=p
       const r=await clFn('widget-place',{id:PS.p.id,photo:PS.photo,items,lead_tok:PS.lead&&PS.lead.tok!=='local'?PS.lead.tok:undefined,note:PS.note||undefined,style:PS.style},{pub:true});
       if(r.review)PS.review=true;else PS.res=r.url;}
     acct.tplUse=acct.tplUse||[];acct.tplUse.push({d:today(),t:'toodehoov'});if(firm)save();}
-  catch(e){const m=String(e&&e.message||'');if(/budget/.test(m)||(e&&e.status===429&&/budget/.test(JSON.stringify(e.data||''))))PS.budget=true;else toast(clErr(e)+(firm?' Krediidid tagastati.':''));}
+  catch(e){const m=String(e&&e.message||'');if(/budget/.test(m)||(e&&e.status===429&&/budget/.test(JSON.stringify(e.data||''))))PS.budget=true;else toast(clErr(e)+(firm?refTxt(e,' Krediidid tagastati.'):''));}
   finally{clearInterval(iv);if(firm&&CLOUD&&CL.cid)clRefresh();plDraw();}}
 
 /* vidina "toode kliendi juures" seaded ja pildisoovid (firma vaade) */
@@ -3378,7 +3378,9 @@ async function clFn(name,body,opt){opt=opt||{};const h={'Content-Type':'applicat
   else if(/^eyJ/.test(CLOUD.key))h.Authorization='Bearer '+CLOUD.key;
   const r=await fetch(CL.fn+name+(opt.q||''),{method:body===undefined?'GET':'POST',headers:h,body:body===undefined?undefined:JSON.stringify(body)});
   let j={};try{j=await r.json();}catch(_){}
-  if(!r.ok){const out=r.status===402||j.error==='insufficient_credits';const e=new Error(out?'Krediite pole piisavalt':j.error||('Viga '+r.status));e.status=out?402:r.status;if(out)creditsOut();throw e;}return j;}
+  if(!r.ok){const out=r.status===402||j.error==='insufficient_credits';const e=new Error(out?'Krediite pole piisavalt':j.error||('Viga '+r.status));e.status=out?402:r.status;if(j.refunded!=null)e.refunded=+j.refunded;if(out)creditsOut();throw e;}return j;}
+/* ebaõnnestunud töö: server ütleb tagastatud krediidid ise („Töö ebaõnnestus, N krediiti tagastati.“), muidu üldine lisa */
+const refTxt=(e,d)=>e&&e.refunded!=null?'':d;
 function clErr(e){if(e&&e.status===402)return '';const m=String(e&&e.message||e||'');
   if(/Invalid login/i.test(m))return 'Vale e-post või parool.';
   if(/already registered|already exists/i.test(m))return 'Selle e-postiga konto on juba olemas. Logi sisse.';
@@ -3539,7 +3541,7 @@ function designPrompt(d,TP){const base=TP&&TP.prompt?TP.prompt.replace('{stiil}'
 function placePrompt(pr,pt){const size=pr.W&&pr.L?`about ${pr.W} m wide and ${pr.L} m long${pr.H?`, ${pr.H} m high`:''}`:'realistic real-world size';
   return `Image 1 is a customer's photo of their yard (the scene). The other images show one product: ${pr.name}. Place EXACTLY this product into image 1 at the point ${Math.round(pt.x)}% from the left and ${Math.round(pt.y)}% from the top of the image, standing on the ground there. Keep the product's exact design, colours and proportions from the product images. Real size ${size}, scaled correctly relative to people, doors, cars and trees in the scene. Match the scene's light direction and colour, add a realistic shadow in the same direction and length as other shadows in the scene. Do not change anything else in image 1 and keep its framing. Photorealistic, no text.`;}
 async function clDesign(d,TP){d.pending=1;save();try{const r=await clFn('ai-image',{kind:'design',prompt:designPrompt(d,TP),images:[d.img],label:'Disain pildist · '+(TP?TP.name:DTN[d.type]),tpl:TP?TP.id:null,n:2});d.out=r.urls||[r.url];toast('Disain valmis');}
-  catch(e){d.err=clErr(e);toast(d.err+' Krediidid tagastati.');}finally{delete d.pending;save();clRefresh();renderDesigns();if(!$('dlg').hidden&&$('dT').textContent.startsWith(TP?TP.name:DTN[d.type]))showDesign(d.id);}}
+  catch(e){d.err=clErr(e);toast(d.err+refTxt(e,' Krediidid tagastati.'));}finally{delete d.pending;save();clRefresh();renderDesigns();if(!$('dlg').hidden&&$('dT').textContent.startsWith(TP?TP.name:DTN[d.type]))showDesign(d.id);}}
 function dzFig(d,k){const u=d.out&&safeUrl(d.out[k]);if(u)return `<a href="${u}" target="_blank" rel="noopener"><img src="${u}" alt="AI variant ${k+1}" style="width:100%;border-radius:8px;display:block"></a>`;
   if(d.pending)return `<div class="ph">AI teeb varianti ${k+1}…<br><small>umbes 20 sekundit</small></div>`;if(d.err)return `<div class="ph">${stripT(d.err)}</div>`;return `<div class="ph">AI variant ${k+1}</div>`;}
 if(CLOUD){
@@ -3551,7 +3553,7 @@ if(CLOUD){
     const pg=$('genProg'),bar=pg.querySelector('i');pg.hidden=false;$('genBtn').disabled=true;$('genMsg').textContent='Genereerin esituspilti, umbes 20 sekundit…';let t=0;const iv=setInterval(()=>{t=Math.min(95,t+2);bar.style.width=t+'%';},400);
     try{const r=await clFn('ai-image',{kind:'pic',prompt:picPrompt(h),images:[shot],label:'Esituspilt · '+h.short,ehr:h.ehr,tpl:h.tpl||null});
       acct.gen[h.ehr]=true;acct.genUrl=acct.genUrl||{};acct.genUrl[h.ehr]=r.url;save();$('genMsg').textContent='Esituspilt valmis. Lülita vaate all „Esitlus“ nupuga 3D ja pildi vahel.';if(HOUSES[cur]===h)setRen(true);toast('Esituspilt valmis');}
-    catch(e){$('genMsg').textContent=clErr(e)+' Krediidid tagastati.';}
+    catch(e){$('genMsg').textContent=clErr(e)+refTxt(e,' Krediidid tagastati.');}
     finally{clearInterval(iv);pg.hidden=true;bar.style.width='0';$('genBtn').disabled=false;clRefresh();}};
   $('genBtn').onclick=()=>startGen();
   /* toote proovimine: plGenerate teeb pilve päringu ise */
@@ -3871,7 +3873,7 @@ function stRenderFilm(){const s=stSess(),T=s?(s.tray||[]):[],f=$('stFilm');f.hid
   f.querySelectorAll('[data-f]').forEach(b=>b.onclick=()=>{if(STU.busy)return;stEdit(+b.dataset.f);});}
 $('stEdDone').onclick=()=>stEditDone();$('stEdBack').onclick=()=>stEditDone();$('stTn').onclick=()=>{if(STU.edit!=null)stEditDone();};
 const stKr=x=>{const v=Math.round(Number(x||0)*100)/100;return String(v).replace('.',',')+' '+(v===1?'krediit':'krediiti');};
-function stCrTxt(m){if(!m||m.cr==null)return '';if(m.err)return m.ref?'krediidid tagastati'+(m.bal!=null?' · saldo '+stKr(m.bal):''):'';return (m.cr>0?'−'+stKr(m.cr):'paketis, krediite ei võetud')+(m.bal!=null?' · saldo '+stKr(m.bal):'');}
+function stCrTxt(m){if(!m||m.cr==null)return '';if(m.err)return m.ref?(m.refN>0?stKr(m.refN)+' tagastati':'krediidid tagastati')+(m.bal!=null?' · saldo '+stKr(m.bal):''):'';return (m.cr>0?'−'+stKr(m.cr):'paketis, krediite ei võetud')+(m.bal!=null?' · saldo '+stKr(m.bal):'');}
 function stSpent(s){return (s&&s.msgs||[]).reduce((a,m)=>a+(m.role==='a'&&!m.err&&!m.pending&&m.cr>0?m.cr:0),0);}
 function stRenderRes(){const el=$('stRes'),s=stSess();if(!el)return;const m=s&&s.msgs.length?s.msgs[s.msgs.length-1]:null;
   if(!m||m.role!=='a'||!m.gen||$('stThread').hidden&&$('stStage').hidden){el.hidden=true;el.innerHTML='';return;}el.hidden=false;
@@ -4125,7 +4127,7 @@ async function stGenerate(){const gen=$('stGenBtn');if(gen.disabled||gen.hidden)
     if(!am.out.length)throw new Error('AI ei tagastanud pilti');
     s.imgs=s.imgs||[];const i0=s.imgs.length;am.out.forEach(u=>s.imgs.push({src:u,k:'ai',marks:[]}));s.tray=s.tray||[];if(s.tray.length&&kind!=='pic')s.tray[0]=i0;else s.tray=[i0,...s.tray].slice(0,ST_MAXP);
     s.thumb=am.out[0];STU.sel=-1;am.text=am.out.length>1?'2 varianti':'Valmis';acct.tplUse=acct.tplUse||[];acct.tplUse.push({d:today(),t:STU.tpl});}
-  catch(e){am.err=clErr(e);if(CLOUD&&CL.cid)am.ref=1;else if(am.cr>0){acct.credits=+(acct.credits+am.cr).toFixed(2);am.ref=1;}if(!$('stIn').value)$('stIn').value=text;toast(am.err+(am.ref?' Krediidid tagastati.':''));}
+  catch(e){am.err=clErr(e);if(e.refunded!=null)am.refN=e.refunded;if(CLOUD&&CL.cid)am.ref=1;else if(am.cr>0){acct.credits=+(acct.credits+am.cr).toFixed(2);am.ref=1;}if(!$('stIn').value)$('stIn').value=text;toast(am.err+(am.ref?refTxt(e,' Krediidid tagastati.'):''));}
   finally{delete am.pending;STU.busy=false;const cl=CLOUD&&CL.cid;if(!cl&&am.bal==null)am.bal=acct.credits;stSave();renderAcct();const here=()=>!$('studio').hidden&&STU.sid===s.id;if(here()){stRender();stScrollEnd();}
     if(cl){try{await clRefresh();}catch(_){}if(am.bal==null||am.err){am.bal=acct.credits;stSave();}if(here()){stRenderRes();stRenderPanel();stRenderThread();}}}}
 /* ---------- Fotod → 3D-mudel (sama subjektide tabel on serveris: supabase/functions/ai-3d) ---------- */
@@ -4199,7 +4201,7 @@ async function p3Start(){if(!p3CanSend())return;const P=STU.p3,L=p3List(),c=p3Ch
   try{const r=await clFn('ai-3d',{subject:sub,photos:L,single:P.single||undefined,check:c.token,force:!c.ok&&P.force,label:P.label||'3D-mudel · '+P3D[sub].n,tpl:STU.tpl,object_id,ehr:sub==='building'&&P.ehr||undefined,garden:sub==='building'&&!!P.ehr&&P.garden!==false,product_id:P.product||undefined});
     Object.assign(s.p3job,{id:r.id,stage:r.stage||'modelling',tm:Date.now(),cleaned:(r.cleaned||[]).filter(safeUrl)});if(s.p3job.cleaned[0])s.thumb=s.p3job.cleaned[0];
     p3Note(s,'Fotod on puhastatud. Ehitan 3D-mudelit, see võtab umbes 4 minutit.');acct.tplUse=acct.tplUse||[];acct.tplUse.push({d:today(),t:STU.tpl});}
-  catch(e){s.p3job=null;P.err=e.status===409?'Fotod tuleb uuesti kontrollida.':clErr(e)+(e.status===502?' Krediidid tagastati.':'');toast(P.err);if(e.status===409){P.chk=null;P.starting=0;p3Changed();}}
+  catch(e){s.p3job=null;P.err=e.status===409?'Fotod tuleb uuesti kontrollida.':clErr(e)+(e.status===502?refTxt(e,' Krediidid tagastati.'):'');toast(P.err);if(e.status===409){P.chk=null;P.starting=0;p3Changed();}}
   finally{P.starting=0;stSave();clRefresh();if(!$('studio').hidden)stRender();if(s.p3job&&s.p3job.id)p3Poll(s.id);}}
 const P3POLL={};
 async function p3Poll(sid){if(P3POLL[sid]||!CL.cid)return;P3POLL[sid]=1;
@@ -4208,7 +4210,7 @@ async function p3Poll(sid){if(P3POLL[sid]||!CL.cid)return;P3POLL[sid]=1;
       try{r=await clFn('ai-3d',{action:'status',id:j.id});}catch(e){if(e.status===404){j.status='failed';j.err='Tööd ei leitud.';}else continue;}
       if(r){j.stage=r.stage||j.stage;if(j.stage!=='cleaning'&&!j.tm)j.tm=Date.now();if(r.cleaned&&r.cleaned.length)j.cleaned=r.cleaned.filter(safeUrl);
         if(r.status==='done'&&safeUrl(r.url)){j.status='done';j.url=r.url;p3Note(s,'3D-mudel on valmis.');p3LoadModels();const pr=r.product_id&&(acct.products||[]).find(x=>x.sid===r.product_id);if(pr){pr.model=r.url;p3Note(s,'Mudel salvestati toote „'+pr.name+'“ juurde.');}}
-        else if(r.status==='failed'){j.status='failed';j.err=r.error||'3D-mudeli tegemine ebaõnnestus, krediidid tagastati.';p3Note(s,j.err);clRefresh();}}
+        else if(r.status==='failed'){j.status='failed';j.err=r.error||'Töö ebaõnnestus, krediidid tagastati.';p3Note(s,j.err);clRefresh();}}
       stSave();if(!$('studio').hidden&&STU.sid===sid)stRender();}}
   finally{delete P3POLL[sid];}}
 // töö jätkub ka pärast lehe värskendamist; server kopeerib .glb alles olekupäringu ajal
@@ -4269,7 +4271,7 @@ function p3Tick(){const s=stSess(),j=s&&s.p3job,bar=$('p3PctBar');if(!j||j.statu
   const p=p3Prog(j),tp=p3TipFor(j),t=$('p3Tip');bar.style.width=p.pct.toFixed(1)+'%';$('p3Pct').textContent=Math.floor(p.pct)+'%';$('p3Eta').textContent=p3Left(p.left);$('p3Prg').setAttribute('aria-valuenow',String(Math.floor(p.pct)));
   if(t&&t.textContent!==tp){t.textContent=tp;t.classList.remove('in');void t.offsetWidth;t.classList.add('in');}}
 function p3JobHtml(j){const st=j.status,cl=(j.cleaned||[]).filter(safeUrl),cur=st==='done'?4:p3Cleaning(j)?1:2;
-  if(st==='failed')return `<p class="p3err">${stEsc(j.err||'3D-mudeli tegemine ebaõnnestus, krediidid tagastati.')}</p>`+(cl.length?`<div class="p3clean"><b>Puhastatud fotod</b><div>${cl.map(u=>`<img src="${stEsc(u)}" alt="Puhastatud foto" loading="lazy">`).join('')}</div></div>`:'')+`<button type="button" class="ghost" id="p3New" style="align-self:flex-start">Uus 3D-mudel</button>`;
+  if(st==='failed')return `<p class="p3err">${stEsc(j.err||'Töö ebaõnnestus, krediidid tagastati.')}</p>`+(cl.length?`<div class="p3clean"><b>Puhastatud fotod</b><div>${cl.map(u=>`<img src="${stEsc(u)}" alt="Puhastatud foto" loading="lazy">`).join('')}</div></div>`:'')+`<button type="button" class="ghost" id="p3New" style="align-self:flex-start">Uus 3D-mudel</button>`;
   let h=`<ol class="p3trk" aria-label="3D-mudeli sammud">${['Fotode kontroll','Puhastan fotosid','Ehitan 3D-mudelit','Valmis'].map((t,i)=>`<li class="${i<cur?'ok':i===cur?'on':''}"${i===cur?' aria-current="step"':''}><i aria-hidden="true">${i<cur?'✓':i+1}</i><span>${t}</span></li>`).join('')}</ol>`;
   if(st==='pending'){const p=p3Prog(j),ph=cl.length?cl:(STU.p3&&STU.sid&&p3List().length?p3List():[]);
     h+=`<div class="p3prog" id="p3Prg" role="progressbar" aria-label="3D-mudeli edenemine" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${Math.floor(p.pct)}"><div class="p3bar"><i id="p3PctBar" style="width:${p.pct.toFixed(1)}%"></i></div><div class="p3pl"><b id="p3Pct">${Math.floor(p.pct)}%</b><span id="p3Eta">${p3Left(p.left)}</span></div></div>`;

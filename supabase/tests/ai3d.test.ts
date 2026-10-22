@@ -109,6 +109,8 @@ Deno.test("Tripo viga → tagastus", async () => {
   const d = await call({ action: "status", id: s.j.id });
   assertEquals(d.j.status, "failed");
   assert(W.refunds.includes(s.j.id));
+  assertEquals(d.j.error, "Töö ebaõnnestus, 10 krediiti tagastati.");
+  assertEquals(d.j.refunded, 10);
 });
 
 Deno.test("puhastuse viga start'is → 502 ja tagastus", async () => {
@@ -119,6 +121,7 @@ Deno.test("puhastuse viga start'is → 502 ja tagastus", async () => {
   W.kieFail = false;
   assertEquals(s.status, 502);
   assert(W.refunds.includes(W.spends.at(-1)!));
+  assertEquals(s.j.error, "Töö ebaõnnestus, 10 krediiti tagastati.");
 });
 
 Deno.test("kontrollist ei saa mööda", async () => {

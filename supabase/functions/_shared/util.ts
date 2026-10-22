@@ -140,10 +140,16 @@ export async function spend(companyId: string, kind: string, label: string, ref:
   if (error) throw new Error(error.message.includes("insufficient") ? "insufficient_credits" : error.message);
   return data as number;
 }
-/** Tagastab täpselt selle viitega võetud summa, ainult üks kord. */
-export async function refund(ref: string) {
-  await admin().rpc("refund_credits", { p_ref: ref });
+/** Tagastab täpselt selle viitega võetud summa, ainult üks kord. Vastus: tagastatud krediidid (ka varem tagastatud, nt ajapiirangul). */
+export async function refund(ref: string): Promise<number> {
+  const db = admin();
+  const { data } = await db.rpc("refund_credits", { p_ref: ref });
+  if (Number(data) > 0) return Number(data);
+  const { data: r } = await db.from("credit_ledger").select("delta").eq("ref", ref).eq("kind", "refund").limit(1).maybeSingle();
+  return Number(r?.delta) || 0;
 }
+/** Ebaõnnestunud töö tekst kasutajale (sama kõigis töödes). */
+export const failText = (n: number) => n > 0 ? `Töö ebaõnnestus, ${String(+n.toFixed(2)).replace(".", ",")} ${n === 1 ? "krediit" : "krediiti"} tagastati.` : "Töö ebaõnnestus.";
 
 const SIZES = new Set(["auto", "1:1", "2:3", "3:2", "3:4", "4:3", "4:5", "5:4", "9:16", "16:9", "21:9"]);
 export const safeSize = (s: unknown) => (typeof s === "string" && SIZES.has(s) ? s : "auto");

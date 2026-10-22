@@ -1,5 +1,5 @@
 // Esituspilt, disain pildist ja toode hoovis firma töölaualt (sisselogitud kasutaja).
-import { cors, json, fail, userCompany, spend, refund, kieImage, storeImage, uploadDataUrl, admin, body, rateLimit, isOurImage, safeSize, isPhoto, refundStale } from "../_shared/util.ts";
+import { failText, cors, json, fail, userCompany, spend, refund, kieImage, storeImage, uploadDataUrl, admin, body, rateLimit, isOurImage, safeSize, isPhoto, refundStale } from "../_shared/util.ts";
 
 const KINDS: Record<string, string> = { pic: "pic", design: "design", place: "design" }; // place maksab sama palju kui disain
 
@@ -47,8 +47,8 @@ Deno.serve(async (req) => {
     await db.from("renders").update({ status: "done", output_url: stored[0], input_urls: urls.map((u) => u.split("?")[0]) }).eq("id", id);
     return json({ url: stored[0], urls: stored, credits, id });
   } catch (e) {
-    await refund(id);
+    const n = await refund(id);
     await db.from("renders").update({ status: "failed", error: String((e as Error).message).slice(0, 500) }).eq("id", id);
-    return fail("Pildi tegemine ebaõnnestus, krediidid tagastati.", 502);
+    return json({ error: failText(n), refunded: n }, 502);
   }
 });
