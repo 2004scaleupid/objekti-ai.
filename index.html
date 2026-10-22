@@ -3466,7 +3466,7 @@ function clLoginUi(){
       if(meta){if(meta.ref){const {data:ok}=await CL.sb.rpc('ref_code_ok',{p_code:meta.ref});if(!ok){$('lRef').value='';$('lRefW').hidden=true;meta.ref='';er.textContent='Partneri link on aegunud või vigane. Vajuta uuesti „Loo konto“, et jätkata ilma soodustuseta.';return;}}
         acct.niche=meta.niche;acct.activeTpl=null;acct.source=meta.source;
         const {data,error}=await CL.sb.auth.signUp({email:em,password:pw,options:{emailRedirectTo:appBase(),data:meta}});if(error)throw error;
-        if(!data.session){er.style.color='var(--ok)';er.textContent='Peaaegu valmis! Saatsime aadressile '+em+' kinnituslingi. Vajuta sellel ja oled sees.';return;}}
+        if(!data.session){er.style.color='var(--ok)';er.textContent='Peaaegu valmis! Saatsime aadressile '+em+' kinnituslingi. Vajuta sellel ja oled sees'+(acct.welcome>0?' – siis lisanduvad ka '+acct.welcome+' tervituskrediiti.':'.');return;}}
       else{const {error}=await CL.sb.auth.signInWithPassword({email:em,password:pw});if(error)throw error;}
       if(await clLoad()){$('lPass').value='';store.set('v3d_email',em);await clWelcome(true,!!meta||clIsNew());clIntoApp(true);}else er.textContent='Konto andmeid ei leitud. Kirjuta info@vaade3d.ee';
     }catch(err){er.textContent=clErr(err);}finally{btn.disabled=false;btn.removeAttribute('aria-busy');btn.textContent=t0;}};
