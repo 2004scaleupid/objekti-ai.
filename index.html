@@ -1119,6 +1119,7 @@ body.p3emb{background:transparent;margin:0;padding:0;overflow:hidden}body.p3emb 
         <div class="seg" id="rtSeg" style="background:var(--bg);border:1px solid var(--line);align-self:flex-start"><button type="button" data-rt="gable">Viilkatus</button><button type="button" data-rt="hip">Kelpkatus</button><button type="button" data-rt="flat">Lamekatus</button></div>
         <span class="fhint">Riigi LOD1 andmetes katuse kuju pole. Vali, milline katus päriselt on, ja pinnad arvutatakse ümber.</span></div>
       <div class="rows" id="rows"></div>
+      <div class="ehr" id="lod2Box" hidden></div>
       <div class="ehr" id="ehrBox"></div>
       <div style="display:flex;flex-direction:column;gap:8px"><div class="tag">Kliendile</div>
         <button type="button" class="apply" id="shareBtn" style="align-self:flex-start">Jaga kliendiga linki</button>
@@ -1696,7 +1697,7 @@ function renderPanel(){applyRoofType(HOUSES[cur]);setTimeout(()=>{const h=HOUSES
   const T=tplOf(h),base=['fp','per','h','eave','roof','wall','lot','yard','nb','tree'],keys=T&&!showAllRows?T.show:(T?SHOWK.map(k=>k[0]):base),vis=R.filter(r=>keys.includes(r[4]));
   $('rows').innerHTML=(T?`<div class="tplbar">${ticon(T,16)}<span>Mall: <b>${T.name}</b></span><button type="button" class="lnk" id="rowAll">${showAllRows?'Näita malli mõõte':'Kõik mõõdud ('+R.length+')'}</button></div>`:'')+vis.map(r=>`<div class="row"><div class="k"><span>${r[0]}${badge(r[2])}</span><small>${r[3]}</small></div><b>${r[1]}</b></div>`).join('');
   if($('rowAll'))$('rowAll').onclick=()=>{showAllRows=!showAllRows;renderPanel();};
-  renderQty();renderEhr(h);
+  renderQty();renderEhr(h);renderLod2(h);
 }
 function renderQty(){}
 function sunFace(h){if(h.roofType==='flat')return{area:h.roof,txt:'Lamekatus: paneelid alusraamil, suund vaba'};
@@ -2055,7 +2056,7 @@ function ctx(){const h=HOUSES[cur],Y=yard(h),rf=roofFaces(h),wl=wallInfo(h);
       seinad:wl,seinad_kokku_viiludega_m2:h.wall,akende_uste_pind_kokku_naidis_m2:+wl.reduce((a,w)=>a+w.akende_uste_pind_naidis_m2,0).toFixed(1),
       krunt_m:[+Y.lw.toFixed(1),+Y.ll.toFixed(1)],krunt_m2:+Y.area.toFixed(0),hoov_m2:+Y.yard.toFixed(0),lahim_puu_m:+Y.tr[0].d.toFixed(1),
       markus:'Krunt on aia hinnang (katastripiir puudub), puud ja aknad on näidis.'},
-    kasutaja_viimane_moot:lastMeasure,too:h.job?jobText(h.job):null,mall:tplOf(h)?{nimi:tplOf(h).name,naita_moote:tplOf(h).show}:null,ehitisregister:h.ehrData||null,paikesepoolne_tahk:sunFace(h),aia_pikkus_m:+(2*(Y.lw+Y.ll)).toFixed(0),
+    kasutaja_viimane_moot:lastMeasure,too:h.job?jobText(h.job):null,mall:tplOf(h)?{nimi:tplOf(h).name,naita_moote:tplOf(h).show}:null,ehitisregister:h.ehrData||null,ametlikud_moodud_maa_amet:lod2Ctx(h.lod2),paikesepoolne_tahk:sunFace(h),aia_pikkus_m:+(2*(Y.lw+Y.ll)).toFixed(0),
     ettevote:typeof acct==='undefined'?null:{nimi:acct.company,tegevusalad:acct.services,piirkond:acct.areas,katusematerjalid:acct.roofMat,fassaadimaterjalid:acct.wallMat,tootjad:acct.brands,garantii_aastat:acct.warranty,varu_katus_pct:+acct.wasteR||10,varu_fassaad_pct:+acct.wasteW||8}};}
 const hist=[];
 function addMsg(role,text){$('cpop').hidden=false;const d=document.createElement('div');d.className='msg '+(role==='user'?'u':'a');d.textContent=text;$('msgs').appendChild(d);$('msgs').scrollTop=1e6;return d;}
@@ -2284,6 +2285,23 @@ function renderEhr(h){const box=$('ehrBox');if(!box)return;const link=`https://l
   loadEhr(h.ehr).then(d=>{if(HOUSES[cur]!==h)return;h.ehrData=d;const rows=[['Kasutusotstarve',d.otstarve],['Esmane kasutus',d.esmane],['Korruseid',d.korrused],['Välissein',(d.sein||[]).join(', ')],['Fassaadi viimistlus',d.viimistlus],['Katusekate',d.katus],['Küte',d.kute],['Energiaallikas',d.energia],['Köetav pind',d.koetav?fmt(+d.koetav)+' m²':null],['Ehitisealune pind',d.alune?fmt(+d.alune)+' m²':null]].filter(r=>r[1]);
     box.innerHTML='<div class="tag">Ehitisregister</div>'+rows.map(r=>`<div class="row"><div class="k"><span>${r[0]}</span></div><b>${String(r[1]).replace(/</g,'&lt;')}</b></div>`).join('')+`<a class="fhint" href="${link}" target="_blank" rel="noopener" style="padding-top:8px">Andmed: ehitisregister (EHR ${h.ehr}) · ava registris ↗</a>`;})
   .catch(()=>{if(HOUSES[cur]!==h)return;box.innerHTML=`<div class="tag">Ehitisregister</div><div class="fhint" style="padding:8px 0">Ehitusaasta, materjalid ja küte tulevad ehitisregistrist. Selles vaates ei saanud andmeid laadida.</div><a class="ghost" href="${link}" target="_blank" rel="noopener" style="align-self:flex-start;text-decoration:none;display:inline-block">Ava ehitisregistris ↗</a>`;});}
+/* Maa-ameti LOD2: ametlikud mõõdud failidest data/lod2/NN.json (NN = EHR 2 viimast numbrit, vt scripts/lod2_tiles.py) */
+const LOD2C={},LOD2_SRC='Hoonete 3D-mudelid: Maa- ja Ruumiamet 2026',DIR8=['põhja','kirdesse','itta','kagusse','lõunasse','edelasse','läände','loodesse'];
+function loadLod2(ehr){ehr=String(ehr||'');if(!/^\d{2,}$/.test(ehr))return Promise.resolve(null);const k=ehr.slice(-2);
+  LOD2C[k]=LOD2C[k]||fetch('data/lod2/'+k+'.json').then(r=>r.ok?r.json():{}).catch(()=>{delete LOD2C[k];return {};});
+  return LOD2C[k].then(d=>d[ehr]||null);}
+function lod2Face(f){return f[2]==null?'lame':`${fmt(f[1],0)}° kalle, vaatab ${DIR8[Math.round(f[2]/45)%8]}`;}
+function lod2Ctx(m){return m?{pohiplaan_m2:m.fp,perimeeter_m:m.per,korgeim_punkt_m:m.ridge,raasta_korgus_m:m.eave,katus_kokku_m2:m.roof,seinad_kokku_m2_aknad_sees:m.wall,
+  katusetahud:m.f.slice(0,12).map(f=>({pind_m2:f[0],kalle_kraadi:f[1],suund:f[2]==null?'lame':DIR8[Math.round(f[2]/45)%8]})),allikas:LOD2_SRC,
+  markus:'Ametlikud mõõdud riigi mõõdistatud LOD2-mudelist. Eelista neid hinnangutele ja ütle, et need on ametlikud (Maa-amet).'}:null;}
+function renderLod2(h){const box=$('lod2Box');if(!box)return;box.hidden=true;
+  loadLod2(h.ehr).then(m=>{if(HOUSES[cur]!==h)return;h.lod2=m;if(!m)return;const big=m.f.slice(0,6),rest=m.f.length-big.length;
+    const rows=[['Ehitisealune pind',fmt(m.fp)+' m²'],['Perimeeter',fmt(m.per)+' m'],['Kõrgeim punkt',fmt(m.ridge,2)+' m','Maapinnast'],['Räästa kõrgus',fmt(m.eave,1)+' m','Suurima katusetahu alumine serv'],
+      ['Katuse pind',fmt(m.roof)+' m²',m.f.length+(m.f.length===1?' tahk':' tahku')],['Seinte pind',fmt(m.wall)+' m²','Aknad maha arvamata'],
+      ...big.map((f,i)=>['Katusetahk '+(i+1),fmt(f[0])+' m²',lod2Face(f)])];
+    box.innerHTML='<div class="tag">Ametlikud mõõdud (Maa-amet)</div>'+rows.map(r=>`<div class="row"><div class="k"><span>${r[0]}</span>${r[2]?`<small>${r[2]}</small>`:''}</div><b>${r[1]}</b></div>`).join('')
+      +(rest>0?`<div class="fhint" style="padding-top:6px">+ ${rest} väiksemat katusetahku</div>`:'')+`<div class="fhint" style="padding-top:8px">${LOD2_SRC} · LOD2${m.t?', mõõdistatud '+m.t.slice(0,4):''}</div>`;
+    box.hidden=false;});}
 /* ---------- share link + client view ---------- */
 const b64e=o=>btoa(unescape(encodeURIComponent(JSON.stringify(o)))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
 const b64d=t=>{try{t=t.replace(/-/g,'+').replace(/_/g,'/');while(t.length%4)t+='=';return JSON.parse(decodeURIComponent(escape(atob(t))));}catch(e){return null;}};
