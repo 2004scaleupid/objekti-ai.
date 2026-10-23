@@ -1,0 +1,187 @@
+<title>Magamistuba 3D</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@500;600;700;800&family=JetBrains+Mono:wght@500&display=swap">
+<style>
+/* Layout: full-bleed 3D room, header top-left, source photo thumbnail top-right, option pills bottom. */
+:root{--bg:#ECE8E2;--paper:#F8F6F2;--ink:#16130F;--muted:#77706A;--accent:#E5482D;--chip:rgba(255,255,255,.92);--chipfg:#16130F;
+ --sans:"Inter Tight","Helvetica Neue",Arial,sans-serif;--mono:"JetBrains Mono",ui-monospace,Menlo,monospace}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#1A1816;--paper:#22201D;--ink:#F1ECE5;--muted:#A39B92;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#1A1816;--paper:#22201D;--ink:#F1ECE5;--muted:#A39B92;color-scheme:dark}
+html,body{height:100%}
+body{background:var(--bg);color:var(--ink);font-family:var(--sans);overflow:hidden}
+#c{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:none}
+header{position:fixed;top:env(safe-area-inset-top,0px);left:0;padding:14px max(16px,env(safe-area-inset-left,0px));pointer-events:none;max-width:60%}
+h1{margin:0;font-size:20px;letter-spacing:-.02em}
+header p{margin:3px 0 0;color:var(--muted);font-size:13px;max-width:34em}
+.src{position:fixed;top:calc(12px + env(safe-area-inset-top,0px));right:max(16px,env(safe-area-inset-right,0px));width:168px;border-radius:10px;overflow:hidden;box-shadow:0 12px 30px rgba(0,0,0,.25);background:#fff}
+.src img{display:block;width:100%}
+.src span{position:absolute;left:6px;top:6px;font:500 9.5px var(--mono);letter-spacing:.06em;text-transform:uppercase;background:rgba(22,19,15,.8);color:#fff;border-radius:4px;padding:2px 6px}
+#ui{position:fixed;left:0;right:0;bottom:calc(14px + env(safe-area-inset-bottom,0px));display:flex;flex-wrap:wrap;gap:6px;justify-content:center;padding:0 max(16px,env(safe-area-inset-left,0px))}
+.g{display:flex;gap:2px;padding:3px;border-radius:999px;background:var(--chip);box-shadow:0 6px 20px rgba(0,0,0,.12)}
+.g button{border:0;background:none;color:var(--chipfg);font:600 12.5px var(--sans);padding:6px 11px;border-radius:999px;cursor:pointer;display:inline-flex;gap:6px;align-items:center}
+.g button.on{background:#16130F;color:#fff}
+.sw{width:10px;height:10px;border-radius:50%;border:1px solid rgba(0,0,0,.2)}
+#st{position:fixed;inset:0;display:grid;place-items:center;color:var(--muted);font:500 12px var(--mono);pointer-events:none}
+@media (max-width:640px){.src{width:96px}header{max-width:70%}header p{display:none}#ui{flex-wrap:nowrap;overflow-x:auto;justify-content:flex-start}.g{flex:none}}
+</style>
+<canvas id="c" aria-label="Magamistuba 3D-s, lohista pööramiseks"></canvas>
+<div id="st">Ehitan tuba…</div>
+<header><h1>Magamistuba → 3D</h1><p>Ühest fotost ehitatud 3D-ruum, materjalid fotolt. Lohista pööramiseks, keri suumimiseks, vaheta materjale all.</p></header>
+<div class="src"><img src="tuba.jpg" alt="Lähtefoto"><span>Foto</span></div>
+<div id="ui">
+ <div class="g" data-k="view"><button data-v="cut" class="on">Lõikevaade</button><button data-v="in">Seest</button></div>
+ <div class="g" data-k="wall"><button data-v="F2F0EC" class="on"><i class="sw" style="background:#F2F0EC"></i>Valge</button><button data-v="B9C2B0"><i class="sw" style="background:#B9C2B0"></i>Salvei</button><button data-v="D9C7B3"><i class="sw" style="background:#D9C7B3"></i>Liiv</button><button data-v="5E6670"><i class="sw" style="background:#5E6670"></i>Grafiit</button></div>
+ <div class="g" data-k="floor"><button data-v="oak" class="on">Tamm</button><button data-v="dark">Tume puit</button></div>
+ <div class="g" data-k="time"><button data-v="day" class="on">Päev</button><button data-v="eve">Õhtu</button></div>
+</div>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"}}</script>
+<script type="module">
+import * as THREE from 'three';
+import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
+import {RoundedBoxGeometry} from 'three/addons/geometries/RoundedBoxGeometry.js';
+import {RoomEnvironment} from 'three/addons/environments/RoomEnvironment.js';
+import {RectAreaLightUniformsLib} from 'three/addons/lights/RectAreaLightUniformsLib.js';
+import {EffectComposer} from 'three/addons/postprocessing/EffectComposer.js';
+import {RenderPass} from 'three/addons/postprocessing/RenderPass.js';
+import {GTAOPass} from 'three/addons/postprocessing/GTAOPass.js';
+import {OutputPass} from 'three/addons/postprocessing/OutputPass.js';
+const st=document.getElementById('st');
+try{
+RectAreaLightUniformsLib.init();
+const cv=document.getElementById('c');
+const R=new THREE.WebGLRenderer({canvas:cv,antialias:true,alpha:true});
+R.setPixelRatio(Math.min(devicePixelRatio,2));R.outputColorSpace=THREE.SRGBColorSpace;R.toneMapping=THREE.ACESFilmicToneMapping;R.toneMappingExposure=.9;
+R.shadowMap.enabled=true;R.shadowMap.type=THREE.VSMShadowMap;
+const S=new THREE.Scene();S.environment=new THREE.PMREMGenerator(R).fromScene(new RoomEnvironment(),0.04).texture;S.environmentIntensity=.45;
+const cam=new THREE.PerspectiveCamera(40,1,.05,60);const ctl=new OrbitControls(cam,cv);ctl.enableDamping=true;
+const CMP=new EffectComposer(R);CMP.addPass(new RenderPass(S,cam));const AO=new GTAOPass(S,cam,innerWidth,innerHeight);AO.updateGtaoMaterial({radius:.35,distanceExponent:1.4,thickness:1.2,scale:1.1,samples:16});AO.blendIntensity=.9;CMP.addPass(AO);CMP.addPass(new OutputPass());
+function size(){const w=innerWidth,h=innerHeight;R.setSize(w,h,false);CMP.setSize(w,h);cam.aspect=w/h;cam.updateProjectionMatrix();}addEventListener('resize',size);size();
+const AN=R.capabilities.getMaxAnisotropy();
+
+// ---- procedural textures (canvas) ----
+function ctex(w,h,draw,rep=[1,1]){const c=document.createElement('canvas');c.width=w;c.height=h;const x=c.getContext('2d');draw(x,w,h);const t=new THREE.CanvasTexture(c);t.colorSpace=THREE.SRGBColorSpace;t.wrapS=t.wrapT=THREE.RepeatWrapping;t.repeat.set(...rep);t.anisotropy=AN;return t;}
+const rnd=(a,b)=>a+Math.random()*(b-a);
+function grain(x,w,h,base,dark,vertical,n=260){x.fillStyle=base;x.fillRect(0,0,w,h);for(let i=0;i<n;i++){x.strokeStyle=`rgba(${dark},${rnd(.04,.16)})`;x.lineWidth=rnd(.6,2.2);x.beginPath();let p=rnd(0,vertical?w:h);for(let s=0;s<=40;s++){const t=s/40*(vertical?h:w),o=p+Math.sin(t*rnd(.01,.03)+i)*rnd(2,7);vertical?x.lineTo(o,t):x.lineTo(t,o);}x.stroke();}}
+function planks(tone){return ctex(1024,1024,(x,w,h)=>{const pw=w/7;for(let i=0;i<7;i++){let y=-rnd(0,h);while(y<h){const L=rnd(h*.45,h*.9);const c=document.createElement('canvas');c.width=pw;c.height=L;const cx=c.getContext('2d');
+  const k=rnd(-14,14);grain(cx,pw,L,`rgb(${tone[0]+k},${tone[1]+k},${tone[2]+k*.7})`,tone[3],true,60);x.drawImage(c,i*pw,y);x.fillStyle='rgba(40,25,15,.45)';x.fillRect(i*pw,y,pw,2);x.fillRect(i*pw,y,1.5,L);y+=L;}}},[2.2,2.2]);}
+const TL=new THREE.TextureLoader();const img=(f,r)=>{const t=TL.load(f);t.colorSpace=THREE.SRGBColorSpace;t.wrapS=t.wrapT=THREE.RepeatWrapping;t.repeat.set(...r);t.anisotropy=AN;return t;};
+const raw=(f,r)=>{const t=TL.load(f);t.wrapS=t.wrapT=THREE.RepeatWrapping;t.repeat.set(...r);return t;};
+const T={
+ oak:img('t_oak.jpg',[3.2,4.2]), oakB:raw('t_oak.jpg',[3.2,4.2]), dark:img('t_oak.jpg',[3.2,4.2]),
+ walnut:img('t_walnut.jpg',[1,1.6]), walnutB:raw('t_walnut.jpg',[1,1.6]), boucle:img('t_boucle.jpg',[2,1.2]), boucleB:raw('t_boucle.jpg',[2,1.2]), waffleI:img('t_waffle.jpg',[11,7]), waffleB:raw('t_waffle.jpg',[11,7]), rugI:img('t_rug.jpg',[2.5,3]), rugB:raw('t_rug.jpg',[2.5,3]), linenI:img('t_linen.jpg',[2,2]), linenB:raw('t_linen.jpg',[2,2]),
+ fabric:ctex(256,256,(x,w,h)=>{x.fillStyle='#BEBCB8';x.fillRect(0,0,w,h);for(let i=0;i<9000;i++){x.fillStyle=`rgba(${Math.random()<.5?255:90},${Math.random()<.5?255:90},${Math.random()<.5?255:90},.07)`;x.fillRect(rnd(0,w),rnd(0,h),1,1);}},[3,3]),
+ rug:ctex(512,512,(x,w,h)=>{x.fillStyle='#B9B5AF';x.fillRect(0,0,w,h);for(let i=0;i<40000;i++){const v=rnd(140,215);x.fillStyle=`rgba(${v},${v-2},${v-5},.35)`;x.fillRect(rnd(0,w),rnd(0,h),rnd(1,2.5),rnd(1,2.5));}},[4,4]),
+ waffle:ctex(256,256,(x,w,h)=>{x.fillStyle='#2A2B2D';x.fillRect(0,0,w,h);const n=8,s=w/n;for(let i=0;i<n;i++)for(let j=0;j<n;j++){x.fillStyle='#1B1C1E';x.fillRect(i*s+5,j*s+5,s-10,s-10);x.fillStyle='rgba(255,255,255,.06)';x.fillRect(i*s+5,j*s+5,s-10,2);}},[10,7]),
+ linen:ctex(512,512,(x,w,h)=>{x.fillStyle='#F3F2EF';x.fillRect(0,0,w,h);for(let i=0;i<70;i++){x.strokeStyle=`rgba(120,115,110,${rnd(.03,.09)})`;x.lineWidth=rnd(2,7);x.beginPath();x.moveTo(rnd(0,w),rnd(0,h));x.bezierCurveTo(rnd(0,w),rnd(0,h),rnd(0,w),rnd(0,h),rnd(0,w),rnd(0,h));x.stroke();}},[1,1]),
+};
+const M={
+ wall:new THREE.MeshStandardMaterial({color:0xF2F0EC,roughness:.95}),
+ ceil:new THREE.MeshStandardMaterial({color:0xF7F6F4,roughness:1}),
+ floor:new THREE.MeshStandardMaterial({map:T.oak,bumpMap:T.oakB,bumpScale:.6,roughness:.5}),
+ walnut:new THREE.MeshStandardMaterial({map:T.walnut,bumpMap:T.walnutB,bumpScale:.3,roughness:.42}),
+ fabric:new THREE.MeshStandardMaterial({map:T.boucle,bumpMap:T.boucleB,bumpScale:2.5,roughness:1}),
+ pillowG:new THREE.MeshStandardMaterial({color:0x9A9897,roughness:1,map:T.boucle,bumpMap:T.boucleB,bumpScale:2}),
+ pillowW:new THREE.MeshStandardMaterial({map:T.linenI,bumpMap:T.linenB,bumpScale:2,roughness:1}),
+ linen:new THREE.MeshStandardMaterial({map:T.linenI,bumpMap:T.linenB,bumpScale:3,roughness:1}),
+ waffle:new THREE.MeshStandardMaterial({map:T.waffleI,bumpMap:T.waffleB,bumpScale:4,roughness:1,side:THREE.DoubleSide}),
+ rug:new THREE.MeshStandardMaterial({color:0xD2CEC8,map:T.rugI,bumpMap:T.rugB,bumpScale:4,roughness:1}),
+ trim:new THREE.MeshStandardMaterial({color:0xF4F3F0,roughness:.6}),
+ black:new THREE.MeshStandardMaterial({color:0x111111,roughness:.35,metalness:.3}),
+ brass:new THREE.MeshStandardMaterial({color:0xB8955A,roughness:.3,metalness:1}),
+ wood:new THREE.MeshStandardMaterial({color:0xC49A68,roughness:.5}),
+ curtain:new THREE.MeshPhysicalMaterial({color:0xFFFFFF,roughness:1,transparent:true,opacity:.78,side:THREE.DoubleSide,emissive:0xFFFFFF,emissiveIntensity:.3,sheen:1,sheenColor:0xffffff}),
+ glass:new THREE.MeshBasicMaterial({color:0xF4F8FF}),
+};
+const room=new THREE.Group();S.add(room);
+function box(w,h,d,m,x,y,z,o={}){const g=o.r?new RoundedBoxGeometry(w,h,d,4,o.r):new THREE.BoxGeometry(w,h,d);const me=new THREE.Mesh(g,m);me.position.set(x,y,z);me.castShadow=o.cast!==false;me.receiveShadow=true;(o.p||room).add(me);return me;}
+
+// ---- room shell: x -1.6..1.6, z 0 (back) .. 4.2 (door), h 2.7 ----
+const W=3.2,D=4.2,H=2.7,hx=W/2;
+const fl=new THREE.Mesh(new THREE.PlaneGeometry(W,D),M.floor);fl.rotation.x=-Math.PI/2;fl.position.set(0,0,D/2);fl.receiveShadow=true;room.add(fl);
+
+const back=box(W,H,.1,M.wall,0,H/2,-.05,{cast:false});
+const left=box(.1,H,D,M.wall,-hx-.05,H/2,D/2,{cast:false});
+const cut=new THREE.Group();room.add(cut);   // hidden in cutaway
+box(W,.1,D,M.ceil,0,H+.05,D/2,{p:cut,cast:false});
+box(W,H,.1,M.wall,0,H/2,D+.05,{p:cut,cast:false});
+// right wall: window opening z 0.35..4.05 full height
+box(.1,H,.35,M.wall,hx+.05,H/2,.175,{cast:false});box(.1,H,.15,M.wall,hx+.05,H/2,D-.075,{cast:false});
+const glass=new THREE.Mesh(new THREE.PlaneGeometry(3.7,H-.1),M.glass);glass.rotation.y=-Math.PI/2;glass.position.set(hx+.09,H/2,2.2);room.add(glass);
+for(const z of [0.35,1.6,2.85,4.05])box(.06,H-.1,.05,M.trim,hx+.07,H/2,z,{cast:false});
+// skirting
+box(W,.07,.015,M.trim,0,.035,.008,{cast:false});box(.015,.07,D,M.trim,-hx+.008,.035,D/2,{cast:false});
+
+// curtains (folded)
+function curtain(z0,z1){const n=Math.round((z1-z0)/.02);const g=new THREE.PlaneGeometry(z1-z0,H-.12,n*2,1);const p=g.attributes.position;for(let i=0;i<p.count;i++){const u=p.getX(i);p.setZ(i,Math.sin((u+z1)*Math.PI/.11)*.045+Math.sin((u+z1)*Math.PI/.031)*.006);}g.computeVertexNormals();
+ const m=new THREE.Mesh(g,M.curtain);m.rotation.y=-Math.PI/2;m.position.set(hx-.14,(H-.12)/2+.02,(z0+z1)/2);m.castShadow=false;room.add(m);}
+curtain(.38,1.95);curtain(2.0,4.02);
+box(.03,.03,3.7,M.trim,hx-.14,H-.08,2.2,{cast:false});
+
+// wardrobe on left wall, z 0..1.75, depth .6, floor-to-ceiling with upper boxes
+const wd=new THREE.Group();room.add(wd);
+const wx=-hx+.3;
+box(.6,H-.02,1.75,M.walnut,wx,(H-.02)/2,.875,{p:wd});
+for(const z of [.58,1.16])box(.012,H-.04,.006,M.black,wx+.302,(H-.02)/2,z,{p:wd,cast:false});
+box(.012,.006,1.73,M.black,wx+.302,2.02,.875,{p:wd,cast:false});
+for(const z of [1.12,1.2])box(.015,.08,.01,M.brass,wx+.31,1.18,z,{p:wd});
+for(const z of [.54,.62])box(.015,.04,.01,M.brass,wx+.31,2.08,z,{p:wd});
+
+// bed: headboard, frame, legs, mattress+duvet, pillows, throw
+const bx=.0,bw=1.6,bl=2.05;
+box(1.68,1.0,.09,M.fabric,bx,.98,.05,{r:.03});
+box(bw,.14,bl,M.wood,bx,.27,.1+bl/2,{r:.01});
+for(const[x,z] of [[-.72,.25],[.72,.25],[-.72,2.05],[.72,2.05]]){const l=new THREE.Mesh(new THREE.CylinderGeometry(.025,.018,.2,12),M.wood);l.position.set(bx+x,.1,z);room.add(l);}
+box(bw-.02,.18,bl-.02,M.linen,bx,.43,.1+bl/2,{r:.05});
+{const g=new THREE.PlaneGeometry(bw+.08,bl-.1,80,100);g.rotateX(-Math.PI/2);const p=g.attributes.position;
+ for(let i=0;i<p.count;i++){const x=p.getX(i),z=p.getZ(i);let y=.535+Math.sin(x*9+z*3)*.012+Math.sin(z*14+x*2)*.008+Math.cos(x*23-z*11)*.004;const ox=Math.abs(x)-(bw/2-.02);if(ox>0)y-=ox*2.2;p.setXYZ(i,x+bx,y,z+.1+bl/2+.04);}
+ g.computeVertexNormals();const d=new THREE.Mesh(g,M.linen);d.castShadow=d.receiveShadow=true;room.add(d);}
+box(.68,.42,.16,M.pillowW,bx-.38,.72,.2,{r:.07}).rotation.x=.25;box(.68,.42,.16,M.pillowW,bx+.38,.72,.2,{r:.07}).rotation.x=.25;
+box(.64,.34,.15,M.pillowG,bx-.37,.69,.33,{r:.065}).rotation.x=.3;box(.64,.34,.15,M.pillowG,bx+.37,.69,.33,{r:.065}).rotation.x=.3;
+{// throw: drapes over lower half and both sides
+ const tw=2.3,td=1.55,g=new THREE.PlaneGeometry(tw,td,90,60);g.rotateX(-Math.PI/2);const p=g.attributes.position;const top=.585,half=bw/2-.02,zEnd=.1+bl;
+ for(let i=0;i<p.count;i++){const x=p.getX(i),z=p.getZ(i)+ (zEnd-td/2+.32);let y=top,X=x,Z=z;
+  const ox=Math.max(0,Math.abs(x)-half);if(ox>0){y=top-ox;X=Math.sign(x)*(half+.02+Math.sin(ox*9)*.008);}
+  const oz=Math.max(0,z-zEnd);if(oz>0){y=Math.min(y,top-oz);Z=zEnd+.02;}
+  y+=Math.sin(x*7+z*5)*.01+Math.sin(x*13-z*4)*.006+Math.cos(z*17)*.004;p.setXYZ(i,X+bx,Math.max(y,.17),Z);}
+ g.computeVertexNormals();const m=new THREE.Mesh(g,M.waffle);m.castShadow=true;m.receiveShadow=true;room.add(m);}
+// rug
+const rug=new THREE.Mesh(new RoundedBoxGeometry(2.55,.012,3.0,2,.006),M.rug);rug.position.set(.05,.006,2.1);rug.receiveShadow=true;room.add(rug);
+
+// floating nightstand + pendant
+box(.46,.17,.38,M.walnut,1.15,.6,.2,{r:.008});
+box(.4,.004,.004,M.black,1.15,.6,.391,{cast:false});
+const cord=new THREE.Mesh(new THREE.CylinderGeometry(.003,.003,1.05,6),M.black);cord.position.set(1.15,H-.525,.32);room.add(cord);
+const shade=new THREE.Mesh(new THREE.ConeGeometry(.13,.14,32,1,true),M.black);shade.position.set(1.15,1.52,.32);room.add(shade);
+box(.035,.08,.035,M.black,1.15,1.62,.32,{r:.01});
+const bulb=new THREE.Mesh(new THREE.SphereGeometry(.03,16,12),new THREE.MeshBasicMaterial({color:0xFFE2B0}));bulb.position.set(1.15,1.46,.32);room.add(bulb);
+// ceiling spot + door frame + switch
+const spot=new THREE.Mesh(new THREE.CircleGeometry(.04,20),new THREE.MeshBasicMaterial({color:0xFFFFFF}));spot.rotation.x=Math.PI/2;spot.position.set(-.6,H-.002,1.2);cut.add(spot);
+
+// ---- lights ----
+const hemi=new THREE.HemisphereLight(0xF6F4F0,0x8A7660,.55);S.add(hemi);
+const win=new THREE.RectAreaLight(0xEAF1FF,5.5,3.6,H-.2);win.position.set(hx-.02,H/2,2.2);win.lookAt(-hx,H/2-.2,2.2);S.add(win);
+const sun=new THREE.DirectionalLight(0xFFF6EA,1.6);sun.position.set(6,4.2,3.2);sun.target.position.set(-.5,0,1.6);sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);
+Object.assign(sun.shadow.camera,{left:-4,right:4,top:4,bottom:-4,near:.5,far:20});sun.shadow.radius=10;sun.shadow.blurSamples=20;sun.shadow.bias=-.0004;S.add(sun);S.add(sun.target);
+const lamp=new THREE.PointLight(0xFFC98A,.0,3.5,2);lamp.position.set(1.15,1.44,.32);lamp.castShadow=true;lamp.shadow.radius=6;S.add(lamp);
+const wash=new THREE.SpotLight(0xFFC98A,0,3,.9,.8,1.6);wash.position.set(1.15,1.45,.32);wash.target.position.set(1.15,0,.3);S.add(wash);S.add(wash.target);
+
+// ---- views ----
+const V={cut:{p:[1.0,5.4,8.6],t:[-.1,.7,1.9]},in:{p:[.25,1.5,4.12],t:[-.05,1.0,0]}};
+let anim=null;function go(k,inst){const v=V[k];const from=cam.position.clone(),ft=ctl.target.clone(),tp=new THREE.Vector3(...v.p),tt=new THREE.Vector3(...v.t);
+ cut.visible=k==='in';ctl.minDistance=k==='in'?.5:3;ctl.maxDistance=k==='in'?4.5:16;cam.fov=k==='in'?62:38;cam.updateProjectionMatrix();
+ if(inst){cam.position.copy(tp);ctl.target.copy(tt);return;}const t0=performance.now();anim=t=>{const p=Math.min(1,(t-t0)/1100),e=p<.5?4*p*p*p:1-Math.pow(-2*p+2,3)/2;cam.position.lerpVectors(from,tp,e);ctl.target.lerpVectors(ft,tt,e);if(p>=1)anim=null;};}
+go('cut',true);
+// keep cutaway walls from blocking: hide wall facing camera
+function autohide(){if(cut.visible)return;const d=cam.position.clone().sub(new THREE.Vector3(0,1,D/2));left.visible=cam.position.x>-hx;back.visible=cam.position.z>0;}
+
+// ---- UI ----
+document.querySelectorAll('.g').forEach(g=>g.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;g.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));const k=g.dataset.k,v=b.dataset.v;
+ if(k==='view')go(v);
+ if(k==='wall')M.wall.color.set('#'+v);
+ if(k==='floor'){M.floor.color.set(v==='dark'?0x6E4E3A:0xFFFFFF);}
+ if(k==='time'){const eve=v==='eve';sun.intensity=eve?.0:1.6;win.intensity=eve?.6:5.5;win.color.set(eve?0x7C8DB8:0xEAF1FF);hemi.intensity=eve?.12:.55;S.environmentIntensity=eve?.12:.45;lamp.intensity=eve?2.2:0;wash.intensity=eve?5:0;M.glass.color.set(eve?0x2A3550:0xF4F8FF);M.curtain.emissiveIntensity=eve?.02:.18;R.toneMappingExposure=eve?1.15:.9;}
+}));
+st.remove();
+(function loop(t){requestAnimationFrame(loop);if(anim)anim(t);autohide();ctl.update();CMP.render();})();
+}catch(e){st.textContent='Viga: '+e.message;}
+</script>

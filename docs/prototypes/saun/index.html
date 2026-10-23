@@ -1,0 +1,168 @@
+<!doctype html><html lang="et"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Saun 3D</title>
+<style>
+:root{--bg:#eceae6;--fg:#1d1b18;--mut:#6b655c;--chip:#ffffffcc;--chipb:#0000001a;--on:#1d1b18;--onfg:#fff}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#1b1a18;--fg:#f1ede6;--mut:#a39c90;--chip:#2a2825cc;--chipb:#ffffff1f;--on:#f1ede6;--onfg:#1b1a18}}
+:root[data-theme="dark"]{--bg:#1b1a18;--fg:#f1ede6;--mut:#a39c90;--chip:#2a2825cc;--chipb:#ffffff1f;--on:#f1ede6;--onfg:#1b1a18}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--fg);font:14px/1.4 system-ui,sans-serif;overflow:hidden}
+#c{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none}
+header{position:absolute;top:0;left:0;right:0;padding:14px 16px;pointer-events:none}
+h1{margin:0;font-size:18px}header p{margin:3px 0 0;color:var(--mut);font-size:13px}
+#ui{position:absolute;left:0;right:0;bottom:0;padding:12px 16px 16px;display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
+.g{display:flex;gap:4px;background:var(--chip);border:1px solid var(--chipb);border-radius:999px;padding:4px;backdrop-filter:blur(8px)}
+.g button{border:0;background:none;color:var(--fg);font:inherit;padding:6px 11px;border-radius:999px;cursor:pointer}
+.g button.on{background:var(--on);color:var(--onfg)}
+#st{position:absolute;top:50%;left:0;right:0;text-align:center;color:var(--mut)}
+</style></head><body>
+<canvas id="c"></canvas>
+<header><h1>Saun 3D</h1><p>Ehitatud mõõtudega 3D-na, päris valgustusega. Keera ja suumi.</p></header>
+<div id="st">Laen…</div>
+<div id="ui">
+ <div class="g" data-k="wood"><button data-v="thermo" class="on">Termopuu</button><button data-v="aspen">Haab</button><button data-v="alder">Lepp</button></div>
+ <div class="g" data-k="light"><button data-v="on" class="on">LED sees</button><button data-v="off">LED väljas</button></div>
+ <div class="g" data-k="cut"><button data-v="cut" class="on">Lõige</button><button data-v="closed">Kinnine</button></div>
+</div>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"}}</script>
+<script type="module">
+import * as THREE from 'three';
+import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
+import {RoomEnvironment} from 'three/addons/environments/RoomEnvironment.js';
+import {RectAreaLightUniformsLib} from 'three/addons/lights/RectAreaLightUniformsLib.js';
+const st=document.getElementById('st');
+try{
+RectAreaLightUniformsLib.init();
+const cv=document.getElementById('c');
+const R=new THREE.WebGLRenderer({canvas:cv,antialias:true,alpha:true});
+R.setPixelRatio(Math.min(devicePixelRatio,2));R.outputColorSpace=THREE.SRGBColorSpace;
+R.toneMapping=THREE.ACESFilmicToneMapping;R.toneMappingExposure=1.0;R.shadowMap.enabled=true;R.shadowMap.type=THREE.PCFSoftShadowMap;
+const S=new THREE.Scene();
+S.environment=new THREE.PMREMGenerator(R).fromScene(new RoomEnvironment(),0.04).texture;S.environmentIntensity=0.55;
+const cam=new THREE.PerspectiveCamera(32,1,0.05,60);
+const ctl=new OrbitControls(cam,cv);ctl.enableDamping=true;ctl.target.set(1.05,0.9,0.7);ctl.minDistance=2;ctl.maxDistance=12;ctl.maxPolarAngle=Math.PI*0.52;
+cam.position.set(-1.6,3.4,6.3);
+function size(){const w=innerWidth,h=innerHeight;R.setSize(w,h,false);cam.aspect=w/h;cam.fov=w<h?48:32;cam.updateProjectionMatrix();}addEventListener('resize',size);size();
+
+// textures
+const TL=new THREE.TextureLoader();const aniso=R.capabilities.getMaxAnisotropy();
+const tex=(f)=>{const t=TL.load(f);t.colorSpace=THREE.SRGBColorSpace;t.wrapS=t.wrapT=THREE.RepeatWrapping;t.anisotropy=aniso;return t;};
+const T={dark:tex('wood_dark.jpg'),light:tex('wood_light.jpg'),bench:tex('bench.jpg'),stone:tex('stone.jpg'),floor:tex('floor.jpg')};
+const M={
+ dark:new THREE.MeshStandardMaterial({map:T.dark,roughness:0.62}),
+ light:new THREE.MeshStandardMaterial({map:T.light,roughness:0.6}),
+ bench:new THREE.MeshStandardMaterial({map:T.bench,roughness:0.5}),
+ ext:new THREE.MeshStandardMaterial({map:T.light,roughness:0.65,color:0xf2e2c8}),
+ stone:new THREE.MeshStandardMaterial({map:T.stone,roughness:0.85}),
+ floor:new THREE.MeshStandardMaterial({map:T.floor,roughness:0.8,color:0x9a9a9a}),
+ wool:new THREE.MeshStandardMaterial({color:0xb7a85a,roughness:1}),
+ cap:new THREE.MeshStandardMaterial({color:0xd9bf91,roughness:0.7}),
+ base:new THREE.MeshStandardMaterial({color:0xd5d3cf,roughness:0.5,metalness:0.2}),
+ steel:new THREE.MeshStandardMaterial({color:0xcfd2d4,roughness:0.22,metalness:1}),
+ dsteel:new THREE.MeshStandardMaterial({color:0x2b2b2b,roughness:0.5,metalness:0.6}),
+ rock:new THREE.MeshStandardMaterial({color:0x3a3a3a,roughness:0.95}),
+ glass:new THREE.MeshPhysicalMaterial({color:0x30363a,roughness:0.04,metalness:0.2,transparent:true,opacity:0.55}),
+ led:new THREE.MeshStandardMaterial({color:0x000000,emissive:0xffc477,emissiveIntensity:3}),
+};
+// world-scale planar UVs so boards keep real size (1 texture = 1 m)
+function wuv(g,rot=false){const p=g.attributes.position,n=g.attributes.normal,uv=g.attributes.uv;
+ for(let i=0;i<p.count;i++){const x=p.getX(i),y=p.getY(i),z=p.getZ(i),ax=Math.abs(n.getX(i)),ay=Math.abs(n.getY(i));
+  let u,v; if(ay>0.5){u=x;v=z;if(rot){u=z;v=x;}} else if(ax>0.5){u=z;v=y;} else {u=x;v=y;}
+  uv.setXY(i,u,v);} uv.needsUpdate=true;return g;}
+const root=new THREE.Group();S.add(root);
+function box(x0,x1,y0,y1,z0,z1,m,opt={}){
+ const g=new THREE.BoxGeometry(x1-x0,y1-y0,z1-z0);g.translate((x0+x1)/2,(y0+y1)/2,(z0+z1)/2);wuv(g,opt.rot);
+ const o=new THREE.Mesh(g,m);o.castShadow=opt.cast!==false;o.receiveShadow=true;(opt.parent||root).add(o);return o;}
+
+// --- dimensions (m): interior x 0..2.0, z 0..1.75 (front), y 0..2.1
+const W=2.0,D=1.75,H=2.1,t=0.11;
+// floor slab + base
+box(-t,W+t,-0.06,0,-t,D+0.02,M.floor,{cast:false});
+box(-t-0.01,W+t+0.01,-0.1,-0.06,-t-0.01,D+0.03,M.base,{cast:false});
+// layered wall: inner boards, wool core, outer cladding, top cap
+function wallX(x,inner,z0,z1,y1,side){ // wall plane at x, thickness toward outside (side=-1 left, +1 right)
+ const a=x,b=x+side*0.02,c=x+side*0.09,d=x+side*t;
+ box(Math.min(a,b),Math.max(a,b),0,y1,z0,z1,inner);box(Math.min(b,c),Math.max(b,c),0,y1,z0,z1,M.wool,{cast:false});box(Math.min(c,d),Math.max(c,d),0,y1,z0,z1,M.ext);
+ box(Math.min(a,d),Math.max(a,d),y1,y1+0.03,z0-(side<0?0:0),z1,M.cap);}
+function wallZ(z,inner,x0,x1,y0,y1){const a=z,b=z-0.02,c=z-0.09,d=z-t;
+ box(x0,x1,y0,y1,b,a,inner);box(x0,x1,y0,y1,c,b,M.wool,{cast:false});box(x0,x1,y0,y1,d,c,M.ext);}
+// back wall: lower light, upper dark (thermo), stone niche on right
+const SX=1.48;
+wallZ(0,M.light,0,SX,0,1.32);
+wallZ(0,M.dark,0,SX,1.32,H);
+box(-t,W+t,H,H+0.03,-t,0,M.cap);
+// stone niche back + right wall stone part
+wallZ(0,M.stone,SX,W,0,H);
+// right wall (x=W): stone near the stove, wood, glass door near the front
+const RZ=0.62,DZ0=1.02,DZ1=1.6;
+wallX(W,M.stone,0,RZ,H,1);
+wallX(W,M.light,RZ,DZ0,H,1);
+box(W,W+t,1.98,H,DZ0,DZ1,M.light);box(W,W+t,H,H+0.03,DZ0,DZ1,M.cap);
+wallX(W,M.light,DZ1,D,H,1);
+box(W-0.01,W+t+0.01,0,1.98,DZ0-0.03,DZ0,M.cap);box(W-0.01,W+t+0.01,0,1.98,DZ1,DZ1+0.03,M.cap);
+const door=new THREE.Mesh(new THREE.BoxGeometry(0.012,1.96,DZ1-DZ0),M.glass);door.position.set(W+0.05,0.98,(DZ0+DZ1)/2);root.add(door);
+box(W-0.02,W,0.95,1.02,DZ0+0.05,DZ0+0.08,M.steel);
+// closed version: left wall, front wall, roof (hidden by default)
+const closed=new THREE.Group();closed.visible=false;root.add(closed);
+{const P={parent:closed};box(-t,0,0,H,-t,D+t,M.ext,P);box(-t,W+t,0,H,D,D+t,M.ext,P);box(-t,W+t,H,H+0.08,-t,D+t,M.ext,P);}
+const front=new THREE.Group();root.add(front);
+// benches: floating thick slabs (cantilevered from the walls) like the design
+const UB=1.06,UZ=0.56,LB=0.62,TH=0.09;
+function slab(x0,x1,z0,z1,top){box(x0,x1,top-TH,top,z0,z1,M.bench);box(x0,x1,top-TH,top-0.012,z1-0.02,z1,M.bench);}
+slab(0,1.46,0,UZ,UB);                 // upper bench
+box(0,1.46,1.30,1.46,0,0.055,M.dark); // backrest board
+slab(0,1.62,UZ,1.14,LB);              // lower bench
+slab(1.38,1.99,0.6,1.36,LB);          // lower bench wing toward the stove
+// stool with mitred frame
+const stool=new THREE.Group();root.add(stool);
+box(0.62,1.24,0.3,0.345,1.3,1.68,M.bench,{parent:stool});
+for(const[x,z]of[[0.66,1.34],[1.17,1.34],[0.66,1.61],[1.17,1.61]])box(x,x+0.05,0,0.3,z,z+0.05,M.light,{parent:stool});
+box(0.62,1.24,0.345,0.36,1.3,1.33,M.light,{parent:stool});box(0.62,1.24,0.345,0.36,1.65,1.68,M.light,{parent:stool});
+
+// HUUM-style stove: cylindrical steel cage with stones, in the stone niche
+const stove=new THREE.Group();stove.position.set(1.76,0,0.3);root.add(stove);
+const body=new THREE.Mesh(new THREE.CylinderGeometry(0.15,0.17,0.86,24),M.dsteel);body.position.y=0.45;stove.add(body);
+for(let i=0;i<14;i++){const y=0.08+i*0.065,r=0.2+0.035*Math.sin(Math.PI*(i/13));const ring=new THREE.Mesh(new THREE.TorusGeometry(r,0.006,6,48),M.steel);ring.rotation.x=Math.PI/2;ring.position.y=y;ring.castShadow=true;stove.add(ring);}
+for(let a=0;a<6;a++){const ang=a*Math.PI/3,c=new THREE.Mesh(new THREE.CylinderGeometry(0.006,0.006,0.9,6),M.steel);c.position.set(Math.cos(ang)*0.215,0.5,Math.sin(ang)*0.215);stove.add(c);}
+const rg=new THREE.IcosahedronGeometry(0.05,1);
+for(let i=0;i<70;i++){const y=0.1+Math.random()*0.82,a=Math.random()*6.28,r=0.12+Math.random()*0.06;const s=new THREE.Mesh(rg,M.rock);s.position.set(Math.cos(a)*r,y,Math.sin(a)*r);s.scale.set(1,0.7,0.9);s.rotation.set(Math.random()*3,Math.random()*3,0);stove.add(s);}
+// chimney
+const ch=new THREE.Mesh(new THREE.CylinderGeometry(0.075,0.075,0.62,28),M.steel);ch.position.set(1.76,1.79,0.2);ch.castShadow=true;root.add(ch);
+const ch2=new THREE.Mesh(new THREE.CylinderGeometry(0.06,0.06,0.14,28),M.steel);ch2.position.set(1.76,1.42,0.2);root.add(ch2);
+
+// --- lights
+const hemi=new THREE.HemisphereLight(0xfff6ea,0x6d665e,0.45);S.add(hemi);
+const sun=new THREE.DirectionalLight(0xfff3e2,1.1);sun.position.set(5,8,7);sun.target.position.set(1,0.6,0.8);sun.castShadow=true;
+sun.shadow.mapSize.set(2048,2048);Object.assign(sun.shadow.camera,{left:-3,right:3,top:3,bottom:-3,near:1,far:20});sun.shadow.radius=6;sun.shadow.bias=-0.0004;S.add(sun);S.add(sun.target);
+const ledParts=[];
+function strip(x0,x1,y,z,toZ){ // LED strip: visible emissive line + warm point lights washing the wall below
+ const s=box(x0,x1,y-0.008,y,z-0.012,z,M.led,{cast:false});ledParts.push(s);
+ const n=Math.max(2,Math.round((x1-x0)/0.3));
+ for(let i=0;i<n;i++){const L=new THREE.PointLight(0xffa850,0.55,0.75,2);L.position.set(x0+(i+0.5)*(x1-x0)/n,y-0.03,z+(toZ||0));S.add(L);ledParts.push(L);}}
+strip(0.02,1.44,UB-TH-0.002,0.05,0.02);    // under upper bench, at the wall
+strip(0.02,1.44,1.30-0.002,0.07,0.0);      // under backrest
+strip(0.02,1.60,LB-TH-0.002,UZ+0.05,0.02); // under lower bench, back
+strip(0.02,1.60,UB-TH-0.002,UZ-0.04,0.08); // upper bench front edge, lights the lower bench top
+// ceiling-edge spots washing the dark wall
+for(let i=0;i<5;i++){const x=0.18+i*0.27;const d=new THREE.Mesh(new THREE.CircleGeometry(0.014,16),M.led);d.rotation.x=Math.PI/2;d.position.set(x,H-0.005,0.05);root.add(d);ledParts.push(d);
+ const s=new THREE.SpotLight(0xffc27a,2.2,1.6,0.42,0.6,1.5);s.position.set(x,H-0.02,0.07);s.target.position.set(x,1.4,0.0);S.add(s);S.add(s.target);ledParts.push(s);}
+
+// UI
+const WOOD={thermo:[0xffffff,0xffffff,0xffffff],aspen:[0xfff0dc,0xf3e6d2,0xfff4e6],alder:[0xffe2c4,0xf7d3b0,0xffe6cc]};
+const SAT={thermo:1,aspen:0.55,alder:0.8};
+document.querySelectorAll('.g').forEach(g=>g.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;
+ g.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));const k=g.dataset.k,v=b.dataset.v;
+ if(k==='light'){ledParts.forEach(o=>o.visible=v==='on');hemi.intensity=v==='on'?0.55:0.8;}
+ if(k==='cut'){front.visible=v==='cut';closed.visible=v==='closed';}
+ if(k==='wood'){const c=WOOD[v];M.light.color.setHex(c[0]);M.bench.color.setHex(c[2]);M.dark.color.setHex(v==='thermo'?0xffffff:c[1]);
+   const f=v==='thermo'?'':(v==='aspen'?'saturate(.45) brightness(1.35)':'saturate(.8) brightness(1.15)');cv.style.filter='';
+   for(const k2 of['light','bench','dark']){M[k2].map=v==='thermo'?T[k2==='light'?'light':k2==='bench'?'bench':'dark']:(window.ALT?.[v]?.[k2]||M[k2].map);M[k2].needsUpdate=true;}}
+}));
+// lighter woods: tint-remap the thermo textures on a canvas once loaded
+function altTex(src,mul){const img=src.image;const c=document.createElement('canvas');c.width=img.width;c.height=img.height;const x=c.getContext('2d');
+ x.filter=mul;x.drawImage(img,0,0);const t=new THREE.CanvasTexture(c);t.colorSpace=THREE.SRGBColorSpace;t.wrapS=t.wrapT=THREE.RepeatWrapping;t.anisotropy=aniso;return t;}
+THREE.DefaultLoadingManager.onLoad=()=>{st.remove();try{window.ALT={
+  aspen:{light:altTex(T.light,'saturate(35%) brightness(155%) sepia(15%)'),bench:altTex(T.bench,'saturate(35%) brightness(150%) sepia(15%)'),dark:altTex(T.dark,'saturate(40%) brightness(190%) sepia(15%)')},
+  alder:{light:altTex(T.light,'saturate(85%) brightness(125%) hue-rotate(-6deg)'),bench:altTex(T.bench,'saturate(85%) brightness(125%) hue-rotate(-6deg)'),dark:altTex(T.dark,'saturate(80%) brightness(150%) hue-rotate(-6deg)')}};}catch(e){}};
+cv.addEventListener('pointerdown',()=>ctl.autoRotate=false);
+(function loop(){ctl.update();R.render(S,cam);requestAnimationFrame(loop);})();
+}catch(e){st.textContent='Viga: '+e.message;}
+</script></body></html>
