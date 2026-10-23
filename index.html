@@ -6312,6 +6312,24 @@ try{rates();}catch(_){}
 })();
 }catch(e){console.warn("blokk: hinnad",e);}
 
+try{
+/* ---------- 23.10: sisselogimine püsib; 7 päeva tegevuseta küsitakse parooli uuesti; avaleht (vaade3d.ee) teab küpsisest, et oled sees ---------- */
+(()=>{if(!CLOUD)return;
+const WEEK=7*864e5,K='v3d_seen';
+const ck=on=>{try{const d=/(^|\.)vaade3d\.ee$/.test(location.hostname)?'; domain=.vaade3d.ee':'';document.cookie='v3d_in='+(on?'1':'')+d+'; path=/; max-age='+(on?604800:0)+(location.protocol==='https:'?'; secure':'')+'; samesite=lax';}catch(_){}};
+const seen=+store.get(K,0)||0;
+if(seen&&Date.now()-seen>WEEK&&!/access_token=|[?&]code=/.test(location.hash+location.search)){
+  try{for(const S of [localStorage,sessionStorage])for(let i=S.length-1;i>=0;i--){const k=S.key(i)||'';if(/^sb-.+-auth-token/.test(k))S.removeItem(k);}}catch(_){}
+  ck(false);store.set(K,0);
+  const msg=()=>{const L=$('login'),e=$('lErr');if(L&&!L.hidden&&e&&!e.textContent){e.style.color='';e.textContent='Sa polnud nädal aega sees, seega küsime turvalisuse huvides parooli uuesti.';return true;}return false;};
+  let n=0;const iv=setInterval(()=>{if(msg()||++n>40)clearInterval(iv);},250);}
+const touch=()=>{store.set(K,Date.now());ck(true);};
+const _cl=clLoad;clLoad=async function(){const r=await _cl.apply(this,arguments);if(r)touch();return r;};
+let t=0;['pointerdown','keydown'].forEach(ev=>addEventListener(ev,()=>{if(CL.uid&&Date.now()-t>6e4){t=Date.now();touch();}},{passive:true,capture:true}));
+const _ci=clInit;clInit=async function(){const sb=await _ci.apply(this,arguments);if(sb&&!sb.__v3dOut){sb.__v3dOut=1;const so=sb.auth.signOut.bind(sb.auth);sb.auth.signOut=async function(){ck(false);store.set(K,0);return so.apply(this,arguments);};}return sb;};
+})();
+}catch(e){console.warn("blokk: seanss",e);}
+
 restoreRT();renderList();renderPanel();build();updFotos();chatReset();setTab(false);renderAcct();
   if(CLOUD)clBoot();else if(!startFromHash()){if(DEV_AUTOLOGIN||store.get('oai_session',null))enter();else $('login').hidden=false;}tick();}
 </script>
