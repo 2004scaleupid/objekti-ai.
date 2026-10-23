@@ -6,7 +6,7 @@
 (function(){
 const GV={cache:new Map()};
 const NDSM=[[58,127,0,4],[105,159,0,7.5],[162,195,0,10],[221,233,0,12],[253,231,0,14],[253,185,0,16],[253,144,0,18.5],[253,96,0,24],[253,33,0,30]];
-const COL={bg:0xE9E7E1,grass:'#B4CC97',road:'#A8A6A1',edge:0x5f5a52,fence:0xA39B8F,wall:0xF4F2EE,roof:0xD9D5CE,nb:0xDCDAD5,trunk:0x8B7D6E,crown:0xAAC690,conifer:0x88AA8B};
+const COL={bg:0xE9E7E1,grass:'#8DAE6E',road:'#A8A6A1',edge:0x5f5a52,fence:0xA39B8F,wall:0xF4F2EE,roof:0xD9D5CE,nb:0xDCDAD5,trunk:0x8B7D6E,crown:0xAAC690,conifer:0x88AA8B};
 const mob=()=>Math.min(innerWidth,innerHeight)<700||matchMedia('(pointer:coarse)').matches;
 const img=u=>new Promise((res,rej)=>{const i=new Image();i.crossOrigin='anonymous';i.onload=()=>res(i);i.onerror=()=>rej(new Error('pilt: '+u));i.src=u;});
 const lin=h=>new THREE.Color(h).convertSRGBToLinear();
@@ -78,11 +78,11 @@ function fencesFrom(im,R){const W=768,px=2*R/W,c=document.createElement('canvas'
 // ---------- maapind: krunt muruna, teed asfaldina, pehme kontaktvari hoonete all, servad sulanduvad taustaks ----------
 function groundTex(S,par,roads,feet,orto,R){const N=2048,px=S/N,c=document.createElement('canvas');c.width=c.height=N;const x=c.getContext('2d'),P=(X,Y)=>[(X+S/2)/px,(S/2-Y)/px];
   const path=(R,close=true)=>{x.beginPath();R.forEach((q,k)=>{const [a,b]=P(q[0],q[1]);k?x.lineTo(a,b):x.moveTo(a,b);});if(close)x.closePath();};
-  x.fillStyle=hex(COL.bg);x.fillRect(0,0,N,N);
+  // maapind: ühtlane muru kõikjal (mitte kaardipilt); krundi piir on joonena, teed hallid
+  x.fillStyle=orto?hex(COL.bg):COL.grass;x.fillRect(0,0,N,N);
   if(orto){const [a,b]=P(-R,R);x.drawImage(orto,a,b,2*R/px,2*R/px);
     // ortofoto katused (kaldu, nihkes) hoonete alt ära: neutraalne pind + 1,5 m varu
     x.save();x.filter='blur(6px)';x.fillStyle=x.strokeStyle='#8E9076';x.lineWidth=3/px;x.lineJoin='round';feet.forEach(R0=>{path(R0);x.fill();x.stroke();});x.restore();}else{
-  if(par){x.fillStyle=COL.grass;path(par);x.fill();}
   x.fillStyle=x.strokeStyle=COL.road;x.lineCap=x.lineJoin='round';
   roads.a.forEach(poly=>{x.beginPath();poly.forEach(r=>ring2(r).forEach((q,k)=>{const [a,b]=P(q[0],q[1]);k?x.lineTo(a,b):x.moveTo(a,b);}));x.fill('evenodd');});roads.l.forEach(l=>{x.lineWidth=l.w/px;path(ring2(l.g),false);x.stroke();});}
   // kontaktvari (pehme AO) hoonete jalajälgede ümber: kujund ekraanist väljas, ainult vari jääb
