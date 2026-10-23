@@ -68,13 +68,13 @@ const ring=[];for(let i=0;i+1<L2.g[0].length;i+=2)ring.push([L2.g[0][i],L2.g[0][
 const W=(a,b,h=.06)=>new THREE.Vector3(a,h,-b);
 const outline=new THREE.LineLoop(new THREE.BufferGeometry().setFromPoints(ring.map(q=>W(q[0],q[1],.08))),new THREE.LineBasicMaterial({color:0xE5482D,transparent:true}));sc.add(outline);
 const labels=[];const add=(cls,txt,P)=>{const d=document.createElement('div');d.className=cls;d.textContent=txt;d.style.opacity=0;lab.appendChild(d);labels.push({d,P});};
-ring.forEach((a,i)=>{const b=ring[(i+1)%ring.length],len=Math.hypot(b[0]-a[0],b[1]-a[1]);if(len>=3)add('dim',fmt(len,1)+' m',W((a[0]+b[0])/2,(a[1]+b[1])/2,.1));});
+ring.forEach((a,i)=>{const b=ring[(i+1)%ring.length],len=Math.hypot(b[0]-a[0],b[1]-a[1]);if(len>=4)add('dim',fmt(len,1)+' m',W((a[0]+b[0])/2,(a[1]+b[1])/2,.1));});
 add('tag',`Katus ${fmt(L2.roof,1)} m² · ${Math.round(L2.f[0][1])}°`,new THREE.Vector3(0,L2.ridge+1.4,0));
 add('dim',`Kõrgus ${fmt(L2.ridge,1)} m`,new THREE.Vector3(0,L2.ridge*.55,0).add(W(ring[2][0],ring[2][1],0)));
-(V.m3S||[]).forEach(s=>add(s.k,s.txt,s.P.length>1?s.P[0].clone().add(s.P[1]).multiplyScalar(.5):s.P[0]));
-(V.m3S||[]).filter(s=>s.k==='sdim').forEach(s=>sc.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(s.P),new THREE.LineDashedMaterial({color:0x16130F,dashSize:.4,gapSize:.25})).computeLineDistances()));
+(V.m3S||[]).filter(s=>s.k!=='sedge'&&!(s.k==='sdim'&&!/naabrini/.test(s.txt))).slice(0,6).forEach(s=>add(s.k,s.txt,s.P.length>1?s.P[0].clone().add(s.P[1]).multiplyScalar(.5):s.P[0]));
+(V.m3S||[]).filter(s=>s.k==='sdim'&&/naabrini/.test(s.txt)).forEach(s=>sc.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(s.P),new THREE.LineDashedMaterial({color:0x16130F,dashSize:.4,gapSize:.25})).computeLineDistances()));
 // kaamera ja animatsioon: aed on kohe, maja kerkib, siis mõõdud, siis pöörleb
-ct.target.set(0,3,0);cam.position.set(30,30,38);ct.update();
+ct.target.set(0,2.5,0);{const k=Math.max(1,1/cam.aspect);cam.position.set(34*k,30*k,44*k);}ct.minDistance=18;ct.maxDistance=140;ct.update();
 const still=matchMedia('(prefers-reduced-motion: reduce)').matches,t0=performance.now(),ease=x=>x<0?0:x>1?1:1-Math.pow(1-x,3);
 grow.scale.y=.001;
 addEventListener('resize',()=>{cam.aspect=el.clientWidth/el.clientHeight;cam.updateProjectionMatrix();r.setSize(el.clientWidth,el.clientHeight);});
