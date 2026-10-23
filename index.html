@@ -5263,7 +5263,7 @@ function m3FinishArea(){const s=stSess(),m=s&&s.model;if(!m||M3.pts.length<3)ret
 const M3PILL={font:"600 12px 'Inter Tight',Arial,sans-serif",small:"600 11px 'Inter Tight',Arial,sans-serif"},M3TW=new Map();
 function m3TW(t,small){const k=(small?'s':'n')+t;if(M3TW.has(k))return M3TW.get(k);const c=m3TW.c||(m3TW.c=document.createElement('canvas').getContext('2d'));c.font=small?M3PILL.small:M3PILL.font;const w=c.measureText(t).width;M3TW.set(k,w);return w;}
 /* Aed ja ümbrus: andmed garden-funktsioonist (vahemälu aadressi kaupa), stseen js/garden.js; ainult kindla sobitusega */
-const GARDEN_SRC='Ortofoto, kataster, teed, piirded, maakatte kõrgusmudel, hooned: Maa- ja Ruumiamet 2026';
+const GARDEN_SRC='Kataster, teed, piirded, maakatte kõrgusmudel, hooned: Maa- ja Ruumiamet 2026';
 function m3GardenHtml(m){if(!m.fit||!m.ehr||!p3Cloud())return '';m.gopt=m.gopt||{};const V=P3V,G=V&&V.garden,on=!!m.garden;
   let h=`<div class="tgl"><div>Aed ja ümbrus<small>Krunt, kõrvalhooned, teed, piirded, puud ja naabrid Maa-ameti andmetest</small></div><span class="sw2"><input type="checkbox" data-m3="garden" ${on?'checked':''} aria-label="Aed ja ümbrus"><i></i></span></div>`;
   if(!on)return h;
@@ -5276,7 +5276,7 @@ function m3GardenHtml(m){if(!m.fit||!m.ehr||!p3Cloud())return '';m.gopt=m.gopt||
 async function m3GardenSync(){const s=stSess(),m=s&&s.model,V=P3V;if(!m||!V||!V.ok)return;m.gopt=m.gopt||{};
   const want=!!m.garden&&!!m.fit&&!!M3L2[m.ehr];
   if(!want){if(V.garden){V.garden.off();V.garden=null;}return;}if(V.garden||V.gLoading)return;V.gLoading=1;V.gErr=null;const t0=performance.now(),T={};
-  try{if(!window.V3DGarden){await new Promise((res,rej)=>{const sc=document.createElement('script');sc.src='js/garden.js?v=7';sc.onload=res;sc.onerror=()=>rej(new Error('garden.js'));document.head.appendChild(sc);});}
+  try{if(!window.V3DGarden){await new Promise((res,rej)=>{const sc=document.createElement('script');sc.src='js/garden.js?v=8';sc.onload=res;sc.onerror=()=>rej(new Error('garden.js'));document.head.appendChild(sc);});}
     const r=await clFn('garden',/^lod2:/.test(m.url)?{ehr:m.ehr}:{ref:m.ref},{q:CO_Q});T.server=Math.round(performance.now()-t0);
     const meta=await (await fetch(r.meta)).json();T.meta=Math.round(performance.now()-t0)-T.server;
     if(P3V!==V||stSess()!==s)return;V.garden=await V3DGarden.show(V,m,meta,T);

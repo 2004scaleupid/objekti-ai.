@@ -64,7 +64,7 @@ Deno.test("esimene kord: 4 allikat paralleelselt, 4 faili, meta suhteliste krund
   assertEquals(meta.c, [545000.5, 6597000.25]);
   assertEquals(meta.parcels[0].p, 1200);
   assertEquals(meta.parcels[0].g[0].slice(0, 4), [10, 10, 20, 10]);
-  assertEquals(meta.v, 4);
+  assertEquals(meta.v, 5);
   assertEquals(meta.parcels[0].d, "2020-10-29");
   assertEquals(meta.roads.l[0], { w: 4, n: "Tammekännu tee", g: [0, 50, 40, 50] });
   assertEquals(meta.roads.a[0][0].slice(0, 2), [0, 60]);
