@@ -6303,7 +6303,7 @@ if(typeof clLoad==='function'){const _cl=clLoad;clLoad=async function(){const r=
 /* näidismajad peidus, kui kontol pole oma objekte (äpp vajab sisemiselt vähemalt ühte maja) */
 window.v3dOwnN=()=>HOUSES.filter(h=>!h.demoHidden).length;
 const hide=()=>{if(!HOUSES.some(h=>h.demoHidden))return;
-  document.querySelectorAll('.ocard[data-i]').forEach(c=>{const h=HOUSES[+c.dataset.i];if(h&&h.demoHidden)c.remove();});
+  document.querySelectorAll('.ocard[data-i]').forEach(c=>{const h=HOUSES[+c.dataset.i];if(h&&h.demoHidden)(c.closest('.owrap')||c).remove();});
   document.querySelectorAll('#objlist [data-i]').forEach(c=>{const h=HOUSES[+c.dataset.i];if(h&&h.demoHidden)c.remove();});
   const so=$('stObj');if(so){so.cu=(so.cu||0)+1;so.textContent=v3dOwnN();}};
 const _rh2=renderHome;renderHome=function(){const r=_rh2.apply(this,arguments);try{hide();}catch(_){}return r;};
