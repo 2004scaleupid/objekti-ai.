@@ -594,6 +594,8 @@ body.cvm .panel>*:not(#cvPanel){display:none!important}
 .stchips{display:flex;flex-wrap:wrap;justify-content:center;gap:8px}
 .studio:not(.fresh) .stchips{display:none}
 .st3dt{display:inline-flex;align-items:center;gap:6px;height:36px;padding:0 12px 0 10px;border-radius:18px;border:1px solid var(--line);background:none;color:var(--ink);font:600 13px var(--display);cursor:pointer;white-space:nowrap;flex:none}.st3dt[aria-pressed=true]{background:var(--ink);color:var(--paper);border-color:var(--ink)}.st3dt small{font:500 11px var(--mono);opacity:.75}.st3dt small:empty{display:none}
+.stroompill{border:1px solid var(--line);background:var(--paper);border-radius:999px;padding:5px 12px;font:600 12.5px var(--display);color:var(--ink);cursor:pointer;white-space:nowrap}
+.stroomact{width:100%;max-width:1000px;margin:0 auto;display:flex;flex-wrap:wrap;gap:8px;align-items:center}.stroomact .apply{min-height:42px}.stroomact .ghost{min-height:42px}
 .stroom{margin:14px auto;max-width:440px;border:1px solid var(--line);border-radius:14px;padding:16px 18px;display:flex;flex-direction:column;gap:8px;background:var(--paper)}.stroom ol{list-style:none;margin:4px 0;padding:0;display:flex;flex-direction:column;gap:8px}.stroom li{display:flex;align-items:center;gap:10px;font-size:14px}.stroom li i{width:22px;height:22px;border-radius:50%;display:grid;place-items:center;font-style:normal;font-size:12px;border:1px solid var(--line);flex:none}.stroom li.ok i{background:var(--ok);border-color:var(--ok);color:#fff}.stroom li.run i{border-color:var(--accent);border-top-color:transparent;animation:stspin 1s linear infinite}.stroom li.wait{color:var(--muted)}@keyframes stspin{to{transform:rotate(360deg)}}@media (prefers-reduced-motion:reduce){.stroom li.run i{animation:none}}
 .stchip{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--line);background:var(--paper);color:var(--ink);border-radius:10px;padding:8px 12px;font:500 13.5px var(--display);cursor:pointer}
 .stchip svg{color:var(--muted)}.stchip:hover{border-color:var(--ink)}
@@ -1381,7 +1383,7 @@ input[type=checkbox]{accent-color:var(--accent)}
   <div class="studio fresh" id="studio" hidden>
     <nav class="strail" id="stRail" aria-label="Tööriistad"></nav>
     <section class="stmain" id="stMain">
-      <div class="sttop" id="stTop"><button type="button" class="stback" id="stHome" aria-label="Tagasi avalehele"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>Avaleht</button><button type="button" class="stback" id="stTo3d" hidden title="Tagasi maja 3D-vaatesse"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 3 8 4.5v9L12 21l-8-4.5v-9z"/><path d="m4 7.5 8 4.5 8-4.5M12 12v9"/></svg>3D-vaade</button><span class="sttn" id="stTn"></span><span class="stsp"></span>
+      <div class="sttop" id="stTop"><button type="button" class="stback" id="stHome" aria-label="Tagasi avalehele"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>Avaleht</button><button type="button" class="stback" id="stTo3d" hidden title="Tagasi maja 3D-vaatesse"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 3 8 4.5v9L12 21l-8-4.5v-9z"/><path d="m4 7.5 8 4.5 8-4.5M12 12v9"/></svg>3D-vaade</button><span class="sttn" id="stTn"></span><button type="button" class="stroompill" id="stRoomPill" hidden title="Tagasi vestlusesse"></button><span class="stsp"></span>
         <div class="stsel"><button type="button" class="stpick" id="stJobs" aria-haspopup="listbox"><span>Tööd</span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button><div class="stmenu dn" id="stJobsM" role="listbox" hidden></div></div>
         <button type="button" class="ghost sm" id="stNew2">+ Uus töö</button><button type="button" class="sticon stpant" id="stPanT" aria-pressed="true" aria-label="Infopaneel" title="Peida infopaneel"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M15 4v16"/></svg></button></div>
       <div class="sthero" id="stHero">
@@ -1407,6 +1409,7 @@ input[type=checkbox]{accent-color:var(--accent)}
       <div id="stRoom" hidden></div>
       <div class="stdock" id="stDock">
         <div class="stresb" id="stRes" role="status" hidden></div>
+        <div class="stroomact" id="stRoomAct" hidden></div>
         <div class="stbox" id="stBox">
           <div class="stdrop" id="stDrop" hidden></div>
           <div class="stfiles" id="stFiles" hidden></div>
@@ -4081,7 +4084,7 @@ function stRender(){const th=stTheme(STU.tpl),s=stSess();if(STU.edit!=null&&!(s&
   const ON=TPLS().filter(t=>t.on),order=['vaba','sisek','toodehoov','maakler','katus','fassaad','mudel3d'];
   ON.sort((a,b)=>((order.indexOf(a.id)+99)%99)-((order.indexOf(b.id)+99)%99));
   $('stChips').innerHTML=ON.filter(t=>t.id!=='mudel3d').map(t=>`<button type="button" class="stchip" data-t="${t.id}" aria-pressed="${t.id===STU.tpl||(STU.tpl==='mudel3d'&&t.id==='vaba')}">${ticon(t,16)}<span>${stEsc(t.id==='vaba'?'Vaba idee':t.name)}</span></button>`).join('');
-  $('stChips').querySelectorAll('.stchip').forEach(b=>b.onclick=()=>{if(b.dataset.t!==STU.tpl)openStudio(b.dataset.t);});st3dRender();roomRender();stPanApply();if(s&&s.room&&s.room.status==='pending')roomPoll(s);
+  $('stChips').querySelectorAll('.stchip').forEach(b=>b.onclick=()=>{if(b.dataset.t!==STU.tpl)openStudio(b.dataset.t);});st3dRender();roomRender();roomActRender();stPanApply();if(s&&s.room&&s.room.status==='pending')roomPoll(s);
   $('stM3').hidden=!mdl;$('stAdd3d').hidden=!(th.T&&th.T.id==='vaba');m3MyRow();if(mdl)m3Show();
   $('stStage').hidden=!editing;$('stThread').hidden=editing||!hasMsgs||!!th.p3;$('stTo3d').hidden=!(s&&s.obj&&HOUSES.some(h=>h.ehr===s.obj));
   if(editing){const n=(s.tray||[]).indexOf(STU.edit);$('stEdT').textContent=n>=0?'Pilt '+(n+1):'Pilt';}
@@ -4452,6 +4455,7 @@ function stRenderThread(){const s=stSess(),box=$('stThread');if(!s||box.hidden){
     if(m.role==='u')return `<div class="stm u">${m.gen?'<span class="gtag">✦ Genereeri</span>':''}${m.pics&&m.pics.length?`<div class="pics">${m.pics.map((u,k)=>`<span><img src="${stEsc(stAiImg(u))}" alt="Pilt ${k+1}" data-z="" data-zcap="Sinu pilt ${k+1}" role="button" tabindex="0"><i>${k+1}</i></span>`).join('')}</div>`:''}${m.text?`<div class="bub">${stEsc(m.text)}</div>`:''}</div>`;
     const head='<div class="who"><span class="stlogo"></span>Vaade3D</div>';
     if(m.note)return `<div class="stm a">${head}<div class="txt">${stEsc(m.note)}</div></div>`;
+    if(m.room)return `<div class="stm a">${head}<div class="stroomc" data-roomc="${stEsc(m.room)}">${roomMsgHtml(s,m)}</div></div>`;
     if(m.chat){if(m.pending)return `<div class="stm a">${head}<div class="sttyping" aria-label="AI kirjutab"><i></i><i></i><i></i></div></div>`;if(m.err)return `<div class="stm a">${head}<div class="sterr">${stEsc(m.err)}</div></div>`;
       const jm=String(m.text||'').match(/Juhis:\s*[„"«“]([^“”"»\n]{3,400})[“”"»]/),body=String(m.text||'').replace(/Juhis:\s*[„"«“][^“”"»\n]{3,400}[“”"»]\s*/,'').trim();
       return `<div class="stm a">${head}${body?`<div class="txt">${stEsc(body)}</div>`:''}${jm?`<div class="stjuh"><q>${stEsc(jm[1])}</q>${stCanImg(s)?`<div class="row"><button type="button" class="gen" data-juh="${stEsc(jm[1])}">Genereeri see · ${stEsc(priceTxt(stPriceKind()))}</button><button type="button" class="ed" data-jed="${stEsc(jm[1])}">Muuda enne</button></div>`:`<div class="row"><button type="button" class="ed" data-jed="${stEsc(jm[1])}">Kasuta seda</button></div>`}</div>`:''}</div>`;}
@@ -4462,7 +4466,7 @@ function stRenderThread(){const s=stSess(),box=$('stThread');if(!s||box.hidden){
     // allikas „Enne / Pärast“ jaoks: sama töö kasutaja sõnumi pilt 1
     const um=s.msgs[mi-1],bfu=um&&um.role==='u'&&um.pics&&um.pics[0]?stAiImg(um.pics[0]):'';
     const vsw=out.length>1?`<div class="stvsw" role="tablist" aria-label="Variandid">${out.map((_,k)=>`<button type="button" role="tab" aria-selected="${k===vi}" data-vi="${mi}:${k}">Variant ${k+1}</button>`).join('')}<span>${vi+1} / ${out.length}</span></div>`:'';
-    const two=out.length===2;return `<div class="stm a">${head}${two?vsw.replace('class="stvsw"','class="stvsw two"'):vsw}<div class="stres ${two?'two':'one'}">${out.map((u,k)=>{const is1=t1&&stAiImg(t1.src)===u,tn=trayU.indexOf(u);return `<div class="stv ${is1?'sel':''}${k===vi?' vcur':''}" ${k!==vi&&!two?'hidden':''}>${m.demo?'<span class="tg">demo</span>':''}<img src="${stEsc(u)}" alt="AI tulemus ${k+1}" data-z="${stEsc(u)}" data-zai="1" data-zbf="${stEsc(bfu&&bfu!==u?bfu:'')}" data-zcap="AI tulemus${out.length>1?' · variant '+(k+1):''}" role="button" tabindex="0"><div class="va">${is1?'<button type="button" class="pri" disabled>✓ See on pilt 1</button>':`<button type="button" class="pri" data-u1="${stEsc(u)}">Jätka sellega</button>`}<button type="button" data-mk="${stEsc(u)}">Märgi</button>${tn>0?`<button type="button" disabled>Pilt ${tn+1}</button>`:tn<0?`<button type="button" data-add="${stEsc(u)}">+ Lisa pildiks</button>`:''}<button type="button" data-to3d="${stEsc(u)}" data-lb="${stEsc((stTheme(STU.tpl).T||{}).name||'Pilt')}">${roomOn()?'Tee tuba 3D-s · '+fmt(price('3d'),0)+' kr':'Tee 3D-ks'}</button><a href="${stEsc(u)}" download="vaade3d-${mi}-${k+1}.jpg" target="_blank" rel="noopener">Laadi alla</a>${s.wreq&&/^https:/.test(u)?`<button type="button" class="pri" data-wsu="${stEsc(u)}">Saada kliendile</button>`:''}</div></div>`;}).join('')}</div>${m.cr!=null?`<span class="crl">${stEsc(stCrTxt(m))}</span>`:''}</div>`;}).join('');
+    const two=out.length===2;return `<div class="stm a">${head}${two?vsw.replace('class="stvsw"','class="stvsw two"'):vsw}<div class="stres ${two?'two':'one'}">${out.map((u,k)=>{const is1=t1&&stAiImg(t1.src)===u,tn=trayU.indexOf(u);return `<div class="stv ${is1?'sel':''}${k===vi?' vcur':''}" ${k!==vi&&!two?'hidden':''}>${m.demo?'<span class="tg">demo</span>':''}<img src="${stEsc(u)}" alt="AI tulemus ${k+1}" data-z="${stEsc(u)}" data-zai="1" data-zbf="${stEsc(bfu&&bfu!==u?bfu:'')}" data-zcap="AI tulemus${out.length>1?' · variant '+(k+1):''}" role="button" tabindex="0"><div class="va">${is1?'<button type="button" class="pri" disabled>✓ See on pilt 1</button>':`<button type="button" class="pri" data-u1="${stEsc(u)}">Jätka sellega</button>`}<button type="button" data-mk="${stEsc(u)}">Märgi</button>${tn>0?`<button type="button" disabled>Pilt ${tn+1}</button>`:tn<0?`<button type="button" data-add="${stEsc(u)}">+ Lisa pildiks</button>`:''}<button type="button" data-to3d="${stEsc(u)}" data-lb="${stEsc((stTheme(STU.tpl).T||{}).name||'Pilt')}">${roomOn()?'Tee kujundusest 3D · '+fmt(price('3d'),0)+' kr':'Tee 3D-ks'}</button><a href="${stEsc(u)}" download="vaade3d-${mi}-${k+1}.jpg" target="_blank" rel="noopener">Laadi alla</a>${s.wreq&&/^https:/.test(u)?`<button type="button" class="pri" data-wsu="${stEsc(u)}">Saada kliendile</button>`:''}</div></div>`;}).join('')}</div>${m.cr!=null?`<span class="crl">${stEsc(stCrTxt(m))}</span>`:''}</div>`;}).join('');
   stThreadFit(box,s);
   box.querySelectorAll('[data-wsu]').forEach(b=>b.onclick=async()=>{let r=WREQ.find(x=>x.id===s.wreq);if(!r){await wReqLoad();r=WREQ.find(x=>x.id===s.wreq);}if(!r){toast('Pildisoovi ei leitud');return;}wReqSend(r,b.dataset.wsu);});
   box.querySelectorAll('[data-juh]').forEach(b=>b.onclick=()=>stGenNow(b.dataset.juh));
@@ -4719,7 +4723,7 @@ document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest
   if(k==='prod'||k==='obj')p3LinkTo(k,u,b);else if(k==='offer')p3Offer(u,b);else if(k==='ar')p3Ar(u,b);else if(k==='studio'){stPopClose();m3Open(m3ByUrl(u),true);}else if(k==='pub'){stPopClose();m3TogglePub(u);}else if(k==='addr'){stPopClose();m3AddrAsk(m3ByUrl(u),b);}else if(k==='garden'){stPopClose();m3Open({...m3ByUrl(u),garden:true},true);}});
 async function p3ToRoom(){const P=STU.p3,L=(P.pool||[]).filter(Boolean);let files=[];
   try{files=await Promise.all(L.map(async(u,i)=>{const o=P3ORIG.get(u);if(o)return o;const b=await (await fetch(u)).blob();return new File([b],'foto-'+(i+1)+'.jpg',{type:b.type||'image/jpeg'});}));}catch(_){toast('Fotosid ei õnnestunud üle tõsta, lisa need uuesti');}
-  STU.room3d=true;acct.room3d=true;save();openStudio('sisek',files);setTimeout(()=>toast('Sisekujundus + 3D: kirjelda, milline tuba olla võiks, ja vajuta Genereeri. Siis vali variant ja „Tee tuba 3D-s“.'),2800);}
+  STU.room3d=true;acct.room3d=true;save();openStudio('sisek',files);}
 // „Tee 3D-ks“ mis tahes pildist: ühe pildi režiim (image-to-3d); üles laetud fotost võetakse originaal
 async function p3FromPicture(src,label){if(!src)return;if(roomOn()){roomStart(src);return;}const up=/^data:/.test(src),orig=up?P3ORIG.get(src):null;
   if(up&&!orig){toast('Algne foto pole enam alles. Lisa sama foto uuesti, siis tuleb 3D täisresolutsiooniga.');const i=document.createElement('input');i.type='file';i.accept='image/*';
@@ -4746,43 +4750,64 @@ function st3dToggle(){const T=STU.tpl,z=st3dState();
 const roomOn=()=>STU.tpl==='sisek'&&STU.room3d;
 const ROOM_SUGG=['Skandinaavia stiilis, vaata 3D-s','Hele puit ja valged seinad 3D-s','Moodne minimalistlik tuba 3D-s'];
 // AI variant (meie failihoidlas) -> tuba 3D-s. Kasutaja võib sisestada päris mõõdud, muidu hinnanguline.
-async function roomStart(src){const u=stAiImg(src)||src;
-  if(!/^https?:/.test(u)){toast('Tee enne AI disainivariant, siis vali see ja vajuta „Tee 3D“');return;}
+// tuba 3D-s: kujundus = üks AI variant; asis = kasutaja fotod nagu on (kuni 12), mõlemad sama hinnaga
+async function roomStart(src,asis){const list=asis?src.slice(0,12):[stAiImg(src)||src];
+  if(!list.length){toast('Lisa toa fotod');return;}
+  if(!asis&&!/^https?:/.test(list[0])){toast('Tee enne AI disainivariant, siis vali see ja vajuta „Tee kujundusest 3D“');return;}
   if(!(CLOUD&&CL.cid)){toast('Toa 3D töötab sisselogitud kontoga');return;}
-  const ok=await ask2('Tuba 3D-s',`AI mõõdab toa ja teeb mööbli eraldi 3D-mudeliteks (4–5 min). Hind ${priceTxt('3d')}. Kui tead toa mõõte, sisesta need, muidu on mõõdud hinnangulised.`,'Tee 3D · '+priceTxt('3d'),
-    `<div class="dims"><label class="fl" for="rmW">Laius (m)<input id="rmW" type="number" min="1.5" max="20" step="0.1" inputmode="decimal" placeholder="nt 3,2"></label><label class="fl" for="rmD">Sügavus (m)<input id="rmD" type="number" min="1.5" max="20" step="0.1" inputmode="decimal" placeholder="nt 4,0"></label><label class="fl" for="rmH">Kõrgus (m)<input id="rmH" type="number" min="2" max="6" step="0.1" inputmode="decimal" placeholder="nt 2,6"></label></div><span class="fhint">Laius = sein vasakult paremale, sügavus = tagaseinast fotograafini. Valikuline.</span>`);
+  const n=list.length,ok=await ask2(asis?'Tee 3D-ruum nendest piltidest':'Tee kujundusest 3D',(asis?`AI mõõdab toa ${n} ${n===1?'pildi':'pildi'} järgi (võrdleb nurki), võtab seinad ja põranda parimalt pildilt ja teeb mööbli eraldi 3D-mudeliteks. Kujundust ei muudeta.`:'AI mõõdab toa ja teeb mööbli eraldi 3D-mudeliteks.')+` 4–5 min, hind ${priceTxt('3d')}. Kui tead toa mõõte, sisesta need, muidu on mõõdud hinnangulised.`,'Tee 3D · '+priceTxt('3d'),
+    `<div class="dims"><label class="fl" for="rmW">Laius (m)<input id="rmW" type="number" min="1.5" max="20" step="0.1" inputmode="decimal" placeholder="nt 3,2"></label><label class="fl" for="rmD">Sügavus (m)<input id="rmD" type="number" min="1.5" max="20" step="0.1" inputmode="decimal" placeholder="nt 4,0"></label><label class="fl" for="rmH">Kõrgus (m)<input id="rmH" type="number" min="2" max="6" step="0.1" inputmode="decimal" placeholder="nt 2,6"></label></div><span class="fhint">Laius = sein vasakult paremale (esimesel pildil), sügavus = tagaseinast fotograafini. Valikuline.</span>`);
   if(!ok)return;const v=id=>parseFloat(String($(id).value).replace(',','.'))||0,d={w:v('rmW'),d:v('rmD'),h:v('rmH')};
-  const dims=d.w&&d.d&&d.h?d:null;if((d.w||d.d||d.h)&&!dims){toast('Sisesta kõik kolm mõõtu või jäta kõik tühjaks');return roomStart(src);}
+  const dims=d.w&&d.d&&d.h?d:null;if((d.w||d.d||d.h)&&!dims){toast('Sisesta kõik kolm mõõtu või jäta kõik tühjaks');return roomStart(src,asis);}
   let s=stSess();if(!s)s=stNewSession();
-  try{const r=await clFn('room-3d',{action:'start',image:u,dims,label:'Tuba 3D-s · '+(s.title||'Sisekujundus')});
-    if(r.credits!=null)acct.credits=r.credits;s.room={id:r.id,status:'pending',p:r,src:u,t0:Date.now()};stSave();renderAcct&&renderAcct();stRender();roomPoll(s);}
+  try{const photos=asis?await Promise.all(list.map(async u=>/^data:image\/jpeg/.test(u)&&u.length<2_500_000?u:shrink(await (await fetch(stAiImg(u)||u)).blob(),1600,.85))):list;
+    const r=await clFn('room-3d',{action:'start',photos,mode:asis?'asis':'design',dims,label:(asis?'Tuba 3D-s (fotodest) · ':'Tuba 3D-s · ')+(s.title||'Sisekujundus')});
+    if(r.credits!=null)acct.credits=r.credits;s.room={id:r.id,status:'pending',p:r,src:asis?photos[0]:list[0],t0:Date.now(),asis:!!asis};s.msgs.push({room:r.id,asis:!!asis});s.noRoomBar=true;stSave();renderAcct&&renderAcct();stRender();roomPoll(s);}
   catch(e){toast(clErr(e));}}
+// kasutaja fotod Sisekujunduses, 3D sees: üks selge tegevus kirjutusriba kohal (teksti pole vaja kirjutada)
+function roomActRender(){const el=$('stRoomAct');if(!el)return;const s=stSess(),T=stTrayImgs(s),hasAi=!!(s&&s.msgs.some(m=>m.out&&m.out.length)),busy=!!(s&&s.room&&s.room.status==='pending');
+  const show=STU.tpl==='sisek'&&STU.room3d&&T.length>0&&!hasAi&&!busy&&!(s&&s.noRoomBar)&&STU.edit==null;el.hidden=!show;if(!show){el.innerHTML='';return;}
+  el.innerHTML=`<button type="button" class="apply" id="stRoomAsis">Tee 3D-ruum nendest ${T.length} pildist · ${fmt(price('3d'),0)} kr</button><button type="button" class="ghost" id="stRoomDesign">Muuda kujundust enne</button>`;
+  $('stRoomAsis').onclick=()=>roomStart(stTrayImgs(stSess()).map(x=>x.src),true);
+  $('stRoomDesign').onclick=()=>{const s2=stSess();if(s2){s2.noRoomBar=true;stSave();}roomActRender();$('stIn').focus();toast('Kirjelda, milline tuba olla võiks, ja vajuta Genereeri. Siis vali variant ja „Tee kujundusest 3D“.');};}
 const ROOMP=new Set();
 async function roomPoll(s){if(!s||!s.room||ROOMP.has(s.room.id))return;const id=s.room.id;ROOMP.add(id);
   try{for(let i=0;i<300&&s.room&&s.room.id===id&&s.room.status==='pending';i++){
       let r;try{r=await clFn('room-3d',{action:'status',id});}catch(e){await new Promise(x=>setTimeout(x,8000));continue;}
       s.room.p=r;s.room.status=r.status==='done'?'done':r.status==='failed'?'failed':'pending';stSave();if(stSess()===s)roomRender();
-      if(r.status==='done'){roomDone(s,r);break;}if(r.status==='failed'){toast(r.error||'Toa 3D ebaõnnestus');stRender();break;}
+      if(r.status==='done'){roomDone(s,r);break;}if(r.status==='failed'){const msg=s.msgs.find(x=>x.room===id);if(msg)msg.err=r.error||'Toa 3D ebaõnnestus. Krediidid tagastati.';stSave();toast(r.error||'Toa 3D ebaõnnestus');stRender();break;}
       await new Promise(x=>setTimeout(x,5000));}}finally{ROOMP.delete(id);}}
 function roomDone(s,r){const m={id:s.room.id,url:r.url,img:s.room.src,cleaned:[s.room.src],tpl:'sisek',d:new Date().toISOString(),ehr:null,garden:false};
-  acct.models=[m,...(acct.models||[]).filter(x=>x.id!==m.id)];s.room.url=r.url;stSave();toast('Tuba on 3D-s valmis');m3Open(m,true);}
-function roomRender(){const el=$('stRoom');if(!el)return;const s=stSess(),R=s&&s.room;el.hidden=!(R&&R.status==='pending');if(el.hidden){el.innerHTML='';return;}
-  const p=R.p||{},it=p.items||[0,0],sec=Math.round((Date.now()-(R.t0||Date.now()))/1000);
+  acct.models=[m,...(acct.models||[]).filter(x=>x.id!==m.id)];s.room.url=r.url;const msg=s.msgs.find(x=>x.room===s.room.id);if(msg)msg.url=r.url;stSave();
+  toast('Tuba on 3D-s valmis');if(stSess()===s&&STU.edit==null)m3Open(m,true);else stRender();}
+/* toa 3D töö elab vestluses (sõnum {room:id}); kui pildi toimetis on lahti, näitab päis väikest märki — vaated ei kattu */
+function roomRender(){const s=stSess(),R=s&&s.room,run=!!(R&&R.status==='pending'),el=$('stRoom');if(el){el.hidden=true;el.innerHTML='';}
+  document.querySelectorAll('[data-roomc]').forEach(c=>{const m=(s&&s.msgs||[]).find(x=>x.room===c.dataset.roomc);if(m)c.innerHTML=roomMsgHtml(s,m);});
+  const pill=$('stRoomPill');if(pill){const show=run&&STU.edit!=null;pill.hidden=!show;if(show){const it=(R.p||{}).items||[0,0];pill.textContent='Tuba 3D-s · '+(R.p&&R.p.measure?(it[1]?'mööbel '+it[0]+'/'+it[1]:'põrand ja seinad'):'mõõdud')+'…';}}}
+function roomMsgHtml(s,m){const R=s.room&&s.room.id===m.room?s.room:null;
+  if(m.url||(R&&R.status==='done'))return `<div class="stroom"><b>Tuba on 3D-s valmis</b><span class="fhint">${m.asis?'Sinu fotodest, toa praegune välimus.':'AI kujundusest.'} Mõõdud ${(R&&R.p&&R.p.room&&R.p.room.est)!==false?'hinnangulised':'sinu sisestatud'}.</span><div class="row"><button type="button" class="apply" data-roomopen="${stEsc(m.room)}">Ava 3D-s</button></div></div>`;
+  if(m.err||(R&&R.status==='failed'))return `<div class="sterr">${stEsc(m.err||(R&&R.p&&R.p.error)||'Toa 3D ebaõnnestus. Krediidid tagastati.')}</div>`;
+  if(!R)return `<div class="stroom"><b>Tuba 3D-s</b><span class="fhint">Töö jätkub…</span></div>`;
+  return roomStepsHtml(R);}
+function roomStepsHtml(R){const p=R.p||{},it=p.items||[0,0],sec=Math.round((Date.now()-(R.t0||Date.now()))/1000);
   const st=k=>k==='measure'?(p.measure?'ok':'run'):k==='floor'?(!p.measure?'wait':p.floor&&p.wall?'ok':'run'):k==='items'?(!p.measure?'wait':it[1]&&it[0]>=it[1]?'ok':'run'):(p.stage==='done'?'ok':!p.measure||it[0]<it[1]?'wait':'run');
-  el.innerHTML=`<div class="stroom" role="status" aria-live="polite"><b>Tuba 3D-s</b><span class="fhint">Tavaliselt 4–5 minutit. Võid vahepeal muud teha, töö jätkub.</span><ol>${ROOM_STEPS.map(([k,n])=>{const x=st(k);
+  return `<div class="stroom" role="status" aria-live="polite"><b>Tuba 3D-s${R.asis?' (sinu fotodest)':''}</b><span class="fhint">Tavaliselt 4–5 minutit. Võid vahepeal muud teha, töö jätkub.</span><ol>${ROOM_STEPS.map(([k,n])=>{const x=st(k);
     return `<li class="${x}"><i>${x==='ok'?'✓':x==='run'?'':'·'}</i><span>${n}${k==='items'&&it[1]?` ${it[0]}/${it[1]}`:''}${k==='measure'&&p.room?` · ${fmt(p.room.w,1)} × ${fmt(p.room.d,1)} × ${fmt(p.room.h,1)} m${p.room.est?' (hinnanguline)':''}`:''}</span></li>`;}).join('')}</ol><span class="fhint">${Math.floor(sec/60)}:${String(sec%60).padStart(2,'0')}</span></div>`;}
+document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('[data-roomopen]');if(!b)return;const s=stSess(),id=b.dataset.roomopen,m=(acct.models||[]).find(x=>x.id===id);
+  const msg=s&&s.msgs.find(x=>x.room===id),url=(m&&m.url)||(msg&&msg.url);if(url)m3Open(m||{id,url,img:'',cleaned:[],tpl:'sisek',d:new Date().toISOString(),ehr:null,garden:false},true);});
 setInterval(()=>{const s=stSess();if(s&&s.room&&s.room.status==='pending'&&!$('studio').hidden)roomRender();},1000);
+$('stRoomPill')&&($('stRoomPill').onclick=()=>{STU.edit=null;stRender();});
 // vaatur: room.json -> kolmemõõtmeline tuba (seinad ainult seestpoolt nähtavad, nii paistab tuba väljastpoolt sisse)
 async function roomBuild(url){const J=await (await fetch(url)).json(),g=new THREE.Group();g.userData.room=J;const W=J.room.w,D=J.room.d,H=J.room.h,ld=new THREE.GLTFLoader();
   const tl=new THREE.TextureLoader();tl.setCrossOrigin('anonymous');
   const tex=(u,rep)=>new Promise(res=>{if(!u)return res(null);tl.load(u,t=>{t.encoding=THREE.sRGBEncoding;t.anisotropy=8;if(rep){t.wrapS=t.wrapT=THREE.RepeatWrapping;t.repeat.set(rep[0],rep[1]);}res(t);},undefined,()=>res(null));});
   const mat=(c,m,side)=>new THREE.MeshStandardMaterial({color:m?0xffffff:c,map:m||null,roughness:.85,side:side||THREE.FrontSide});
   const pl=(w,h,mt)=>new THREE.Mesh(new THREE.PlaneGeometry(w,h),mt),T=J.floor.tile||2;
-  const [ft,bt]=await Promise.all([tex(J.floor.tex,[W/T,D/T]),tex(J.back.tex)]);
+  const SD=J.sides||{},[ft,bt,lt,rt]=await Promise.all([tex(J.floor.tex,[W/T,D/T]),tex(J.back.tex),tex(SD.left),tex(SD.right)]);
   const fl=pl(W,D,mat(J.floor.color,ft));fl.rotation.x=-Math.PI/2;fl.position.set(W/2,0,D/2);fl.name='roomFloor';g.add(fl);
   const bk=pl(W,H,mat(J.walls.back,bt));bk.position.set(W/2,H/2,0);g.add(bk);
-  const L=pl(D,H,mat(J.walls.left));L.rotation.y=Math.PI/2;L.position.set(0,H/2,D/2);g.add(L);
-  const Rw=pl(D,H,mat(J.walls.right));Rw.rotation.y=-Math.PI/2;Rw.position.set(W,H/2,D/2);g.add(Rw);
+  const L=pl(D,H,mat(J.walls.left,lt));L.rotation.y=Math.PI/2;L.position.set(0,H/2,D/2);g.add(L);
+  const Rw=pl(D,H,mat(J.walls.right,rt));Rw.rotation.y=-Math.PI/2;Rw.position.set(W,H/2,D/2);g.add(Rw);
   (J.openings||[]).filter(o=>o.wall!=='back').forEach(o=>{const m=pl(o.x1-o.x0,o.y1-o.y0,new THREE.MeshStandardMaterial({color:o.kind==='window'?0xcfe0ea:0xe6e0d6,roughness:.4}));
     m.rotation.y=o.wall==='left'?Math.PI/2:-Math.PI/2;m.position.set(o.wall==='left'?.01:W-.01,(o.y0+o.y1)/2,(o.x0+o.x1)/2);g.add(m);});
   const cache={};const glb=u=>cache[u]=cache[u]||new Promise((res,rej)=>ld.load(u,x=>res(x.scene),undefined,rej));

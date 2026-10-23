@@ -38,7 +38,7 @@ Deno.test("sisselogimata keelatud", async () => {
 
 Deno.test("ainult meie AI variant ja mõistlikud mõõdud, siis ei võeta krediiti", async () => {
   W.spent = 0;
-  for (const image of ["https://evil.example/x.jpg", SB + "/storage/v1/object/public/uploads/c1/a.jpg", "data:image/png;base64,AAAA", OURS + "/../x"]) {
+  for (const image of ["https://evil.example/x.jpg", SB + "/storage/v1/object/public/uploads/c1/a.jpg", "data:image/png;base64,AAAA", "data:text/html;base64,AAAA", OURS + "/../x"]) {
     assertEquals((await call({ action: "start", image })).status, 400, image);
   }
   assertEquals((await call({ action: "start", image: OURS, dims: { w: 0.5, d: 4, h: 2.6 } })).status, 400);
@@ -56,4 +56,13 @@ Deno.test("start: krediidid võetakse, töö algab mõõtmisega, kasutaja mõõd
   const row = W.inserted[0] as any;
   assertEquals([row.kind, row.stage, row.room.dims, row.room.src], ["3d", "measure", { w: 3.2, d: 4, h: 2.5 }, OURS]);
   assert(row.room.lock === 0);
+});
+
+Deno.test("toa fotod (asis): kuni 12 fotot, vigane foto ei maksa", async () => {
+  // 1x1 JPEG
+  const JPG = "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEASABIAAD/2wBDAP//////////////////////////////////////////////////////////////////////////////////////wgALCAABAAEBAREA/8QAFBABAAAAAAAAAAAAAAAAAAAAAP/aAAgBAQABPxA=";
+  W.spent = 0;
+  assertEquals((await call({ action: "start", mode: "asis", photos: Array(13).fill(JPG) })).status, 400);
+  assertEquals((await call({ action: "start", mode: "asis", photos: [JPG, "data:image/jpeg;base64,AAAA"] })).status, 400);
+  assertEquals(W.spent, 0);
 });

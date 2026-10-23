@@ -3,27 +3,31 @@
 //   measure -> Claude mõõdab toa ja mööbli, lõiked, MuAPI tööd (põrand, tagasein ilma mööblita, mööbel eraldi fotoks)
 //   parts   -> tulemused; mööbli fotost Tripo mudel; tagaseina ja kapifrontide sirgendus
 //   done    -> models/room/<firma>/<id>/room.json (vaatur ehitab toa sellest). Viga -> krediidid tagasi.
-import { cors, json, fail, env, admin, body, userCompany, tfetch, spend, refund, failText, isOurImage, rateLimit, refundStale, asJpeg, sniffType } from "../_shared/util.ts";
-import { sanitizePlan, backWallH, frontH, warp, type Plan, type Item } from "../_shared/room.ts";
+import { cors, json, fail, env, admin, body, userCompany, tfetch, spend, refund, failText, isOurImage, isPhoto, rateLimit, refundStale, asJpeg, sniffType } from "../_shared/util.ts";
+import { sanitizePlan, backWallH, frontH, sideWallH, warp, jpegSize, type Plan, type Item } from "../_shared/room.ts";
 
 const MU = () => env("MUAPI_API_BASE", "https://api.muapi.ai/api/v1");
 const muKey = () => { const k = env("MUAPI_API_KEY") || env("Muapi.ai ") || env("Muapi.ai"); if (!k) throw new Error("MUAPI_API_KEY puudub"); return k; };
 const PPM = 150, REDO_MAX = 3;
 type Job = { rid?: string; url?: string; done?: boolean; err?: string };
 type St = {
-  v: 1; plan?: Plan; src: string; dims: { w: number; d: number; h: number } | null; stage: "measure" | "parts" | "done";
+  v: 1; plan?: Plan; src: string; srcs?: string[]; mode?: "design" | "asis"; dims: { w: number; d: number; h: number } | null; stage: "measure" | "parts" | "done";
+  sides?: { left?: string | null; right?: string | null }; sidesDone?: boolean;
   floor: Job; wall: Job; backTex?: string | null; fronts?: Record<number, string>; frontsDone?: boolean;
   models: Record<string, { crop?: string; iso: Job; tri: Job; glb?: string; prev?: string; fail?: string; redo?: number }>;
   lock?: number; t0: number; cost: number; out?: string;
 };
 
-const PROMPT = `You are a room-measuring assistant. The image is a {W}x{H} px photo of a redesigned interior. Build a simple parametric model of the room.
-Coordinates in metres: x from the LEFT wall (as seen in the photo) to the right, z from the BACK wall (the wall facing the camera) towards the camera, y up from the floor.
+const PROMPT = `You are a room-measuring assistant. You get {N} photo(s) of one interior (labelled "Photo i (W x H px)"). Build a simple parametric model of the room.
+Coordinates in metres: x from the LEFT wall (as seen in Photo 0) to the right, z from the BACK wall (the wall facing the camera in Photo 0) towards the camera, y up from the floor.
+{MULTI}
 {DIMS}Estimate sizes from standard furniture (double bed ~2.0 m long, doors 2.0-2.1 m, ceilings 2.5-2.7 m, kitchen counters 0.9 m high, dining chair seat 0.45 m).
 Return ONLY JSON:
 {"room":{"width":m,"depth":m,"height":m},
  "floor_pts":[{"px":[x,y],"m":[x,z]} x4] - 4 points ON THE BARE FLOOR (not on rugs, beds or furniture), spread as wide as possible, convex quad,
  "back_wall_pts":[{"px":[x,y],"m":[x,y]} x4] - 4 points on the back wall plane, ideally its visible corners,
+ "left_wall_pts":[{"px":[x,y],"m":[z,y]} x4] and "right_wall_pts":[...] - optional, 4 points on that side wall if clearly visible,
+ "floor_photo":i,"back_wall_photo":i,"left_wall_photo":i,"right_wall_photo":i - the photo index each list of points belongs to (0 if only one photo),
  "walls":{"back":"#hex","left":"#hex","right":"#hex","ceiling":"#hex"},
  "floor":{"material":"short name, e.g. light oak planks","color":"#hex"},
  "openings":[{"wall":"back|left|right","kind":"window|door","x0":m,"x1":m,"y0":m,"y1":m}] (on left/right walls x is measured along z),
@@ -32,15 +36,22 @@ Return ONLY JSON:
    "has_back":bool (true only if it has a clearly taller back side: bed headboard, chair or sofa backrest),
    "builtin":bool (true for fixed cabinetry: kitchen cabinet runs, built-in wardrobes, fitted shelving),
    "front_px":[[x,y],[x,y],[x,y],[x,y]] (builtin only: corners of its visible FRONT face in the photo: top-left, top-right, bottom-right, bottom-left),
-   "color":"#hex"}]}
+   "color":"#hex","photo":i (index of the photo the bbox_px and front_px refer to)}]}
 w is the width of the front side, d the depth front-to-back. Include up to 12 pieces; skip rugs, pictures, pillows, blankets, lamps hanging from the ceiling.`;
 
-async function claudePlan(src: string, W: number, H: number, dims: St["dims"]) {
+const MULTI = `These are SEVERAL photos of the SAME room from different angles. Use them together: cross-check every size between the photos and give one consistent value.
+For each surface choose the photo where it is seen best (most straight-on, least covered) and give the points in THAT photo.
+List every piece of furniture ONCE even when several photos show it; its "photo" is the sharpest, most complete view of that item.
+`;
+async function claudePlan(srcs: string[], sizes: [number, number][], dims: St["dims"]) {
   const d = dims ? `The room is exactly ${dims.w} m wide (left to right), ${dims.d} m deep and ${dims.h} m high: use these numbers.\n` : "";
+  const content: Record<string, unknown>[] = [];
+  srcs.forEach((u, i) => { content.push({ type: "text", text: `Photo ${i} (${sizes[i][0]} x ${sizes[i][1]} px)` }); content.push({ type: "image", source: { type: "url", url: u } }); });
+  content.push({ type: "text", text: PROMPT.replace("{N}", String(srcs.length)).replace("{MULTI}", srcs.length > 1 ? MULTI : "").replace("{DIMS}", d) });
   const r = await tfetch(env("ANTHROPIC_API_URL", "https://api.anthropic.com") + "/v1/messages", {
     method: "POST", headers: { "x-api-key": env("ANTHROPIC_API_KEY"), "anthropic-version": "2023-06-01", "content-type": "application/json" },
     body: JSON.stringify({ model: env("ROOM_MODEL", "claude-opus-5-5"), max_tokens: 6000,
-      messages: [{ role: "user", content: [{ type: "image", source: { type: "url", url: src } }, { type: "text", text: PROMPT.replace("{W}", String(W)).replace("{H}", String(H)).replace("{DIMS}", d) }] }] }),
+      messages: [{ role: "user", content }] }),
   }, 120000);
   const j = await r.json().catch(() => ({}));
   if (!r.ok) throw new Error("anthropic " + r.status + " " + JSON.stringify(j).slice(0, 200));
@@ -108,7 +119,8 @@ function crop(img: { width: number; height: number; data: Uint8Array }, b: Item[
 function roomJson(st: St) {
   const p = st.plan!;
   return {
-    v: 1, est: p.est, room: p.room, walls: p.walls, openings: p.openings,
+    v: 1, est: p.est, room: p.room, walls: p.walls, openings: p.openings, mode: st.mode || "design", photos: (st.srcs || [st.src]).length,
+    sides: { left: st.sides?.left || null, right: st.sides?.right || null },
     floor: { color: p.floor.color, material: p.floor.material, tex: st.floor.done ? st.floor.url : null, tile: 2 },
     back: { tex: st.backTex || null }, src: st.src,
     items: p.items.map((it, i) => ({ name: it.name, key: it.key, size: it.size, pos: it.pos, elev: it.elev, rot: it.rot, has_back: it.has_back, builtin: it.builtin, color: it.color,
@@ -123,21 +135,26 @@ function progress(st: St) {
 
 async function step(id: string, cid: string, st: St): Promise<St> {
   const db = admin(), dir = `room/${cid}/${id}`;
+  const srcs = st.srcs || [st.src];
   if (st.stage === "measure") {
-    const img = await decode(st.src);
-    const { a, cost } = await claudePlan(st.src, img.width, img.height, st.dims);
-    const plan = sanitizePlan(a, img.width, img.height, st.dims);
+    // fotode mõõdud päisest (lahti pakkimata: protsessoriaeg on piiratud)
+    const sizes = await Promise.all(srcs.map(async (u) => { const r = await tfetch(u, {}, 30000), z = jpegSize(new Uint8Array(await r.arrayBuffer())); if (!r.ok || !z) throw new Error("pilti ei saanud lugeda"); return z; }));
+    const { a, cost } = await claudePlan(srcs, sizes, st.dims);
+    const plan = sanitizePlan(a, sizes, null, st.dims);
     st.plan = plan; st.cost += cost;
     // tööd paralleelselt: põrand, tagasein ilma eraldi modelleeritava mööblita, iga mööbel eraldi fotoks
     const remove = plan.items.filter((i) => !i.builtin && i.pos.z < plan.room.d * .6).map((i) => i.name);
     const jobs: Promise<unknown>[] = [
-      muSubmit("nano-banana-edit", { prompt: `Create a seamless tileable texture, straight top-down orthographic view, of exactly the floor in this photo (${plan.floor.material}), covering about 2 x 2 metres, even lighting, no furniture, no shadows, no perspective.`, images_list: [st.src] }).then((r) => st.floor.rid = r).catch((e) => st.floor.err = String(e.message).slice(0, 160)),
+      muSubmit("nano-banana-edit", { prompt: `Create a seamless tileable texture, straight top-down orthographic view, of exactly the floor in this photo (${plan.floor.material}), covering about 2 x 2 metres, even lighting, no furniture, no shadows, no perspective.`, images_list: [srcs[plan.photo.floor]] }).then((r) => st.floor.rid = r).catch((e) => st.floor.err = String(e.message).slice(0, 160)),
       remove.length
-        ? muSubmit("nano-banana-edit", { prompt: `Remove these objects from the photo completely: ${[...new Set(remove)].join(", ")}. Fill their place with the wall and floor that would be behind them, as if the room were empty there. Keep everything else exactly identical: same camera, same walls, windows, cabinets and lighting.`, images_list: [st.src] }).then((r) => st.wall.rid = r).catch((e) => st.wall.err = String(e.message).slice(0, 160))
-        : Promise.resolve(st.wall = { done: true, url: st.src }),
+        ? muSubmit("nano-banana-edit", { prompt: `Remove these objects from the photo completely: ${[...new Set(remove)].join(", ")}. Fill their place with the wall and floor that would be behind them, as if the room were empty there. Keep everything else exactly identical: same camera, same walls, windows, cabinets and lighting.`, images_list: [srcs[plan.photo.back]] }).then((r) => st.wall.rid = r).catch((e) => st.wall.err = String(e.message).slice(0, 160))
+        : Promise.resolve(st.wall = { done: true, url: srcs[plan.photo.back] }),
     ];
+    // mööbli lõiked: ainult vajalikud fotod lahti
+    const imgs: Record<number, Awaited<ReturnType<typeof decode>>> = {};
+    for (const p of new Set(plan.items.filter((i) => i.model).map((i) => i.photo))) imgs[p] = await decode(srcs[p]);
     for (const it of plan.items.filter((i) => i.model)) {
-      const c = crop(img, it.bbox), m: St["models"][string] = st.models[it.key] = { iso: {}, tri: {} };
+      const c = crop(imgs[it.photo], it.bbox), m: St["models"][string] = st.models[it.key] = { iso: {}, tri: {} };
       jobs.push(encode(c.out, c.w, c.h, 90).then((b) => put(`${dir}/crop-${it.key.replace(/ /g, "-")}.jpg`, b, "image/jpeg"))
         .then((u) => { m.crop = u; return muSubmit("nano-banana-edit", { prompt: ISO(it.name), images_list: [u] }); })
         .then((r) => m.iso.rid = r).catch((e) => m.iso.err = String(e.message).slice(0, 160)));
@@ -170,8 +187,8 @@ async function step(id: string, cid: string, st: St): Promise<St> {
     st.backTex = null;
     if (H) {
       try {
-        const img = await decode(st.wall.done ? st.wall.url! : st.src);
-        const sx = img.width / st.plan!.img[0], sy = img.height / st.plan!.img[1]; // puhastatud pilt võib olla teise suurusega
+        const img = await decode(st.wall.done ? st.wall.url! : srcs[st.plan!.photo?.back ?? 0]), sz = (st.plan!.sizes || [st.plan!.img])[st.plan!.photo?.back ?? 0];
+        const sx = img.width / sz[0], sy = img.height / sz[1]; // puhastatud pilt võib olla teise suurusega
         const h = H.h.map((v, i) => [0, 1, 2].includes(i) ? v * sx : [3, 4, 5].includes(i) ? v * sy : v);
         st.backTex = await put(`${dir}/back.jpg`, await encode(warp(img, h, H.W, H.H), H.W, H.H), "image/jpeg");
       } catch (e) { console.error("room back", (e as Error).message); }
@@ -183,18 +200,31 @@ async function step(id: string, cid: string, st: St): Promise<St> {
     const B = st.plan!.items.map((it, i) => [it, i] as const).filter(([it]) => it.builtin && it.front_px);
     if (B.length) {
       try {
-        const img = await decode(st.src);
+        const cache: Record<number, Awaited<ReturnType<typeof decode>>> = {};
         for (const [it, i] of B) {
-          const F = frontH(it, PPM);
-          if (F) st.fronts[i] = await put(`${dir}/front-${i}.jpg`, await encode(warp(img, F.h, F.W, F.H), F.W, F.H), "image/jpeg");
+          const F = frontH(it, PPM), ph = it.photo ?? 0;
+          if (!F) continue;
+          const img = cache[ph] = cache[ph] || await decode(srcs[ph]);
+          st.fronts[i] = await put(`${dir}/front-${i}.jpg`, await encode(warp(img, F.h, F.W, F.H), F.W, F.H), "image/jpeg");
         }
       } catch (e) { console.error("room fronts", (e as Error).message); }
     }
     st.frontsDone = true;
     return st;
   }
+  if (st.frontsDone && !st.sidesDone) {
+    st.sides = {};
+    for (const side of ["left", "right"] as const) {
+      const S = st.plan!.left_pts ? sideWallH(st.plan!, side, PPM) : null;
+      if (!S) continue;
+      try { const img = await decode(srcs[st.plan!.photo[side]]); st.sides[side] = await put(`${dir}/side-${side}.jpg`, await encode(warp(img, S.h, S.W, S.H), S.W, S.H), "image/jpeg"); }
+      catch (e) { console.error("room side", (e as Error).message); }
+    }
+    st.sidesDone = true;
+    return st;
+  }
   const allItems = M.every(([, m]) => m.glb || m.fail);
-  if (allItems && (st.floor.done || st.floor.err) && st.frontsDone) {
+  if (allItems && (st.floor.done || st.floor.err) && st.frontsDone && st.sidesDone) {
     const bytes = new TextEncoder().encode(JSON.stringify(roomJson(st)));
     st.out = await put(`${dir}/room-${Date.now()}.json`, bytes, "application/json");
     st.stage = "done";
@@ -208,23 +238,41 @@ export async function handler(req: Request): Promise<Response> {
   if (req.method !== "POST") return fail("POST only", 405);
   const me = await userCompany(req);
   if (!me) return fail("unauthorized", 401);
-  const b = await body(req, 20_000).catch(() => ({} as Record<string, unknown>));
+  const b = await body(req, 30_000_000).catch(() => ({} as Record<string, unknown>));
   const db = admin();
 
   if (b.action === "start") {
-    const src = String(b.image || "");
-    if (!isOurImage(src, "renders")) return fail("Vali AI tehtud disainivariant");
+    // kujundus = üks AI variant (meie kaustas); asis = kasutaja fotod nagu on (1–12, data-URL või meie kaust)
+    const list = (Array.isArray(b.photos) ? b.photos : [b.image]).map((x) => String(x || ""));
+    if (!list.length || list.length > 12) return fail("Lisa 1–12 fotot");
+    if (!list.every((u) => isOurImage(u, "renders") || isPhoto(u))) return fail("Vali AI tehtud disainivariant või lisa toa fotod");
+    const mode = b.mode === "asis" ? "asis" as const : "design" as const;
+    // fotod kontrollitakse ENNE krediidi võtmist (vigane foto ei maksa midagi)
+    const jpgs: (Uint8Array | null)[] = [];
+    for (const u of list) {
+      if (!isPhoto(u)) { jpgs.push(null); continue; }
+      let raw: Uint8Array;
+      try { raw = Uint8Array.from(atob(u.slice(u.indexOf(",") + 1)), (c) => c.charCodeAt(0)); } catch { return fail("Foto on vigane"); }
+      if (raw.length > 6_000_000) return fail("Foto on liiga suur");
+      const { bytes } = await asJpeg(raw);
+      if (sniffType(bytes) !== "image/jpeg" || !jpegSize(bytes)) return fail("Foto on vigane, lisa see uuesti");
+      jpgs.push(bytes);
+    }
     const D = (b.dims || null) as Record<string, unknown> | null, n = (v: unknown) => Number(String(v ?? "").replace(",", "."));
     const dims = D && [D.w, D.d, D.h].every((v) => n(v) > 0) ? { w: n(D.w), d: n(D.d), h: n(D.h) } : null;
     if (dims && !(dims.w >= 1.5 && dims.w <= 20 && dims.d >= 1.5 && dims.d <= 20 && dims.h >= 2 && dims.h <= 6)) return fail("Toa mõõdud: laius ja sügavus 1,5–20 m, kõrgus 2–6 m");
     await refundStale(me.companyId);
     if (!(await rateLimit("3d:" + me.companyId, 10, 3600))) return fail("Liiga palju 3D-töid lühikese ajaga. Proovi hiljem.", 429);
-    const id = crypto.randomUUID(), label = String(b.label || "Tuba 3D-s").slice(0, 120);
+    const id = crypto.randomUUID(), label = String(b.label || (mode === "asis" ? "Tuba 3D-s (fotodest)" : "Tuba 3D-s")).slice(0, 120);
     let credits: number;
     try { credits = await spend(me.companyId, "3d", label, id); }
     catch (e) { const m = (e as Error).message; return fail(m, m === "insufficient_credits" ? 402 : 400); }
-    const st: St = { v: 1, src, dims, stage: "measure", floor: {}, wall: {}, models: {}, t0: Date.now(), cost: 0, lock: 0 };
-    const { error } = await db.from("renders").insert({ id, company_id: me.companyId, kind: "3d", tpl: "sisek", prompt: "[tuba] " + label, input_urls: [src], stage: "measure", room: st });
+    // kasutaja fotod avalikku kausta (MuAPI ja Claude loevad neid aadressi järgi), alati JPEG
+    let srcs: string[];
+    try { srcs = await Promise.all(list.map((u, i) => jpgs[i] ? put(`room/${me.companyId}/${id}/src-${i}.jpg`, jpgs[i]!, "image/jpeg") : Promise.resolve(u))); }
+    catch (e) { const r = await refund(id); return json({ error: (e as Error).message + ". " + failText(r), refunded: r }, 500); }
+    const st: St = { v: 1, src: srcs[0], srcs, mode, dims, stage: "measure", floor: {}, wall: {}, models: {}, t0: Date.now(), cost: 0, lock: 0 };
+    const { error } = await db.from("renders").insert({ id, company_id: me.companyId, kind: "3d", tpl: "sisek", prompt: "[tuba " + mode + "] " + label, input_urls: srcs, stage: "measure", room: st });
     if (error) { const r = await refund(id); return json({ error: failText(r), refunded: r }, 500); }
     return json({ id, status: "pending", credits, ...progress(st) });
   }
