@@ -5209,7 +5209,7 @@ function m3PanelWire(){const s=stSess(),m=s&&s.model,P=$('stPanel');if(!m||!P)re
   P.querySelectorAll('[data-m3e]').forEach(b=>b.onclick=()=>{const it=m.items[+b.dataset.m3e],r=b.getBoundingClientRect();m3Ask(it.t==='note'?'Muuda märget':'Nimi (nt „lõunasein“)',it.t==='note'?it.txt:it.lb||'',{x:r.left,y:r.bottom},v=>{if(it.t==='note'){if(!v)return;it.txt=v;}else it.lb=v;m3Changed();});});
   const sc=P.querySelector('[data-m3="scale"]');if(sc)sc.onclick=()=>m3SetTool('scale');
   const gd=P.querySelector('[data-m3="garden"]');if(gd)gd.onchange=()=>{m.garden=gd.checked;stSave();m3GardenSync();stRenderPanel();};
-  P.querySelectorAll('[data-gk]').forEach(b=>b.onclick=()=>{const k=b.dataset.gk;m.gopt[k]=m.gopt[k]===false;stSave();const V=P3V;if(V&&V.garden)V.garden.vis();stRenderPanel();});
+  P.querySelectorAll('[data-gk]').forEach(b=>b.onclick=()=>{const k=b.dataset.gk;m.gopt[k]=k==='orto'?m.gopt.orto!==true:m.gopt[k]===false;stSave();const V=P3V;if(V&&V.garden)V.garden.vis();stRenderPanel();});
   P.querySelectorAll('[data-gt]').forEach(b=>b.onclick=()=>{m.gopt.time=b.dataset.gt;stSave();const V=P3V;if(V&&V.garden)V.garden.setTime(m.gopt.time);stRenderPanel();});
   const of=P.querySelector('[data-m3="off"]');if(of)of.onchange=()=>{m.offOn=of.checked;if(!of.checked){m.pin=[];m3FaceClear();}stSave();m3Redraw();};
   const ad=P.querySelector('[data-m3="addr"]');if(ad)ad.onclick=()=>m3AddrAsk({id:m.ref,url:m.url,ehr:m.ehr},ad);
@@ -5267,7 +5267,7 @@ const GARDEN_SRC='Ortofoto, kataster, teed, piirded, maakatte kõrgusmudel, hoon
 function m3GardenHtml(m){if(!m.fit||!m.ehr||!p3Cloud())return '';m.gopt=m.gopt||{};const V=P3V,G=V&&V.garden,on=!!m.garden;
   let h=`<div class="tgl"><div>Aed ja ümbrus<small>Krunt, kõrvalhooned, teed, piirded, puud ja naabrid Maa-ameti andmetest</small></div><span class="sw2"><input type="checkbox" data-m3="garden" ${on?'checked':''} aria-label="Aed ja ümbrus"><i></i></span></div>`;
   if(!on)return h;
-  h+=`<div class="gchips">${[['aed','Aed'],['puud','Puud'],['naabrid','Naabrid'],['krunt','Krundi piir']].map(([k,l])=>`<button type="button" class="chip" data-gk="${k}" aria-pressed="${m.gopt[k]!==false}">${l}</button>`).join('')}</div>`
+  h+=`<div class="gchips">${[['aed','Aed'],['puud','Puud'],['naabrid','Naabrid'],['krunt','Krundi piir'],...(G&&G.hasOrto?[['orto','Aerofoto']]:[])].map(([k,l])=>`<button type="button" class="chip" data-gk="${k}" aria-pressed="${k==='orto'?m.gopt.orto===true:m.gopt[k]!==false}">${l}</button>`).join('')}</div>`
    +`<div class="seg2 gtime" role="radiogroup" aria-label="Kellaaeg (päikese suund)">${[['h','Hommik'],['p','Päev'],['o','Õhtu']].map(([k,l])=>`<button type="button" role="radio" data-gt="${k}" aria-checked="${(m.gopt.time||'p')===k}">${l}</button>`).join('')}</div>`;
   const P=G&&G.parcel;if(G&&G.ghost)h+=`<span class="fhint" style="color:#C2410C">Sobitus on ebakindel (kuju kattub ${Math.round((m.fit.iou||0)*100)} %, kindlaks on vaja 80 %): oranž kontuur on Maa-ameti maja, 3D-mudeli asukoht on ligikaudne.</span>`;h+=`<span class="fhint">${V&&V.gErr?stEsc(V.gErr):G?`${G.trees.length} olulist puud (Maa-amet, 2020–2023) · ${G.neighbours} naabrit`:'Laadin krundi mudelit…'}</span>`;
   if(P&&P.a)h+=`<div class="row"><div class="k"><span>Krunt</span><small>${stEsc(P.a)} · ${stEsc(P.t)} · Maa-amet${/^\d{4}/.test(P.d||'')?', '+P.d.slice(0,4):''}</small></div><b>${fmt(P.p,0)} m²</b></div>`;
@@ -5276,7 +5276,7 @@ function m3GardenHtml(m){if(!m.fit||!m.ehr||!p3Cloud())return '';m.gopt=m.gopt||
 async function m3GardenSync(){const s=stSess(),m=s&&s.model,V=P3V;if(!m||!V||!V.ok)return;m.gopt=m.gopt||{};
   const want=!!m.garden&&!!m.fit&&!!M3L2[m.ehr];
   if(!want){if(V.garden){V.garden.off();V.garden=null;}return;}if(V.garden||V.gLoading)return;V.gLoading=1;V.gErr=null;const t0=performance.now(),T={};
-  try{if(!window.V3DGarden){await new Promise((res,rej)=>{const sc=document.createElement('script');sc.src='js/garden.js?v=7';sc.onload=res;sc.onerror=()=>rej(new Error('garden.js'));document.head.appendChild(sc);});}
+  try{if(!window.V3DGarden){await new Promise((res,rej)=>{const sc=document.createElement('script');sc.src='js/garden.js?v=8';sc.onload=res;sc.onerror=()=>rej(new Error('garden.js'));document.head.appendChild(sc);});}
     const r=await clFn('garden',/^lod2:/.test(m.url)?{ehr:m.ehr}:{ref:m.ref},{q:CO_Q});T.server=Math.round(performance.now()-t0);
     const meta=await (await fetch(r.meta)).json();T.meta=Math.round(performance.now()-t0)-T.server;
     if(P3V!==V||stSess()!==s)return;V.garden=await V3DGarden.show(V,m,meta,T);
