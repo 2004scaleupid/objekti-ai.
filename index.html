@@ -5276,7 +5276,7 @@ function m3GardenHtml(m){if(!m.fit||!m.ehr||!p3Cloud())return '';m.gopt=m.gopt||
 async function m3GardenSync(){const s=stSess(),m=s&&s.model,V=P3V;if(!m||!V||!V.ok)return;m.gopt=m.gopt||{};
   const want=!!m.garden&&!!m.fit&&!!M3L2[m.ehr];
   if(!want){if(V.garden){V.garden.off();V.garden=null;}return;}if(V.garden||V.gLoading)return;V.gLoading=1;V.gErr=null;const t0=performance.now(),T={};
-  try{if(!window.V3DGarden){await new Promise((res,rej)=>{const sc=document.createElement('script');sc.src='js/garden.js?v=5';sc.onload=res;sc.onerror=()=>rej(new Error('garden.js'));document.head.appendChild(sc);});}
+  try{if(!window.V3DGarden){await new Promise((res,rej)=>{const sc=document.createElement('script');sc.src='js/garden.js?v=6';sc.onload=res;sc.onerror=()=>rej(new Error('garden.js'));document.head.appendChild(sc);});}
     const r=await clFn('garden',/^lod2:/.test(m.url)?{ehr:m.ehr}:{ref:m.ref},{q:CO_Q});T.server=Math.round(performance.now()-t0);
     const meta=await (await fetch(r.meta)).json();T.meta=Math.round(performance.now()-t0)-T.server;
     if(P3V!==V||stSess()!==s)return;V.garden=await V3DGarden.show(V,m,meta,T);

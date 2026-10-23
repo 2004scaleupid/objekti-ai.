@@ -28,7 +28,7 @@ window.lod2Get=async p=>{const r=await fetch(LOD2_BASE+p+'.gz');if(!r.ok)return 
 window.M3L2={};window.fmt=(v,d=1)=>(+v).toLocaleString('et-EE',{minimumFractionDigits:d,maximumFractionDigits:d});window.fmtM=x=>x.toFixed(2).replace('.',',');
 window.m3Redraw=()=>{};
 </script>
-<script src="../../js/garden.js?v=5"></script>
+<script src="../../js/garden.js?v=6"></script>
 <script>
 (async()=>{
 const el=document.getElementById('v'),lab=document.getElementById('lab');
@@ -58,7 +58,7 @@ const get=t=>fetch(`${base}&typeNames=etak:${t}${bb}`).then(r=>r.ok?r.json():{fe
 const [A,J]=await Promise.all([get('e_501_tee_a'),get('e_501_tee_j')]);
 const ra=[];for(const f of A.features||[]){const g=f.geometry,polys=g?.type==='Polygon'?[g.coordinates]:g?.type==='MultiPolygon'?g.coordinates:[];for(const p of polys)if(p[0]?.length)ra.push(p.map(rr=>rel(rr)));}
 const rl=[];for(const f of J.features||[]){const g=f.geometry,ls=g?.type==='LineString'?[g.coordinates]:g?.type==='MultiLineString'?g.coordinates:[];for(const c of ls)if(c?.length>1)rl.push({w:Math.max(2,Math.min(20,Number(f.properties?.laius)||4)),g:rel(c)});}
-const meta={v:5,ehr:EHR,c:C,r:R,files:{ndsm:wms('fotokaart','nDSM',768,'image/png'),fences:wms('kaart','etak_piirded',1536,'image/png'),orto:wms('fotokaart','EESTIFOTO',2048,'image/jpeg')},parcels,roads:{a:ra,l:rl}};
+const meta={v:5,ehr:EHR,c:C,r:R,files:{ndsm:wms('fotokaart','nDSM',768,'image/png'),fences:wms('kaart','etak_piirded',1536,'image/png'),orto:wms('fotokaart','EESTIFOTO',1024,'image/jpeg')},parcels,roads:{a:ra,l:rl}};
 const V={r,sc,cam,ct,sun,catcher,model:house};
 const mm={ehr:EHR,fit:{s:1,rot:0,mc:[0,0],lc:[0,0],y0:0,ok:true},gopt:{}};
 const G=await V3DGarden.show(V,mm,meta,{});

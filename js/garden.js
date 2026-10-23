@@ -93,7 +93,8 @@ function groundTex(S,par,roads,feet,orto,R){const N=2048,px=S/N,c=document.creat
 // ---------- vaade ----------
 async function show(V,m,meta,T){const R=meta.r,t=()=>performance.now();let t0=t();
   const L=M3L2[m.ehr],f=m.fit;if(!L||!f)throw new Error('sobitus puudub');
-  const [ndsm,fen,geo,orto]=await Promise.all([img(meta.files.ndsm),img(meta.files.fences),nearby(meta),meta.files.orto?img(meta.files.orto).catch(()=>null):null]);
+  const oP=meta.files.orto?img(meta.files.orto).catch(()=>null):Promise.resolve(null); // ortofoto ei blokeeri: kui hilineb, lisatakse hiljem
+  const [ndsm,fen,geo]=await Promise.all([img(meta.files.ndsm),img(meta.files.fences),nearby(meta)]);
   T.andmed=Math.round(t()-t0);t0=t();
   const par=(meta.parcels||[]).find(p=>pip(0,0,ring2(p.g[0])))||null,PP=par?ring2(par.g[0]):null;
   const own=[],nb=[];geo.forEach(o=>{if(o.e===meta.ehr)return;(PP&&pip(o.dx,o.dy,PP)?own:nb).push(o);});
@@ -101,7 +102,8 @@ async function show(V,m,meta,T){const R=meta.r,t=()=>performance.now();let t0=t(
   const grp={aed:new THREE.Group(),puud:new THREE.Group(),naabrid:new THREE.Group(),krunt:new THREE.Group()};Object.values(grp).forEach(g=>G.add(g));
   // maapind
   const S=180,shift=o=>r=>ring2(r).map(q=>[q[0]+o.dx,q[1]+o.dy]),feet=[...(L.g||[]).map(ring2),...own.flatMap(o=>o.b.g.map(shift(o))),...nb.flatMap(o=>o.b.g.map(shift(o)))];
-  const gt=groundTex(S,PP,meta.roads||{a:[],l:[]},feet,orto,R);gt.anisotropy=V.r.capabilities.getMaxAnisotropy();
+  const orto=await Promise.race([oP,new Promise(r=>setTimeout(()=>r(undefined),1500))]);
+  let gt=groundTex(S,PP,meta.roads||{a:[],l:[]},feet,orto,R);gt.anisotropy=V.r.capabilities.getMaxAnisotropy();
   const ground=new THREE.Mesh(new THREE.PlaneGeometry(S,S),new THREE.MeshLambertMaterial({map:gt}));ground.rotation.x=-Math.PI/2;ground.receiveShadow=true;ground.position.y=-.02;
   const far=new THREE.Mesh(new THREE.CircleGeometry(900,48),new THREE.MeshBasicMaterial({color:lin(COL.bg)}));far.rotation.x=-Math.PI/2;far.position.y=-.06;
   grp.aed.add(ground,far);
@@ -112,12 +114,11 @@ async function show(V,m,meta,T){const R=meta.r,t=()=>performance.now();let t0=t(
     const fg=new THREE.BufferGeometry();fg.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));fg.computeVertexNormals();const fm=new THREE.Mesh(fg,new THREE.MeshStandardMaterial({color:COL.fence,roughness:.9,side:THREE.DoubleSide}));fm.castShadow=true;grp.aed.add(fm);}
   // hooned: krundi omad valged (nagu maja), naabrid hallid
   const edge=new THREE.LineBasicMaterial({color:0x8d877e,transparent:true,opacity:.55}),wallM=new THREE.MeshStandardMaterial({color:COL.wall,roughness:.95,side:THREE.DoubleSide}),roofM=new THREE.MeshStandardMaterial({color:COL.roof,roughness:.9,side:THREE.DoubleSide});
-  let oTex=null;if(orto){oTex=new THREE.Texture(orto);oTex.encoding=THREE.sRGBEncoding;oTex.anisotropy=gt.anisotropy;oTex.needsUpdate=true;roofM.map=oTex;roofM.color.set(0xffffff);}
-  own.sort((a,b)=>b.b.fp-a.b.fp).forEach((o,k)=>{o.info={nm:'Kõrvalhoone '+(k+1),fp:o.b.fp,h:o.b.r,roof:o.b.ro,R:oTex?R:0};grp.aed.add(building(o.b,o.dx,o.dy,wallM,roofM,edge,o.info));});
+  own.sort((a,b)=>b.b.fp-a.b.fp).forEach((o,k)=>{o.info={nm:'Kõrvalhoone '+(k+1),fp:o.b.fp,h:o.b.r,roof:o.b.ro,R};grp.aed.add(building(o.b,o.dx,o.dy,wallM,roofM,edge,o.info));});
   // ebakindel sobitus: Maa-ameti maja kummituskontuurina (näitab, kus maja tegelikult on); kindla sobituse korral peidus
   if(!f.ok){const gm=new THREE.MeshBasicMaterial({color:0xC2410C,transparent:true,opacity:.1,depthWrite:false,side:THREE.DoubleSide}),gh=building({g:L.g,f:(L.f||[]).map(F=>F[3]),e:L.eave||L.ridge*.6},0,0,gm,gm,new THREE.LineBasicMaterial({color:0xC2410C,transparent:true,opacity:.85}),null);
     gh.traverse(o=>{o.castShadow=o.receiveShadow=false;o.renderOrder=2;});grp.krunt.add(gh);}
-  const nbM=new THREE.MeshStandardMaterial({color:COL.nb,roughness:.95,side:THREE.DoubleSide}),nbR=oTex?roofM:nbM;nb.forEach(o=>grp.naabrid.add(building(o.b,o.dx,o.dy,nbM,nbR,null,{nm:'Naaberhoone',fp:o.b.fp,h:o.b.r,roof:o.b.ro,R:oTex?R:0})));
+  const nbM=new THREE.MeshStandardMaterial({color:COL.nb,roughness:.95,side:THREE.DoubleSide}),nbR=new THREE.MeshStandardMaterial({color:COL.nb,roughness:.95,side:THREE.DoubleSide});nb.forEach(o=>grp.naabrid.add(building(o.b,o.dx,o.dy,nbM,nbR,null,{nm:'Naaberhoone',fp:o.b.fp,h:o.b.r,roof:o.b.ro,R})));
   // olulised puud: ≥ 5 m kõrgused, võra ≥ 2,5 m, krundil + 12 m varu, max 25
   const W=ndsm.width,mk=document.createElement('canvas');mk.width=mk.height=W;const mx=mk.getContext('2d',{willReadFrequently:true}),px=2*R/W;mx.fillStyle=mx.strokeStyle='#fff';mx.lineWidth=2/px;
   feet.forEach(Rg=>{mx.beginPath();Rg.forEach((q,k)=>{const a=(q[0]+R)/px,b=(R-q[1])/px;k?mx.lineTo(a,b):mx.moveTo(a,b);});mx.closePath();mx.fill();mx.stroke();});
@@ -128,14 +129,20 @@ async function show(V,m,meta,T){const R=meta.r,t=()=>performance.now();let t0=t(
   trees.forEach(tr=>{tr.con=tr.r/tr.h<.3;tr.own=!!PP&&pip(tr.x,tr.y,PP);});
   T.puud=Math.round(t()-t0);t0=t();
   const mtx=new THREE.Matrix4(),q=new THREE.Quaternion();
-  const kinds=[['trunk',new THREE.CylinderGeometry(.13,.18,1,7).translate(0,.5,0),orto?0x5E4E3E:COL.trunk,()=>true],['crown',new THREE.IcosahedronGeometry(1,1),orto?0x5C8A45:COL.crown,tr=>!tr.con],['cone',new THREE.ConeGeometry(1,1,9).translate(0,.5,0),orto?0x3F6E48:COL.conifer,tr=>tr.con]];
-  for(const [k,geom,c,ok] of kinds){const L2=trees.filter(ok);if(!L2.length)continue;const im=new THREE.InstancedMesh(geom,new THREE.MeshStandardMaterial({color:c,roughness:.95,flatShading:true}),L2.length);
+  const kinds=[['trunk',new THREE.CylinderGeometry(.13,.18,1,7).translate(0,.5,0),COL.trunk,()=>true],['crown',new THREE.IcosahedronGeometry(1,1),COL.crown,tr=>!tr.con],['cone',new THREE.ConeGeometry(1,1,9).translate(0,.5,0),COL.conifer,tr=>tr.con]],tMat={};
+  for(const [k,geom,c,ok] of kinds){const L2=trees.filter(ok);if(!L2.length)continue;const im=new THREE.InstancedMesh(geom,tMat[k]=new THREE.MeshStandardMaterial({color:c,roughness:.95,flatShading:true}),L2.length);
     im.castShadow=true;im.receiveShadow=true;im.userData.trees=L2;
     L2.forEach((tr,i)=>{q.setFromAxisAngle(new THREE.Vector3(0,1,0),((tr.i*7919+tr.j*104729)%628)/100);let p,s;
       if(k==='trunk'){p=[tr.x,0,-tr.y];s=[1+tr.r*.05,tr.con?tr.h*.3:tr.h-tr.r*1.1,1+tr.r*.05];}
       else if(k==='crown'){const cr=tr.r*.9,ch=Math.min(cr*1.1,tr.h*.5);p=[tr.x,tr.h-ch,-tr.y];s=[cr,ch,cr];}
       else{p=[tr.x,tr.h*.18,-tr.y];s=[tr.r*.82,tr.h*.82,tr.r*.82];}
       mtx.compose(new THREE.Vector3(...p),q,new THREE.Vector3(...s));im.setMatrixAt(i,mtx);});im.instanceMatrix.needsUpdate=true;grp.puud.add(im);}
+  // ortofoto: maapind + katused fotolt, puud looduslikumates toonides
+  let oTex=null,dead=false;const applyOrto=o=>{if(!o||dead||oTex)return;oTex=new THREE.Texture(o);oTex.encoding=THREE.sRGBEncoding;oTex.anisotropy=gt.anisotropy;oTex.needsUpdate=true;
+    const g2=groundTex(S,PP,meta.roads||{a:[],l:[]},feet,o,R);g2.anisotropy=gt.anisotropy;ground.material.map=g2;ground.material.needsUpdate=true;gt.dispose();gt=g2;
+    for(const M of [roofM,nbR]){M.map=oTex;M.color.set(0xffffff);M.needsUpdate=true;}
+    [['trunk',0x5E4E3E],['crown',0x5C8A45],['cone',0x3F6E48]].forEach(([k,c])=>{if(tMat[k])tMat[k].color.set(c);});if(typeof m3Redraw==='function')m3Redraw();};
+  if(orto)applyOrto(orto);else oP.then(applyOrto);
   V.sc.add(outer);outer.updateMatrixWorld(true);
   // krundi mõõdud sildikihile (maailma koordinaadid): pindala, servad, majast piirini, naabriteni, kõrvalhoonete pinnad
   const w=(x,y,z=0)=>new THREE.Vector3(x,z,-y).applyMatrix4(G.matrixWorld),site=[],main=(L.g||[]).map(ring2)[0]||[];
@@ -166,7 +173,7 @@ async function show(V,m,meta,T){const R=meta.r,t=()=>performance.now();let t0=t(
   const sp=new THREE.Sphere();new THREE.Box3().setFromObject(V.model).getBoundingSphere(sp);const dir=V.cam.position.clone().sub(V.ct.target);dir.y=0;dir.normalize();dir.y=.85;dir.normalize();
   V.cam.position.copy(V.ct.target).addScaledVector(dir,Math.max(sp.radius*4.4,46/s)*Math.max(1,1/V.cam.aspect));V.ct.update(); // püstkaadris (telefon) kitsas vaade -> kaugemale
   T.mudel=Math.round(t()-t0);if(typeof m3Redraw==='function')m3Redraw();
-  const off=()=>{V.r.toneMappingExposure=st.exp;V.sc.environment=st.env;if(hemi&&st.hemi){hemi.intensity=st.hemi[0];hemi.color.set(st.hemi[1]);hemi.groundColor.set(st.hemi[2]);}V.sc.remove(outer);V.sc.background=st.bg;V.sc.fog=st.fog;V.catcher.visible=st.catcher;
+  const off=()=>{dead=true;V.r.toneMappingExposure=st.exp;V.sc.environment=st.env;if(hemi&&st.hemi){hemi.intensity=st.hemi[0];hemi.color.set(st.hemi[1]);hemi.groundColor.set(st.hemi[2]);}V.sc.remove(outer);V.sc.background=st.bg;V.sc.fog=st.fog;V.catcher.visible=st.catcher;
     V.sun.position.copy(st.sunPos);V.sun.intensity=st.sunI;V.sun.color.set(0xffffff);V.sun.shadow.radius=st.rad;Object.assign(sc,{left:st.cam.left,right:st.cam.right,top:st.cam.top,bottom:st.cam.bottom,near:st.cam.near,far:st.cam.far});sc.updateProjectionMatrix();
     V.cam.far=st.far;V.cam.updateProjectionMatrix();V.ct.maxDistance=st.maxD;V.gpick=null;V.m3S=null;outer.traverse(o=>{if(o.geometry)o.geometry.dispose();});gt.dispose();if(oTex)oTex.dispose();if(typeof m3Redraw==='function')m3Redraw();};
   return {off,vis,setTime,trees,ghost:!f.ok,parcel:par,own:own.map(o=>o.info),neighbours:nb.length,fences:segs.length};}
