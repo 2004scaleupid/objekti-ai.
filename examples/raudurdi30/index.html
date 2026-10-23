@@ -21,7 +21,7 @@ html,body{margin:0;height:100%;background:#E9E7E1;overflow:hidden;font-family:va
 /* Näidis: meie fotodest tehtud maja + äpi "Aed ja ümbrus" (js/garden.js) Maa-ameti avaandmetest, laetakse otse brauseris. */
 const EHR='116069357',C=[553547.9,6592778.79],R=64;
 // maja paigutus LOD2 raamis (x = ida, z = -põhi, nullpunkt LOD2 keskpunkt): sobitatud põhiplaani ja harjakõrguse (8,89 m) järgi
-const FIT={a:1.362284743429779,cx:1.3045807991065117,cy:-0.2321894328169769,rotY:-3.8746309394274117,s:12.827982930076056,y0:4.439988954476835,off:[2.3800912140126806,0.8124687004647253]};
+const FIT={a:1.362284743429779,cx:1.3045807991065117,cy:-0.2321894328169769,rotY:-3.8004544462176524,s:12.827982930076056,y0:4.439988954476835,off:[2.0,0.8]};
 const LOD2_BASE='https://twubqebmjuvwypeduqqq.supabase.co/storage/v1/object/public/lod2/v1/';
 window.lod2Get=async p=>{const r=await fetch(LOD2_BASE+p+'.gz');if(!r.ok)return {};const b=new Uint8Array(await r.arrayBuffer());
   if(b[0]!==0x1f||b[1]!==0x8b)return JSON.parse(new TextDecoder().decode(b));return JSON.parse(await new Response(new Blob([b]).stream().pipeThrough(new DecompressionStream('gzip'))).text());};
