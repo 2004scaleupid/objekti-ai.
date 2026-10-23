@@ -6374,6 +6374,16 @@ const _ci=clInit;clInit=async function(){const sb=await _ci.apply(this,arguments
 })();
 }catch(e){console.warn("blokk: seanss",e);}
 
+/* 3 sihtrühma: firmadele maja 3D, toode pildile ja kodulehe vidin; kõigile 3D-mudel ja vaba idee (vidina kaart avab seaded) */
+try{(()=>{const css=document.createElement('style');css.textContent='@media (min-width:900px){#tGrid{grid-template-columns:repeat(6,minmax(0,1fr))!important}#tGrid .tcard{grid-column:span 2}#tGrid .tcard.w3{grid-column:span 3}}#tGrid .tvbox{position:absolute;left:30%;top:50%;width:42%;height:32%;border:2px dashed #FF5A1F;background:rgba(255,90,31,.18);border-radius:4px}#tGrid .tvbox em{position:absolute;left:-2px;top:-2px;transform:translateY(-100%);background:#FF5A1F;color:#fff;font:700 10px/1 system-ui;font-style:normal;padding:2px 5px;border-radius:4px}';document.head.appendChild(css);
+  const _r=renderTpls;renderTpls=function(){const r=_r.apply(this,arguments);const g=$('tGrid');if(!g)return r;
+    let v=g.querySelector('.tcard[data-t="vidin"]');if(!v){v=document.createElement('button');v.type='button';v.className='tcard';v.dataset.t='vidin';
+      v.innerHTML=`<span class="tex" style="position:relative"><img src="${typeof PLACE!=='undefined'&&PLACE.park?PLACE.park:''}" alt="" style="width:100%;height:100%;object-fit:cover"><i class="tvbox"><em>1</em></i><span class="tl"><i class="pa">Sinu kodulehel</i></span></span><b>Kodulehe vidin</b><p>Klient paneb sinu lehel foto, valib toote ja märgib koha. Sina saad päringu koos pildiga.</p><div class="tm"><span>Koduleht → päring</span><span>Seadista<span class="ar" aria-hidden="true">→</span></span></div>`;
+      v.onclick=()=>show('settings','widget');}
+    const priv=acct.kind==='private';['maja','pane'].forEach(id=>{const b=g.querySelector(`.tcard[data-t="${id}"]`);if(b){g.appendChild(b);b.classList.toggle('w3',priv);}});if(priv)v.remove();else g.appendChild(v);
+    ['mudel3d','vaba'].forEach(id=>{const b=g.querySelector(`.tcard[data-t="${id}"]`);if(b){g.appendChild(b);b.classList.add('w3');}});return r;};
+  if($('tGrid'))renderTpls();})();}catch(e){console.warn('[tööriistad]',e);}
+
 restoreRT();renderList();renderPanel();build();updFotos();chatReset();setTab(false);renderAcct();
   if(CLOUD)clBoot();else if(!startFromHash()){if(DEV_AUTOLOGIN||store.get('oai_session',null))enter();else $('login').hidden=false;}tick();}
 </script>
