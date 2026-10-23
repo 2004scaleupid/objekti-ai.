@@ -1128,6 +1128,34 @@ input[type=checkbox]{accent-color:var(--accent)}
   .hspark .l{stroke-dashoffset:0}.hspark .f{opacity:1}
   .p3d .b{clip-path:none}.p3d .c,.p3d .t3{opacity:1}.p3d .p3s{transform:rotateY(-14deg) rotateX(6deg)}
   .oprog b{width:60%}}
+
+/* ---------- töölaud: rakendus kogu ekraanil (nagu Claude / ChatGPT); telefon: css/mobile.css ---------- */
+@media (min-width:821px){
+  body{padding:0;margin:0}
+  .app{max-width:none;border:0;border-radius:0;min-height:100dvh}
+  /* stuudio ja objekti 3D-vaade täidavad ekraani, sisu kerib oma alas */
+  body:has(#studio:not([hidden])),body:has(#body:not([hidden])){height:100dvh;overflow:hidden}
+  body:has(#studio:not([hidden])) .app,body:has(#body:not([hidden])) .app{height:100dvh}
+  .app>.hdr{flex:none}
+  .studio{height:auto!important;flex:1;min-height:0;grid-template-columns:52px minmax(0,1fr) min(300px,26vw)}
+  .body{height:auto!important;flex:1;min-height:0}
+  .studio.pcol{grid-template-columns:52px minmax(0,1fr)}
+  .studio.pcol .stpanel{display:none}
+  .stthread{padding-left:clamp(16px,3vw,48px);padding-right:clamp(16px,3vw,48px)}
+  .stthread>*{max-width:1240px}
+  .stbox{max-width:1000px}
+}
+/* pildid vestluses mahuvad alati nähtavasse alasse (--stimg = vestluse kõrgus miinus nupud), ei lõigata */
+.stres{justify-items:start}
+.stres.one{max-width:none}
+.stv{max-width:100%}
+.stv>img{width:auto;max-width:100%;max-height:var(--stimg,60vh);object-fit:contain;align-self:center;background:var(--soft)}
+.stres.two{grid-template-columns:repeat(2,minmax(0,1fr));max-width:none;justify-items:stretch}
+.stres.two .stv>img{width:100%}
+@media (min-width:821px){.stvsw.two{display:none}}
+@media (max-width:820px){.stres.two{grid-template-columns:minmax(0,1fr)}.stres.two .stv:not(.vcur){display:none}#stPanT{display:none}}
+.stf{width:56px;height:56px;border-radius:10px}
+.stpant[aria-pressed=true]{background:var(--soft)}
 </style>
 <link rel="stylesheet" href="css/mobile.css">
 </head>
@@ -1355,7 +1383,7 @@ input[type=checkbox]{accent-color:var(--accent)}
     <section class="stmain" id="stMain">
       <div class="sttop" id="stTop"><button type="button" class="stback" id="stHome" aria-label="Tagasi avalehele"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>Avaleht</button><button type="button" class="stback" id="stTo3d" hidden title="Tagasi maja 3D-vaatesse"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 3 8 4.5v9L12 21l-8-4.5v-9z"/><path d="m4 7.5 8 4.5 8-4.5M12 12v9"/></svg>3D-vaade</button><span class="sttn" id="stTn"></span><span class="stsp"></span>
         <div class="stsel"><button type="button" class="stpick" id="stJobs" aria-haspopup="listbox"><span>Tööd</span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button><div class="stmenu dn" id="stJobsM" role="listbox" hidden></div></div>
-        <button type="button" class="ghost sm" id="stNew2">+ Uus töö</button></div>
+        <button type="button" class="ghost sm" id="stNew2">+ Uus töö</button><button type="button" class="sticon stpant" id="stPanT" aria-pressed="true" aria-label="Infopaneel" title="Peida infopaneel"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M15 4v16"/></svg></button></div>
       <div class="sthero" id="stHero">
         <div class="stlogo" aria-hidden="true"></div>
         <h1 id="stTitle">Mida täna loome?</h1>
@@ -4053,7 +4081,7 @@ function stRender(){const th=stTheme(STU.tpl),s=stSess();if(STU.edit!=null&&!(s&
   const ON=TPLS().filter(t=>t.on),order=['vaba','sisek','toodehoov','maakler','katus','fassaad','mudel3d'];
   ON.sort((a,b)=>((order.indexOf(a.id)+99)%99)-((order.indexOf(b.id)+99)%99));
   $('stChips').innerHTML=ON.filter(t=>t.id!=='mudel3d').map(t=>`<button type="button" class="stchip" data-t="${t.id}" aria-pressed="${t.id===STU.tpl||(STU.tpl==='mudel3d'&&t.id==='vaba')}">${ticon(t,16)}<span>${stEsc(t.id==='vaba'?'Vaba idee':t.name)}</span></button>`).join('');
-  $('stChips').querySelectorAll('.stchip').forEach(b=>b.onclick=()=>{if(b.dataset.t!==STU.tpl)openStudio(b.dataset.t);});st3dRender();roomRender();if(s&&s.room&&s.room.status==='pending')roomPoll(s);
+  $('stChips').querySelectorAll('.stchip').forEach(b=>b.onclick=()=>{if(b.dataset.t!==STU.tpl)openStudio(b.dataset.t);});st3dRender();roomRender();stPanApply();if(s&&s.room&&s.room.status==='pending')roomPoll(s);
   $('stM3').hidden=!mdl;$('stAdd3d').hidden=!(th.T&&th.T.id==='vaba');m3MyRow();if(mdl)m3Show();
   $('stStage').hidden=!editing;$('stThread').hidden=editing||!hasMsgs||!!th.p3;$('stTo3d').hidden=!(s&&s.obj&&HOUSES.some(h=>h.ehr===s.obj));
   if(editing){const n=(s.tray||[]).indexOf(STU.edit);$('stEdT').textContent=n>=0?'Pilt '+(n+1):'Pilt';}
@@ -4197,6 +4225,7 @@ const stIn=$('stIn');let stDraftT=0;stIn.addEventListener('input',()=>{stAuto();
 stIn.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey&&!e.isComposing){if(typeof sug!=='undefined'&&!sug.hidden&&sugIn===stIn)return;e.preventDefault();if((e.metaKey||e.ctrlKey)&&!$('stGenBtn').hidden){stGenerate();return;}if(!$('stSend').disabled)stSend();}});
 $('stGenBtn').onclick=()=>stGenerate();
 $('st3dT').onclick=()=>st3dToggle();
+$('stPanT').onclick=()=>{const col=!$('studio').classList.contains('pcol');try{localStorage.setItem('v3d_pan',col?'0':'1');}catch(_){}stPanApply();};
 stIn.addEventListener('paste',e=>{const fs=[...((e.clipboardData||{}).items||[])].filter(i=>i.kind==='file').map(i=>i.getAsFile()).filter(Boolean);if(fs.length){e.preventDefault();stAddFiles(fs);}});
 $('stAdd').onclick=()=>$('stFile').click();$('stUp').onclick=()=>$('stFile').click();
 $('stFile').onchange=e=>{const f=[...e.target.files];e.target.value='';stAddFiles(f);};
@@ -4408,6 +4437,16 @@ function stZoomImg(u,list){const L=(list&&list.length?list:[{u}]).filter(x=>x&&x
 // lõime kõik pildid järjekorras: kasutaja fotod ja AI tulemused
 function stThreadImgs(box){return [...box.querySelectorAll('[data-z]')].map(el=>({u:el.dataset.z||el.src,ai:el.dataset.zai==='1',cap:el.dataset.zcap||'',before:el.dataset.zbf||''}));}
 function stUseAs1(u){const s=stSess();if(!s)return;let i=s.imgs.findIndex(x=>x.src===u);if(i<0){s.imgs.push({src:u,k:'ai',marks:[]});i=s.imgs.length-1;}s.tray=s.tray||[];const j=s.tray.indexOf(i);if(j>0)s.tray.splice(j,1);if(j!==0){if(s.tray.length)s.tray[0]=i;else s.tray=[i];}STU.edit=null;stSave();stRender();}
+/* töölaual: infopaneel peidetav (vaikimisi peidus, kui vestlus on olemas), valik meeles */
+function stPanApply(){const st=$('studio'),b=$('stPanT');if(!st||!b)return;const s=stSess();let v=null;try{v=localStorage.getItem('v3d_pan');}catch(_){}
+  const col=v==='0'?true:v==='1'?false:!!(s&&s.msgs&&s.msgs.length);st.classList.toggle('pcol',col);b.setAttribute('aria-pressed',String(!col));b.title=col?'Näita infopaneeli':'Peida infopaneel';}
+/* vestluse pildid mahuvad nähtavasse alasse; uus tulemus kerib täies ulatuses vaatesse */
+let STFIT=null;
+function stThreadFit(box,s){if(!STFIT&&window.ResizeObserver){STFIT=new ResizeObserver(()=>box.style.setProperty('--stimg',Math.max(180,box.clientHeight-120)+'px'));STFIT.observe(box);}
+  box.style.setProperty('--stimg',Math.max(180,box.clientHeight-120)+'px');
+  const last=s.msgs[s.msgs.length-1]||{},k=s.id+':'+s.msgs.length+':'+(last.pending?'p':'d')+':'+((last.out||[]).length);
+  if(box.dataset.k===k)return;const first=!box.dataset.k||box.dataset.sid!==s.id;box.dataset.k=k;box.dataset.sid=s.id;
+  const go=()=>{box.scrollTop=box.scrollHeight;};requestAnimationFrame(go);if(!first||last.out)box.querySelectorAll('img').forEach(i=>{if(!i.complete)i.addEventListener('load',go,{once:true});});}
 function stRenderThread(){const s=stSess(),box=$('stThread');if(!s||box.hidden){box.innerHTML='';return;}const t1=s.imgs[(s.tray||[])[0]];
   box.innerHTML=s.msgs.map((m,mi)=>{
     if(m.role==='u')return `<div class="stm u">${m.gen?'<span class="gtag">✦ Genereeri</span>':''}${m.pics&&m.pics.length?`<div class="pics">${m.pics.map((u,k)=>`<span><img src="${stEsc(stAiImg(u))}" alt="Pilt ${k+1}" data-z="" data-zcap="Sinu pilt ${k+1}" role="button" tabindex="0"><i>${k+1}</i></span>`).join('')}</div>`:''}${m.text?`<div class="bub">${stEsc(m.text)}</div>`:''}</div>`;
@@ -4423,7 +4462,8 @@ function stRenderThread(){const s=stSess(),box=$('stThread');if(!s||box.hidden){
     // allikas „Enne / Pärast“ jaoks: sama töö kasutaja sõnumi pilt 1
     const um=s.msgs[mi-1],bfu=um&&um.role==='u'&&um.pics&&um.pics[0]?stAiImg(um.pics[0]):'';
     const vsw=out.length>1?`<div class="stvsw" role="tablist" aria-label="Variandid">${out.map((_,k)=>`<button type="button" role="tab" aria-selected="${k===vi}" data-vi="${mi}:${k}">Variant ${k+1}</button>`).join('')}<span>${vi+1} / ${out.length}</span></div>`:'';
-    return `<div class="stm a">${head}${vsw}<div class="stres one">${out.map((u,k)=>{const is1=t1&&stAiImg(t1.src)===u,tn=trayU.indexOf(u);return `<div class="stv ${is1?'sel':''}" ${k!==vi?'hidden':''}>${m.demo?'<span class="tg">demo</span>':''}<img src="${stEsc(u)}" alt="AI tulemus ${k+1}" data-z="${stEsc(u)}" data-zai="1" data-zbf="${stEsc(bfu&&bfu!==u?bfu:'')}" data-zcap="AI tulemus${out.length>1?' · variant '+(k+1):''}" role="button" tabindex="0"><div class="va">${is1?'<button type="button" class="pri" disabled>✓ See on pilt 1</button>':`<button type="button" class="pri" data-u1="${stEsc(u)}">Jätka sellega</button>`}<button type="button" data-mk="${stEsc(u)}">Märgi</button>${tn>0?`<button type="button" disabled>Pilt ${tn+1}</button>`:tn<0?`<button type="button" data-add="${stEsc(u)}">+ Lisa pildiks</button>`:''}<button type="button" data-to3d="${stEsc(u)}" data-lb="${stEsc((stTheme(STU.tpl).T||{}).name||'Pilt')}">${roomOn()?'Tee tuba 3D-s · '+fmt(price('3d'),0)+' kr':'Tee 3D-ks'}</button><a href="${stEsc(u)}" download="vaade3d-${mi}-${k+1}.jpg" target="_blank" rel="noopener">Laadi alla</a>${s.wreq&&/^https:/.test(u)?`<button type="button" class="pri" data-wsu="${stEsc(u)}">Saada kliendile</button>`:''}</div></div>`;}).join('')}</div>${m.cr!=null?`<span class="crl">${stEsc(stCrTxt(m))}</span>`:''}</div>`;}).join('');
+    const two=out.length===2;return `<div class="stm a">${head}${two?vsw.replace('class="stvsw"','class="stvsw two"'):vsw}<div class="stres ${two?'two':'one'}">${out.map((u,k)=>{const is1=t1&&stAiImg(t1.src)===u,tn=trayU.indexOf(u);return `<div class="stv ${is1?'sel':''}${k===vi?' vcur':''}" ${k!==vi&&!two?'hidden':''}>${m.demo?'<span class="tg">demo</span>':''}<img src="${stEsc(u)}" alt="AI tulemus ${k+1}" data-z="${stEsc(u)}" data-zai="1" data-zbf="${stEsc(bfu&&bfu!==u?bfu:'')}" data-zcap="AI tulemus${out.length>1?' · variant '+(k+1):''}" role="button" tabindex="0"><div class="va">${is1?'<button type="button" class="pri" disabled>✓ See on pilt 1</button>':`<button type="button" class="pri" data-u1="${stEsc(u)}">Jätka sellega</button>`}<button type="button" data-mk="${stEsc(u)}">Märgi</button>${tn>0?`<button type="button" disabled>Pilt ${tn+1}</button>`:tn<0?`<button type="button" data-add="${stEsc(u)}">+ Lisa pildiks</button>`:''}<button type="button" data-to3d="${stEsc(u)}" data-lb="${stEsc((stTheme(STU.tpl).T||{}).name||'Pilt')}">${roomOn()?'Tee tuba 3D-s · '+fmt(price('3d'),0)+' kr':'Tee 3D-ks'}</button><a href="${stEsc(u)}" download="vaade3d-${mi}-${k+1}.jpg" target="_blank" rel="noopener">Laadi alla</a>${s.wreq&&/^https:/.test(u)?`<button type="button" class="pri" data-wsu="${stEsc(u)}">Saada kliendile</button>`:''}</div></div>`;}).join('')}</div>${m.cr!=null?`<span class="crl">${stEsc(stCrTxt(m))}</span>`:''}</div>`;}).join('');
+  stThreadFit(box,s);
   box.querySelectorAll('[data-wsu]').forEach(b=>b.onclick=async()=>{let r=WREQ.find(x=>x.id===s.wreq);if(!r){await wReqLoad();r=WREQ.find(x=>x.id===s.wreq);}if(!r){toast('Pildisoovi ei leitud');return;}wReqSend(r,b.dataset.wsu);});
   box.querySelectorAll('[data-juh]').forEach(b=>b.onclick=()=>stGenNow(b.dataset.juh));
   box.querySelectorAll('[data-jed]').forEach(b=>b.onclick=()=>{$('stIn').value=b.dataset.jed;stAuto();stSync();$('stIn').focus();});
