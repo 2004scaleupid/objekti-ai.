@@ -52,7 +52,10 @@ Deno.serve(async (req) => {
   // AI juhis: iga toode oma kohaga, paigalduskoha järgi
   const names = P.map(({ p }) => String(p.name).replace(/[^\p{L}\p{N} ,.×x\-]/gu, "").slice(0, 80));
   const lines: string[] = ["Image 1 is the customer's photo (the scene). Keep its framing, camera angle and everything that is not part of the request."];
-  let img = 2;
+  // juhendpilt (sama foto nummerdatud märkidega), kui klient märkis koha või ala
+  const hasGuide = isPhoto(b.guide) && String(b.guide).length < 2_500_000 && P.some(({ i }) => !i.auto);
+  if (hasGuide) lines.push("Image 2 is the same photo with numbered orange markers showing where each product goes. Use it only as a placement guide: the markers, numbers and dashed boxes must NOT appear in the result.");
+  let img = hasGuide ? 3 : 2;
   const per = P.length > 1 ? 1 : 3;
   const pimgs: string[] = [];
   P.forEach(({ p, i }, k) => {
@@ -63,8 +66,9 @@ Deno.serve(async (req) => {
     const pl = PLACE[String(p.placement)] || PLACE.ground;
     let where = "Choose the most natural spot for it.";
     const ar = Array.isArray(i.area) && i.area.length === 4 ? i.area.map((v) => Math.max(0, Math.min(100, Number(v) || 0))) : null;
-    if (ar) where = `Place it inside the area x ${ar[0].toFixed(0)}–${ar[2].toFixed(0)}%, y ${ar[1].toFixed(0)}–${ar[3].toFixed(0)}% of image 1.`;
-    else if (!i.auto && Number.isFinite(Number(i.x)) && Number.isFinite(Number(i.y))) where = `Place it at the point ${Math.max(0, Math.min(100, Number(i.x))).toFixed(0)}% from the left and ${Math.max(0, Math.min(100, Number(i.y))).toFixed(0)}% from the top of image 1.`;
+    const mk = hasGuide ? `marked ${k + 1} on the guide image ` : "";
+    if (ar) where = `Place it inside the area ${mk}(x ${ar[0].toFixed(0)}–${ar[2].toFixed(0)}%, y ${ar[1].toFixed(0)}–${ar[3].toFixed(0)}% of image 1), filling that area naturally.`;
+    else if (!i.auto && Number.isFinite(Number(i.x)) && Number.isFinite(Number(i.y))) where = `Place it at the point ${mk}(${Math.max(0, Math.min(100, Number(i.x))).toFixed(0)}% from the left and ${Math.max(0, Math.min(100, Number(i.y))).toFixed(0)}% from the top of image 1).`;
     lines.push(`${at} Add EXACTLY this product to image 1, ${pl}. ${where}${size} Keep the product's exact design, colours and proportions from its images.`);
   });
   const note = o.allow_note ? String(b.note || "").replace(/["\\]/g, "'").slice(0, 300) : "";
@@ -83,12 +87,20 @@ Deno.serve(async (req) => {
   const ppath = `${w.company_id}/wr-${rid}-foto.${pm[1].split("/")[1].replace("jpeg", "jpg")}`;
   const up = await db.storage.from("renders").upload(ppath, bytes, { contentType: pm[1], upsert: true });
   const photoUrl = up.error ? null : (() => { const u = db.storage.from("renders").getPublicUrl(ppath).data.publicUrl, h = env("PUBLIC_STORAGE_URL"); return h ? u.replace(env("SUPABASE_URL"), h) : u; })();
+  let guideUrl: string | null = null;
+  if (hasGuide) {
+    const gm = String(b.guide).match(/^data:(image\/(?:jpeg|png|webp));base64,(.+)$/)!;
+    const gpath = `${w.company_id}/wr-${rid}-juhend.${gm[1].split("/")[1].replace("jpeg", "jpg")}`;
+    const gu = await db.storage.from("renders").upload(gpath, Uint8Array.from(atob(gm[2]), (c) => c.charCodeAt(0)), { contentType: gm[1], upsert: true });
+    if (!gu.error) { const u = db.storage.from("renders").getPublicUrl(gpath).data.publicUrl, h = env("PUBLIC_STORAGE_URL"); guideUrl = h ? u.replace(env("SUPABASE_URL"), h) : u; }
+  }
   const itemsSaved = P.map(({ p, i }) => ({ product_id: p.id, name: p.name, placement: p.placement, x: i.x ?? null, y: i.y ?? null, area: i.area ?? null, auto: !!i.auto }));
   const { data: wr } = await db.from("widget_requests").insert({ company_id: w.company_id, lead_id: lead?.id || null, mode: o.mode, status: "pending", photo_path: photoUrl, items: itemsSaved, note: note || null, style: st }).select("id,token").single();
   try {
     if (!photoUrl) throw new Error("foto salvestamine ebaõnnestus");
+    if (hasGuide && !guideUrl) throw new Error("juhendpildi salvestamine ebaõnnestus");
     const model = o.quality === "hd" ? env("KIE_MODEL_HD", "nano-banana-2") : undefined;
-    const out = await kieImage(prompt, [photoUrl, ...pimgs].slice(0, 5), "auto", model);
+    const out = await kieImage(prompt, [photoUrl, ...(guideUrl ? [guideUrl] : []), ...pimgs].slice(0, 5), "auto", model);
     const url = await storeImage(out, `${w.company_id}/w-${rid}.jpg`, w.company_id);
     await db.from("renders").update({ status: "done", output_url: url, input_urls: [photoUrl] }).eq("id", rid);
     const sent = o.mode === "instant";
