@@ -98,3 +98,10 @@
   body.m-st .stgen>span:not(.stcost){position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
   body.m-st .stgen{width:36px;padding:0;justify-content:center;border-radius:50%}
 }
+
+/* Telefon (kõik vaated): äpp ääreni, ilma raami ja vahedeta; päise menüüd (teavitused, abi) ekraani laiuses, mitte ekraanist väljas */
+@media (max-width:600px){
+  body{padding:0;margin:0}
+  .app{border:0;border-radius:0;min-height:100dvh}
+  .hdr .menu{position:fixed;left:8px;right:8px;top:calc(env(safe-area-inset-top,0px) + 60px);width:auto;max-width:none;max-height:calc(100dvh - 84px);overflow-y:auto}
+}
