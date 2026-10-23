@@ -3,10 +3,22 @@
   "building": {
     "title": "Eramu, 4 telefonifotot",
     "photos": [
-      { "src": "examples/building-1.webp", "label": "Eest" },
-      { "src": "examples/building-2.webp", "label": "Vasakult" },
-      { "src": "examples/building-3.webp", "label": "Tagant" },
-      { "src": "examples/building-4.webp", "label": "Paremalt" }
+      {
+        "src": "examples/building-1.webp",
+        "label": "Eest"
+      },
+      {
+        "src": "examples/building-2.webp",
+        "label": "Vasakult"
+      },
+      {
+        "src": "examples/building-3.webp",
+        "label": "Tagant"
+      },
+      {
+        "src": "examples/building-4.webp",
+        "label": "Paremalt"
+      }
     ],
     "glb": "examples/building.glb",
     "poster": "examples/building-poster.webp"
