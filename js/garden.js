@@ -141,7 +141,7 @@ async function show(V,m,meta,T){const R=meta.r,t=()=>performance.now();let t0=t(
   let oTex=null,dead=false;const applyOrto=o=>{if(!o||dead||oTex)return;oTex=new THREE.Texture(o);oTex.encoding=THREE.sRGBEncoding;oTex.anisotropy=gt.anisotropy;oTex.needsUpdate=true;
     const g2=groundTex(S,PP,meta.roads||{a:[],l:[]},feet,o,R);g2.anisotropy=gt.anisotropy;ground.material.map=g2;ground.material.needsUpdate=true;gt.dispose();gt=g2;
     for(const M of [roofM,nbR]){M.map=oTex;M.color.set(0xffffff);M.needsUpdate=true;}
-    [['trunk',0x5E4E3E],['crown',0x5C8A45],['cone',0x3F6E48]].forEach(([k,c])=>{if(tMat[k])tMat[k].color.set(c);});if(typeof m3Redraw==='function')m3Redraw();};
+    [['trunk',0x5E4E3E],['crown',0x5C8A45],['cone',0x3F6E48]].forEach(([k,c])=>{if(tMat[k])tMat[k].color.copy(lin(c));});if(typeof m3Redraw==='function')m3Redraw();};
   if(orto)applyOrto(orto);else oP.then(applyOrto);
   V.sc.add(outer);outer.updateMatrixWorld(true);
   // krundi mõõdud sildikihile (maailma koordinaadid): pindala, servad, majast piirini, naabriteni, kõrvalhoonete pinnad
