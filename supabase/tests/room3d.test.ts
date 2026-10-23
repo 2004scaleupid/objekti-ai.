@@ -6,14 +6,14 @@ const SB = "http://sb.test";
 Object.entries({ SUPABASE_URL: SB, SUPABASE_SERVICE_ROLE_KEY: "service-role-key-for-tests-only-123456" }).forEach(([k, v]) => Deno.env.set(k, v));
 const b64u = (s: string) => btoa(s).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
 const TOK = b64u(JSON.stringify({ alg: "HS256" })) + "." + b64u(JSON.stringify({ sub: "u1" })) + ".sig";
-const W = { spent: 0, inserted: [] as unknown[] };
+const W = { spent: 0, inserted: [] as unknown[], admin: true };
 const res = (b: unknown, status = 200) => new Response(JSON.stringify(b), { status, headers: { "content-type": "application/json" } });
 globalThis.fetch = async (input: string | URL | Request, init: RequestInit = {}) => {
   const req = input instanceof Request ? input : new Request(String(input), init);
   const u = new URL(req.url), p = u.pathname;
   if (u.origin === SB) {
     if (p === "/auth/v1/user") return req.headers.get("authorization") === "Bearer " + TOK ? res({ id: "u1", aud: "authenticated" }) : res({}, 401);
-    if (p === "/rest/v1/profiles") return res({ company_id: "c1" });
+    if (p === "/rest/v1/profiles") return res(u.searchParams.get("select") === "is_admin" ? { is_admin: W.admin } : { company_id: "c1" });
     if (p === "/rest/v1/rpc/rate_hit") return res(true);
     if (p === "/rest/v1/rpc/refund_stale_renders") return res(0);
     if (p === "/rest/v1/rpc/spend_credits") { W.spent++; return res(20); }
@@ -34,6 +34,13 @@ const OURS = SB + "/storage/v1/object/public/renders/c1/abc.jpg";
 
 Deno.test("sisselogimata keelatud", async () => {
   assertEquals((await call({ action: "start", image: OURS }, "bad")).status, 401);
+});
+
+Deno.test("mitte-admin: 403 enne tasu (toa 3D on peidus)", async () => {
+  W.admin = false; W.spent = 0;
+  for (const action of ["start", "status", "redo"]) assertEquals((await call({ action, image: OURS, id: "x", key: "m0" })).status, 403, action);
+  assertEquals(W.spent, 0);
+  W.admin = true;
 });
 
 Deno.test("ainult meie AI variant ja mõistlikud mõõdud, siis ei võeta krediiti", async () => {

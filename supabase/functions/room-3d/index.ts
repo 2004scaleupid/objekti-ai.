@@ -318,6 +318,8 @@ export async function handler(req: Request): Promise<Response> {
   if (req.method !== "POST") return fail("POST only", 405);
   const me = await userCompany(req);
   if (!me) return fail("unauthorized", 401);
+  // toa 3D on ainult adminile, kuni kvaliteet on kinnitatud (enne igasugust tasu või tööd)
+  { const { data: p } = await admin().from("profiles").select("is_admin").eq("user_id", me.userId).single(); if (!p?.is_admin) return fail("Toa 3D pole praegu saadaval", 403); }
   const b = await body(req, 30_000_000).catch(() => ({} as Record<string, unknown>));
   const db = admin();
 
