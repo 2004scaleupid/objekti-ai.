@@ -42,7 +42,7 @@ function building(b,dx,dy,wallM,roofM,edgeM,info){const roofs=b.f.map(f=>ring3(f
       pos.push(x0,0,-y0,x1,0,-y1,x1,h1,-y1,x0,0,-y0,x1,h1,-y1,x0,h0,-y0);}}}
   const wg=new THREE.BufferGeometry();wg.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));wg.computeVertexNormals();const w=new THREE.Mesh(wg,wallM);w.castShadow=w.receiveShadow=true;w.userData.bld=info;g.add(w);
   for(const R of roofs){if(R.length<3)continue;const P=R.map(q=>new THREE.Vector3(q[0],q[2]+.02,-q[1]));const geo=new THREE.BufferGeometry().setFromPoints(P);
-    geo.setIndex(THREE.ShapeUtils.triangulateShape(R.map(q=>new THREE.Vector2(q[0],q[1])),[]).flat());geo.computeVertexNormals();const m=new THREE.Mesh(geo,roofM);m.castShadow=m.receiveShadow=true;m.userData.bld=info;g.add(m);
+    if(info&&info.R)geo.setAttribute('uv',new THREE.Float32BufferAttribute(R.flatMap(q=>[(q[0]+info.R)/(2*info.R),(q[1]+info.R)/(2*info.R)]),2));geo.setIndex(THREE.ShapeUtils.triangulateShape(R.map(q=>new THREE.Vector2(q[0],q[1])),[]).flat());geo.computeVertexNormals();const m=new THREE.Mesh(geo,roofM);m.castShadow=m.receiveShadow=true;m.userData.bld=info;g.add(m);
     if(edgeM)g.add(new THREE.LineLoop(new THREE.BufferGeometry().setFromPoints(P),edgeM));}
   if(edgeM)for(const r of b.g){ring2(r).forEach(q=>{const x=q[0]+dx,y=q[1]+dy,h=roofH(roofs,x,y,b.e);g.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(x,0,-y),new THREE.Vector3(x,h,-y)]),edgeM));});}
   return g;}
@@ -76,21 +76,22 @@ function fencesFrom(im,R){const W=768,px=2*R/W,c=document.createElement('canvas'
   return segs;}
 
 // ---------- maapind: krunt muruna, teed asfaldina, pehme kontaktvari hoonete all, servad sulanduvad taustaks ----------
-function groundTex(S,par,roads,feet){const N=2048,px=S/N,c=document.createElement('canvas');c.width=c.height=N;const x=c.getContext('2d'),P=(X,Y)=>[(X+S/2)/px,(S/2-Y)/px];
+function groundTex(S,par,roads,feet,orto,R){const N=2048,px=S/N,c=document.createElement('canvas');c.width=c.height=N;const x=c.getContext('2d'),P=(X,Y)=>[(X+S/2)/px,(S/2-Y)/px];
   const path=(R,close=true)=>{x.beginPath();R.forEach((q,k)=>{const [a,b]=P(q[0],q[1]);k?x.lineTo(a,b):x.moveTo(a,b);});if(close)x.closePath();};
   x.fillStyle=hex(COL.bg);x.fillRect(0,0,N,N);
+  if(orto){const [a,b]=P(-R,R);x.drawImage(orto,a,b,2*R/px,2*R/px);}else{
   if(par){x.fillStyle=COL.grass;path(par);x.fill();}
   x.fillStyle=x.strokeStyle=COL.road;x.lineCap=x.lineJoin='round';
-  roads.a.forEach(poly=>{x.beginPath();poly.forEach(r=>ring2(r).forEach((q,k)=>{const [a,b]=P(q[0],q[1]);k?x.lineTo(a,b):x.moveTo(a,b);}));x.fill('evenodd');});roads.l.forEach(l=>{x.lineWidth=l.w/px;path(ring2(l.g),false);x.stroke();});
+  roads.a.forEach(poly=>{x.beginPath();poly.forEach(r=>ring2(r).forEach((q,k)=>{const [a,b]=P(q[0],q[1]);k?x.lineTo(a,b):x.moveTo(a,b);}));x.fill('evenodd');});roads.l.forEach(l=>{x.lineWidth=l.w/px;path(ring2(l.g),false);x.stroke();});}
   // kontaktvari (pehme AO) hoonete jalajälgede ümber: kujund ekraanist väljas, ainult vari jääb
   x.save();x.translate(-N*2,0);x.shadowColor='rgba(60,52,40,.42)';x.shadowBlur=1.1/px;x.shadowOffsetX=N*2;x.fillStyle='#000';feet.forEach(R=>{path(R);x.fill();});x.restore();
-  const g=x.createRadialGradient(N/2,N/2,N*.3,N/2,N/2,N*.5);g.addColorStop(0,hex(COL.bg)+'00');g.addColorStop(1,hex(COL.bg));x.fillStyle=g;x.fillRect(0,0,N,N);
+  const g=orto?x.createRadialGradient(N/2,N/2,R/px*.82,N/2,N/2,R/px*1.02):x.createRadialGradient(N/2,N/2,N*.3,N/2,N/2,N*.5);g.addColorStop(0,hex(COL.bg)+'00');g.addColorStop(1,hex(COL.bg));x.fillStyle=g;x.fillRect(0,0,N,N);
   const t=new THREE.CanvasTexture(c);t.encoding=THREE.sRGBEncoding;return t;}
 
 // ---------- vaade ----------
 async function show(V,m,meta,T){const R=meta.r,t=()=>performance.now();let t0=t();
   const L=M3L2[m.ehr],f=m.fit;if(!L||!f)throw new Error('sobitus puudub');
-  const [ndsm,fen,geo]=await Promise.all([img(meta.files.ndsm),img(meta.files.fences),nearby(meta)]);
+  const [ndsm,fen,geo,orto]=await Promise.all([img(meta.files.ndsm),img(meta.files.fences),nearby(meta),meta.files.orto?img(meta.files.orto).catch(()=>null):null]);
   T.andmed=Math.round(t()-t0);t0=t();
   const par=(meta.parcels||[]).find(p=>pip(0,0,ring2(p.g[0])))||null,PP=par?ring2(par.g[0]):null;
   const own=[],nb=[];geo.forEach(o=>{if(o.e===meta.ehr)return;(PP&&pip(o.dx,o.dy,PP)?own:nb).push(o);});
@@ -98,7 +99,7 @@ async function show(V,m,meta,T){const R=meta.r,t=()=>performance.now();let t0=t(
   const grp={aed:new THREE.Group(),puud:new THREE.Group(),naabrid:new THREE.Group(),krunt:new THREE.Group()};Object.values(grp).forEach(g=>G.add(g));
   // maapind
   const S=180,shift=o=>r=>ring2(r).map(q=>[q[0]+o.dx,q[1]+o.dy]),feet=[...(L.g||[]).map(ring2),...own.flatMap(o=>o.b.g.map(shift(o))),...nb.flatMap(o=>o.b.g.map(shift(o)))];
-  const gt=groundTex(S,PP,meta.roads||{a:[],l:[]},feet);gt.anisotropy=V.r.capabilities.getMaxAnisotropy();
+  const gt=groundTex(S,PP,meta.roads||{a:[],l:[]},feet,orto,R);gt.anisotropy=V.r.capabilities.getMaxAnisotropy();
   const ground=new THREE.Mesh(new THREE.PlaneGeometry(S,S),new THREE.MeshLambertMaterial({map:gt}));ground.rotation.x=-Math.PI/2;ground.receiveShadow=true;ground.position.y=-.02;
   const far=new THREE.Mesh(new THREE.CircleGeometry(900,48),new THREE.MeshBasicMaterial({color:lin(COL.bg)}));far.rotation.x=-Math.PI/2;far.position.y=-.06;
   grp.aed.add(ground,far);
@@ -109,11 +110,12 @@ async function show(V,m,meta,T){const R=meta.r,t=()=>performance.now();let t0=t(
     const fg=new THREE.BufferGeometry();fg.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));fg.computeVertexNormals();const fm=new THREE.Mesh(fg,new THREE.MeshStandardMaterial({color:COL.fence,roughness:.9,side:THREE.DoubleSide}));fm.castShadow=true;grp.aed.add(fm);}
   // hooned: krundi omad valged (nagu maja), naabrid hallid
   const edge=new THREE.LineBasicMaterial({color:0x8d877e,transparent:true,opacity:.55}),wallM=new THREE.MeshStandardMaterial({color:COL.wall,roughness:.95,side:THREE.DoubleSide}),roofM=new THREE.MeshStandardMaterial({color:COL.roof,roughness:.9,side:THREE.DoubleSide});
-  own.sort((a,b)=>b.b.fp-a.b.fp).forEach((o,k)=>{o.info={nm:'Kõrvalhoone '+(k+1),fp:o.b.fp,h:o.b.r,roof:o.b.ro};grp.aed.add(building(o.b,o.dx,o.dy,wallM,roofM,edge,o.info));});
+  let oTex=null;if(orto){oTex=new THREE.Texture(orto);oTex.encoding=THREE.sRGBEncoding;oTex.anisotropy=gt.anisotropy;oTex.needsUpdate=true;roofM.map=oTex;roofM.color.set(0xffffff);}
+  own.sort((a,b)=>b.b.fp-a.b.fp).forEach((o,k)=>{o.info={nm:'Kõrvalhoone '+(k+1),fp:o.b.fp,h:o.b.r,roof:o.b.ro,R:oTex?R:0};grp.aed.add(building(o.b,o.dx,o.dy,wallM,roofM,edge,o.info));});
   // ebakindel sobitus: Maa-ameti maja kummituskontuurina (näitab, kus maja tegelikult on); kindla sobituse korral peidus
   if(!f.ok){const gm=new THREE.MeshBasicMaterial({color:0xC2410C,transparent:true,opacity:.1,depthWrite:false,side:THREE.DoubleSide}),gh=building({g:L.g,f:(L.f||[]).map(F=>F[3]),e:L.eave||L.ridge*.6},0,0,gm,gm,new THREE.LineBasicMaterial({color:0xC2410C,transparent:true,opacity:.85}),null);
     gh.traverse(o=>{o.castShadow=o.receiveShadow=false;o.renderOrder=2;});grp.krunt.add(gh);}
-  const nbM=new THREE.MeshStandardMaterial({color:COL.nb,roughness:.95,side:THREE.DoubleSide});nb.forEach(o=>grp.naabrid.add(building(o.b,o.dx,o.dy,nbM,nbM,null,{nm:'Naaberhoone',fp:o.b.fp,h:o.b.r,roof:o.b.ro})));
+  const nbM=new THREE.MeshStandardMaterial({color:COL.nb,roughness:.95,side:THREE.DoubleSide}),nbR=oTex?roofM:nbM;nb.forEach(o=>grp.naabrid.add(building(o.b,o.dx,o.dy,nbM,nbR,null,{nm:'Naaberhoone',fp:o.b.fp,h:o.b.r,roof:o.b.ro,R:oTex?R:0})));
   // olulised puud: ≥ 5 m kõrgused, võra ≥ 2,5 m, krundil + 12 m varu, max 25
   const W=ndsm.width,mk=document.createElement('canvas');mk.width=mk.height=W;const mx=mk.getContext('2d',{willReadFrequently:true}),px=2*R/W;mx.fillStyle=mx.strokeStyle='#fff';mx.lineWidth=2/px;
   feet.forEach(Rg=>{mx.beginPath();Rg.forEach((q,k)=>{const a=(q[0]+R)/px,b=(R-q[1])/px;k?mx.lineTo(a,b):mx.moveTo(a,b);});mx.closePath();mx.fill();mx.stroke();});
@@ -164,7 +166,7 @@ async function show(V,m,meta,T){const R=meta.r,t=()=>performance.now();let t0=t(
   T.mudel=Math.round(t()-t0);if(typeof m3Redraw==='function')m3Redraw();
   const off=()=>{V.r.toneMappingExposure=st.exp;V.sc.environment=st.env;if(hemi&&st.hemi){hemi.intensity=st.hemi[0];hemi.color.set(st.hemi[1]);hemi.groundColor.set(st.hemi[2]);}V.sc.remove(outer);V.sc.background=st.bg;V.sc.fog=st.fog;V.catcher.visible=st.catcher;
     V.sun.position.copy(st.sunPos);V.sun.intensity=st.sunI;V.sun.color.set(0xffffff);V.sun.shadow.radius=st.rad;Object.assign(sc,{left:st.cam.left,right:st.cam.right,top:st.cam.top,bottom:st.cam.bottom,near:st.cam.near,far:st.cam.far});sc.updateProjectionMatrix();
-    V.cam.far=st.far;V.cam.updateProjectionMatrix();V.ct.maxDistance=st.maxD;V.gpick=null;V.m3S=null;outer.traverse(o=>{if(o.geometry)o.geometry.dispose();});gt.dispose();if(typeof m3Redraw==='function')m3Redraw();};
+    V.cam.far=st.far;V.cam.updateProjectionMatrix();V.ct.maxDistance=st.maxD;V.gpick=null;V.m3S=null;outer.traverse(o=>{if(o.geometry)o.geometry.dispose();});gt.dispose();if(oTex)oTex.dispose();if(typeof m3Redraw==='function')m3Redraw();};
   return {off,vis,setTime,trees,ghost:!f.ok,parcel:par,own:own.map(o=>o.info),neighbours:nb.length,fences:segs.length};}
 async function nearby(meta){const [cx,cy]=meta.c,K=new Set();for(const dx of [-85,85])for(const dy of [-85,85])K.add(Math.floor((cx+dx)/250)+'_'+Math.floor((cy+dy)/250));
   const tiles=await Promise.all([...K].map(k=>GV.cache.get(k)||(GV.cache.set(k,window.lod2Get('geo/'+k+'.json').catch(()=>({}))),GV.cache.get(k))));

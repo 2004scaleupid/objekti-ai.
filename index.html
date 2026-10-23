@@ -5263,7 +5263,7 @@ function m3FinishArea(){const s=stSess(),m=s&&s.model;if(!m||M3.pts.length<3)ret
 const M3PILL={font:"600 12px 'Inter Tight',Arial,sans-serif",small:"600 11px 'Inter Tight',Arial,sans-serif"},M3TW=new Map();
 function m3TW(t,small){const k=(small?'s':'n')+t;if(M3TW.has(k))return M3TW.get(k);const c=m3TW.c||(m3TW.c=document.createElement('canvas').getContext('2d'));c.font=small?M3PILL.small:M3PILL.font;const w=c.measureText(t).width;M3TW.set(k,w);return w;}
 /* Aed ja ümbrus: andmed garden-funktsioonist (vahemälu aadressi kaupa), stseen js/garden.js; ainult kindla sobitusega */
-const GARDEN_SRC='Kataster, teed, piirded, maakatte kõrgusmudel, hooned: Maa- ja Ruumiamet 2026';
+const GARDEN_SRC='Ortofoto, kataster, teed, piirded, maakatte kõrgusmudel, hooned: Maa- ja Ruumiamet 2026';
 function m3GardenHtml(m){if(!m.fit||!m.ehr||!p3Cloud())return '';m.gopt=m.gopt||{};const V=P3V,G=V&&V.garden,on=!!m.garden;
   let h=`<div class="tgl"><div>Aed ja ümbrus<small>Krunt, kõrvalhooned, teed, piirded, puud ja naabrid Maa-ameti andmetest</small></div><span class="sw2"><input type="checkbox" data-m3="garden" ${on?'checked':''} aria-label="Aed ja ümbrus"><i></i></span></div>`;
   if(!on)return h;

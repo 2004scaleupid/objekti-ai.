@@ -3,10 +3,10 @@
 import { admin, env, tfetch } from "./util.ts";
 
 export const GARDEN_R = 64; // maja keskpunktist ±64 m
-export const GARDEN_V = 4; // 3: krundi mudel vektorandmetest (teed aukudega); 4: krundi piiri muutmise kuupäev
+export const GARDEN_V = 5; // 5: ortofoto (maapind ja katused realistlikud); 3: krundi mudel vektorandmetest (teed aukudega); 4: krundi piiri muutmise kuupäev
 const MAX_AGE = 30 * 864e5;
 const BUCKET = "models";
-const SRC = "Kataster, teed, piirded, maakatte kõrgusmudel, hooned: Maa- ja Ruumiamet 2026";
+const SRC = "Ortofoto, kataster, teed, piirded, maakatte kõrgusmudel, hooned: Maa- ja Ruumiamet 2026";
 
 export type Timing = Record<string, number>;
 const pub = (path: string) => {
@@ -102,18 +102,19 @@ export async function buildGarden(ehr: string, T: Timing = {}, force = false): P
   const c = await centre(ehr);
   lap("lod2");
   if (!c) return null;
-  const [ndsm, fences, ky, rd] = await Promise.all([
+  const [ndsm, fences, ky, rd, orto] = await Promise.all([
     bytes(wms("fotokaart", "nDSM", c, 768, "image/png"), /png/),
     bytes(wms("kaart", "etak_piirded", c, 1536, "image/png"), /png/),
     parcels(c).catch(() => [] as Parcel[]),
     roads(c).catch(() => ({ a: [], l: [] })),
+    bytes(wms("fotokaart", "EESTIFOTO", c, 2048, "image/jpeg"), /jpeg/).catch(() => null),
   ]);
   lap("maaamet");
   const up = (name: string, b: Uint8Array, ct: string) =>
     db.storage.from(BUCKET).upload(dir + name, b, { contentType: ct, upsert: true, cacheControl: "2592000" }).then(({ error }) => { if (error) throw new Error("storage: " + error.message); });
-  await Promise.all([up("ndsm.png", ndsm, "image/png"), up("fences.png", fences, "image/png")]);
+  await Promise.all([up("ndsm.png", ndsm, "image/png"), up("fences.png", fences, "image/png"), orto ? up("orto.jpg", orto, "image/jpeg") : null]);
   const meta = { v: GARDEN_V, ehr, c, r: GARDEN_R, t: new Date().toISOString(), src: SRC,
-    files: { ndsm: pub(dir + "ndsm.png"), fences: pub(dir + "fences.png") }, parcels: ky, roads: rd };
+    files: { ndsm: pub(dir + "ndsm.png"), fences: pub(dir + "fences.png"), ...(orto ? { orto: pub(dir + "orto.jpg") } : {}) }, parcels: ky, roads: rd };
   // meta viimasena: kui see on olemas, on ka pildid olemas
   await db.storage.from(BUCKET).upload(dir + "meta.json", new TextEncoder().encode(JSON.stringify(meta)), { contentType: "application/json", upsert: true, cacheControl: "300" })
     .then(({ error }) => { if (error) throw new Error("storage: " + error.message); });
