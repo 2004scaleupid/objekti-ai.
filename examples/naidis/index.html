@@ -392,6 +392,16 @@ class Viewer{
     this.io?.disconnect();this.composer?.dispose?.();this.envRT?.dispose();this.r.dispose();this.r.forceContextLoss?.();this.el.innerHTML='';
   }
 }
+// lumi -> katus/plaadid: ülespoole vaatavad heledad värvitud pinnad (lumi talvefotodelt) värvitakse ümber; seinad jäävad
+function deSnow(root,baseY,THREE){root.traverse(o=>{if(!o.isMesh)return;[].concat(o.material).forEach(mt=>{mt.onBeforeCompile=sh=>{
+  sh.uniforms.uBase={value:baseY};
+  sh.vertexShader=sh.vertexShader.replace('#include <common>','#include <common>\nvarying float vWY;\nvarying vec3 vWN;').replace('#include <project_vertex>','#include <project_vertex>\nvWY=(modelMatrix*vec4(transformed,1.0)).y;vWN=normalize(mat3(modelMatrix)*normal);');
+  sh.fragmentShader=sh.fragmentShader.replace('#include <common>','#include <common>\nvarying float vWY;\nvarying vec3 vWN;\nuniform float uBase;').replace('#include <map_fragment>',`#include <map_fragment>
+  {vec3 c=diffuseColor.rgb;float l=dot(c,vec3(.3333));float sat=max(c.r,max(c.g,c.b))-min(c.r,min(c.g,c.b));
+   float up=smoothstep(.25,.55,normalize(vWN).y),sn=smoothstep(.20,.36,l)*(1.0-smoothstep(.08,.18,sat))*up;
+   bool low=vWY<uBase+0.9;vec3 tgt=low?vec3(.30,.29,.27):vec3(.060,.064,.070);
+   float n=fract(sin(dot(floor(gl_FragCoord.xy*.5),vec2(12.9898,78.233)))*43758.5453);
+   diffuseColor.rgb=mix(c,tgt*(0.92+0.16*n),sn);}`);};mt.needsUpdate=true;});});}
 const B={id:'b1',jv:{fp:150.3,roof:173.5,height:7.45,perimeter:50.5},type:'gable',W:15.68,D:9.58,h:4.68,pitch:30,o:0.4};
 const el=document.getElementById('v');
 const auto=!matchMedia('(prefers-reduced-motion:reduce)').matches;
@@ -409,7 +419,7 @@ ld.load('../building.glb',g=>{
   const inner=new THREE.Group();m.position.set(-c.x,-bx.min.y,-c.z);inner.add(m);if(!long)inner.rotation.y=Math.PI/2;
   inner.scale.set((B.W+2*B.o)/Lx,H/sz.y,(B.D+2*B.o)/Lz);
   m.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true;}});
-  holder.add(inner);holder.scale.y=.001;glb=m;V.t0=performance.now();
+  deSnow(m,0,THREE);holder.add(inner);holder.scale.y=.001;glb=m;V.t0=performance.now();
   try{parent.postMessage({v3dNaidis:'ok'},'*');}catch(e){}
 });
 </script></body></html>
