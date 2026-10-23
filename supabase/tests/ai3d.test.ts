@@ -345,3 +345,12 @@ Deno.test("siseruum (sauna seest): blokeerib, üks lühike juhis igal fotol, ese
   W.check = good("object", 1); (W.check.photos as { issues: string[] }[])[0].issues = ["interior"];
   assertEquals((await call({ action: "check", subject: "object", photos: [P4[0]] })).j.ok, true);
 });
+
+Deno.test("siseruum aknaga ja saunanišiga (subjekt valimata): reegel on promptis, vastus -> toa tee", async () => {
+  W.check = { ...good("building", 1), subject: "unsupported", interior: true };
+  const c = await call({ action: "check", photos: [P4[0]] });
+  const sys = String((W.lastAn as { system?: string })?.system || "");
+  assert(sys.includes("STILL interior when a window") && sys.includes("sauna niche"), "siseruumi reegel peab olema promptis");
+  assertEquals([c.j.ok, c.j.interior, c.j.subject], [false, true, "unsupported"]);
+  assert(c.j.photos.every((p: { issues: string[] }) => p.issues.join() === "interior"));
+});

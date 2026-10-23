@@ -141,7 +141,9 @@ Check each photo and all photos together:
 5. "occluded" only if more than ~30% of the thing is hidden (trees, cars, people in front). Small occlusion is fine, it gets cleaned.
 6. "too_close" (clearly only part of the thing in frame), "too_far" (thing is tiny in the photo), heavy tilt counts as "wrong_side".
 7. "aerial" (buildings only): the photo is clearly taken from the air - drone, plane, satellite or oblique aerial photo looking down at the roof and yard. Ground-level photos (also from a window, balcony or slope) are NOT aerial.
-8. "interior" (top-level true/false): true if the photos are taken INSIDE a room or building (a sauna's inside with benches, a living room, kitchen, bathroom), i.e. they show walls/floor around the camera instead of one thing from outside. A single piece of furniture or product that clearly fills the photo is NOT interior. Use "interior" only at the top level, never as a photo issue.
+8. "interior" (top-level true/false): true if the photos are taken INSIDE a room or building, i.e. the camera stands indoors with walls, ceiling or floor around it (a sauna with benches, a living room, kitchen, bathroom).
+   It is STILL interior when a window, glass wall or the outdoors is visible, and STILL interior when one built-in structure dominates the photo (a sauna niche or cabin inside a bigger tiled room, a kitchen, a fireplace wall).
+   Only a single movable piece of furniture or product that clearly fills the photo (one chair, one stove photographed up close) is NOT interior. When a room is visible around it, it is interior. Use "interior" only at the top level, never as a photo issue.
 Be lenient: the photos are cleaned by AI and reconstructed afterwards, normal phone photos of the whole thing are good enough. Flag an issue only when it would clearly ruin the 3D model. When in doubt, do NOT flag. Ordinary phone photos with small imperfections must pass with "ok": true.
 Allowed issues: ${ISSUES.join(", ")}.
 Answer ONLY with JSON, no other text:

@@ -4476,6 +4476,8 @@ function p3New(o){o=o||{};const T=tplById(STU.tpl)||{},fix=(T.photo3d||{}).subje
   const pool=(o.photos||[]).filter(Boolean).slice(0,P3MAXPOOL);
   return {subject:sub,lock:!!(o.lock||fix),single:!!o.single,pool,photos:[0,1,2,3].map(i=>pool[i]||null),manual:false,unused:new Map(),asg:-1,product:o.product||null,chk:null,checking:0,force:false,gen:0,ehr:o.ehr||null,label:o.label||null,err:null};}
 const p3List=()=>STU.p3.photos.filter(Boolean);
+// fotodest ei saa üht 3D-eset: alati kaks teed edasi (toa 3D või eseme 3D), mitte tupik
+const p3Dead=c=>!!c&&(c.interior||c.unsup||c.subject==='unsupported'||(c.photos||[]).some(x=>x.issues.includes('unsupported')||x.issues.includes('interior')));
 function p3ChkFor(){const c=STU.p3&&STU.p3.chk,L=p3List();return c&&c.subj===STU.p3.subject&&c.list.length===L.length&&c.list.every((x,i)=>x===L[i])?c:null;}
 function p3Sess(){const P=STU.p3;let s=stSess();if(!s){s=stNewSession();s.title=P.label||'3D-mudel';}Object.assign(s,{p3sub:P.subject,p3lock:P.lock,p3ehr:P.ehr,p3label:P.label,p3product:P.product,p3single:P.single});return s;}
 function p3Note(s,t){if(!s||!t||(s.msgs.at(-1)||{}).note===String(t).slice(0,300))return;s.msgs.push({role:'a',note:String(t).slice(0,300),d:Date.now()});s.msgs=s.msgs.slice(-20);}
@@ -4515,7 +4517,7 @@ async function p3Check(mode){const P=STU.p3,g=P.gen,sub=P.subject;
   const L=p3List(),send=mode==='detect'?L.slice(0,1):mode==='pool'?P.pool.slice():L;if(!send.length){P.checking=0;return;}
   try{const r=await clFn('ai-3d',{action:'check',subject:sub||null,photos:send,single:P.single||undefined});if(P.gen!==g||STU.p3!==P)return;
     if(mode==='pool'){
-      if(!sub){if(!P3D[r.subject]){P.err=P3UNSUP;return;}P.subject=r.subject;P.aiSub=r.subject;p3Sess().p3sub=r.subject;}
+      if(!sub){if(!P3D[r.subject]){P.chk={...r,list:p3List(),subj:P.subject,unsup:true};return;}P.subject=r.subject;P.aiSub=r.subject;p3Sess().p3sub=r.subject;}
       // AI valik: iga külje parim foto; ülejäänud tuhmilt koos põhjusega
       const ph=[null,null,null,null];(r.selected||[]).forEach(x=>{const k=P3SIDES.indexOf(x.side);if(k>=0&&send[x.index])ph[k]=send[x.index];});
       P.photos=ph;P.unused=new Map((r.unused||[]).filter(u=>send[u.index]).map(u=>[send[u.index],u.reason||'']));
@@ -4523,7 +4525,7 @@ async function p3Check(mode){const P=STU.p3,g=P.gen,sub=P.subject;
     if(!sub){if(P3D[r.subject]){P.subject=r.subject;P.aiSub=r.subject;const s=p3Sess();s.p3sub=r.subject;
         if(send.length===L.length&&r.token){P.chk={...r,list:L,subj:r.subject};p3Note(s,r.summary);}
         else if(L.length>=P3D[r.subject].min)P.t=setTimeout(()=>p3Check(),0);}
-      else P.err=P3UNSUP;}
+      else P.chk={...r,list:L,subj:P.subject,unsup:true};}
     else{P.chk={...r,list:L,subj:sub};p3Note(stSess(),r.summary);}}
   catch(e){if(P.gen===g)P.err=clErr(e);}
   finally{if(P.gen===g){P.checking=0;stSave();if(!$('studio').hidden)stRender();}}}
@@ -4560,7 +4562,7 @@ function p3Render(){const box=$('st3d'),th=stTheme(STU.tpl);box.hidden=!th.p3;if
   if(!P.lock)h+=`<div class="p3sub"><b>Mis fotodel on?</b><div class="p3seg" role="group" aria-label="Mis fotodel on?">${Object.entries(P3D).map(([k,v])=>`<button type="button" data-sub="${k}" aria-pressed="${k===sub}">${v.n}</button>`).join('')}${sub?'<button type="button" class="linkbtn p3exlink" id="p3ExL">Vaata näidet</button>':''}</div><small>${P.aiSub&&P.aiSub===sub?'AI tundis ära, saad muuta. ':''}Toad, maastik ja inimesed ei sobi: 3D-mudel tehakse ühest asjast.</small></div>`;
   if(sub==='building'&&p3Cloud()){const a=P.ehr?m3AddrTxt(P.ehr):'';h+=`<div class="p3addr"><label for="p3Ad"><b>Aadress</b> <small>(valikuline)</small></label><input id="p3Ad" type="text" data-addr="pick" autocomplete="off" maxlength="120" placeholder="nt Narva mnt 5, Tallinn" value="${stEsc(a)}"><small id="p3AdS">${a?P3AD_OK:P3AD_HINT}</small><label class="p3g"${P.ehr?'':' hidden'}><input type="checkbox" id="p3Gd"${P.garden!==false?' checked':''}> Lisa aed ja ümbrus <small>(puud, piirded, naabrid Maa-ameti andmetest; tasuta)</small></label></div>`;}
   let k=0;h+=`<div class="p3slots">${slots.map((nm,i)=>{const ph=P.photos[i],ms=!ph&&c&&(c.missing||[]).find(m=>m.side===P3SIDES[i]);let pr=ph&&c?c.photos[k++]:null;if(ms)pr={tip:ms.tip,issues:['missing']};const bad=(pr&&!pr.ok)||!!ms;
-    return `<div class="p3slot${ph?' has':''}${bad?' bad':''}${pr&&pr.ok?' good':''}"><button type="button" class="pick" data-slot="${i}" aria-label="${ph?'Vaheta foto':'Lisa foto'}: ${stEsc(nm)}">${ph?`<img src="${stEsc(ph)}" alt="">`:'<span class="plus" aria-hidden="true">+</span>'}</button><span class="cap">${stEsc(nm)}${D&&i>=D.min?' <small>(soovi korral)</small>':''}</span>${ph?`<button type="button" class="x" data-rm="${i}" aria-label="Eemalda foto: ${stEsc(nm)}">×</button>`:''}${bad?`<span class="tip">${stEsc(c&&c.interior?P3ISS.interior:(pr.tip||pr.issues.map(x=>P3ISS[x]||x).join(', ')))}</span>`:''}</div>`;}).join('')}</div>`;
+    return `<div class="p3slot${ph?' has':''}${bad?' bad':''}${pr&&pr.ok?' good':''}"><button type="button" class="pick" data-slot="${i}" aria-label="${ph?'Vaheta foto':'Lisa foto'}: ${stEsc(nm)}">${ph?`<img src="${stEsc(ph)}" alt="">`:'<span class="plus" aria-hidden="true">+</span>'}</button><span class="cap">${stEsc(nm)}${D&&i>=D.min?' <small>(soovi korral)</small>':''}</span>${ph?`<button type="button" class="x" data-rm="${i}" aria-label="Eemalda foto: ${stEsc(nm)}">×</button>`:''}${bad?`<span class="tip">${stEsc(p3Dead(c)?(c.interior?P3ISS.interior:'Ei sobi'):(pr.tip||pr.issues.map(x=>P3ISS[x]||x).join(', ')))}</span>`:''}</div>`;}).join('')}</div>`;
   // kõik fotod: valitud külje märgiga, kasutamata tuhmilt; puudutades saab külje ise valida
   const N=P.single?0:P.pool.length,extra=N>n;
   if(P.single)h+=`<div class="p3one"><span>Ühest pildist tehtud 3D-mudel on lihtsam. Palju parema tulemuse annavad 4 fotot igast küljest.</span><button type="button" class="ghost" id="p3Multi">Lisa rohkem fotosid</button></div>`;
@@ -4569,7 +4571,7 @@ function p3Render(){const box=$('st3d'),th=stTheme(STU.tpl);box.hidden=!th.p3;if
     if(P.asg>=0&&P.pool[P.asg]){const u=P.pool[P.asg];h+=`<div class="p3as"><b>Foto ${P.asg+1}: vali külg</b><div class="row">${slots.map((nm,k)=>`<button type="button" class="ghost" data-as="${k}" aria-pressed="${P.photos[k]===u}">${stEsc(nm)}</button>`).join('')}<button type="button" class="ghost" data-as="none">Ära kasuta</button><button type="button" class="ghost" data-as="del">Eemalda</button></div></div>`;}}
   if(!P.single)h+=`</div>`;
   const need=P.single?Math.max(0,1-n):D?Math.max(0,D.min-n):1;
-  h+=P.err?`<p class="p3err">${stEsc(P.err)}</p>`:P.checking?`<div class="p3stat">AI kontrollib fotosid…</div>`:c&&c.interior?`<div class="p3err p3in"><p>${stEsc(c.summary||'Need on siseruumi fotod.')} Krediite ei võetud.</p><p class="fhint">${P.subject==='object'?'Pildista üks ese lähedalt (nt pink või keris) või tee toast 3D.':'Toa 3D: AI teeb toast disainivariandi ja sellest 3D-ruumi. Eseme 3D: üks ese (nt keris või pink) eraldi mudeliks.'}</p><div class="p3inb"><button type="button" class="apply" id="p3Room">Tee toast 3D (Sisekujundus + 3D)</button>${P.subject==='object'?'':'<button type="button" class="ghost" id="p3Obj">Tee üksikust esemest 3D</button>'}</div></div>`:c&&c.photos.some(x=>x.issues.includes('unsupported'))?`<p class="p3err">${P3UNSUP}</p>`:c?`<div class="p3stat ${c.ok?'ok':'bad'}">${c.ok?'✓ Fotod on korras. Võid 3D-mudeli teha.':stEsc(c.summary||'Mõni foto vajab uuendamist.')}</div>`
+  h+=P.err?`<p class="p3err">${stEsc(P.err)}</p>`:P.checking?`<div class="p3stat">AI kontrollib fotosid…</div>`:p3Dead(c)?`<div class="p3err p3in"><p>${c.interior?stEsc(c.summary||'Need on siseruumi fotod.'):'Sellest fotost ei saa üht 3D-eset teha.'} Krediite ei võetud.</p><p class="fhint">${P.subject==='object'?'Pildista üks ese lähedalt (nt pink või keris) või tee toast 3D.':c.interior?'Toa 3D: AI teeb toast disainivariandi ja sellest 3D-ruumi. Eseme 3D: üks ese (nt keris või pink) eraldi mudeliks.':'Kui see on ruum, tee toast 3D. Kui pildil on üks ese, tee sellest eraldi 3D-mudel.'}</p><div class="p3inb"><button type="button" class="apply" id="p3Room">Tee toast 3D (Sisekujundus + 3D)</button>${P.subject==='object'?'':'<button type="button" class="ghost" id="p3Obj">Tee üksikust esemest 3D</button>'}</div></div>`:c?`<div class="p3stat ${c.ok?'ok':'bad'}">${c.ok?'✓ Fotod on korras. Võid 3D-mudeli teha.':stEsc(c.summary||'Mõni foto vajab uuendamist.')}</div>`
     :`<div class="p3stat">${P.single?(need?'Lisa üks pilt.':'Pilt on lisatud.'):!D?'Lisa esimene foto või vali, mis fotodel on.':need?`Lisa veel ${need} ${need===1?'foto':'fotot'}: ${stEsc(D.slots.filter((_,i)=>!P.photos[i]).slice(0,need).join(', ').toLowerCase())}.`:'Fotod on lisatud.'}</div>`;
   if(c&&!c.ok&&c.soft)h+=`<label class="p3force"><input type="checkbox" id="p3Force"${P.force?' checked':''}> Jätka ikkagi (vead on kerged)</label>`;
   box.innerHTML=h;const el=$('p3ExL');if(el)el.onclick=()=>p3ExSheet(sub);
@@ -5251,7 +5253,6 @@ $('stAdd3d').onclick=e=>m3Picker(e.currentTarget);
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&M3.pts.length&&!$('stM3').hidden){M3.pts=[];const s=stSess();if(P3V&&s&&s.model)m3Draw(P3V,s.model,$('m3Labs'),M3.pts);m3Hint();}});
 // Üks ühine 3D-komponent kõigile mallidele: mall annab photo3d:{subject,from,btn}; ilma selleta aadressimall = hoone, fotomall = AI otsustab
 const P3ORIG=new Map(); // Stuudio eelvaade (data-URL) -> algne fail, ainult selle lehe eluajaks
-const P3UNSUP='Sellest ei saa 3D-mudelit teha. 3D-mudeli saab teha majast, esemest või sõidukist (mitte toast, maastikust ega inimestest). Krediite ei võetud.';
 function p3Cfg(T,kind){if(T&&T.photo3d)return T.photo3d;return (T&&T.input==='addr')||kind==='addr'?{subject:'building'}:{from:'image',btn:'Tee sellest 3D'};}
 function p3EntryHtml(T,s,hasImg){const c=p3Cfg(T);if(!c.from)return '';
   if(c.from==='product')return `<div class="stcard"><h3>3D-mudel</h3><p>Tee oma tootest pööratav 3D-mudel toote fotodest (kuni 4).</p><div class="p3prods">${prodList().map((p,i)=>`<button type="button" class="ghost" data-p3p="${i}">${stEsc(c.btn||'Tee tootest 3D-mudel')}: ${stEsc(p.name)}</button>${p.model?`<a class="fhint" href="${stEsc(p.model+(p.model.includes('?')?'&':'?')+'download=3d-mudel.glb')}" download>✓ 3D-mudel olemas · laadi alla .glb</a>`:''}`).join('')}</div></div>`;
