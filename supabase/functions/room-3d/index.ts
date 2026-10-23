@@ -4,7 +4,7 @@
 //   parts   -> tulemused; mööbli fotost Tripo mudel; tagaseina ja kapifrontide sirgendus
 //   done    -> models/room/<firma>/<id>/room.json (vaatur ehitab toa sellest). Viga -> krediidid tagasi.
 import { cors, json, fail, env, admin, body, userCompany, tfetch, spend, refund, failText, isOurImage, isPhoto, rateLimit, refundStale, asJpeg, sniffType } from "../_shared/util.ts";
-import { sanitizePlan, backWallH, frontH, sideWallH, warp, jpegSize, type Plan, type Item } from "../_shared/room.ts";
+import { sanitizePlan, sanitizeScene, TEX_KINDS, backWallH, frontH, sideWallH, warp, jpegSize, type Plan, type Item, type Scene } from "../_shared/room.ts";
 
 const MU = () => env("MUAPI_API_BASE", "https://api.muapi.ai/api/v1");
 const muKey = () => { const k = env("MUAPI_API_KEY") || env("Muapi.ai ") || env("Muapi.ai"); if (!k) throw new Error("MUAPI_API_KEY puudub"); return k; };
@@ -13,6 +13,7 @@ type Job = { rid?: string; url?: string; done?: boolean; err?: string };
 type St = {
   v: 1; plan?: Plan; src: string; srcs?: string[]; mode?: "design" | "asis"; dims: { w: number; d: number; h: number } | null; stage: "measure" | "parts" | "done";
   sides?: { left?: string | null; right?: string | null }; sidesDone?: boolean;
+  v2?: boolean; scene?: Scene; tex?: Record<string, Job & { saved?: string | null }>;
   floor: Job; wall: Job; backTex?: string | null; fronts?: Record<number, string>; frontsDone?: boolean;
   models: Record<string, { crop?: string; iso: Job; tri: Job; glb?: string; prev?: string; fail?: string; redo?: number }>;
   lock?: number; t0: number; cost: number; out?: string;
@@ -39,20 +40,39 @@ Return ONLY JSON:
    "color":"#hex","photo":i (index of the photo the bbox_px and front_px refer to)}]}
 w is the width of the front side, d the depth front-to-back. Include up to 12 pieces; skip rugs, pictures, pillows, blankets, lamps hanging from the ceiling.`;
 
+const SCENE = `You rebuild an interior as a clean PARAMETRIC 3D scene (like an architect's model) from {N} photo(s), labelled "Photo i (W x H px)".
+Coordinates in metres: x from the LEFT wall (as seen in Photo 0) to the right, z from the BACK wall (the wall facing the camera in Photo 0) towards the camera, y up from the floor.
+Walls: back (z=0, runs along x), left (x=0, along z), right (x=width, along z), front (z=depth, along x). "a" is the position along a wall (x for back/front, z for left/right).
+{MULTI}{DIMS}Measure from real references: count floor tiles (usually 0.6 x 0.6 m or 0.3 x 0.6 m), doors 2.0-2.1 m high, a bench seat ~0.45-0.6 m deep, ceilings 2.3-2.7 m.
+Return ONLY JSON:
+{"room":{"width":m,"depth":m,"height":m},
+ "materials":[{"id":"short_id","name":"Estonian name","kind":"wood|stone|tile|concrete|fabric|leather|paint|metal|glass|plaster|carpet|plastic|emissive","desc":"short English texture description, e.g. dark thermo-ash vertical boards","color":"#hex average colour","rough":0..1,"metal":0..1,"scale":m (real size of one texture repeat: about 6 board widths, one tile, ...),"photo":i (photo where this material is seen best and largest)}] (max 8),
+ "floor":"material id","ceiling":"material id","wall":"default wall material id",
+ "zones":[{"wall":"back|left|right|front","a0":m,"a1":m,"y0":m,"y1":m,"mat":"id"}] (parts of a wall in another material: stone niche wall, wood panelling, tiles),
+ "openings":[{"wall":"...","kind":"window|door|glass","a0":m,"a1":m,"y0":m,"y1":m}] ("glass" = glass wall or glass door),
+ "elements":[{"t":"box|cyl|stove|curtain|model","name":"short english","mat":"id","x0":m,"x1":m,"y0":m,"y1":m,"z0":m,"z1":m,"r":m (corner radius, soft things 0.03-0.08),"rot":deg around y,"tilt":deg (pillows),"photo":i,"bbox_px":[x0,y0,x1,y1] (t=model only, in that photo),"has_back":bool}],
+ "lights":[{"t":"strip|spot|lamp","x0":m,"x1":m,"y":m,"z":m,"tx":m,"ty":m,"tz":m}]}
+Build rules:
+- Build every built-in part and piece of furniture from boxes: benches = slabs 0.08-0.10 thick, backrests = boards, a stool = top + 4 legs, cabinets = carcass + doors, shelves = thin boards, a bed = frame + mattress (r 0.05) + duvet + pillows (r 0.07, tilt 15-20), a sofa = base + seat cushions + back cushions + arms (r 0.04-0.08), a table = top + legs, a niche built into the room = its walls and ceiling as thin boxes in the niche material.
+- "cyl" fills its box (pipes, chimneys, round lamps, pots). "stove" = a sauna stove (steel cage with stones) in its box. "curtain" = a curtain hanging in its box.
+- "model" only for things that cannot be built from boxes (a plant, an organic chair, a sculpture), and only with bbox_px.
+- 20-90 elements. Be precise so parts touch: nothing floats, nothing overlaps.
+- Only what the photos show. Wall areas no photo shows: plain default wall material, nothing invented.
+- lights: only real fixtures seen in the photos (LED strips under benches or shelves, ceiling spots, lamps).`;
 const MULTI = `These are SEVERAL photos of the SAME room from different angles. Use them together: cross-check every size between the photos and give one consistent value.
 For each surface choose the photo where it is seen best (most straight-on, least covered) and give the points in THAT photo.
 List every piece of furniture ONCE even when several photos show it; its "photo" is the sharpest, most complete view of that item.
 `;
-async function claudePlan(srcs: string[], sizes: [number, number][], dims: St["dims"]) {
+async function claudePlan(srcs: string[], sizes: [number, number][], dims: St["dims"], v2 = false) {
   const d = dims ? `The room is exactly ${dims.w} m wide (left to right), ${dims.d} m deep and ${dims.h} m high: use these numbers.\n` : "";
   const content: Record<string, unknown>[] = [];
   srcs.forEach((u, i) => { content.push({ type: "text", text: `Photo ${i} (${sizes[i][0]} x ${sizes[i][1]} px)` }); content.push({ type: "image", source: { type: "url", url: u } }); });
-  content.push({ type: "text", text: PROMPT.replace("{N}", String(srcs.length)).replace("{MULTI}", srcs.length > 1 ? MULTI : "").replace("{DIMS}", d) });
+  content.push({ type: "text", text: (v2 ? SCENE : PROMPT).replace("{N}", String(srcs.length)).replace("{MULTI}", srcs.length > 1 ? MULTI : "").replace("{DIMS}", d) });
   const r = await tfetch(env("ANTHROPIC_API_URL", "https://api.anthropic.com") + "/v1/messages", {
     method: "POST", headers: { "x-api-key": env("ANTHROPIC_API_KEY"), "anthropic-version": "2023-06-01", "content-type": "application/json" },
-    body: JSON.stringify({ model: env("ROOM_MODEL", "claude-opus-5-5"), max_tokens: 6000,
+    body: JSON.stringify({ model: env("ROOM_MODEL", "claude-opus-5-5"), max_tokens: v2 ? 16000 : 6000,
       messages: [{ role: "user", content }] }),
-  }, 120000);
+  }, 140000);
   const j = await r.json().catch(() => ({}));
   if (!r.ok) throw new Error("anthropic " + r.status + " " + JSON.stringify(j).slice(0, 200));
   const t = String((j.content || []).filter((c: { type?: string }) => c.type === "text").map((c: { text?: string }) => c.text || "").join(""));
@@ -129,11 +149,84 @@ function roomJson(st: St) {
 }
 function progress(st: St) {
   const M = Object.values(st.models), N = M.length, n = M.filter((m) => m.glb || m.fail).length;
+  if (st.v2) {
+    const T = Object.values(st.tex || {}), tx = !!st.scene && T.every((j) => j.saved !== undefined);
+    return { stage: st.stage, measure: !!st.scene, floor: tx, wall: tx, items: [n, N], room: st.scene ? { ...st.scene.room, est: st.scene.est } : null };
+  }
   return { stage: st.stage, measure: !!st.plan, floor: !!(st.floor.done || st.floor.err), wall: !!(st.wall.done || st.wall.err || st.backTex !== undefined), items: [n, N],
     room: st.plan ? { ...st.plan.room, est: st.plan.est } : null };
 }
 
+/** Mööbli mudelid: eseme foto valmis -> Tripo; Tripo valmis -> .glb meie kausta (v1 ja v2 sama). */
+async function advanceModels(st: St, M: [string, St["models"][string]][], dir: string) {
+  for (const [key, m] of M) {
+    if (m.iso.err && !m.fail) m.fail = "foto: " + m.iso.err;
+    if (m.iso.done && !m.tri.rid && !m.tri.err && !m.fail) {
+      try { m.tri.rid = await muSubmit("tripo3d-h31-image-to-3d", TRIPO(m.iso.url!)); st.cost += .3; } catch (e) { m.tri.err = String((e as Error).message).slice(0, 160); }
+    }
+    if (m.tri.err && !m.fail) m.fail = "3D: " + m.tri.err;
+    if (m.tri.done && !m.glb && !m.fail) {
+      try {
+        const r = await tfetch(m.tri.url!, {}, 60000), b = new Uint8Array(await r.arrayBuffer());
+        if (!r.ok || b.length < 1000 || b.length > 30_000_000) throw new Error("mudel " + b.length);
+        m.glb = await put(`${dir}/${key.replace(/ /g, "-")}-${m.redo || 0}.glb`, b, "model/gltf-binary");
+      } catch (e) { m.fail = "salvestus: " + (e as Error).message; }
+    }
+  }
+}
+
+const TEXP = (m: { desc: string; scale: number }) => `Create a seamless tileable texture of exactly this material from the photo: ${m.desc}. Flat and straight-on, even soft lighting, no shadows, no objects, no perspective, edges that tile seamlessly. It covers about ${m.scale} x ${m.scale} m. Square image.`;
+/** v2: parameetriline stseen. measure -> Claude kirjeldab stseeni; parts -> materjalide tekstuurid (meie kausta) ja „model“ elementide Tripo mudelid. */
+async function stepV2(id: string, cid: string, st: St, srcs: string[]): Promise<St> {
+  const dir = `room/${cid}/${id}`;
+  if (st.stage === "measure") {
+    const sizes = await Promise.all(srcs.map(async (u) => { const r = await tfetch(u, {}, 30000), z = jpegSize(new Uint8Array(await r.arrayBuffer())); if (!r.ok || !z) throw new Error("pilti ei saanud lugeda"); return z; }));
+    const { a, cost } = await claudePlan(srcs, sizes, st.dims, true);
+    const sc = sanitizeScene(a, sizes, st.dims);
+    st.scene = sc; st.cost += cost; st.tex = {};
+    const jobs: Promise<unknown>[] = [];
+    for (const m of sc.mats.filter((m) => TEX_KINDS.has(m.kind))) {
+      const j: Job & { saved?: string | null } = st.tex[m.id] = {};
+      jobs.push(muSubmit("nano-banana-edit", { prompt: TEXP(m), images_list: [srcs[m.photo]] }).then((r) => j.rid = r).catch((e) => j.err = String(e.message).slice(0, 160)));
+    }
+    const need = sc.els.map((e, i) => [e, i] as const).filter(([e]) => e.t === "model" && e.bbox);
+    const imgs: Record<number, Awaited<ReturnType<typeof decode>>> = {};
+    for (const p of new Set(need.map(([e]) => e.photo))) imgs[p] = await decode(srcs[p]);
+    for (const [e, i] of need) {
+      const key = "m" + i, m: St["models"][string] = st.models[key] = { iso: {}, tri: {} }, b = e.bbox!, c = crop(imgs[e.photo], [b[0], b[1], b[2], b[3]]);
+      jobs.push(encode(c.out, c.w, c.h, 90).then((x) => put(`${dir}/crop-${key}.jpg`, x, "image/jpeg"))
+        .then((u) => { m.crop = u; return muSubmit("nano-banana-edit", { prompt: ISO(e.name), images_list: [u] }); })
+        .then((r) => m.iso.rid = r).catch((er) => m.iso.err = String(er.message).slice(0, 160)));
+    }
+    await Promise.all(jobs);
+    st.cost += .03 * (Object.keys(st.tex).length + need.length);
+    st.stage = "parts";
+    return st;
+  }
+  const T = Object.entries(st.tex || {}), M = Object.entries(st.models);
+  await Promise.all([...T.map(([, j]) => muPoll(j, /\.(png|jpe?g|webp)/i)), ...M.flatMap(([, m]) => [muPoll(m.iso, /\.(png|jpe?g|webp)/i), muPoll(m.tri, /\.glb/i)])]);
+  T.forEach(([, j]) => { if (j.err && j.saved === undefined) j.saved = null; });
+  // tekstuur meie kausta (MuAPI lingid võivad aeguda); üks pilt päringu kohta (protsessoriaeg)
+  const next = T.find(([, j]) => j.done && j.saved === undefined);
+  if (next) {
+    const [k, j] = next;
+    try { const r = await tfetch(j.url!, {}, 30000), { bytes, type } = await asJpeg(new Uint8Array(await r.arrayBuffer())); j.saved = await put(`${dir}/tex-${k}.jpg`, bytes, type); }
+    catch (e) { console.error("room tex", k, (e as Error).message); j.saved = null; }
+  }
+  await advanceModels(st, M, dir);
+  if (T.every(([, j]) => j.saved !== undefined) && M.every(([, m]) => m.glb || m.fail)) {
+    const sc = st.scene!, out = { ...sc, mode: st.mode || "design", photos: srcs.length,
+      mats: sc.mats.map((m) => ({ ...m, tex: st.tex?.[m.id]?.saved || null })),
+      els: sc.els.map((e, i) => ({ ...e, glb: st.models["m" + i]?.glb || st.models["m" + i]?.prev || null, redo: !!st.models["m" + i] })) };
+    st.out = await put(`${dir}/room-${Date.now()}.json`, new TextEncoder().encode(JSON.stringify(out)), "application/json");
+    st.stage = "done";
+    await admin().from("ai_usage").insert({ company_id: cid, kind: "3d", model: "room-v2:opus+nano-banana+tripo", cost_usd: +st.cost.toFixed(3) }).then(() => {}, () => {});
+  }
+  return st;
+}
+
 async function step(id: string, cid: string, st: St): Promise<St> {
+  if (st.v2) return stepV2(id, cid, st, st.srcs || [st.src]);
   const db = admin(), dir = `room/${cid}/${id}`;
   const srcs = st.srcs || [st.src];
   if (st.stage === "measure") {
@@ -167,20 +260,7 @@ async function step(id: string, cid: string, st: St): Promise<St> {
   // ---------- parts ----------
   const M = Object.entries(st.models);
   await Promise.all([muPoll(st.floor, /\.(png|jpe?g|webp)/i), muPoll(st.wall, /\.(png|jpe?g|webp)/i), ...M.flatMap(([, m]) => [muPoll(m.iso, /\.(png|jpe?g|webp)/i), muPoll(m.tri, /\.glb/i)])]);
-  for (const [key, m] of M) {
-    if (m.iso.err && !m.fail) m.fail = "foto: " + m.iso.err;
-    if (m.iso.done && !m.tri.rid && !m.tri.err && !m.fail) {
-      try { m.tri.rid = await muSubmit("tripo3d-h31-image-to-3d", TRIPO(m.iso.url!)); st.cost += .3; } catch (e) { m.tri.err = String((e as Error).message).slice(0, 160); }
-    }
-    if (m.tri.err && !m.fail) m.fail = "3D: " + m.tri.err;
-    if (m.tri.done && !m.glb && !m.fail) {
-      try {
-        const r = await tfetch(m.tri.url!, {}, 60000), b = new Uint8Array(await r.arrayBuffer());
-        if (!r.ok || b.length < 1000 || b.length > 30_000_000) throw new Error("mudel " + b.length);
-        m.glb = await put(`${dir}/${key.replace(/ /g, "-")}-${m.redo || 0}.glb`, b, "model/gltf-binary");
-      } catch (e) { m.fail = "salvestus: " + (e as Error).message; }
-    }
-  }
+  await advanceModels(st, M, dir);
   // tagasein (üks protsessorimahukas samm ühe päringu kohta)
   if (st.backTex === undefined && (st.wall.done || st.wall.err)) {
     const H = backWallH(st.plan!, PPM);
@@ -271,7 +351,7 @@ export async function handler(req: Request): Promise<Response> {
     let srcs: string[];
     try { srcs = await Promise.all(list.map((u, i) => jpgs[i] ? put(`room/${me.companyId}/${id}/src-${i}.jpg`, jpgs[i]!, "image/jpeg") : Promise.resolve(u))); }
     catch (e) { const r = await refund(id); return json({ error: (e as Error).message + ". " + failText(r), refunded: r }, 500); }
-    const st: St = { v: 1, src: srcs[0], srcs, mode, dims, stage: "measure", floor: {}, wall: {}, models: {}, t0: Date.now(), cost: 0, lock: 0 };
+    const st: St = { v: 1, v2: true, src: srcs[0], srcs, mode, dims, stage: "measure", floor: {}, wall: {}, models: {}, t0: Date.now(), cost: 0, lock: 0 };
     const { error } = await db.from("renders").insert({ id, company_id: me.companyId, kind: "3d", tpl: "sisek", prompt: "[tuba " + mode + "] " + label, input_urls: srcs, stage: "measure", room: st });
     if (error) { const r = await refund(id); return json({ error: failText(r), refunded: r }, 500); }
     return json({ id, status: "pending", credits, ...progress(st) });
@@ -288,7 +368,8 @@ export async function handler(req: Request): Promise<Response> {
     if (r.status !== "done" || !m) return fail("Seda eset ei saa uuesti teha");
     const used = Object.values(st.models).reduce((a, x) => a + (x.redo || 0), 0);
     if (used >= REDO_MAX) return fail(`Uuesti tegemisi on selle toa kohta ${REDO_MAX}`);
-    const it = st.plan!.items.find((i) => i.key === key)!;
+    const it = st.v2 ? st.scene!.els[Number(key.slice(1))] : st.plan!.items.find((i) => i.key === key)!;
+    if (!it) return fail("Seda eset ei saa uuesti teha");
     try {
       const rid = await muSubmit("nano-banana-edit", { prompt: ISO(it.name) + " Show it from a slightly different angle than before.", images_list: [m.crop!] });
       st.models[key] = { crop: m.crop, iso: { rid }, tri: {}, redo: (m.redo || 0) + 1, prev: m.glb || m.prev };

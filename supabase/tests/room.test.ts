@@ -1,7 +1,7 @@
 // Toa 3D puhas loogika: plaani kontroll, homograafia, sirgendus.
 // Käivita: deno test -A --no-config --node-modules-dir=none supabase/tests/room.test.ts
 import { assert, assertAlmostEquals, assertEquals } from "jsr:@std/assert@1";
-import { sanitizePlan, homography, apply, warp, itemKey, MAX_MODELS } from "../functions/_shared/room.ts";
+import { sanitizePlan, sanitizeScene, homography, apply, warp, itemKey, MAX_MODELS } from "../functions/_shared/room.ts";
 
 Deno.test("plaan: mõõdud piiridesse, kasutaja mõõdud ülimuslikud, vaibad ja pildid välja, mudeliks lahtine mööbel", () => {
   const a = {
@@ -54,4 +54,35 @@ Deno.test("seinaäärne pööratud kapp jääb seina äärde, seinakapp õhku", 
   assertEquals(p.items[1].elev, 1.45);
   assertAlmostEquals(p.items[2].elev, 2.6 - .75, 1e-9); // lae sisse ei lähe
   assertAlmostEquals(p.items[2].pos.x, 5.9, 1e-9); // seinas, ruumi sees
+});
+
+Deno.test("v2 stseen: materjalid, seinatsoonid, avad, elemendid toas, Tripo ainult lõikega", () => {
+  const a = {
+    room: { width: 2, depth: 1.75, height: 2.1 }, floor: "tile", wall: "wood_l", ceiling: "nope",
+    materials: [{ id: "wood_l", kind: "wood", desc: "light thermowood boards", color: "#C8A27A", scale: 1.2 }, { id: "tile", kind: "tile", color: "#777", scale: 0.6 },
+      { id: "wood_l", kind: "wood" }, { id: "steel", kind: "metal" }, { id: "x?!", kind: "lava" }],
+    zones: [{ wall: "back", a0: 1.48, a1: 9, y0: 0, y1: 2.1, mat: "stone" }, { wall: "back", a0: 0, a1: 1.48, y0: 1.32, y1: 2.1, mat: "wood_l" }],
+    openings: [{ wall: "right", kind: "glass_wall", a0: 1, a1: 1.6, y0: 0, y1: 1.98 }, { wall: "left", kind: "window", a0: 0, a1: .1, y0: 0, y1: 2 }],
+    elements: [
+      { t: "box", name: "upper bench", mat: "wood_l", x0: 0, x1: 1.46, y0: .97, y1: 1.06, z0: 0, z1: .56, r: .5 },
+      { t: "stove", name: "stove", mat: "steel", x0: 1.6, x1: 1.92, y0: 0, y1: .9, z0: .15, z1: .45 },
+      { t: "model", name: "plant", mat: "wood_l", x0: .1, x1: .4, y0: 0, y1: .8, z0: 1, z1: 1.3 },
+      { t: "box", name: "tiny", x0: 0, x1: .001, y0: 0, y1: 1, z0: 0, z1: 1 },
+      { t: "box", name: "far", x0: -9, x1: 99, y0: 0, y1: 1, z0: 0, z1: 1 },
+    ],
+    lights: [{ t: "strip", x0: .02, x1: 1.44, y: .96, z: .05 }, { t: "laser" }],
+  };
+  const s = sanitizeScene(a, [[1600, 1200]]);
+  assertEquals(s.room, { w: 2, d: 1.75, h: 2.1 });
+  assertEquals(s.mats.map((m) => m.id), ["wood_l", "tile", "steel", "x"]); // kordus välja, id puhastatud
+  assertEquals(s.mats[3].kind, "paint");
+  assertEquals([s.floor, s.wall, s.ceiling], ["tile", "wood_l", "wood_l"]); // tundmatu -> esimene
+  assertEquals(s.zones[0], { wall: "back", a0: 1.48, a1: 2, y0: 0, y1: 2.1, mat: "wood_l" }); // seina pikkuseni, tundmatu materjal -> esimene
+  assertEquals(s.opens.map((o) => o.kind), ["glass"]); // liiga kitsas aken välja
+  assertEquals(s.els.map((e) => e.name), ["upper bench", "stove", "plant", "far"]);
+  assertAlmostEquals(s.els[0].r, .045, 1e-9); // ümardus ei ole paksem kui pool paksusest
+  assertEquals(s.els[2].t, "box"); // model ilma fotolõiketa -> kast
+  assertEquals([s.els[3].x0, s.els[3].x1], [-.3, 2.3]);
+  assertEquals(s.lights.map((l) => l.t), ["strip", "lamp"]);
+  assertEquals(sanitizeScene({}, [[10, 10]], { w: 3, d: 4, h: 2.5 }).est, false);
 });

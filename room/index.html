@@ -1,0 +1,158 @@
+<!doctype html><html lang="et"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; connect-src 'self' https://*.supabase.co https://cdn.jsdelivr.net data: blob:; worker-src 'self' blob:; object-src 'none'; base-uri 'none'; frame-ancestors 'self'">
+<title>Tuba 3D-s · Vaade3D</title>
+<style>
+:root{--bg:#eceae6;--fg:#1d1b18;--mut:#6b655c;--chip:#ffffffd9;--chipb:#0000001a;--on:#1d1b18;--onfg:#fff}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#1b1a18;--fg:#f1ede6;--mut:#a39c90;--chip:#2a2825d9;--chipb:#ffffff1f;--on:#f1ede6;--onfg:#1b1a18}}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--fg);font:14px/1.4 system-ui,-apple-system,"Segoe UI",sans-serif;overflow:hidden}
+#c{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none}
+#info{position:absolute;top:12px;left:14px;right:14px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;pointer-events:none}
+#info b{font-size:15px}#info .t{font:600 10.5px ui-monospace,monospace;letter-spacing:.06em;text-transform:uppercase;background:var(--chip);border:1px solid var(--chipb);border-radius:999px;padding:3px 9px}
+#ui{position:absolute;left:0;right:0;bottom:0;padding:10px 12px 12px;display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
+.g{display:flex;gap:3px;background:var(--chip);border:1px solid var(--chipb);border-radius:999px;padding:3px;backdrop-filter:blur(8px)}
+.g button{border:0;background:none;color:var(--fg);font:inherit;font-size:13px;padding:6px 11px;border-radius:999px;cursor:pointer;min-height:32px}
+.g button.on{background:var(--on);color:var(--onfg)}
+.g button:focus-visible{outline:2px solid #e5482d;outline-offset:1px}
+#st{position:absolute;inset:0;display:grid;place-items:center;color:var(--mut);text-align:center;padding:20px}
+#st i{display:block;width:34px;height:34px;margin:0 auto 10px;border-radius:50%;border:3px solid var(--chipb);border-top-color:#e5482d;animation:sp 1s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}@media (prefers-reduced-motion:reduce){#st i{animation:none}}
+body.e #info b{display:none}body.e #info{justify-content:flex-end}
+</style></head><body>
+<canvas id="c" aria-label="Toa 3D-mudel, keera hiire või sõrmega"></canvas>
+<div id="info"><b>Tuba 3D-s</b><span class="t" id="dims" hidden></span></div>
+<div id="st"><div><i></i>Laen tuba…</div></div>
+<div id="ui" hidden>
+ <div class="g" data-k="cut"><button data-v="cut" class="on" title="Seinad kaamera poolt peidus">Lõige</button><button data-v="closed">Kinnine</button></div>
+ <div class="g" data-k="light"><button data-v="on" class="on">Valgus sees</button><button data-v="off">Päev</button></div>
+ <div class="g"><button id="dl" title="Lae alla .glb (meetrites)">.glb</button></div>
+</div>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"}}</script>
+<script type="module">
+// Vaade3D tuba 3D-s (room.json v2): sama valgus ja materjalid kui docs/prototypes. ?u=<room.json>&e=1 (vaaturis)
+import * as THREE from 'three';
+import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
+import {RoomEnvironment} from 'three/addons/environments/RoomEnvironment.js';
+import {RoundedBoxGeometry} from 'three/addons/geometries/RoundedBoxGeometry.js';
+import {RectAreaLightUniformsLib} from 'three/addons/lights/RectAreaLightUniformsLib.js';
+import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
+import {EffectComposer} from 'three/addons/postprocessing/EffectComposer.js';
+import {RenderPass} from 'three/addons/postprocessing/RenderPass.js';
+import {GTAOPass} from 'three/addons/postprocessing/GTAOPass.js';
+import {OutputPass} from 'three/addons/postprocessing/OutputPass.js';
+const Q=new URLSearchParams(location.search),U=Q.get('u')||'',st=document.getElementById('st');
+if(Q.get('e'))document.body.classList.add('e');
+const fail=m=>{st.innerHTML='<div>'+m+'</div>';};
+// ainult meie failihoidla (või sama päritolu kohalikus testis)
+const okUrl=u=>{try{const x=new URL(u,location.href);return x.origin===location.origin||/^https:\/\/[a-z0-9]+\.supabase\.co\/storage\/v1\/object\/public\/models\/room\//.test(x.href);}catch(_){return false;}};
+if(!okUrl(U)){fail('Vale link.');throw new Error('url');}
+let J;try{J=await (await fetch(U)).json();}catch(_){fail('Tuba ei õnnestunud laadida.');throw _;}
+if(J.v!==2){fail('See tuba on vanas vormingus. Ava see Vaade3D stuudios.');throw new Error('v');}
+RectAreaLightUniformsLib.init();
+const W=J.room.w,D=J.room.d,H=J.room.h,small=Math.min(innerWidth,innerHeight)<600||matchMedia('(pointer:coarse)').matches;
+const cv=document.getElementById('c'),R=new THREE.WebGLRenderer({canvas:cv,antialias:true,preserveDrawingBuffer:true});
+R.setPixelRatio(Math.min(devicePixelRatio,small?1.5:2));R.outputColorSpace=THREE.SRGBColorSpace;R.toneMapping=THREE.ACESFilmicToneMapping;R.toneMappingExposure=1.0;
+R.setClearColor(new THREE.Color(getComputedStyle(document.body).backgroundColor));R.shadowMap.enabled=true;R.shadowMap.type=small?THREE.PCFSoftShadowMap:THREE.VSMShadowMap;
+const S=new THREE.Scene();S.environment=new THREE.PMREMGenerator(R).fromScene(new RoomEnvironment(),.04).texture;S.environmentIntensity=.55;
+const cam=new THREE.PerspectiveCamera(32,1,.05,80),ctl=new OrbitControls(cam,cv);ctl.enableDamping=true;ctl.maxPolarAngle=Math.PI*.52;
+const M0=Math.max(W,D,H);ctl.target.set(W/2,H*.38,D/2);cam.position.set(W/2+M0*.95,H*1.55+M0*.55,D+M0*1.35);ctl.minDistance=M0*.5;ctl.maxDistance=M0*5;
+let CMP=null,AO=null;
+if(!small){CMP=new EffectComposer(R);CMP.addPass(new RenderPass(S,cam));AO=new GTAOPass(S,cam,innerWidth,innerHeight);AO.updateGtaoMaterial({radius:.35,distanceExponent:1.4,thickness:1.2,scale:1.1,samples:16});AO.blendIntensity=.9;CMP.addPass(AO);CMP.addPass(new OutputPass());}
+function size(){const w=innerWidth,h=innerHeight;R.setSize(w,h,false);if(CMP)CMP.setSize(w,h);cam.aspect=w/h;cam.fov=w<h?48:32;cam.updateProjectionMatrix();}addEventListener('resize',size);size();
+// ---------- materjalid: korduv tekstuur maailma mõõdus (1 kordus = scale meetrit)
+const TL=new THREE.TextureLoader(),aniso=R.capabilities.getMaxAnisotropy(),MAT={},SC={};
+for(const m of J.mats){let mt;
+  if(m.kind==='glass')mt=new THREE.MeshPhysicalMaterial({color:m.color,roughness:.04,metalness:.1,transparent:true,opacity:.35,transmission:0});
+  else if(m.kind==='emissive')mt=new THREE.MeshStandardMaterial({color:0x000000,emissive:m.color,emissiveIntensity:2.5});
+  else{mt=new THREE.MeshStandardMaterial({color:m.tex?0xffffff:m.color,roughness:m.rough,metalness:m.metal});
+    if(m.tex&&okUrl(m.tex)||m.tex&&/^https:\/\/[a-z0-9]+\.supabase\.co\/storage\/v1\/object\/public\/models\//.test(m.tex)){const t=TL.load(m.tex);t.colorSpace=THREE.SRGBColorSpace;t.wrapS=t.wrapT=THREE.RepeatWrapping;t.anisotropy=aniso;mt.map=t;}}
+  MAT[m.id]=mt;SC[m.id]=m.scale||1;}
+const glassM=new THREE.MeshPhysicalMaterial({color:0x9fb4bf,roughness:.03,metalness:.1,transparent:true,opacity:.28});
+const skyM=new THREE.MeshBasicMaterial({color:0xdfe9ef});
+const steel=new THREE.MeshStandardMaterial({color:0xcfd2d4,roughness:.22,metalness:1}),dsteel=new THREE.MeshStandardMaterial({color:0x2b2b2b,roughness:.5,metalness:.6}),rockM=new THREE.MeshStandardMaterial({color:0x3a3a3a,roughness:.95});
+const ledM=new THREE.MeshStandardMaterial({color:0x000000,emissive:0xffc477,emissiveIntensity:3});
+const mat=id=>MAT[id]||MAT[J.wall]||Object.values(MAT)[0];
+// maailma-UV: plaadid ja lauad oma päris suuruses
+function wuv(g,s){const p=g.attributes.position,n=g.attributes.normal,uv=g.attributes.uv;g.computeBoundingBox();
+  for(let i=0;i<p.count;i++){const x=p.getX(i),y=p.getY(i),z=p.getZ(i),ax=Math.abs(n.getX(i)),ay=Math.abs(n.getY(i));let u,v;
+    if(ay>.5){u=x;v=z;}else if(ax>.5){u=z;v=y;}else{u=x;v=y;}uv.setXY(i,u/s,v/s);}uv.needsUpdate=true;return g;}
+const root=new THREE.Group();S.add(root);const walls={back:new THREE.Group(),left:new THREE.Group(),right:new THREE.Group(),front:new THREE.Group()},lid=new THREE.Group();
+Object.values(walls).forEach(g=>root.add(g));root.add(lid);
+function slab(x0,x1,y0,y1,z0,z1,m,id,par,o={}){const g=new THREE.BoxGeometry(x1-x0,y1-y0,z1-z0);g.translate((x0+x1)/2,(y0+y1)/2,(z0+z1)/2);wuv(g,SC[id]||1);
+  const me=new THREE.Mesh(g,m);me.castShadow=o.cast!==false;me.receiveShadow=true;(par||root).add(me);return me;}
+// ---------- põrand, lagi
+const T=.08;
+slab(-T,W+T,-.06,0,-T,D+T,mat(J.floor),J.floor,root,{cast:false});
+slab(-T,W+T,H,H+.06,-T,D+T,mat(J.ceiling),J.ceiling,lid,{cast:false});
+// ---------- seinad: rakud tsoonide ja avade järgi (ava = auk + klaas + valgus)
+const openAt=(w,a,y)=>J.opens.find(o=>o.wall===w&&a>o.a0&&a<o.a1&&y>o.y0&&y<o.y1);
+function buildWall(w){const L=w==='left'||w==='right'?D:W,Z=J.zones.filter(z=>z.wall===w),O=J.opens.filter(o=>o.wall===w);
+  const A=[...new Set([0,L,...Z.flatMap(z=>[z.a0,z.a1]),...O.flatMap(o=>[o.a0,o.a1])])].filter(v=>v>=0&&v<=L).sort((a,b)=>a-b);
+  const Y=[...new Set([0,H,...Z.flatMap(z=>[z.y0,z.y1]),...O.flatMap(o=>[o.y0,o.y1])])].filter(v=>v>=0&&v<=H).sort((a,b)=>a-b);
+  for(let i=0;i+1<A.length;i++)for(let k=0;k+1<Y.length;k++){const a0=A[i],a1=A[i+1],y0=Y[k],y1=Y[k+1];if(a1-a0<.005||y1-y0<.005)continue;const am=(a0+a1)/2,ym=(y0+y1)/2;
+    if(openAt(w,am,ym))continue;let zid=J.wall;for(const z of Z)if(am>z.a0&&am<z.a1&&ym>z.y0&&ym<z.y1)zid=z.mat;
+    const m=mat(zid),g=walls[w];
+    if(w==='back')slab(a0,a1,y0,y1,-T,0,m,zid,g);else if(w==='front')slab(a0,a1,y0,y1,D,D+T,m,zid,g);
+    else if(w==='left')slab(-T,0,y0,y1,a0,a1,m,zid,g);else slab(W,W+T,y0,y1,a0,a1,m,zid,g);}
+  for(const o of O){const g=walls[w],wd=o.a1-o.a0,h=o.y1-o.y0,am=(o.a0+o.a1)/2,ym=(o.y0+o.y1)/2;
+    const pane=new THREE.Mesh(new THREE.BoxGeometry(w==='left'||w==='right'?.012:wd,h,w==='left'||w==='right'?wd:.012),o.kind==='door'?mat(J.wall):glassM);
+    const sky=new THREE.Mesh(new THREE.PlaneGeometry(wd,h),skyM);
+    if(w==='back'){pane.position.set(am,ym,-T/2);sky.position.set(am,ym,-T-.02);}
+    else if(w==='front'){pane.position.set(am,ym,D+T/2);sky.position.set(am,ym,D+T+.02);sky.rotation.y=Math.PI;}
+    else if(w==='left'){pane.position.set(-T/2,ym,am);sky.position.set(-T-.02,ym,am);sky.rotation.y=Math.PI/2;}
+    else{pane.position.set(W+T/2,ym,am);sky.position.set(W+T+.02,ym,am);sky.rotation.y=-Math.PI/2;}
+    if(o.kind!=='door')g.add(sky);g.add(pane);
+    if(o.kind!=='door'){const L2=new THREE.RectAreaLight(0xeaf1ff,4.5,wd,h);L2.position.copy(sky.position);
+      const c=new THREE.Vector3(W/2,ym*.8,D/2);L2.lookAt(c);S.add(L2);}}}
+['back','left','right','front'].forEach(buildWall);
+// ---------- elemendid
+const ldr=new GLTFLoader(),GLB={};
+function stoveAt(e){const g=new THREE.Group(),w=e.x1-e.x0,d=e.z1-e.z0,h=e.y1-e.y0,r=Math.min(w,d)/2;g.position.set((e.x0+e.x1)/2,e.y0,(e.z0+e.z1)/2);
+  const body=new THREE.Mesh(new THREE.CylinderGeometry(r*.7,r*.78,h*.96,24),dsteel);body.position.y=h*.5;body.castShadow=true;g.add(body);
+  const n=Math.max(6,Math.round(h/.065));for(let i=0;i<n;i++){const t=i/(n-1),ring=new THREE.Mesh(new THREE.TorusGeometry(r*(.92+.12*Math.sin(Math.PI*t)),.006,6,40),steel);ring.rotation.x=Math.PI/2;ring.position.y=h*(.08+.88*t);ring.castShadow=true;g.add(ring);}
+  const rg=new THREE.IcosahedronGeometry(r*.24,1);for(let i=0;i<60;i++){const a=i*2.39996,rr=r*(.55+.25*((i*37)%10)/10),y=h*(.12+.8*((i*53)%100)/100);const s=new THREE.Mesh(rg,rockM);s.position.set(Math.cos(a)*rr,y,Math.sin(a)*rr);s.scale.set(1,.7,.9);s.rotation.set(i,i*.7,0);g.add(s);}
+  return g;}
+function curtainAt(e,m){const alongZ=(e.z1-e.z0)>(e.x1-e.x0),L=alongZ?e.z1-e.z0:e.x1-e.x0,h=e.y1-e.y0,n=Math.max(8,Math.round(L/.02)),g=new THREE.PlaneGeometry(L,h,n*2,1),p=g.attributes.position;
+  for(let i=0;i<p.count;i++)p.setZ(i,Math.sin((p.getX(i)+L)*Math.PI/.11)*.045);g.computeVertexNormals();const me=new THREE.Mesh(g,m);me.castShadow=true;me.receiveShadow=true;
+  me.material=m.clone();me.material.side=THREE.DoubleSide;me.position.set((e.x0+e.x1)/2,(e.y0+e.y1)/2,(e.z0+e.z1)/2);if(alongZ)me.rotation.y=Math.PI/2;return me;}
+// Tripo mudel kasti: seljaga ese selg seina poole (kõrgem pool), muidu pikk külg laiuse suunas
+function fitModel(o,e){o.rotation.set(0,0,0);o.scale.set(1,1,1);o.updateMatrixWorld(true);const b=new THREE.Box3().setFromObject(o),s=b.getSize(new THREE.Vector3()),c=b.getCenter(new THREE.Vector3());
+  const w=e.x1-e.x0,d=e.z1-e.z0,h=e.y1-e.y0;let r=0,set=false;
+  if(e.has_back){const v=new THREE.Vector3(),top=b.min.y+s.y*.8;let n=0,bx=0,bz=0;o.traverse(m=>{if(m.isMesh){const p=m.geometry.attributes.position;for(let i=0;i<p.count;i+=5){v.fromBufferAttribute(p,i).applyMatrix4(m.matrixWorld);if(v.y>top){bx+=v.x;bz+=v.z;n++;}}}});
+    if(n){bx=bx/n-c.x;bz=bz/n-c.z;if(Math.hypot(bx/s.x,bz/s.z)>.08){const k=Math.abs(bx/s.x)>Math.abs(bz/s.z)?[Math.sign(bx),0]:[0,Math.sign(bz)];r=Math.PI-Math.atan2(k[0],k[1]);set=true;}}}
+  if(!set&&Math.abs(w-d)>.1&&(s.x>s.z)!==(w>d))r=Math.PI/2;const sw=Math.abs(Math.sin(r))>.5;o.scale.set((sw?d:w)/s.x,h/s.y,(sw?w:d)/s.z);o.rotation.y=r;
+  o.updateMatrixWorld(true);const b2=new THREE.Box3().setFromObject(o),c2=b2.getCenter(new THREE.Vector3());o.position.set(-c2.x,-b2.min.y,-c2.z);}
+const loads=[];
+for(const e of J.els){const m=mat(e.mat),cx=(e.x0+e.x1)/2,cy=(e.y0+e.y1)/2,cz=(e.z0+e.z1)/2,w=e.x1-e.x0,h=e.y1-e.y0,d=e.z1-e.z0;let o;
+  if(e.t==='stove')o=stoveAt(e);
+  else if(e.t==='curtain')o=curtainAt(e,m);
+  else if(e.t==='cyl'){const g=new THREE.CylinderGeometry(Math.min(w,d)/2,Math.min(w,d)/2,h,28);o=new THREE.Mesh(g,m);o.position.set(cx,cy,cz);o.castShadow=o.receiveShadow=true;}
+  else if(e.t==='model'&&e.glb){o=new THREE.Group();o.position.set(cx,e.y0,cz);o.rotation.y=(e.rot||0)*Math.PI/180;const holder=o;
+    loads.push(new Promise(res=>ldr.load(e.glb,g=>{const x=g.scene;x.traverse(n=>{if(n.isMesh){n.castShadow=n.receiveShadow=true;}});fitModel(x,e);holder.add(x);res();},undefined,()=>res())));}
+  else{const g=e.r>.004?new RoundedBoxGeometry(w,h,d,3,e.r):new THREE.BoxGeometry(w,h,d);wuv(g,SC[e.mat]||1);o=new THREE.Mesh(g,m);o.position.set(cx,cy,cz);o.castShadow=o.receiveShadow=true;}
+  if(e.t!=='model'&&e.t!=='curtain'){o.rotation.y=(e.rot||0)*Math.PI/180;if(e.tilt)o.rotation.x=e.tilt*Math.PI/180;}
+  o.name=e.name;root.add(o);}
+// ---------- valgus: päev + soojad tuled nagu fotol
+const hemi=new THREE.HemisphereLight(0xfff6ea,0x6d665e,.45);S.add(hemi);
+const sun=new THREE.DirectionalLight(0xfff3e2,1.1);sun.position.set(W/2+M0*1.6,H+M0*2.4,D+M0*2);sun.target.position.set(W/2,0,D/2);sun.castShadow=true;
+sun.shadow.mapSize.set(2048,2048);Object.assign(sun.shadow.camera,{left:-M0,right:M0,top:M0,bottom:-M0,near:.5,far:M0*8});sun.shadow.radius=6;sun.shadow.bias=-.0004;S.add(sun,sun.target);
+const warm=[];
+for(const l of J.lights){if(l.t==='strip'){const x0=Math.min(l.x0,l.x1),x1=Math.max(l.x0,l.x1)||x0+.4;warm.push(slab(x0,x1,l.y-.008,l.y,l.z-.012,l.z,ledM,null,root,{cast:false}));
+    const n=Math.max(2,Math.round((x1-x0)/.3));for(let i=0;i<n;i++){const p=new THREE.PointLight(0xffa850,.55,.8,2);p.position.set(x0+(i+.5)*(x1-x0)/n,l.y-.03,l.z+.02);S.add(p);warm.push(p);}}
+  else if(l.t==='spot'){const s=new THREE.SpotLight(0xffc27a,2.2,Math.max(1.6,H),.42,.6,1.5);s.position.set(l.x0,l.y,l.z);s.target.position.set(l.tx,l.ty,l.tz);S.add(s,s.target);warm.push(s);}
+  else{const p=new THREE.PointLight(0xffc98a,1.4,3.5,2);p.position.set(l.x0,l.y,l.z);S.add(p);warm.push(p);}}
+// ---------- lõige: kaamera poolsed seinad ja lagi peidus (näha sisse nagu prototüübis)
+let mode='cut';const nrm={back:[0,-1],front:[0,1],left:[-1,0],right:[1,0]};
+function autohide(){const dx=cam.position.x-W/2,dz=cam.position.z-D/2;for(const k in walls){const n=nrm[k];walls[k].visible=mode==='closed'||(n[0]*dx+n[1]*dz)<=Math.max(W,D)*.15;}lid.visible=mode==='closed'&&cam.position.y<H;}
+document.getElementById('dims').textContent=`${W.toFixed(1).replace('.',',')} × ${D.toFixed(1).replace('.',',')} × ${H.toFixed(1).replace('.',',')} m${J.est?' · hinnanguline':''}`;document.getElementById('dims').hidden=false;
+document.querySelectorAll('.g[data-k]').forEach(g=>g.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;g.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));
+  if(g.dataset.k==='cut')mode=b.dataset.v;if(g.dataset.k==='light'){warm.forEach(o=>o.visible=b.dataset.v==='on');hemi.intensity=b.dataset.v==='on'?.45:.8;}}));
+// ---------- allalaadimine .glb (ka äpist postMessage kaudu)
+async function glb(){const {GLTFExporter}=await import('three/addons/exporters/GLTFExporter.js');const vis=[];root.traverse(o=>{if(o.isGroup&&!o.visible){vis.push(o);o.visible=true;}});
+  try{return await new Promise((res,rej)=>new GLTFExporter().parse(root,res,rej,{binary:true}));}finally{vis.forEach(o=>o.visible=false);}}
+document.getElementById('dl').onclick=async()=>{const b=await glb(),a=document.createElement('a');a.href=URL.createObjectURL(new Blob([b],{type:'model/gltf-binary'}));a.download='tuba-3d.glb';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),4000);};
+addEventListener('message',async e=>{if(e.origin!==location.origin||!e.data||e.data.t!=='glb')return;try{const b=await glb();e.source.postMessage({t:'glb',id:e.data.id,b},e.origin,[b]);}catch(_){e.source.postMessage({t:'glb',id:e.data.id,err:1},e.origin);}});
+await Promise.race([Promise.all(loads),new Promise(r=>setTimeout(r,15000))]);
+st.remove();document.getElementById('ui').hidden=false;window.READY=true;parent!==window&&parent.postMessage({t:'room-ready'},location.origin);
+cv.addEventListener('pointerdown',()=>ctl.autoRotate=false);
+(function loop(){ctl.update();autohide();if(CMP)CMP.render();else R.render(S,cam);requestAnimationFrame(loop);})();
+</script></body></html>

@@ -144,3 +144,70 @@ export function frontH(it: Item, ppm: number): { h: number[]; W: number; H: numb
   const h = homography([[0, 0], [W, 0], [W, H], [0, H]], it.front_px);
   return h ? { h, W, H } : null;
 }
+
+// ---------- v2: parameetriline stseen (prototüüpide kvaliteet: docs/prototypes) ----------
+// Kõik meetrites: x vasakult seinast paremale, z tagaseinast kaamera poole, y põrandast üles.
+export type Mat = { id: string; name: string; kind: string; desc: string; color: string; rough: number; metal: number; scale: number; photo: number; tex?: string | null };
+export type Zone = { wall: "back" | "left" | "right" | "front"; a0: number; a1: number; y0: number; y1: number; mat: string };
+export type Open = { wall: "back" | "left" | "right" | "front"; kind: "window" | "door" | "glass"; a0: number; a1: number; y0: number; y1: number };
+export type El = { t: "box" | "cyl" | "stove" | "curtain" | "model"; name: string; mat: string;
+  x0: number; x1: number; y0: number; y1: number; z0: number; z1: number; r: number; rot: number; tilt: number; bbox?: number[]; photo: number; has_back?: boolean };
+export type Light = { t: "strip" | "spot" | "lamp"; x0: number; x1: number; y: number; z: number; tx: number; ty: number; tz: number; warm: boolean };
+export type Scene = { v: 2; room: { w: number; d: number; h: number }; est: boolean; sizes: [number, number][];
+  floor: string; ceiling: string; wall: string; mats: Mat[]; zones: Zone[]; opens: Open[]; els: El[]; lights: Light[] };
+
+const KINDS = new Set(["wood", "stone", "tile", "concrete", "fabric", "leather", "paint", "metal", "glass", "plaster", "carpet", "plastic", "emissive"]);
+export const TEX_KINDS = new Set(["wood", "stone", "tile", "concrete", "fabric", "leather", "plaster", "carpet"]); // nendele tehakse korduv tekstuur fotolt
+const WALLS = ["back", "left", "right", "front"] as const;
+const wallLen = (w: string, R: { w: number; d: number }) => (w === "left" || w === "right" ? R.d : R.w);
+
+/** Claude'i stseen -> kontrollitud stseen: kõik numbrid toas, viited olemasolevatele materjalidele, piiratud arv. */
+export function sanitizeScene(a: Record<string, unknown>, sizes: [number, number][], dims?: { w: number; d: number; h: number } | null): Scene {
+  const N = Math.max(1, sizes.length), ph = (v: unknown) => { const n = Number(v); return Number.isInteger(n) && n >= 0 && n < N ? n : 0; };
+  const r = (a.room || {}) as Record<string, unknown>;
+  const R = dims ? { ...dims } : { w: num(r.width, 1.2, 20, 3.5), d: num(r.depth, 1.2, 20, 3.5), h: num(r.height, 1.9, 6, 2.5) };
+  const ids = new Set<string>(), mats: Mat[] = [];
+  for (const m of (Array.isArray(a.materials) ? a.materials : []).slice(0, 8) as Record<string, unknown>[]) {
+    const id = String(m.id || "").toLowerCase().replace(/[^a-z0-9_]/g, "").slice(0, 24);
+    if (!id || ids.has(id)) continue;
+    ids.add(id);
+    const kind = KINDS.has(String(m.kind)) ? String(m.kind) : "paint";
+    mats.push({ id, name: String(m.name || id).slice(0, 40), kind, desc: String(m.desc || m.name || kind).slice(0, 140), color: hex(m.color, "#bbb5ab"),
+      rough: num(m.rough, 0, 1, kind === "metal" ? .35 : .75), metal: num(m.metal, 0, 1, kind === "metal" ? .8 : 0), scale: num(m.scale, .1, 4, 1), photo: ph(m.photo) });
+  }
+  if (!mats.length) mats.push({ id: "wall", name: "sein", kind: "paint", desc: "white painted wall", color: "#e9e6e0", rough: .85, metal: 0, scale: 1, photo: 0 });
+  const mid = (v: unknown, d = mats[0].id) => { const s = String(v || "").toLowerCase(); return ids.has(s) ? s : d; };
+  const zones: Zone[] = [], opens: Open[] = [];
+  for (const z of (Array.isArray(a.zones) ? a.zones : []).slice(0, 24) as Record<string, unknown>[]) {
+    const w = WALLS.includes(z.wall as never) ? z.wall as Zone["wall"] : "back", L = wallLen(w, R);
+    const a0 = num(z.a0, 0, L, 0), a1 = num(z.a1, 0, L, L), y0 = num(z.y0, 0, R.h, 0), y1 = num(z.y1, 0, R.h, R.h);
+    if (a1 - a0 > .05 && y1 - y0 > .05) zones.push({ wall: w, a0, a1, y0, y1, mat: mid(z.mat) });
+  }
+  for (const o of (Array.isArray(a.openings) ? a.openings : []).slice(0, 12) as Record<string, unknown>[]) {
+    const w = WALLS.includes(o.wall as never) ? o.wall as Open["wall"] : "back", L = wallLen(w, R);
+    const kind = o.kind === "door" ? "door" : o.kind === "glass" || o.kind === "glass_wall" ? "glass" : "window";
+    const a0 = num(o.a0, 0, L, 0), a1 = num(o.a1, 0, L, L), y0 = num(o.y0, 0, R.h, 0), y1 = num(o.y1, 0, R.h, R.h);
+    if (a1 - a0 > .2 && y1 - y0 > .2) opens.push({ wall: w, kind, a0, a1, y0, y1 });
+  }
+  const els: El[] = [];
+  for (const e of (Array.isArray(a.elements) ? a.elements : []).slice(0, 90) as Record<string, unknown>[]) {
+    const t = ["box", "cyl", "stove", "curtain", "model"].includes(String(e.t)) ? String(e.t) as El["t"] : "box";
+    const x0 = num(e.x0, -.3, R.w + .3, 0), x1 = num(e.x1, -.3, R.w + .3, x0 + .5), y0 = num(e.y0, 0, R.h + .3, 0), y1 = num(e.y1, 0, R.h + .5, y0 + .5);
+    const z0 = num(e.z0, -.3, R.d + .3, 0), z1 = num(e.z1, -.3, R.d + .3, z0 + .5);
+    const [X0, X1, Y0, Y1, Z0, Z1] = [Math.min(x0, x1), Math.max(x0, x1), Math.min(y0, y1), Math.max(y0, y1), Math.min(z0, z1), Math.max(z0, z1)];
+    if (X1 - X0 < .004 || Y1 - Y0 < .004 || Z1 - Z0 < .004) continue;
+    const bb = Array.isArray(e.bbox_px) && e.bbox_px.length === 4 ? (e.bbox_px as unknown[]).map(Number) : undefined;
+    els.push({ t, name: String(e.name || t).slice(0, 50), mat: mid(e.mat), x0: X0, x1: X1, y0: Y0, y1: Y1, z0: Z0, z1: Z1,
+      r: num(e.r, 0, Math.min(X1 - X0, Y1 - Y0, Z1 - Z0) / 2, 0), rot: num(e.rot, -180, 180, 0), tilt: num(e.tilt, -60, 60, 0),
+      bbox: bb && bb.every(Number.isFinite) ? bb : undefined, photo: ph(e.photo), has_back: e.has_back === true });
+  }
+  // „model“ (Tripo) ainult siis, kui on foto lõige; muidu kast
+  els.forEach((e) => { if (e.t === "model" && !e.bbox) e.t = "box"; });
+  const lights: Light[] = [];
+  for (const l of (Array.isArray(a.lights) ? a.lights : []).slice(0, 20) as Record<string, unknown>[]) {
+    const t = ["strip", "spot", "lamp"].includes(String(l.t)) ? String(l.t) as Light["t"] : "lamp";
+    lights.push({ t, x0: num(l.x0 ?? l.x, 0, R.w, R.w / 2), x1: num(l.x1 ?? l.x, 0, R.w, R.w / 2), y: num(l.y, 0, R.h, R.h - .05), z: num(l.z, 0, R.d, R.d / 2),
+      tx: num(l.tx ?? l.x0 ?? l.x, 0, R.w, R.w / 2), ty: num(l.ty, 0, R.h, 0), tz: num(l.tz ?? l.z, 0, R.d, R.d / 2), warm: l.warm !== false });
+  }
+  return { v: 2, room: R, est: !dims, sizes, floor: mid(a.floor), ceiling: mid(a.ceiling), wall: mid(a.wall), mats, zones, opens, els, lights };
+}
