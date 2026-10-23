@@ -1170,6 +1170,7 @@ input[type=checkbox]{accent-color:var(--accent)}
 /* laadimise kohatäide = tulemuse suurus (sisendi kuvasuhe), kõrvuti ja keskel */
 .stres.ld{justify-items:stretch;max-width:none}.stres.ld .stv{width:100%}
 .stres.ld .stph{aspect-ratio:var(--ar,4/3);width:min(100%,calc(var(--stimg,60vh) * var(--ar,1.333)));max-height:var(--stimg,60vh);margin:0 auto;border-radius:12px}
+.m3dir{display:flex;flex-direction:column;gap:6px;padding:10px 12px;border:1px solid rgba(194,65,12,.45);border-radius:10px;background:rgba(194,65,12,.08);font-size:13px}.m3dir b{color:#C2410C;font:600 13px var(--display)}.m3dir span{color:var(--muted)}.m3dir button{align-self:flex-start}
 .stsame{display:flex;flex-direction:column;gap:6px;padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:var(--paper);max-width:640px;font-size:14px}.stsame b{font:600 14px var(--display)}.stsame span{color:var(--muted)}
 img.ld{background:linear-gradient(90deg,var(--soft) 25%,var(--paper) 50%,var(--soft) 75%);background-size:200% 100%;animation:stshim 1.1s linear infinite;color:transparent}
 .stv>img.ld{width:100%;min-height:min(var(--stimg,60vh),380px)}.stm .pics img.ld{min-width:120px;min-height:90px}
@@ -4892,7 +4893,7 @@ async function roomBuild(url,J0){const J=J0||await (await fetch(url)).json(),g=n
 // Tripo mudeli suund pole fotoga seotud: selg = kõrgem pool (voodi peats, tooli seljatugi), esikülg vastas; muidu pikk külg laiuse suunas
 function roomOrient(o,it){o.rotation.set(0,0,0);o.scale.set(1,1,1);o.updateMatrixWorld(true);const b=new THREE.Box3().setFromObject(o),s=b.getSize(new THREE.Vector3()),c=b.getCenter(new THREE.Vector3());let r=0,set=false;
   if(it.has_back){const v=new THREE.Vector3(),top=b.min.y+s.y*.8;let n=0,bx=0,bz=0;
-    o.traverse(m=>{if(m.isMesh&&m.geometry.attributes.position){const p=m.geometry.attributes.position;for(let i=0;i<p.count;i+=5){v.fromBufferAttribute(p,i).applyMatrix4(m.matrixWorld);if(v.y>top){bx+=v.x;bz+=v.z;n++;}}}});
+    o.traverse(m=>{if(m.isMesh&&m.geometry.attributes.position){const p=m.geometry.attributes.position;for(let i=0;i<p.count;i+=5){m3Vtx(v,p,i).applyMatrix4(m.matrixWorld);if(v.y>top){bx+=v.x;bz+=v.z;n++;}}}});
     if(n){bx=bx/n-c.x;bz=bz/n-c.z;if(Math.hypot(bx/s.x,bz/s.z)>.08){const back=Math.abs(bx/s.x)>Math.abs(bz/s.z)?[Math.sign(bx),0]:[0,Math.sign(bz)];r=Math.PI-Math.atan2(back[0],back[1]);set=true;}}} // nurk φ -> φ+r; selg peab minema -z poole (φ=π)
   if(!set&&Math.abs(it.size.w-it.size.d)>.1&&(s.x>s.z)!==(it.size.w>it.size.d))r=Math.PI/2;
   const sw=Math.abs(Math.sin(r))>.5;o.scale.set((sw?it.size.d:it.size.w)/s.x,it.size.h/s.y,(sw?it.size.w:it.size.d)/s.z);o.rotation.y=r;
@@ -5092,7 +5093,7 @@ function m3ConformCalc(V,L,f){if(!V||!V.model||!L||!L.g||!(L.ridge>0)||!f)return
   const eave=L.eave>0?L.eave:L.ridge*.6,Z=[.3,.5,.7].map(k=>k*eave),P=[],S=[],v=new THREE.Vector3();
   // seinte lõiked: kolmnurga servad lõikavad tasandeid z = 30/50/70 % räästast (ka hõreda võrgu korral)
   V.model.traverse(o=>{const g=o.isMesh&&o.geometry,p=g&&g.attributes.position;if(!p)return;const ix=g.index,n=ix?ix.count:p.count,Q=[];
-    for(let i=0;i<p.count;i++){v.fromBufferAttribute(p,i).applyMatrix4(o.matrixWorld);Q.push(m3ToL(f,v));}P.push(...Q);
+    for(let i=0;i<p.count;i++){m3Vtx(v,p,i).applyMatrix4(o.matrixWorld);Q.push(m3ToL(f,v));}for(const q of Q)P.push(q); // mitte P.push(...Q): suur võrk ületab kutsepinu
     for(let t=0;t+2<n;t+=3){const T3=[0,1,2].map(k=>Q[ix?ix.getX(t+k):t+k]);for(const z of Z)for(let k=0;k<3;k++){const A=T3[k],B=T3[(k+1)%3];if((A[2]<z)!==(B[2]<z)){const u=(z-A[2])/(B[2]-A[2]);S.push([A[0]+u*(B[0]-A[0]),A[1]+u*(B[1]-A[1])]);}}}});
   if(S.length<8)return null;
   const FP=[];L.g.forEach(r=>{for(let i=0;i+1<r.length;i+=2)FP.push([r[i],r[i+1]]);});
@@ -5117,17 +5118,20 @@ function m3AxisSnap(V,L,f){let c=m3ConformCalc(V,L,f);if(!c)return;f.rot=+(f.rot
 const m3Pct=x=>(x>=0?'+':'−')+fmt(Math.abs(x)*100,1)+' %';
 function m3ConfTxt(c){return `Mõõdud joondatud Maa-ameti andmetega (pikkus ${m3Pct(c.len)}, laius ${m3Pct(c.wid)}, kõrgus ${m3Pct(c.hgt)})`;}
 const M3FITS={}; // url -> kindel sobitus (allalaadimine Maa-ameti mõõtudes)
-function m3AutoFit(){const s=stSess(),m=s&&s.model,V=P3V,L=m&&m.ehr&&M3L2[m.ehr];if(!L||!V||!V.ok||V.url!==m.url)return;
+function m3AutoFit(rotU){const s=stSess(),m=s&&s.model,V=P3V,L=m&&m.ehr&&M3L2[m.ehr];if(!L||!V||!V.ok||V.url!==m.url)return;
   if(V.model.userData.lod2){if(!(m.fit&&m.fit.src==='lod2')){const o=V.model.position;m.fit={s:1,rot:0,mc:[o.x,-o.z],lc:[0,0],y0:o.y,iou:1,err:0,ok:true,sym:false,v:1,src:'lod2',ehr:m.ehr};m.scale=1;m3Changed();m3RenderBar();}m3GardenSync();return;}
-  if(m.scale&&!m.fit)return;if(m.fit&&m.fit.ehr===m.ehr){if(m.fit.conf&&m.fit.conf.ok)m3ConformApply(V,m.fit.conf);m3GardenSync();return;}let f=m3Fit(V,L);if(!f)return;
+  if(m.scale&&!m.fit)return;if(m.fit&&m.fit.ehr===m.ehr){if(m.fit.conf&&m.fit.conf.ok)m3ConformApply(V,m.fit.conf);m3GardenSync();return;}let f=m3Fit(V,L,rotU);if(!f)return;if(rotU!=null)f.user=1;
   if(!f.ok){const c=m3ConformCalc(V,L,f);if(c&&c.ok){let cc=c,f2=null;
       // 2 sammu: venita, sobita samas suunas, joonda teljed ja kese; teine samm parandab ümbritsevate mõõtude jäägi (~1 %, seinad pole täisristkülik)
       // teises sammus sobitust ei korrata (selle ühtlane mõõtkava võrdsustab pinna ja tühistaks paranduse), ainult teljed ja kese joondatakse uuesti
       for(let it=0;it<2;it++){m3ConformApply(V,cc);if(it){m3AxisSnap(V,L,f2);break;}f2=m3Fit(V,L,f.rot);if(!(f2&&f2.ok))break;m3AxisSnap(V,L,f2);const r=m3ConformCalc(V,L,f2);
         if(!r||[r.ku,r.kw,r.kz].every(k=>Math.abs(k-1)<.003))break;const d=(((r.beta-cc.beta)%180)+180)%180,sw=d>45&&d<135,ku=cc.ku*(sw?r.kw:r.ku),kw=cc.kw*(sw?r.ku:r.kw),kz=cc.kz*r.kz;
         if([ku,kw,kz].some(k=>!(Math.abs(k-1)<=M3CF.max)))break;cc=Object.assign({},cc,{ku:+ku.toFixed(4),kw:+kw.toFixed(4),kz:+kz.toFixed(4),len:+((c.long?ku:kw)-1).toFixed(3),wid:+((c.long?kw:ku)-1).toFixed(3),hgt:+(kz-1).toFixed(3)});}
-      if(f2&&f2.ok)f=Object.assign(f2,{conf:cc,pre:{iou:f.iou,err:f.err}});else{m3ConformApply(V,null);f.conf=Object.assign(c,{ok:false,why:'kuju'});}}else if(c)f.conf=c;}
-  m.fit=Object.assign(f,{ehr:m.ehr});if(f.ok){M3FITS[m.url]=m.fit;m.scale=f.s;toast(`Mõõtkava seadistati Maa-ameti andmetest (±${m3Pm(f)}%)`);}m3Changed();m3RenderBar();m3GardenSync();}
+      if(f2&&f2.ok)f=Object.assign(f2,{conf:cc,pre:{iou:f.iou,err:f.err},sym:f.sym,dir:f.dir});else{m3ConformApply(V,null);f.conf=Object.assign(c,{ok:false,why:'kuju'});}}else if(c)f.conf=c;}
+  m.fit=Object.assign(f,{ehr:m.ehr});if(f.ok){M3FITS[m.url]=m.fit;m.scale=f.s;if(rotU==null)toast(`Mõõtkava seadistati Maa-ameti andmetest (±${m3Pm(f)}%)`);}m3Changed();m3RenderBar();m3GardenSync();}
+// „Pööra 180°“: sama sobitus vastupidises suunas (kasutaja teab, kus on tänav/aed); salvestub mudeli juurde
+function m3Flip(){const s=stSess(),m=s&&s.model,V=P3V;if(!m||!m.fit||!V||!V.ok)return;const r=((m.fit.rot+180)%360+360)%360;
+  m3ConformApply(V,null);delete M3FITS[m.url];m.fit=null;m.scale=null;m3AutoFit(r);toast(m.fit?'Maja pöörati 180°':'Pööramine ei õnnestunud');stRenderPanel();}
 async function m3AddrAsk(mod,at){addrPick(mod.ehr?'Muuda aadressi':'Lisa aadress',at,async a=>{
   const {error}=await CL.sb.from('renders').update({ehr:a.ehr}).eq('id',mod.id).eq('company_id',CL.cid);if(error){toast('Aadressi salvestamine ebaõnnestus');return;}
   const mm=(acct.models||[]).find(x=>x.id===mod.id);if(mm)mm.ehr=a.ehr;toast('Aadress lisatud: '+a.full);
@@ -5136,6 +5140,9 @@ async function m3AddrAsk(mod,at){addrPick(mod.ehr?'Muuda aadressi':'Lisa aadress
 function addrPick(title,at,cb){stPop(`<b>${stEsc(title)}</b><input id="adIn" type="text" data-addr="pick" maxlength="120" placeholder="nt Narva mnt 5, Tallinn" autocomplete="off" aria-label="Aadress"><div class="row"><button type="button" class="sz" id="adOk">Seo aadress</button></div>`,at);
   const i=$('adIn'),done=a=>{if(!a)return;ADDRN[a.ehr]=a.full;stPopClose();cb(a);},go=async()=>done(await adsPick(i.value,i));
   i.addEventListener('adspick',()=>done(i._ads));$('adOk').onclick=go;i.onkeydown=e=>{if(e.key==='Enter')go();if(e.key==='Escape')stPopClose();};i.focus();}
+// tipp mudelist: kvantiseeritud (KHR_mesh_quantization, normaliseeritud int8/int16) asukohad tagasi -1..1 skaalasse, nagu GPU teeb
+const M3NK={Int8Array:127,Uint8Array:255,Int16Array:32767,Uint16Array:65535};
+function m3Vtx(v,p,i){v.fromBufferAttribute(p,i);if(p.normalized){const k=M3NK[p.array.constructor.name]||1;v.divideScalar(k);}return v;}
 /* LOD2 sobitus. Mudel: x = ida, -z = põhi, y = üles. Mõõtkava seinte lõigetest (räästast allpool; LOD2 jalajäljel pole räästa üleulatust),
    pööre peatelgedest + 4 suunda pealtvaate kattuvusega (IoU), kõrgus kontrolliks. */
 function m3Hull(P){P=P.slice().sort((a,b)=>a[0]-b[0]||a[1]-b[1]);const cr=(o,a,b)=>(a[0]-o[0])*(b[1]-o[1])-(a[1]-o[1])*(b[0]-o[0]),lo=[],up=[];
@@ -5144,10 +5151,33 @@ function m3Hull(P){P=P.slice().sort((a,b)=>a[0]-b[0]||a[1]-b[1]);const cr=(o,a,b
   const H=lo.slice(0,-1).concat(up.slice(0,-1));let a=0;for(let i=0;i<H.length;i++){const p=H[i],q=H[(i+1)%H.length];a+=p[0]*q[1]-q[0]*p[1];}return Math.abs(a)/2;}
 function m3Mom(G,W,H,c,a,b){let n=0,sx=0,sy=0,sxx=0,syy=0,sxy=0;for(let j=0;j<H;j++)for(let i=0;i<W;i++)if(G[j*W+i]){const x=a+(i+.5)*c,y=b+(j+.5)*c;n++;sx+=x;sy+=y;sxx+=x*x;syy+=y*y;sxy+=x*y;}
   const mx=sx/n,my=sy/n;return {n,mx,my,ang:.5*Math.atan2(2*(sxy/n-mx*my),(sxx/n-mx*mx)-(syy/n-my*my))};}
+/* Suund, kui pealtvaate kattuvus ei otsusta (ruudukujuline maja, 180° pööre): katusetahkude suunad ja seinte kontuur.
+   Katus: mudeli katusekolmnurkade (räästast kõrgemal, kalle 14–70°) horisontaalnormaalide jaotus vs LOD2 tahkude normaalid, 5° kaupa. */
+function m3RoofCorr(T,Y,yE,RF){const NB=72,hm=new Float64Array(NB),hl=new Float64Array(NB);
+  const add=(h,n0,n1,w)=>{const b=((Math.atan2(n1,n0)*180/Math.PI/5)%NB+NB)%NB,k=Math.floor(b),fr=b-k;h[k]+=w*(1-fr);h[(k+1)%NB]+=w*fr;};
+  const ok=(nx,ny,nz)=>{const l=Math.hypot(nx,ny,nz),u=nz/l;return l>0&&u>=.34&&u<=.97;};
+  for(let t=0;t+5<T.length;t+=6){const i=t/2;if(Y[i]<yE||Y[i+1]<yE||Y[i+2]<yE)continue;
+    const ux=T[t+2]-T[t],uy=T[t+3]-T[t+1],uz=Y[i+1]-Y[i],vx=T[t+4]-T[t],vy=T[t+5]-T[t+1],vz=Y[i+2]-Y[i];
+    let nx=uy*vz-uz*vy,ny=uz*vx-ux*vz,nz=ux*vy-uy*vx;if(nz<0){nx=-nx;ny=-ny;nz=-nz;}if(ok(nx,ny,nz))add(hm,nx,ny,Math.hypot(nx,ny));}
+  RF.forEach(F=>{let nx=F.nx,ny=F.ny,nz=F.nz;if(nz<0){nx=-nx;ny=-ny;nz=-nz;}if(ok(nx,ny,nz))add(hl,nx,ny,Math.hypot(nx,ny));});
+  const sm=a=>{const o=new Float64Array(NB);for(let i=0;i<NB;i++)for(let d=-2;d<=2;d++)o[i]+=a[(i+d+NB)%NB]*[.1,.2,.4,.2,.1][d+2];const t=o.reduce((x,y)=>x+y,0);return t>0?o.map(x=>x/t):null;};
+  const A=sm(hm),B=sm(hl);if(!A||!B)return null;
+  const at=th=>{const r=((th*180/Math.PI/5)%NB+NB)%NB,k=Math.floor(r),fr=r-k,c=q=>{let x=0;for(let i=0;i<NB;i++)x+=Math.min(A[i],B[(i+q)%NB]);return x;};return c(k)*(1-fr)+c((k+1)%NB)*fr;};
+  let pk=0,pv=-1;for(let r=0;r<NB;r++){const v=at(r*5*Math.PI/180);if(v>pv){pv=v;pk=r;}}
+  // tugev: selge tipp ja risti suund palju nõrgem (viilkatus ühes teljes); siis annab katus maja telje
+  return {at,peak:pk*5*Math.PI/180,strong:pv>=.45&&pv-at((pk*5+90)*Math.PI/180)>=.15};}
+// seinte kontuur seina kõrgusel (räästast allpool lõiked) vs LOD2 rõngas: keskmine kaugus rõngani (m), väike nihke otsing ±2 m
+function m3WallDist(S,PL,s,th){const st=Math.max(1,Math.floor(S.length/600)),P=S.filter((_,i)=>i%st===0);if(P.length<8)return null;
+  let mx=0,my=0;P.forEach(p=>{mx+=p[0];my+=p[1];});mx/=P.length;my/=P.length;
+  const R=PL[0];let a=0,cx=0,cy=0;for(let i=0;i<R.length;i++){const p=R[i],q=R[(i+1)%R.length],c=p[0]*q[1]-q[0]*p[1];a+=c;cx+=(p[0]+q[0])*c;cy+=(p[1]+q[1])*c;}cx/=3*a;cy/=3*a;
+  const E=[];PL.forEach(r=>r.forEach((p,i)=>E.push([p,r[(i+1)%r.length]])));
+  const co=Math.cos(th),si=Math.sin(th),Q=P.map(p=>{const dx=(p[0]-mx)*s,dy=(p[1]-my)*s;return [dx*co-dy*si+cx,dx*si+dy*co+cy];});
+  const dist=(x,y)=>{let d=9;for(const [p,q] of E){const vx=q[0]-p[0],vy=q[1]-p[1],t=Math.max(0,Math.min(1,((x-p[0])*vx+(y-p[1])*vy)/(vx*vx+vy*vy||1)));d=Math.min(d,Math.hypot(x-p[0]-t*vx,y-p[1]-t*vy));}return Math.min(d,1.5);};
+  let best=9;for(let ox=-2;ox<=2;ox+=.25)for(let oy=-2;oy<=2;oy+=.25){let t=0;for(const q of Q)t+=dist(q[0]+ox,q[1]+oy);best=Math.min(best,t/Q.length);}return best;}
 function m3Fit(V,L,rot0){if(!V||!V.model||!L||!L.g||!L.g.length||!(L.ridge>0))return null;V.model.updateMatrixWorld(true);
   const T=[],Y=[],v=new THREE.Vector3();let y0=Infinity,y1=-Infinity;
   V.model.traverse(o=>{const g=o.isMesh&&o.geometry,p=g&&g.attributes.position;if(!p)return;const ix=g.index,n=ix?ix.count:p.count;
-    for(let i=0;i<n;i++){v.fromBufferAttribute(p,ix?ix.getX(i):i).applyMatrix4(o.matrixWorld);y0=Math.min(y0,v.y);y1=Math.max(y1,v.y);T.push(v.x,-v.z);Y.push(v.y);}});
+    for(let i=0;i<n;i++){m3Vtx(v,p,ix?ix.getX(i):i).applyMatrix4(o.matrixWorld);y0=Math.min(y0,v.y);y1=Math.max(y1,v.y);T.push(v.x,-v.z);Y.push(v.y);}});
   if(T.length<6||!(y1>y0))return null;let Hm=y1-y0;
   // pealtvaade rastriks
   let a=Infinity,b=Infinity,A=-Infinity,B=-Infinity;for(let i=0;i<T.length;i+=2){a=Math.min(a,T[i]);A=Math.max(A,T[i]);b=Math.min(b,T[i+1]);B=Math.max(B,T[i+1]);}
@@ -5175,22 +5205,41 @@ function m3Fit(V,L,rot0){if(!V||!V.model||!L||!L.g||!L.g.length||!(L.ridge>0))re
   const M=m3Mom(G,W,H,c,a,b),LM=m3Mom(LG,LW,LH,lc,la,lb);if(!M.n||!LM.n)return null;
   // mõõtkava: seinte lõigete ümbris vs jalajälje ümbris; kui lõikeid pole, siis kogu pealtvaade
   const hm=S.length>=8?m3Hull(S):0,s=hm>0?Math.sqrt(m3Hull(FP)/hm):Math.sqrt(LM.n*lc*lc/(M.n*c*c)),sh=L.ridge/Hm;
-  const iouAt=th=>{const co=Math.cos(th),si=Math.sin(th);let hit=0,he=0,hn=0;
-    for(let j=0;j<H;j++)for(let i=0;i<W;i++)if(G[j*W+i]){const dx=(a+(i+.5)*c-M.mx)*s,dy=(b+(j+.5)*c-M.my)*s,X=dx*co-dy*si+LM.mx,Z=dx*si+dy*co+LM.my,ii=Math.floor((X-la)/lc),jj=Math.floor((Z-lb)/lc);
-      if(ii>=0&&jj>=0&&ii<LW&&jj<LH&&LG[jj*LW+ii]){hit++;const z=LZ[jj*LW+ii],y=HT[j*W+i];if(z===z&&y>-Infinity){he+=Math.abs((y-y0)*s-z);hn++;}}}
-    const inter=hit*c*c*s*s;return {iou:inter/(M.n*c*c*s*s+LM.n*lc*lc-inter),th,hz:hn?he/hn:Infinity};};
+  const iouAt=(th,k=s)=>{const co=Math.cos(th),si=Math.sin(th);let hit=0,he=0,hn=0;
+    for(let j=0;j<H;j++)for(let i=0;i<W;i++)if(G[j*W+i]){const dx=(a+(i+.5)*c-M.mx)*k,dy=(b+(j+.5)*c-M.my)*k,X=dx*co-dy*si+LM.mx,Z=dx*si+dy*co+LM.my,ii=Math.floor((X-la)/lc),jj=Math.floor((Z-lb)/lc);
+      if(ii>=0&&jj>=0&&ii<LW&&jj<LH&&LG[jj*LW+ii]){hit++;const z=LZ[jj*LW+ii],y=HT[j*W+i];if(z===z&&y>-Infinity){he+=Math.abs((y-y0)*k-z);hn++;}}}
+    const inter=hit*c*c*k*k;return {iou:inter/(M.n*c*c*k*k+LM.n*lc*lc-inter),th,hz:hn?he/hn:Infinity};};
   // 4 suunda: kuju kattuvus, viigi korral (±0,03) katuse kõrguste kokkulangevus
-  const C=[0,1,2,3].map(k=>iouAt(LM.ang-M.ang+k*Math.PI/2)),top=Math.max(...C.map(r=>r.iou));
-  // rot0: eelmise sobituse suund (pärast mõõtude joondamist on maja ruudulähedane ja 90° pöörded on peaaegu võrdsed)
+  // katuse suunad annavad telje, kui need on selged (ruudukujulisel majal on peatelg ebatäpne, näide Raudürdi 30: 32° mööda)
+  const RC=m3RoofCorr(T,Y,y0+er*Hm,RF),base=RC&&RC.strong?RC.peak:LM.ang-M.ang;
+  const C=[0,1,2,3].map(k=>iouAt(base+k*Math.PI/2)),top=Math.max(...C.map(r=>r.iou));
+  // rot0: eelmise sobituse suund (pärast mõõtude joondamist on maja ruudulähedane ja 90° pöörded on peaaegu võrdsed; ka kasutaja „Pööra 180°“)
   const dd=r=>{const d=((r.th*180/Math.PI-rot0)%360+540)%360-180;return Math.abs(d);};
-  let best=rot0!=null?C.slice().sort((p,q)=>dd(p)-dd(q))[0]:C.filter(r=>r.iou>=top-.03).sort((p,q)=>p.hz-q.hz)[0];const alt=C[(C.indexOf(best)+2)%4];
+  let best,dir=null;
+  if(rot0!=null)best=C.slice().sort((p,q)=>dd(p)-dd(q))[0];
+  else{best=RC&&RC.strong?(C[0].iou>=C[2].iou?C[0]:C[2]):C.filter(r=>r.iou>=top-.03).sort((p,q)=>p.hz-q.hz)[0];
+    const b=C[(C.indexOf(best)+2)%4];
+    // 180° viik: ära vali juhuslikult. Järjekorras otsustab esimene selge märk: seinte kontuur (L-sopid, tiivad), katuse kõrgused,
+    // katuse tahkude suunad, kattuvus. Stressitestis (aedtest/fitcheck.js) oli katuse suund räästastega mudelil 5/6 korral vale, kõrgused alati õiged.
+    // Kui seinad ja kõrgused on vastupidi või ükski märk pole selge -> suund ebakindel (kasutajale „Pööra 180°“).
+    // Seinte ja kõrguste jaoks kõrgusest mõõtkava, kui seinte lõigete mõõtkava sellega ei klapi (avatud veranda, rõdu, räästad).
+    if(b.iou>=best.iou-.03||(RC&&RC.strong)){const sv=Math.abs(L.ridge/Hm/s-1)>.08?L.ridge/Hm:s,ev=[],why=[];let pick=0,clash=false;
+      const sg=(x,y,min,lowWins)=>x==null||y==null||!isFinite(x)||!isFinite(y)||Math.abs(x-y)<min?0:(lowWins?x<y:x>y)?1:-1;
+      ev.push(['seinad',sg(m3WallDist(S,PL,sv,best.th),m3WallDist(S,PL,sv,b.th),.05,true)]);
+      ev.push(['katuse kõrgus',sg(iouAt(best.th,sv).hz,iouAt(b.th,sv).hz,.1,true)]);
+      if(RC)ev.push(['katuse suund',sg(RC.at(best.th),RC.at(b.th),.04,false)]);
+      ev.push(['kattuvus',sg(best.iou,b.iou,.03,false)]);
+      for(const [nm,v] of ev){if(!v)continue;if(!pick){pick=v;why.push(nm);}else if(v!==pick&&(nm==='katuse kõrgus'&&why[0]==='seinad'))clash=true;}
+      if(pick<0)best=b;dir={sure:!!pick&&!clash,why};}}
+  const alt=C[(C.indexOf(best)+2)%4];
   // peatelg on peaaegu ruudukujulisel majal ebatäpne: täpsusta nurka ±10° (1°), siis ±1° (0,2°)
   for(const [w,st] of [[10,1],[1,.2]]){const t0=best.th;for(let d=-w;d<=w;d+=st){const r=iouAt(t0+d*Math.PI/180);if(r.iou>best.iou)best=r;}}
   // pööratud 180° on sama hea -> põhjasuunda ei tea (sümmeetriline maja)
-  const sym=alt.iou>=best.iou-.03&&Math.abs(alt.hz-best.hz)<.15;
+  // suund ebakindel: ainult esimesel sobitusel (rot0 = suund on juba valitud, ka kasutaja „Pööra 180°“)
+  const sym=rot0!=null?false:dir?!dir.sure:alt.iou>=best.iou-.03&&Math.abs(alt.hz-best.hz)<.15;
   // lävendid: stressitest (scripts/lod2_tiles.py hooned, juhuslik mõõtkava/pööre/üleulatus/müra): õige maja IoU >= 0,88, kõrgus <= 2,6%; sarnane vale maja IoU 0,82, kõrgus 11,7%
   const err=Math.abs(sh/s-1),ok=best.iou>=.8&&err<=.08;
-  return {s:+s.toPrecision(5),rot:+(best.th*180/Math.PI).toFixed(1),mc:[+M.mx.toFixed(4),+M.my.toFixed(4)],lc:[+LM.mx.toFixed(2),+LM.my.toFixed(2)],y0:+y0.toFixed(4),iou:+best.iou.toFixed(2),err:+err.toFixed(3),ok,sym,v:1};}
+  return {s:+s.toPrecision(5),rot:+((((best.th*180/Math.PI)%360)+360)%360).toFixed(1),mc:[+M.mx.toFixed(4),+M.my.toFixed(4)],lc:[+LM.mx.toFixed(2),+LM.my.toFixed(2)],y0:+y0.toFixed(4),iou:+best.iou.toFixed(2),err:+err.toFixed(3),ok,sym,dir:dir&&dir.why.join(', '),v:1};}
 /* Ametlik tahk: klõps mudelil -> LOD2 koordinaadid (sobituse kaudu) -> lähim katusetahk/sein, esile tõstetud. Ainult kindla sobitusega. */
 // klõps (pööramise režiimis) ametlikul tahul: tõsta esile ja kinnita silt; uus klõps samal tahul vabastab
 function m3PinAt(e){const s=stSess(),m=s&&s.model,V=P3V;if(!m||!V)return;if(V.garden&&m3TreeAt(V,e))return;if(!m3OffOn(m))return;const b=V.r.domElement.getBoundingClientRect(),rc=new THREE.Raycaster();
@@ -5234,14 +5283,19 @@ function m3Val(it,k){const P=it.p.map(a=>new THREE.Vector3(a[0],a[1],a[2]));let 
 function m3Ctx(m){const L=(m.items||[]).filter(m3Ok);let kl=0,kp=0;const mo=L.map((it,i)=>{const v=m3Val(it,m.scale);if(v.v!=null){if(it.t==='dist')kl+=v.v;if(it.t==='area')kp+=v.v;}return {nr:i+1,tyyp:M3N[it.t].toLowerCase(),vaartus:it.t==='note'?null:v.txt,silt:it.t==='note'?(it.txt||''):(it.lb||'')};});
   return {nimi:m.name,mootkava:m.scale?(m3AutoOn(m)?`automaatne Maa-ameti LOD2 järgi (±${m3Pm(m.fit)}%), väärtused meetrites`:'kasutaja seadistatud, väärtused meetrites'):'pole seadistatud, väärtused suhtelised',aadress:m.ehr?m3AddrTxt(m.ehr):null,ametlikud_moodud_maa_amet:lod2Ctx(M3L2[m.ehr]),moodud:mo,kokku:m.scale?{kaugused_m:+kl.toFixed(2),pinnad_m2:+kp.toFixed(2)}:null};}
 function m3Text(m){const c=m3Ctx(m);return [c.nimi,'Mõõtkava: '+c.mootkava,...c.moodud.map(x=>`${x.nr}. ${M3N[Object.keys(M3N).find(k=>M3N[k].toLowerCase()===x.tyyp)]}${x.vaartus?': '+x.vaartus:''}${x.silt?' – '+x.silt:''}`),c.kokku?`Kokku: kaugused ${fmtM(c.kokku.kaugused_m)} m, pinnad ${fmtM(c.kokku.pinnad_m2)} m²`:''].filter(Boolean).join('\n');}
+// maja suund LOD2 suhtes: ebakindel (180° viik) -> selge märge ja üks klõps; muidu vaikne link
+function m3DirHtml(m){const f=m.fit;if(!f||f.src==='lod2'||!m.ehr)return '';
+  if(f.sym&&!f.user)return `<div class="m3dir" role="status"><b>Suund ebakindel</b><span>Maja võib olla 180° valetpidi (esi- ja tagakülg sarnased). Kontrolli, kas rõdu/aed ja tänav on õigel pool.</span><button type="button" class="apply" data-m3="flip">Pööra 180°</button></div>`;
+  return `<span class="fhint">${f.user?'Suund: sinu valitud':'Suund Maa-ameti andmetest'} · <button type="button" class="linkbtn" data-m3="flip">Pööra 180°</button></span>`;}
 function m3PanelHtml(m){if(P3V&&P3V.el&&P3V.url===m.url)return '';const k=m.scale,L=(m.items||[]).filter(m3Ok);let tl=0,ta=0;
   const rows=L.map((it,i)=>{const v=m3Val(it,k);if(v.v!=null){if(it.t==='dist')tl+=v.v;if(it.t==='area')ta+=v.v;}return `<div class="m3it"><i>${i+1}</i><span><b>${M3N[it.t]}</b> ${stEsc(it.t==='note'?it.txt||'':v.txt)}${it.lb?` <small>${stEsc(it.lb)}</small>`:''}</span><button type="button" class="linkbtn" data-m3e="${i}">Muuda</button><button type="button" class="m3x" data-m3d="${i}" aria-label="Kustuta ${i+1}">×</button></div>`;}).join('');
-  return `<div class="stcard m3card"><h3>3D-mudel · mõõdud</h3><span class="fhint">${m3ScaleTxt(m)}${m.fit&&m.fit.src==='lod2'?'':` · <button type="button" class="linkbtn" data-m3="scale">${k?'Muuda':'Seadista'}</button>`}</span>
+  return `<div class="stcard m3card"><h3>3D-mudel · mõõdud</h3><span class="fhint">${m3ScaleTxt(m)}${m.fit&&m.fit.src==='lod2'?'':` · <button type="button" class="linkbtn" data-m3="scale">${k?'Muuda':'Seadista'}</button>`}</span>${m3DirHtml(m)}
     ${L.length?`<div class="m3list">${rows}</div>${k?`<span class="fhint">Kokku: kaugused ${fmtM(tl)} m · pinnad ${fmtM(ta)} m²</span>`:''}<button type="button" class="ghost" data-m3="copy" style="align-self:flex-start">Kopeeri tekstina</button>`:'<p>Vali vasakult tööriist ja klõpsa mudelil. Mõõdud ja märkmed salvestuvad mudeli juurde. Mõõtmine on tasuta.</p>'}</div>${m3OffHtml(m)}`;}
 function m3PanelWire(){const s=stSess(),m=s&&s.model,P=$('stPanel');if(!m||!P)return;
   P.querySelectorAll('[data-m3d]').forEach(b=>b.onclick=()=>{m.items.splice(+b.dataset.m3d,1);m3Changed();});
   P.querySelectorAll('[data-m3e]').forEach(b=>b.onclick=()=>{const it=m.items[+b.dataset.m3e],r=b.getBoundingClientRect();m3Ask(it.t==='note'?'Muuda märget':'Nimi (nt „lõunasein“)',it.t==='note'?it.txt:it.lb||'',{x:r.left,y:r.bottom},v=>{if(it.t==='note'){if(!v)return;it.txt=v;}else it.lb=v;m3Changed();});});
   const sc=P.querySelector('[data-m3="scale"]');if(sc)sc.onclick=()=>m3SetTool('scale');
+  const fl=P.querySelector('[data-m3="flip"]');if(fl)fl.onclick=()=>m3Flip();
   const gd=P.querySelector('[data-m3="garden"]');if(gd)gd.onchange=()=>{m.garden=gd.checked;stSave();m3GardenSync();stRenderPanel();};
   P.querySelectorAll('[data-gk]').forEach(b=>b.onclick=()=>{const k=b.dataset.gk;m.gopt[k]=k==='orto'?m.gopt.orto!==true:m.gopt[k]===false;stSave();const V=P3V;if(V&&V.garden)V.garden.vis();stRenderPanel();});
   P.querySelectorAll('[data-gt]').forEach(b=>b.onclick=()=>{m.gopt.time=b.dataset.gt;stSave();const V=P3V;if(V&&V.garden)V.garden.setTime(m.gopt.time);stRenderPanel();});
