@@ -5075,7 +5075,8 @@ function m3Pm(f){return Math.max(2,Math.round((f&&f.err||0)*100));}
 function m3AutoOn(m){return !!(m.fit&&m.fit.ok&&m.scale&&Math.abs(m.scale/m.fit.s-1)<1e-6);}
 const m3Room=m=>{const V=P3V,J=V&&V.ok&&V.url===m.url&&V.model&&V.model.userData.room;return J||null;};
 function m3ScaleTxt(m){if(m.fit&&m.fit.src==='lod2')return 'Ametlik Maa-ameti kuju, mõõdud meetrites';{const J=m3Room(m);if(J)return 'Mõõdud meetrites toa mõõtudest'+(J.est?' (hinnanguline)':'');}if(m3AutoOn(m))return `Mõõtkava: automaatne, Maa-ameti andmetest (±${m3Pm(m.fit)}%)`;if(m.scale)return 'Mõõtkava: kasutaja seadistatud';
-  if(m.fit&&!m.fit.ok)return `Automaatne mõõtkava jäi ebakindlaks (±${m3Pm(m.fit)}%). Seadista käsitsi: mõõda üks teadaolev pikkus`;return 'Mõõtkava pole, väärtused on suhtelised';}
+  // ebakindel: mõõtkava võib olla korras (kõrgusest), aga kuju ei klapi Maa-ameti jalajäljega -> ütle päris põhjus
+  if(m.fit&&!m.fit.ok)return m.fit.err<=.08?`Maja kuju kattub Maa-ameti jalajäljega ainult ${Math.round((m.fit.iou||0)*100)} % (kindlaks on vaja 80 %). Tavaliselt on põhjus katusealune veranda, rõdu või tiib, mis fotomudelil puudub. Mõõtkava on katuseharja kõrgusest, ametlikud tahud pole klõpsatavad. Täpseks mõõtmiseks: mõõda üks teadaolev pikkus`:`Automaatne mõõtkava jäi ebakindlaks (±${m3Pm(m.fit)}%). Seadista käsitsi: mõõda üks teadaolev pikkus`;return 'Mõõtkava pole, väärtused on suhtelised';}
 const m3Yr=L=>L&&/^\d{4}/.test(L.t||'')?'Maa-amet, '+L.t.slice(0,4):'Maa-amet';
 function m3OffHtml(m){if(!p3Cloud()||m3Room(m))return '';const L=m.ehr&&M3L2[m.ehr];
   if(!m.ehr)return `<div class="stcard"><h3>Ametlikud mõõdud (Maa-amet)</h3><p>Seo mudel maja aadressiga: siis tulevad ametlikud mõõdud ja mõõtkava riigi 3D-andmetest.</p><button type="button" class="ghost" data-m3="addr" style="align-self:flex-start">Lisa aadress</button></div>`;
@@ -5085,7 +5086,22 @@ function m3OffHtml(m){if(!p3Cloud()||m3Room(m))return '';const L=m.ehr&&M3L2[m.e
   const tg=m3AutoOn(m)?`<div class="tgl"><div>Näita katuse ja seinte mõõte<small>Iga tahu ametlik pind mudelil</small></div><span class="sw2"><input type="checkbox" data-m3="off" ${m.offOn!==false?'checked':''} aria-label="Näita katuse ja seinte mõõte"><i></i></span></div>`:'';
   const cf=m.fit&&m.fit.conf&&m.fit.conf.ok&&m3AutoOn(m)?`<span class="fhint m3cf">${m3ConfTxt(m.fit.conf)}</span>`:'';
   return `<div class="stcard"><h3>Ametlikud mõõdud (${m3Yr(L)})</h3><span class="fhint">${stEsc(m3AddrTxt(m.ehr))}${chg}</span>${cf}${tg}${m3GardenHtml(m)}${R.map(r=>`<div class="row"><div class="k"><span>${r[0]}</span></div><b>${r[1]}</b></div>`).join('')}<span class="fhint">${LOD2_SRC}</span></div>`;}
-function m3Lod2(m){if(!m||!m.ehr)return;if(m.ehr in M3L2){m3AutoFit();return;}loadLod2(m.ehr).then(L=>{M3L2[m.ehr]=L;m3AutoFit();if(!$('studio').hidden)stRenderPanel();});}
+function m3Lod2(m){if(!m||!m.ehr)return;if(m.ehr in M3L2){m3AutoFit();return;}
+  loadLod2(m.ehr).then(async L=>{if(L)L.site=await Promise.race([m3SiteLoad(m,L).catch(()=>null),new Promise(r=>setTimeout(()=>r(null),6000))]);M3L2[m.ehr]=L;m3AutoFit();if(!$('studio').hidden)stRenderPanel();});}
+/* Maja ümbrus suuna kontrolliks (ainult asukohad, LOD2 maja keskmest meetrites): krundi piir, piirded, teised hooned.
+   Krunt ja piirded aia andmetest (garden, tasuta, vahemälus), hooned LOD2 kildudest. Puudub -> ümbruse hääl jääb ära. */
+async function m3SiteLoad(m,L){const site={E:[],B:[],P:null};let meta=null;
+  if(p3Cloud()){try{const r=await clFn('garden',/^lod2:/.test(m.url)?{ehr:m.ehr}:{ref:m.ref},{q:CO_Q});meta=await (await fetch(r.meta)).json();}catch(_){}}
+  const c=meta&&meta.c||L.c;if(!c)return null;
+  const ring=f=>{const r=[];for(let i=0;i+1<f.length;i+=2)r.push([f[i],f[i+1]]);return r;},seg=R=>R.forEach((p,i)=>site.E.push([p,R[(i+1)%R.length]]));
+  if(meta){const par=(meta.parcels||[]).find(p=>pip([0,0],ring(p.g[0])));if(par){site.P=ring(par.g[0]);seg(site.P);}
+    try{if(!window.V3DGarden){await new Promise((res,rej)=>{const sc=document.createElement('script');sc.src='js/garden.js?v=9';sc.onload=res;sc.onerror=rej;document.head.appendChild(sc);});}
+      if(meta.files&&meta.files.fences)V3DGarden.fencesFrom(await V3DGarden.img(meta.files.fences),meta.r).forEach(([a,b,x,y])=>site.E.push([[a,b],[x,y]]));}catch(_){}}
+  const K=new Set();for(const dx of [-40,40])for(const dy of [-40,40])K.add(Math.floor((c[0]+dx)/250)+'_'+Math.floor((c[1]+dy)/250));
+  const tiles=await Promise.all([...K].map(k=>window.lod2Get('geo/'+k+'.json').catch(()=>({}))));
+  tiles.forEach(T=>Object.entries(T||{}).forEach(([e,b])=>{if(e===String(m.ehr)||!b||!b.c||!b.g)return;const dx=b.c[0]-c[0],dy=b.c[1]-c[1];if(Math.hypot(dx,dy)>40)return;
+    b.g.forEach(f=>{const R=ring(f).map(q=>[q[0]+dx,q[1]+dy]);site.B.push(R);seg(R);});}));
+  return site.E.length?site:null;}
 // automaatne mõõtkava: ainult kui kasutaja pole ise seadistanud ja selle aadressiga pole veel arvutatud
 /* Joonda ametlike mõõtudega: LOD2 on tõde, fotodest mudel annab välimuse. Kui telg on kindel (≤5°) ning pind ja kõrgus ±12 %,
    venitatakse mudelit LOD2 põhiplaani peatelgede (pikkus, laius) ja kõrguse järgi, max ±20 % telje kohta; siis sobitatakse uuesti. */
@@ -5130,7 +5146,8 @@ const M3FITS={}; // url -> kindel sobitus (allalaadimine Maa-ameti mõõtudes)
 function m3AutoFit(rotU){const s=stSess(),m=s&&s.model,V=P3V,L=m&&m.ehr&&M3L2[m.ehr];if(!L||!V||!V.ok||V.url!==m.url)return;
   if(V.model.userData.lod2){if(!(m.fit&&m.fit.src==='lod2')){const o=V.model.position;m.fit={s:1,rot:0,mc:[o.x,-o.z],lc:[0,0],y0:o.y,iou:1,err:0,ok:true,sym:false,v:1,src:'lod2',ehr:m.ehr};m.scale=1;m3Changed();m3RenderBar();}m3GardenSync();return;}
   if(m.scale&&!m.fit)return;if(m.fit&&m.fit.ehr===m.ehr){if(m.fit.conf&&m.fit.conf.ok)m3ConformApply(V,m.fit.conf);m3GardenSync();return;}let f=m3Fit(V,L,rotU);if(!f)return;if(rotU!=null)f.user=1;
-  if(!f.ok){const c=m3ConformCalc(V,L,f);if(c&&c.ok){let cc=c,f2=null;
+  // pööre peenhäälestati kattuvusega; seinte telg võib jääda paar kraadi mööda (telje kontroll ±5°) -> joonda seinte telje järgi enne kontrolli
+  if(!f.ok){let c=m3ConformCalc(V,L,f);if(c&&c.why==='telg'&&Math.abs(c.sd)<=10){f.rot=+(f.rot-c.sd).toFixed(2);c=m3ConformCalc(V,L,f);}if(c&&c.ok){let cc=c,f2=null;
       // 2 sammu: venita, sobita samas suunas, joonda teljed ja kese; teine samm parandab ümbritsevate mõõtude jäägi (~1 %, seinad pole täisristkülik)
       // teises sammus sobitust ei korrata (selle ühtlane mõõtkava võrdsustab pinna ja tühistaks paranduse), ainult teljed ja kese joondatakse uuesti
       for(let it=0;it<2;it++){m3ConformApply(V,cc);if(it){m3AxisSnap(V,L,f2);break;}f2=m3Fit(V,L,f.rot);if(!(f2&&f2.ok))break;m3AxisSnap(V,L,f2);const r=m3ConformCalc(V,L,f2);
@@ -5182,7 +5199,13 @@ function m3WallDist(S,PL,s,th){const st=Math.max(1,Math.floor(S.length/600)),P=S
   const E=[];PL.forEach(r=>r.forEach((p,i)=>E.push([p,r[(i+1)%r.length]])));
   const co=Math.cos(th),si=Math.sin(th),Q=P.map(p=>{const dx=(p[0]-mx)*s,dy=(p[1]-my)*s;return [dx*co-dy*si+cx,dx*si+dy*co+cy];});
   const dist=(x,y)=>{let d=9;for(const [p,q] of E){const vx=q[0]-p[0],vy=q[1]-p[1],t=Math.max(0,Math.min(1,((x-p[0])*vx+(y-p[1])*vy)/(vx*vx+vy*vy||1)));d=Math.min(d,Math.hypot(x-p[0]-t*vx,y-p[1]-t*vy));}return Math.min(d,1.5);};
-  let best=9;for(let ox=-2;ox<=2;ox+=.25)for(let oy=-2;oy<=2;oy+=.25){let t=0;for(const q of Q)t+=dist(q[0]+ox,q[1]+oy);best=Math.min(best,t/Q.length);}return best;}
+  let best=9,bo=[0,0];for(let ox=-3;ox<=3;ox+=.25)for(let oy=-3;oy<=3;oy+=.25){let t=0;for(const q of Q)t+=dist(q[0]+ox,q[1]+oy);if(t/Q.length<best){best=t/Q.length;bo=[ox,oy];}}
+  return {d:best,Q:Q.map(q=>[q[0]+bo[0],q[1]+bo[1]])};}
+// ümbruse viga: iga paigutatud seinapunkti kaugus krundi piirist, piiretest ja teistest hoonetest peab olema sama mis lähimal LOD2 seinal.
+// Teise hoone sees või krundist väljas = negatiivne kaugus (pööratud tiib läheks kõrvalhoonesse). Väiksem = parem.
+function m3Clear(Q,PL,site){if(!site||!Q)return null;const R=PL[0],ds=(x,y,a,b)=>{const vx=b[0]-a[0],vy=b[1]-a[1],t=Math.max(0,Math.min(1,((x-a[0])*vx+(y-a[1])*vy)/(vx*vx+vy*vy||1)));return [Math.hypot(x-a[0]-t*vx,y-a[1]-t*vy),a[0]+t*vx,a[1]+t*vy];};
+  const sd=(x,y)=>{let d=Infinity;for(const [a,b] of site.E)d=Math.min(d,ds(x,y,a,b)[0]);const bad=site.B.some(r=>pip([x,y],r))||(site.P&&!pip([x,y],site.P));return Math.min(15,bad?-d:d);};
+  let t=0;for(const q of Q){let n=null,nd=Infinity;for(let i=0;i<R.length;i++){const r=ds(q[0],q[1],R[i],R[(i+1)%R.length]);if(r[0]<nd){nd=r[0];n=[r[1],r[2]];}}t+=Math.min(3,Math.abs(sd(q[0],q[1])-sd(n[0],n[1])));}return t/Q.length;}
 function m3Fit(V,L,rot0){if(!V||!V.model||!L||!L.g||!L.g.length||!(L.ridge>0))return null;V.model.updateMatrixWorld(true);
   const T=[],Y=[],v=new THREE.Vector3();let y0=Infinity,y1=-Infinity;
   V.model.traverse(o=>{const g=o.isMesh&&o.geometry,p=g&&g.attributes.position;if(!p)return;const ix=g.index,n=ix?ix.count:p.count;
@@ -5213,14 +5236,23 @@ function m3Fit(V,L,rot0){if(!V||!V.model||!L||!L.g||!L.g.length||!(L.ridge>0))re
     RF.forEach(F=>{if(!pip(q,F.R))return;const z=F.R[0][2]-(F.nx*(q[0]-F.R[0][0])+F.ny*(q[1]-F.R[0][1]))/F.nz;if(!(z<=LZ[j*LW+i]))LZ[j*LW+i]=z;});}
   const M=m3Mom(G,W,H,c,a,b),LM=m3Mom(LG,LW,LH,lc,la,lb);if(!M.n||!LM.n)return null;
   // mõõtkava: seinte lõigete ümbris vs jalajälje ümbris; kui lõikeid pole, siis kogu pealtvaade
-  const hm=S.length>=8?m3Hull(S):0,s=hm>0?Math.sqrt(m3Hull(FP)/hm):Math.sqrt(LM.n*lc*lc/(M.n*c*c)),sh=L.ridge/Hm;
+  const hm=S.length>=8?m3Hull(S):0,sh=L.ridge/Hm;let s=hm>0?Math.sqrt(m3Hull(FP)/hm):Math.sqrt(LM.n*lc*lc/(M.n*c*c)),scBy='seinad';
+  const RC=m3RoofCorr(T,Y,y0+er*Hm,RF);
+  // mõõtkava: seinte lõigete pind vs jalajälg eeldab, et seinad katavad kogu jalajälje. Katusealune veranda/rõdu on LOD2 jalajäljes,
+  // aga fotomudelis ainult postid (Raudürdi 30: seinad 9,5 × 10,7 m, LOD2 10,3 × 14,5 m -> 17,5 asemel 13,7). Kui seinte ja kõrguse
+  // mõõtkava lahknevad > 8 %, jääb see, mis paneb mudeli seinad LOD2 seintele lähemale.
+  if(Math.abs(sh/s-1)>.08&&S.length>=8){const b0=RC&&RC.strong?RC.peak:LM.ang-M.ang,wd=k=>Math.min(...[0,1,2,3].map(j=>{const r=m3WallDist(S,PL,k,b0+j*Math.PI/2);return r?r.d:9;}));
+    if(wd(sh)<wd(s)-.03){s=sh;scBy='kõrgus';}}
   const iouAt=(th,k=s)=>{const co=Math.cos(th),si=Math.sin(th);let hit=0,he=0,hn=0;
     for(let j=0;j<H;j++)for(let i=0;i<W;i++)if(G[j*W+i]){const dx=(a+(i+.5)*c-M.mx)*k,dy=(b+(j+.5)*c-M.my)*k,X=dx*co-dy*si+LM.mx,Z=dx*si+dy*co+LM.my,ii=Math.floor((X-la)/lc),jj=Math.floor((Z-lb)/lc);
       if(ii>=0&&jj>=0&&ii<LW&&jj<LH&&LG[jj*LW+ii]){hit++;const z=LZ[jj*LW+ii],y=HT[j*W+i];if(z===z&&y>-Infinity){he+=Math.abs((y-y0)*k-z);hn++;}}}
     const inter=hit*c*c*k*k;return {iou:inter/(M.n*c*c*k*k+LM.n*lc*lc-inter),th,hz:hn?he/hn:Infinity};};
   // 4 suunda: kuju kattuvus, viigi korral (±0,03) katuse kõrguste kokkulangevus
   // katuse suunad annavad telje, kui need on selged (ruudukujulisel majal on peatelg ebatäpne, näide Raudürdi 30: 32° mööda)
-  const RC=m3RoofCorr(T,Y,y0+er*Hm,RF),base=RC&&RC.strong?RC.peak:LM.ang-M.ang;
+  // peateljed on tavaliselt täpsemad (seinte järgi, sobitamise telje kontroll ±5°); katus annab telje ainult siis, kui peateljed on selgelt
+  // mööda (> 12°, ruudukujuline maja). Muidu valib katus vaid, milline neljast peatelje suunast on esimene (telje suund).
+  const pa=LM.ang-M.ang,Q4=Math.PI/2;let base=pa;
+  if(RC&&RC.strong){const d=((RC.peak-pa)%Q4+Q4)%Q4;base=Math.min(d,Q4-d)>12*Math.PI/180?RC.peak:pa+Math.round((RC.peak-pa)/Q4)*Q4;}
   const C=[0,1,2,3].map(k=>iouAt(base+k*Math.PI/2)),top=Math.max(...C.map(r=>r.iou));
   // rot0: eelmise sobituse suund (pärast mõõtude joondamist on maja ruudulähedane ja 90° pöörded on peaaegu võrdsed; ka kasutaja „Pööra 180°“)
   const dd=r=>{const d=((r.th*180/Math.PI-rot0)%360+540)%360-180;return Math.abs(d);};
@@ -5234,11 +5266,14 @@ function m3Fit(V,L,rot0){if(!V||!V.model||!L||!L.g||!L.g.length||!(L.ridge>0))re
     // Seinte ja kõrguste jaoks kõrgusest mõõtkava, kui seinte lõigete mõõtkava sellega ei klapi (avatud veranda, rõdu, räästad).
     if(b.iou>=best.iou-.03||(RC&&RC.strong)){const sv=Math.abs(L.ridge/Hm/s-1)>.08?L.ridge/Hm:s,ev=[],why=[];let pick=0,clash=false;
       const sg=(x,y,min,lowWins)=>x==null||y==null||!isFinite(x)||!isFinite(y)||Math.abs(x-y)<min?0:(lowWins?x<y:x>y)?1:-1;
-      ev.push(['seinad',sg(m3WallDist(S,PL,sv,best.th),m3WallDist(S,PL,sv,b.th),.05,true)]);
+      const wa=m3WallDist(S,PL,sv,best.th),wb=m3WallDist(S,PL,sv,b.th);
+      ev.push(['seinad',sg(wa&&wa.d,wb&&wb.d,.05,true)]);
+      ev.push(['ümbrus',sg(wa&&m3Clear(wa.Q,PL,L.site),wb&&m3Clear(wb.Q,PL,L.site),.1,true)]);
       ev.push(['katuse kõrgus',sg(iouAt(best.th,sv).hz,iouAt(b.th,sv).hz,.1,true)]);
       if(RC)ev.push(['katuse suund',sg(RC.at(best.th),RC.at(b.th),.04,false)]);
       ev.push(['kattuvus',sg(best.iou,b.iou,.03,false)]);
-      for(const [nm,v] of ev){if(!v)continue;if(!pick){pick=v;why.push(nm);}else if(v!==pick&&(nm==='katuse kõrgus'&&why[0]==='seinad'))clash=true;}
+      // tugevad märgid (seinad, ümbrus, katuse kõrgus) ei tohi otsusele vastu rääkida, muidu suund ebakindel
+      const strong=['seinad','ümbrus','katuse kõrgus'];for(const [nm,v] of ev){if(!v)continue;if(!pick){pick=v;why.push(nm);}else if(v!==pick&&strong.includes(nm)&&strong.includes(why[0]))clash=true;}
       if(pick<0)best=b;dir={sure:!!pick&&!clash,why};}}
   const alt=C[(C.indexOf(best)+2)%4];
   // peatelg on peaaegu ruudukujulisel majal ebatäpne: täpsusta nurka ±10° (1°), siis ±1° (0,2°)
@@ -5248,7 +5283,7 @@ function m3Fit(V,L,rot0){if(!V||!V.model||!L||!L.g||!L.g.length||!(L.ridge>0))re
   const sym=rot0!=null?false:dir?!dir.sure:alt.iou>=best.iou-.03&&Math.abs(alt.hz-best.hz)<.15;
   // lävendid: stressitest (scripts/lod2_tiles.py hooned, juhuslik mõõtkava/pööre/üleulatus/müra): õige maja IoU >= 0,88, kõrgus <= 2,6%; sarnane vale maja IoU 0,82, kõrgus 11,7%
   const err=Math.abs(sh/s-1),ok=best.iou>=.8&&err<=.08;
-  return {s:+s.toPrecision(5),rot:+((((best.th*180/Math.PI)%360)+360)%360).toFixed(1),mc:[+M.mx.toFixed(4),+M.my.toFixed(4)],lc:[+LM.mx.toFixed(2),+LM.my.toFixed(2)],y0:+y0.toFixed(4),iou:+best.iou.toFixed(2),err:+err.toFixed(3),ok,sym,dir:dir&&dir.why.join(', '),v:1};}
+  return {s:+s.toPrecision(5),rot:+((((best.th*180/Math.PI)%360)+360)%360).toFixed(1),mc:[+M.mx.toFixed(4),+M.my.toFixed(4)],lc:[+LM.mx.toFixed(2),+LM.my.toFixed(2)],y0:+y0.toFixed(4),iou:+best.iou.toFixed(2),err:+err.toFixed(3),ok,sym,dir:dir&&dir.why.join(', '),sc:scBy,v:1};}
 /* Ametlik tahk: klõps mudelil -> LOD2 koordinaadid (sobituse kaudu) -> lähim katusetahk/sein, esile tõstetud. Ainult kindla sobitusega. */
 // klõps (pööramise režiimis) ametlikul tahul: tõsta esile ja kinnita silt; uus klõps samal tahul vabastab
 function m3PinAt(e){const s=stSess(),m=s&&s.model,V=P3V;if(!m||!V)return;if(V.garden&&m3TreeAt(V,e))return;if(!m3OffOn(m))return;const b=V.r.domElement.getBoundingClientRect(),rc=new THREE.Raycaster();

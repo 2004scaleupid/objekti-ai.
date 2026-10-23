@@ -183,5 +183,5 @@ async function nearby(meta){const [cx,cy]=meta.c,K=new Set();for(const dx of [-8
   const tiles=await Promise.all([...K].map(k=>GV.cache.get(k)||(GV.cache.set(k,window.lod2Get('geo/'+k+'.json').catch(()=>({}))),GV.cache.get(k))));
   const out=[];tiles.forEach(T=>Object.entries(T).forEach(([e,b])=>{const dx=b.c[0]-cx,dy=b.c[1]-cy;if(Math.hypot(dx,dy)<80)out.push({e,b,dx,dy});}));return out;}
 
-window.V3DGarden={show,sunAt,treesFrom,fencesFrom,closest};
+window.V3DGarden={show,sunAt,treesFrom,fencesFrom,closest,img};
 })();
