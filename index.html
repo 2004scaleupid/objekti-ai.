@@ -1157,6 +1157,9 @@ input[type=checkbox]{accent-color:var(--accent)}
 @media (min-width:821px){.stvsw.two{display:none}}
 @media (max-width:820px){.stres.two{grid-template-columns:minmax(0,1fr)}.stres.two .stv:not(.vcur){display:none}#stPanT{display:none}}
 .stf{width:56px;height:56px;border-radius:10px}
+img.ld{background:linear-gradient(90deg,var(--soft) 25%,var(--paper) 50%,var(--soft) 75%);background-size:200% 100%;animation:stshim 1.1s linear infinite;color:transparent}
+.stv>img.ld{width:100%;min-height:min(var(--stimg,60vh),380px)}.stm .pics img.ld{min-width:120px;min-height:90px}
+@keyframes stshim{to{background-position:-200% 0}}@media (prefers-reduced-motion:reduce){img.ld{animation:none}}
 .stpant[aria-pressed=true]{background:var(--soft)}
 </style>
 <link rel="stylesheet" href="css/mobile.css">
@@ -1430,7 +1433,7 @@ input[type=checkbox]{accent-color:var(--accent)}
         </div>
         <div class="stchips" id="stChips" role="group" aria-label="Vali töö"></div>
         <div class="stsugg" id="stSugg"></div>
-        <input type="file" id="stFile" accept="image/*,.heic,.heif" multiple hidden>
+        <input type="file" id="stFile" accept="image/*,.heic,.heif,video/mp4,video/quicktime" multiple hidden>
         <input type="file" id="p3File" accept="image/*" multiple hidden>
       </div>
     </section>
@@ -3855,7 +3858,7 @@ const stTrayImgs=s=>s?(s.tray||[]).map(i=>s.imgs&&s.imgs[i]).filter(Boolean):[];
 function stPoint(s,i){const im=s.imgs[i];if(!im)return;stWB();s.base=im.src;im.marks=im.marks||[];s.marks=im.marks;s.scale=im.scale||null;}
 function stPointMain(s){if(!s)return;const i=STU.edit!=null&&s.imgs[STU.edit]?STU.edit:(s.tray||[])[0];if(i!=null&&s.imgs[i]){if(s.base!==s.imgs[i].src)stPoint(s,i);}else{stWB();s.base=null;s.marks=[];s.scale=null;}}
 function stAddPic(src,k,demo){let s=stSess();if(!s)s=stNewSession();s.imgs=s.imgs||[];s.tray=s.tray||[];let i=s.imgs.findIndex(x=>x.src===src);if(i<0){s.imgs.push({src,k:k||'up',demo:demo?1:0,marks:[]});i=s.imgs.length-1;}
-  if(!s.tray.includes(i)){if(s.tray.length>=ST_MAXP){toast('Kuni '+ST_MAXP+' pilti korraga. Eemalda mõni, et lisada uus.');return -1;}s.tray.push(i);}if(!s.thumb)s.thumb=src;stSave();return i;}
+  if(!s.tray.includes(i)){const mx=roomOn()?12:ST_MAXP;if(s.tray.length>=mx){toast('Kuni '+mx+' pilti korraga. Eemalda mõni, et lisada uus.');return -1;}s.tray.push(i);}if(!s.thumb)s.thumb=src;stSave();return i;}
 function stEdit(i,tool){const s=stSess();if(!s||!s.imgs[i])return;STU.edit=i;stPoint(s,i);STU.tool=tool&&tool!=='color'?tool:'hand';STU.undo=[];STU.redo=[];STU.sel=-1;STU.cmp=false;STU.fit=true;stRender();stToStage();}
 function stEditDone(){STU.edit=null;STU.sel=-1;stSave();stRender();}
 function stNewSession(){const s={id:'s'+Date.now(),tpl:STU.tpl,title:'Uus töö',date:new Date().toLocaleDateString('et-EE'),msgs:[],imgs:[],tray:[],base:null,marks:[],scale:null,style:STU.style,prod:STU.prod};acct.studio.unshift(s);acct.studio=acct.studio.slice(0,12);STU.sid=s.id;return s;}
@@ -4084,7 +4087,7 @@ function stRender(){const th=stTheme(STU.tpl),s=stSess();if(STU.edit!=null&&!(s&
   const ON=TPLS().filter(t=>t.on),order=['vaba','sisek','toodehoov','maakler','katus','fassaad','mudel3d'];
   ON.sort((a,b)=>((order.indexOf(a.id)+99)%99)-((order.indexOf(b.id)+99)%99));
   $('stChips').innerHTML=ON.filter(t=>t.id!=='mudel3d').map(t=>`<button type="button" class="stchip" data-t="${t.id}" aria-pressed="${t.id===STU.tpl||(STU.tpl==='mudel3d'&&t.id==='vaba')}">${ticon(t,16)}<span>${stEsc(t.id==='vaba'?'Vaba idee':t.name)}</span></button>`).join('');
-  $('stChips').querySelectorAll('.stchip').forEach(b=>b.onclick=()=>{if(b.dataset.t!==STU.tpl)openStudio(b.dataset.t);});st3dRender();roomRender();roomActRender();stPanApply();if(s&&s.room&&s.room.status==='pending')roomPoll(s);
+  $('stChips').querySelectorAll('.stchip').forEach(b=>b.onclick=()=>{if(b.dataset.t!==STU.tpl)openStudio(b.dataset.t);});st3dRender();roomRender();roomActRender();stPanApply();stImgLoading($('stFiles'));if(s&&s.room&&s.room.status==='pending')roomPoll(s);
   $('stM3').hidden=!mdl;$('stAdd3d').hidden=!(th.T&&th.T.id==='vaba');m3MyRow();if(mdl)m3Show();
   $('stStage').hidden=!editing;$('stThread').hidden=editing||!hasMsgs||!!th.p3;$('stTo3d').hidden=!(s&&s.obj&&HOUSES.some(h=>h.ehr===s.obj));
   if(editing){const n=(s.tray||[]).indexOf(STU.edit);$('stEdT').textContent=n>=0?'Pilt '+(n+1):'Pilt';}
@@ -4205,7 +4208,16 @@ function stRenderFiles(){const s=stSess(),box=$('stFiles'),T=s?(s.tray||[]):[],t
   box.querySelectorAll('[data-ed]').forEach(b=>b.onclick=()=>{if(STU.busy)return;stEdit(+b.dataset.ed);});
   box.querySelectorAll('[data-x]').forEach(b=>b.onclick=()=>{const n=+b.dataset.x,ix=s.tray[n];s.tray.splice(n,1);if(STU.edit===ix)STU.edit=null;stSave();stRender();});
   const a=$('stAdd2');if(a)a.onclick=()=>$('stFile').click();}
+// video (toast ringiga filmitud): 8 kaadrit ühtlaste vahedega, brauseris (fail serverisse ei lähe)
+async function stVideoFrames(f,n=8){const u=URL.createObjectURL(f),v=document.createElement('video');v.muted=true;v.playsInline=true;v.preload='auto';v.src=u;
+  try{await new Promise((r,j)=>{v.onloadedmetadata=r;v.onerror=()=>j(new Error('video'));});const d=v.duration||0;if(!(d>0))throw new Error('video');const out=[];
+    for(let k=0;k<n;k++){v.currentTime=Math.min(d-.05,d*(k+.5)/n);await new Promise(r=>v.onseeked=r);const sc=Math.min(1,1600/Math.max(v.videoWidth,v.videoHeight)),c=document.createElement('canvas');
+      c.width=Math.round(v.videoWidth*sc);c.height=Math.round(v.videoHeight*sc);c.getContext('2d').drawImage(v,0,0,c.width,c.height);
+      out.push(await new Promise(r=>c.toBlob(b=>r(new File([b],'kaader-'+(k+1)+'.jpg',{type:'image/jpeg'})),'image/jpeg',.85)));}
+    return out;}finally{URL.revokeObjectURL(u);}}
 async function stAddFiles(list){const th=stTheme(STU.tpl);if(th.need==='addr'){toast('Selle töö jaoks sisesta aadress');return;}if(th.p3)return p3AddFiles(list);
+  {const vids=[...list].filter(f=>/^video\//.test(f.type));if(vids.length){if(!roomOn()){toast('Video sobib toa 3D jaoks: lülita Sisekujunduses 3D sisse');return;}
+    try{const fr=await stVideoFrames(vids[0]);toast('Videost võeti '+fr.length+' kaadrit');list=[...[...list].filter(f=>!/^video\//.test(f.type)),...fr];}catch(_){toast('Videot ei õnnestunud lugeda. Proovi MP4 või pildista 4 nurka.');return;}}}
   const arr=[...list].filter(f=>/^image\//.test(f.type)||/\.(jpe?g|png|webp|heic|heif)$/i.test(f.name||''));if(!arr.length){toast('Vali pildifail (JPG, PNG, WebP või HEIC)');return;}
   let added=0,warn=null;for(const f of arr){let src;try{src=await shrink(f);}catch(e){toast('Pilti ei õnnestunud avada');continue;}P3ORIG.set(src,f);const ix=stAddPic(src,'up');if(ix<0)break;added++;
     const q=await stQuality(src),s1=stSess();if(q&&s1&&s1.imgs[ix]){s1.imgs[ix].q=q;if(q.lvl!=='ok'&&(!warn||(q.lvl==='bad'&&warn.q.lvl!=='bad')))warn={n:s1.tray.indexOf(ix)+1,q};}}
@@ -4305,7 +4317,7 @@ async function stQuality(src){try{const img=await stLoadImg(src),k=Math.min(1,51
   if(Math.max(img.naturalWidth,img.naturalHeight)<400)iss.push(['warn','Pilt on väga väike','Kasuta originaalfotot, mitte väikest pilti.']);
   return {lvl:iss.some(x=>x[0]==='bad')?'bad':iss.length?'warn':'ok',iss};}catch(e){return null;}}
 const ST_GOOD=[['Terav','Hoia telefon paigal ja puuduta objekti, et fookus oleks õige.'],['Päevavalgus','Pilves päev on parim. Ära pildista vastu päikest ega pimedas.'],['Kogu objekt pildil','Jäta servadesse veidi ruumi, ära lõika katust ega nurki ära.'],['Midagi pole ees','Autod, inimesed, oksad ega aed ei tohi muudetavat kohta varjata.'],['Hea nurk','Otse või kergelt nurga alt, umbes silmade kõrguselt. Ära kasuta 0,5× lainurka.'],['Originaalfoto','Mitte ekraanipilt, filter ega tugevalt suumitud pilt.']];
-function stGoodTips(){const t=STU.tpl;return t==='sisek'?[...ST_GOOD.slice(0,1),['Tuled põlema','Lülita toas tuled põlema ja ava kardinad.'],['Pildista nurgast','Nii on näha kaks seina ja põrand.'],['Korista ees olev','Juhtmed, kotid ja väikesed asjad eemalda enne pildistamist.']]:t==='toodehoov'?[...ST_GOOD.slice(0,2),['Maapind näha','Pildista kohast, kust toodet hiljem vaadataks. Koht, kuhu toode tuleb, peab olema vaba ja näha.'],ST_GOOD[4]]:ST_GOOD;}
+function stGoodTips(){const t=STU.tpl;return t==='sisek'&&roomOn()?[['Kogu ruum','Pildista ruumi igast nurgast (4 nurka) või filmi 30 s ringiga.'],['Tuled põlema','Lülita toas tuled põlema ja ava kardinad.'],['Põrand ja lagi näha','Hoia telefoni rinna kõrgusel, nii on põrand, seinad ja lagi kaadris.']]:t==='sisek'?[...ST_GOOD.slice(0,1),['Tuled põlema','Lülita toas tuled põlema ja ava kardinad.'],['Pildista nurgast','Nii on näha kaks seina ja põrand.'],['Korista ees olev','Juhtmed, kotid ja väikesed asjad eemalda enne pildistamist.']]:t==='toodehoov'?[...ST_GOOD.slice(0,2),['Maapind näha','Pildista kohast, kust toodet hiljem vaadataks. Koht, kuhu toode tuleb, peab olema vaba ja näha.'],ST_GOOD[4]]:ST_GOOD;}
 /* AI juhis koos märkidega */
 const ST_CN={'#E5482D':'red','#F2B705':'yellow','#2A7FBF':'blue','#2F9E5B':'green','#FFFFFF':'white','#16130F':'black'};
 function stMarksText(s){const NAT=s.nat||STU.nat;const L=stLabels(s.marks),P=prodList(),pc=v=>Math.round(Math.max(0,Math.min(1,v))*100),pt=p=>`(x ${pc(p[0])}%, y ${pc(p[1])}%)`;
@@ -4342,7 +4354,7 @@ async function stComposite(s){const im=(s.imgs||[]).find(x=>x.src===s.base);retu
 async function stThumb(src,max){const img=await stLoadImg(src,1),k=Math.min(1,max/Math.max(img.naturalWidth,img.naturalHeight)),cv=document.createElement('canvas');cv.width=Math.round(img.naturalWidth*k);cv.height=Math.round(img.naturalHeight*k);cv.getContext('2d').drawImage(img,0,0,cv.width,cv.height);return cv.toDataURL('image/jpeg',.8);}
 function stDemoOut(text,base){const t=String(text||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');const pick=/paike|paikese/.test(t)?'test-paike':/saun/.test(t)?'test-saun':/aed|haljast|hekk|muru|lill/.test(t)?'test-aed':/varv|hall|must|valge|puna/.test(t)?'test-varv':null;
   if(pick&&EXIMG[pick])return [EXIMG[pick]];return base?[base]:[];}
-async function stSend(){if($('stSend').disabled)return;const th=stTheme(STU.tpl),text=$('stIn').value.trim(),kind=stKind();
+async function stSend(){if($('stSend').disabled)return;const th=stTheme(STU.tpl),text=$('stIn').value.trim(),kind=stKind();if(kind!=='addr'&&!th.p3&&stRoute3d(text))return;
   if(kind==='addr'){acct.activeTpl=STU.tpl;save();$('stIn').value='';stAuto();openAddress(text,null);return;}
   if(th.p3)return p3Start();
   const s=stSess();if(text&&stCanImg(s)&&(stSame(text,stLastJuh(s))||stIsEdit(text)))return stOffer(text);
@@ -4445,7 +4457,8 @@ function stPanApply(){const st=$('studio'),b=$('stPanT');if(!st||!b)return;const
   const col=v==='0'?true:v==='1'?false:!!(s&&s.msgs&&s.msgs.length);st.classList.toggle('pcol',col);b.setAttribute('aria-pressed',String(!col));b.title=col?'Näita infopaneeli':'Peida infopaneel';}
 /* vestluse pildid mahuvad nähtavasse alasse; uus tulemus kerib täies ulatuses vaatesse */
 let STFIT=null;
-function stThreadFit(box,s){if(!STFIT&&window.ResizeObserver){STFIT=new ResizeObserver(()=>box.style.setProperty('--stimg',Math.max(180,box.clientHeight-120)+'px'));STFIT.observe(box);}
+function stImgLoading(root){root.querySelectorAll('.stv>img,.stm .pics img,.stf img').forEach(i=>{if(i.complete&&i.naturalWidth)return;i.classList.add('ld');const ok=()=>i.classList.remove('ld');i.addEventListener('load',ok,{once:true});i.addEventListener('error',ok,{once:true});});}
+function stThreadFit(box,s){stImgLoading(box);if(!STFIT&&window.ResizeObserver){STFIT=new ResizeObserver(()=>box.style.setProperty('--stimg',Math.max(180,box.clientHeight-120)+'px'));STFIT.observe(box);}
   box.style.setProperty('--stimg',Math.max(180,box.clientHeight-120)+'px');
   const last=s.msgs[s.msgs.length-1]||{},k=s.id+':'+s.msgs.length+':'+(last.pending?'p':'d')+':'+((last.out||[]).length);
   if(box.dataset.k===k)return;const first=!box.dataset.k||box.dataset.sid!==s.id;box.dataset.k=k;box.dataset.sid=s.id;
@@ -4481,11 +4494,23 @@ function stRenderThread(){const s=stSess(),box=$('stThread');if(!s||box.hidden){
   box.querySelectorAll('[data-mk]').forEach(b=>b.onclick=()=>{stUseAs1(b.dataset.mk);const s2=stSess();stEdit(s2.tray[0]);});
   box.querySelectorAll('[data-add]').forEach(b=>b.onclick=()=>{const i=stAddPic(b.dataset.add,'ai');if(i>=0){stRender();toast('Lisatud: pilt '+stSess().tray.length);}});}
 /* Genereeri: teeb pildi nummerdatud piltidest, märkidest ja tekstist */
-async function stGenerate(){const gen=$('stGenBtn');if(gen.hidden)return;if(gen.getAttribute('aria-disabled')==='true'){if(gen.dataset.why)toast(gen.dataset.why);return;}const th=stTheme(STU.tpl),T=th.T,text=$('stIn').value.trim(),kind=stKind();
+/* kavatsus ENNE tasu: „tee 3d ruum…“ = toa 3D (mitte pildi kujundus), „tee 3d-mudel…“ = foto → 3D.
+   Kujundussõnadega („…skandinaavia stiilis 3D-s“) jääb tavaline kujundus, sealt edasi „Tee kujundusest 3D“. */
+const ST_3D=/(^|[^a-z0-9])3\s*-?\s*d(?![a-z])/i,ST_ROOMW=/(ruum|tuba|toa\b|toast|saun|köök|köögi|interjöör|siseruum)/i,
+  ST_DESIGNW=/(stiil|kujund|värv|disain|moodn|modern|skandinaav|hele|tume|muuda|asenda|remont|renoveeri|vaheta|uus |uue )/i;
+const ST_OBJW=/(mudel|ese|eseme|tool|laud|laua|diivan|keris|pink|lamp|toode|toote|kapp|voodi)/i;
+function st3dIntent(t){t=String(t||'').toLowerCase().trim();if(!ST_3D.test(t)||ST_DESIGNW.test(t)||t.endsWith('?')||(typeof stIsQuestion==='function'&&stIsQuestion(t)))return null;
+  return ST_ROOMW.test(t)?'room':ST_OBJW.test(t)?'object':STU.tpl==='sisek'?'room':'object';}
+function stRoute3d(text){const k=st3dIntent(text);if(!k)return false;const T=stTrayImgs(stSess());
+  if(!T.length){toast(k==='room'?'Lisa toa fotod (4 nurka või 30 s video), siis tee 3D-ruum':'Lisa foto asjast, millest 3D teha');return true;}
+  $('stIn').value='';stAuto();stSync();
+  if(k==='room')roomStart(T.map(x=>x.src),true);else p3FromPicture(T[0].src,(stTheme(STU.tpl).T||{}).name||'Pilt');
+  return true;}
+async function stGenerate(){const gen=$('stGenBtn');if(gen.hidden)return;if(gen.getAttribute('aria-disabled')==='true'){if(gen.dataset.why)toast(gen.dataset.why);return;}const th=stTheme(STU.tpl),T=th.T,text=$('stIn').value.trim(),kind=stKind();if(stRoute3d(text))return;
   if(th.soon){toast('See töö tuleb peagi. Krediite ei võetud.');return;}
   const pk=stPriceKind();if(!await canPay(price(pk),T&&T.id!=='vaba'?T.name:'Vaba idee'))return;
   let s=stSess();if(!s)s=stNewSession();stWB();
-  const pics=kind==='pic'?[]:stTrayImgs(s),prods=kind==='place'?stProdRefs(text,s):[],roles=[],legend=[],images=[];
+  const pics=kind==='pic'?[]:stTrayImgs(s).slice(0,ST_MAXP),prods=kind==='place'?stProdRefs(text,s):[],roles=[],legend=[],images=[];
   const first=!(s.imgs||[]).some(x=>x.k==='ai'),n=kind==='design'&&first?2:1,nm=pics.reduce((a,im)=>a+(im.marks||[]).length,0);
   if((!s.title||s.title==='Uus töö')&&text)s.title=text.slice(0,48);
   s.msgs.push({role:'u',text,gen:1,pics:pics.map(p=>p.src),marks:nm,d:Date.now()});const am={role:'a',gen:1,pending:1,n,cr:price(pk),d:Date.now()};s.msgs.push(am);
