@@ -6014,7 +6014,7 @@ function mount(){const c=document.querySelector('#tGrid .tcard[data-t="maja"]');
   c.querySelectorAll('.tex,.ti').forEach(x=>x.remove());
   const s=document.createElement('span');s.className='tex tmaja';
   s.innerHTML='<img class="po" src="examples/building-poster.webp" alt="" loading="lazy"><span class="tl"><i class="pa">Näidis · maja, aed ja mõõdud</i></span><span class="hint3d">↻ lohista</span>';c.insertBefore(s,c.firstChild);
-  const go=new IntersectionObserver(es=>{if(!es.some(e=>e.isIntersecting))return;go.disconnect();const f=document.createElement('iframe');f.src='examples/naidis/index.html';f.title='Näidis: maja 3D-mudel aias koos Maa-ameti mõõtudega';f.setAttribute('loading','lazy');s.insertBefore(f,s.querySelector('.tl'));});go.observe(s);}
+  const go=new IntersectionObserver(es=>{if(!es.some(e=>e.isIntersecting))return;go.disconnect();const f=document.createElement('iframe');f.src='examples/raudurdi30/index.html';f.title='Näidis: maja 3D-mudel aias koos Maa-ameti mõõtudega';f.setAttribute('loading','lazy');s.insertBefore(f,s.querySelector('.tl'));});go.observe(s);}
 const _rt=renderTpls;renderTpls=function(){const r=_rt.apply(this,arguments);mount();return r;};
 try{mount();}catch(_){}
 })();
