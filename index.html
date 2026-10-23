@@ -3265,7 +3265,7 @@ $('dzFile').onchange=e=>{const f=[...e.target.files];e.target.value='';openStudi
 let tFil=null,tMoreOpen=false;
 function tplMine(t){return acct.niche&&(t.niche===acct.niche||(t.also||[]).includes(acct.niche));}
 // 3 sihtrühma: ehitusfirmad (maja 3D), tootefirmad (toode pildile, vidin, 3D-mudel), tavakasutajad (vaba idee); muud tööriistad peidus (koodis alles)
-const TPL_HIDE=new Set(['muuda','sisek']);
+const TPL_HIDE=new Set(['sisek']);
 function renderTpls(){const all=TPLS().filter(t=>t.on&&!TPL_HIDE.has(t.id));if(tFil===null)tFil='all';
   const F=[...(acct.niche&&all.some(tplMine)?[['mine','Sinu valdkond']]:[]),['all','Kõik'],['addr','Aadressiga'],['photo','Fotoga']];
   $('tFil').innerHTML=F.map(([k,l])=>`<button type="button" data-f="${k}" aria-pressed="${tFil===k}">${l}</button>`).join('');
@@ -5862,11 +5862,12 @@ const R=[
   ['mudel3d',/\b3d|kolmemõõt|prindi|printi|\bar\b|glb|stl|usdz|keera(ta|tav)|pöörata|e-?poodi|tootelehele/i,'Tahad asjast 3D-mudelit: saad selle alla laadida, kodulehele panna või printida.','vaba'],
   ['pane',/\b(pane|panna|lisa|lisada|paiguta|tõsta)\b.*\b(saun|aiamaja|telk|terrass|bassein|kasvuhoone|garaaž|kuur|batuut|diivan|laud|kamin|auto|paat|pergola|mööbel|toode|tooli|lamp|maal|pilt)/i,'Tahad panna konkreetse asja päris fotole õigesse kohta ja suurusesse.','vaba'],
   ['pane',/\b(saun|aiamaja|telk|bassein|kasvuhoone|batuut|pergola)\w*\b.*\b(hoov|aed|aia|krunt|krundi|plats)/i,'Tahad näha ehitist või toodet oma hoovis õiges suuruses.','vaba'],
-  ['maja',/\b(mõõt|pindala|m2|m²|ruutmeet|kalle|kalded|kui suur|katuse pind|seinte pind)/i,'Tahad maja mõõte: katuse ja seinte pinnad tulevad riigi 3D-andmetest.',null]];
+  ['maja',/\b(mõõt|pindala|m2|m²|ruutmeet|kalle|kalded|kui suur|katuse pind|seinte pind)/i,'Tahad maja mõõte: katuse ja seinte pinnad tulevad riigi 3D-andmetest.',null],
+  ['muuda',/\b(värv|tooni|toon|materjal|fassaad|katus|aken|aknad|uks|voodri|krohv|plekk|kivi|tumehall|must|valge|hall|muuda|vaheta|uus välimus|teip|velg)/i,'Tahad muuta olemasoleva asja värvi, materjali või stiili, kuju jääb samaks.','maja']];
 function rules(t){for(const [id,re,why,alt] of R)if(re.test(t)){let al=alt===id?null:alt;if(al==='maja'&&!/maja|majal|katus|fassaad|sein/i.test(t))al='vaba';return{id,why,alt:al};}return null;}
 async function ai(t){if(typeof CLOUD==='undefined'||!CLOUD||typeof CL==='undefined'||!CL.cid)return null;
-  const q=`Vali Vaade3D tööriist kasutaja soovi jaoks. Tööriistad: vaba (vaba idee, ükskõik mis pilt kirjelduse järgi), pane (pane asi päris fotole õiges suuruses), mudel3d (fotodest 3D-mudel alla laadimiseks), maja (maja 3D ja mõõdud aadressi järgi). Vasta ainult ühel real kujul: id | üks lühike lause eesti keeles, miks see sobib.\nSoov: "${t.replace(/"/g,"'").slice(0,400)}"`;
-  try{const r=await clFn('ai-chat',{role:'Vaade3D kasutajale',context:{},messages:[{role:'user',content:q}]});const s=String(r&&r.text||'');const m=s.match(/\b(vaba|pane|mudel3d|maja)\b\s*[|:–-]?\s*(.*)/i);
+  const q=`Vali Vaade3D tööriist kasutaja soovi jaoks. Tööriistad: vaba (vaba idee, ükskõik mis pilt kirjelduse järgi), pane (pane asi päris fotole õiges suuruses), muuda (muuda värvi, materjali või stiili, kuju jääb), mudel3d (fotodest 3D-mudel alla laadimiseks), maja (maja 3D ja mõõdud aadressi järgi). Vasta ainult ühel real kujul: id | üks lühike lause eesti keeles, miks see sobib.\nSoov: "${t.replace(/"/g,"'").slice(0,400)}"`;
+  try{const r=await clFn('ai-chat',{role:'Vaade3D kasutajale',context:{},messages:[{role:'user',content:q}]});const s=String(r&&r.text||'');const m=s.match(/\b(vaba|pane|muuda|mudel3d|maja)\b\s*[|:–-]?\s*(.*)/i);
     if(m)return{id:m[1].toLowerCase(),why:(m[2]||'').replace(/^[\s|:–-]+/,'').trim().slice(0,200)||'See sobib sinu soovile kõige paremini.',alt:null};}catch(_){}return null;}
 function ico(k){return typeof TICON!=='undefined'&&TICON[k]?`<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${TICON[k]}</svg>`:'';}
 function start(id,t){let tx=t.trim();if(id==='maja'){const m=tx.match(/[A-ZÕÄÖÜŠŽ][\wõäöüšž-]*(\s[\wõäöüšž-]+)*\s(tee|tn|tänav|mnt|maantee|pst|puiestee|põik|allee)\s*\d+[a-z]?/i);tx=m?m[0]:'';}openStudio(id);if(tx){setTimeout(()=>{$('stIn').value=tx;try{stAuto();stSync();}catch(_){}},80);}}
@@ -6380,8 +6381,9 @@ try{(()=>{const css=document.createElement('style');css.textContent='@media (min
     let v=g.querySelector('.tcard[data-t="vidin"]');if(!v){v=document.createElement('button');v.type='button';v.className='tcard';v.dataset.t='vidin';
       v.innerHTML=`<span class="tex" style="position:relative"><img src="${typeof PLACE!=='undefined'&&PLACE.park?PLACE.park:''}" alt="" style="width:100%;height:100%;object-fit:cover"><i class="tvbox"><em>1</em></i><span class="tl"><i class="pa">Sinu kodulehel</i></span></span><b>Kodulehe vidin</b><p>Klient paneb sinu lehel foto, valib toote ja märgib koha. Sina saad päringu koos pildiga.</p><div class="tm"><span>Koduleht → päring</span><span>Seadista<span class="ar" aria-hidden="true">→</span></span></div>`;
       v.onclick=()=>show('settings','widget');}
-    const priv=acct.kind==='private';['maja','pane'].forEach(id=>{const b=g.querySelector(`.tcard[data-t="${id}"]`);if(b){g.appendChild(b);b.classList.toggle('w3',priv);}});if(priv)v.remove();else g.appendChild(v);
-    ['mudel3d','vaba'].forEach(id=>{const b=g.querySelector(`.tcard[data-t="${id}"]`);if(b){g.appendChild(b);b.classList.add('w3');}});return r;};
+    const priv=acct.kind==='private';['maja','pane','muuda'].forEach(id=>{const b=g.querySelector(`.tcard[data-t="${id}"]`);if(b)g.appendChild(b);});if(priv)v.remove();else g.appendChild(v);
+    ['mudel3d','vaba'].forEach(id=>{const b=g.querySelector(`.tcard[data-t="${id}"]`);if(b)g.appendChild(b);});
+    const cs=[...g.querySelectorAll('.tcard')];cs.forEach(b=>b.classList.remove('w3'));if(cs.length%3===2)cs.slice(-2).forEach(b=>b.classList.add('w3'));return r;};
   if($('tGrid'))renderTpls();})();}catch(e){console.warn('[tööriistad]',e);}
 
 restoreRT();renderList();renderPanel();build();updFotos();chatReset();setTab(false);renderAcct();
