@@ -79,7 +79,9 @@ function fencesFrom(im,R){const W=768,px=2*R/W,c=document.createElement('canvas'
 function groundTex(S,par,roads,feet,orto,R){const N=2048,px=S/N,c=document.createElement('canvas');c.width=c.height=N;const x=c.getContext('2d'),P=(X,Y)=>[(X+S/2)/px,(S/2-Y)/px];
   const path=(R,close=true)=>{x.beginPath();R.forEach((q,k)=>{const [a,b]=P(q[0],q[1]);k?x.lineTo(a,b):x.moveTo(a,b);});if(close)x.closePath();};
   x.fillStyle=hex(COL.bg);x.fillRect(0,0,N,N);
-  if(orto){const [a,b]=P(-R,R);x.drawImage(orto,a,b,2*R/px,2*R/px);}else{
+  if(orto){const [a,b]=P(-R,R);x.drawImage(orto,a,b,2*R/px,2*R/px);
+    // ortofoto katused (kaldu, nihkes) hoonete alt ära: neutraalne pind + 1,5 m varu
+    x.save();x.filter='blur(6px)';x.fillStyle=x.strokeStyle='#8E9076';x.lineWidth=3/px;x.lineJoin='round';feet.forEach(R0=>{path(R0);x.fill();x.stroke();});x.restore();}else{
   if(par){x.fillStyle=COL.grass;path(par);x.fill();}
   x.fillStyle=x.strokeStyle=COL.road;x.lineCap=x.lineJoin='round';
   roads.a.forEach(poly=>{x.beginPath();poly.forEach(r=>ring2(r).forEach((q,k)=>{const [a,b]=P(q[0],q[1]);k?x.lineTo(a,b):x.moveTo(a,b);}));x.fill('evenodd');});roads.l.forEach(l=>{x.lineWidth=l.w/px;path(ring2(l.g),false);x.stroke();});}
@@ -126,7 +128,7 @@ async function show(V,m,meta,T){const R=meta.r,t=()=>performance.now();let t0=t(
   trees.forEach(tr=>{tr.con=tr.r/tr.h<.3;tr.own=!!PP&&pip(tr.x,tr.y,PP);});
   T.puud=Math.round(t()-t0);t0=t();
   const mtx=new THREE.Matrix4(),q=new THREE.Quaternion();
-  const kinds=[['trunk',new THREE.CylinderGeometry(.13,.18,1,7).translate(0,.5,0),COL.trunk,()=>true],['crown',new THREE.IcosahedronGeometry(1,1),COL.crown,tr=>!tr.con],['cone',new THREE.ConeGeometry(1,1,9).translate(0,.5,0),COL.conifer,tr=>tr.con]];
+  const kinds=[['trunk',new THREE.CylinderGeometry(.13,.18,1,7).translate(0,.5,0),orto?0x5E4E3E:COL.trunk,()=>true],['crown',new THREE.IcosahedronGeometry(1,1),orto?0x5C8A45:COL.crown,tr=>!tr.con],['cone',new THREE.ConeGeometry(1,1,9).translate(0,.5,0),orto?0x3F6E48:COL.conifer,tr=>tr.con]];
   for(const [k,geom,c,ok] of kinds){const L2=trees.filter(ok);if(!L2.length)continue;const im=new THREE.InstancedMesh(geom,new THREE.MeshStandardMaterial({color:c,roughness:.95,flatShading:true}),L2.length);
     im.castShadow=true;im.receiveShadow=true;im.userData.trees=L2;
     L2.forEach((tr,i)=>{q.setFromAxisAngle(new THREE.Vector3(0,1,0),((tr.i*7919+tr.j*104729)%628)/100);let p,s;
