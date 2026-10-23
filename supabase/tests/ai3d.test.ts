@@ -319,3 +319,29 @@ Deno.test("hoone EHR kood salvestub 3D-töö juurde, vigane või muu subjekt -> 
   assertEquals(await run("building", [4, 5, 6, 7].map(photo), "12a; drop"), null);
   assertEquals(await run("object", [photo(7)], "120656418"), null);
 });
+
+Deno.test("siseruum (sauna seest): blokeerib, üks lühike juhis igal fotol, esemel mitte", async () => {
+  W.check = { ...good(), subject: "unsupported", interior: true };
+  (W.check.photos as { issues: string[]; tip?: string }[]).forEach((p) => { p.issues = ["wrong_subject"]; p.tip = "Pildista saunahoonet väljastpoolt, et terve hoone oleks kaadris."; });
+  const c = await call({ action: "check", subject: "building", photos: P4 });
+  assertEquals([c.j.ok, c.j.soft, c.j.interior], [false, false, true]);
+  assert(c.j.photos.every((p: { issues: string[]; tip: string }) => p.issues.join() === "interior" && p.tip.includes("Sisekujundus + 3D") && !p.tip.includes("väljastpoolt")));
+  assert(c.j.summary.includes("siseruumi"));
+  assertEquals((await call({ subject: "building", photos: P4, check: c.j.token, force: true })).status, 409); // ka "Jätka ikkagi" ei aita
+  // valikurežiim: toas pole „puuduvaid külgi“
+  W.check = { ...pick({ front: 2, left: null, back: null, right: null }), interior: true };
+  const d = await call({ action: "check", subject: "building", photos: P12 });
+  assertEquals([d.j.ok, d.j.interior, d.j.missing.length], [false, true, 0]);
+  // ese: kaadrit täitev ese toas on lubatud; terve ruumi foto ese-režiimis -> sama tee edasi, eseme juhisega
+  W.check = { ...good("object", 1), interior: false };
+  const o = await call({ action: "check", subject: "object", photos: [P4[0]] });
+  assertEquals([o.j.ok, o.j.interior], [true, false]);
+  W.check = { ...good("object", 1), subject: "unsupported", interior: true };
+  (W.check.photos as { issues: string[] }[])[0].issues = ["interior", "wrong_subject"];
+  const r = await call({ action: "check", subject: "object", photos: [P4[0]] });
+  assertEquals([r.j.ok, r.j.interior, r.j.photos[0].issues.join()], [false, true, "interior"]);
+  assert(r.j.photos[0].tip.includes("lähedalt") && r.j.photos[0].tip.includes("toast 3D"));
+  // AI paneb "interior" ühele fotole, aga tervikuna pole siseruum -> ei loe
+  W.check = good("object", 1); (W.check.photos as { issues: string[] }[])[0].issues = ["interior"];
+  assertEquals((await call({ action: "check", subject: "object", photos: [P4[0]] })).j.ok, true);
+});
