@@ -2260,10 +2260,11 @@ function lotScene(h,grp){const [x0,y0,x1,y1]=h.lot,d=h.door;
       const gate=Math.abs(d.nx)>.5?(Math.abs(y-d.my)<2.2&&Math.abs(x-(d.nx>0?x1:x0))<.1):(Math.abs(x-d.mx)<2.2&&Math.abs(y-(d.ny>0?y1:y0))<.1);
       if(!gate)posts.push([x,y,rot]);}};
   const PP=h.parcel&&h.parcel.pts&&h.parcel.pts.length>=3?h.parcel.pts:null;
-  if(h.fences){/* päris aiad Maa-ameti ETAK piirete kihist, mitte väljamõeldud */
-    h.fences.forEach(([ax,ay,bx,by])=>{const L=Math.hypot(bx-ax,by-ay),n=Math.max(1,Math.floor(L/.16)),rot=Math.atan2(by-ay,bx-ax);for(let i=0;i<n;i++){const t=(i+.5)/n;posts.push([ax+(bx-ax)*t,ay+(by-ay)*t,rot]);}});
-    if(PP){/* krundipiir: madal hall joon maas, et krunt oleks näha ka seal, kus aeda pole */const bl=[];PP.forEach((a,k)=>{const b=PP[(k+1)%PP.length];bl.push(...v(a[0],a[1],.06),...v(b[0],b[1],.06));});
-      const bg=new THREE.BufferGeometry();bg.setAttribute('position',new THREE.Float32BufferAttribute(bl,3));const ln=new THREE.LineSegments(bg,new THREE.LineDashedMaterial({color:0xF4F2EE,dashSize:.8,gapSize:.5}));ln.computeLineDistances();grp.add(ln);}}
+  if(h.fences||PP){/* päris aiad Maa-ameti ETAK piirete kihist, mitte väljamõeldud */
+    (h.fences||[]).forEach(([ax,ay,bx,by])=>{const L=Math.hypot(bx-ax,by-ay),n=Math.max(1,Math.floor(L/.16)),rot=Math.atan2(by-ay,bx-ax);for(let i=0;i<n;i++){const t=(i+.5)/n;posts.push([ax+(bx-ax)*t,ay+(by-ay)*t,rot]);}});
+    if(PP){/* krundipiir: hele 0,3 m riba maas, et krunt oleks näha ka seal, kus aeda pole (mitte aed) */const bl=[],w=.15;PP.forEach((a,k)=>{const b=PP[(k+1)%PP.length],L=Math.hypot(b[0]-a[0],b[1]-a[1])||1,nx=-(b[1]-a[1])/L*w,ny=(b[0]-a[0])/L*w;
+        const q=[[a[0]-nx,a[1]-ny],[b[0]-nx,b[1]-ny],[b[0]+nx,b[1]+ny],[a[0]+nx,a[1]+ny]];[0,1,2,0,2,3].forEach(i=>bl.push(...v(q[i][0],q[i][1],.07)));});
+      const bg=new THREE.BufferGeometry();bg.setAttribute('position',new THREE.Float32BufferAttribute(bl,3));const lm=new THREE.Mesh(bg,new THREE.MeshBasicMaterial({color:0xF4F2EE,transparent:true,opacity:.85,side:THREE.DoubleSide,depthWrite:false}));lm.name='krundipiir';lm.renderOrder=2;grp.add(lm);}}
   else if(PP){/* päris katastripiir: aed piiri mööda, värav seal, kus sissesõit piiri lõikab */
     const ex=d.nx,ey=d.ny,gp=(x,y)=>{const t=(x-d.mx)*ex+(y-d.my)*ey;return t>0&&Math.abs((x-d.mx)*ey-(y-d.my)*ex)<2.2;};
     let tg=1e9;PP.forEach((a,k)=>{const b=PP[(k+1)%PP.length],sx=b[0]-a[0],sy=b[1]-a[1],den=ex*sy-ey*sx;if(Math.abs(den)<1e-9)return;
