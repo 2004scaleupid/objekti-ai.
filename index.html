@@ -7113,6 +7113,9 @@ const css=document.createElement('style');css.textContent=`
 .wgd .pf{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}.wgd .pf button{border:1px solid var(--line);background:var(--paper);border-radius:999px;padding:5px 11px;font:600 12px var(--display);color:var(--ink);cursor:pointer}.wgd .pf button[aria-pressed="true"]{background:var(--ink);color:var(--paper);border-color:var(--ink)}
 .wgd .pfs{list-style:decimal;margin:8px 0 0;padding-left:18px;font-size:13px;line-height:1.55;color:var(--ink)}.wgd .pfs li{display:list-item;border:0;padding:0;background:none;grid-template-columns:none}
 @media (max-width:560px){.wgd li{grid-template-columns:28px minmax(0,1fr)}.wgd li>button{grid-column:2;justify-self:start}}
+@media (min-width:1400px){.spane.wgl{display:grid;grid-template-columns:minmax(0,860px) minmax(300px,360px);column-gap:28px;row-gap:20px;align-items:start;max-width:1280px}
+.app:has(.spane.wgl:not([hidden])){overflow:clip}.spane.wgl>*{grid-column:1}.spane.wgl>#wGuide{grid-column:2;grid-row:1 / span 40;position:sticky;top:84px;max-height:calc(100vh - 104px);overflow:auto}
+.spane.wgl #wGuide li{grid-template-columns:28px minmax(0,1fr)}.spane.wgl #wGuide li>button{grid-column:2;justify-self:start}}
 .wflash{animation:wFl 1.4s ease}@keyframes wFl{0%,100%{box-shadow:0 0 0 0 transparent}30%{box-shadow:0 0 0 4px color-mix(in srgb,var(--accent) 45%,transparent)}}
 `;document.head.appendChild(css);
 const E=t=>String(t==null?'':t).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
@@ -7134,6 +7137,7 @@ const steps=()=>{const S=wFeats(acct.wFeat),prods=(typeof prodList==='function'?
 function jump(id){const el=$(id);if(!el)return;const c=el.closest('.card,.qgrp,label')||el;c.scrollIntoView({block:'center',behavior:'smooth'});c.classList.remove('wflash');void c.offsetWidth;c.classList.add('wflash');}
 function draw(){const pane=document.querySelector('.spane[data-pane="widget"]');if(!pane)return;let box=$('wGuide');
   if(!box){box=document.createElement('div');box.className='card wgd';box.id='wGuide';const lead=pane.querySelector('p.lead');(lead||pane.firstChild).after(box);}
+  pane.classList.add('wgl');
   const L=steps(),done=L.filter(x=>x.ok).length,cur=L.findIndex(x=>!x.ok);
   box.innerHTML=`<div class="ct"><b>Vidin kodulehele ${L.length} sammuga</b><span class="fhint">${done===L.length?'Valmis! Vidin on sinu lehel.':`${done} / ${L.length} tehtud · umbes 10 minutit`}</span></div><div class="bar"><i style="width:${Math.round(done/L.length*100)}%"></i></div>
   <ol>${L.map((x,i)=>`<li class="${x.ok?'ok':i===cur?'cur':''}"><span class="n">${x.ok?'✓':i+1}</span><div><b>${E(x.t)}</b><p>${E(x.p)}</p>${x.pf?`<div class="pf">${Object.entries(PF).map(([k,v])=>`<button type="button" data-pf="${k}" aria-pressed="${pf===k}">${v[0]}</button>`).join('')}</div><ol class="pfs">${PF[pf][1].map(s=>`<li>${E(s)}</li>`).join('')}</ol>`:''}</div><button type="button" class="${i===cur?'apply':'ghost'} sm" data-gs="${i}">${E(x.go)}</button></li>`).join('')}</ol>`;
