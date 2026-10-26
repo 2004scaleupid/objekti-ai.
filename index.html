@@ -2053,7 +2053,7 @@ function renderPanel(){applyRoofType(HOUSES[cur]);setTimeout(()=>{const h=HOUSES
     ['Seinte pind',fmt(h.wall)+' m²',h.roofType==='lod2'&&+h.wall0>0?'d':'h',h.roofType==='lod2'&&+h.wall0>0?'Ametlik, Maa-ameti LOD2, aknad maha arvamata':(h.roofType==='gable'||h.roofType==='lod2'?'Viilud sees, ':'')+'aknad maha arvamata','wall']];
   if(h.manual)R.forEach(r=>{const t={fp:'Sisestatud käsitsi (LOD2 mudelit pole)',per:'Sisestatud mõõtudest',eave:'Sisestatud käsitsi',h:h.manual.rt==='flat'?'Lamekatusel = räästas':'Räästast ja 30° kaldest'}[r[4]];if(t){r[2]='h';r[3]=t;}});
   const Y=yard(h);R.push(h.parcel?['Krunt',fmt(Y.area,0)+' m²','d','Katastriüksus '+h.parcel.t+' · '+fmt(Y.lw)+' × '+fmt(Y.ll)+' m','lot']:['Krunt (aiaga)',fmt(Y.lw)+' × '+fmt(Y.ll)+' m','h','~'+fmt(Y.area,0)+' m², katastripiir täpsustub','lot'],['Hoovi pind',fmt(Y.yard,0)+' m²','h','Krunt miinus maja','yard'],
-    ['Aia pikkus',fmt(2*(Y.lw+Y.ll),0)+' m','h','Krundi ümbermõõt, väravad maha arvamata','fence'],
+    (()=>{const F=window.v3dFenceLen?v3dFenceLen(h):{real:0,man:0};return F.man?['Aia pikkus',fmt(F.man,0)+' m','h','Lisatud käsitsi: kogu krundipiir, värav maha arvatud','fence']:F.real?['Aia pikkus',fmt(F.real,0)+' m','d','Maa-ameti piirete kaardilt','fence']:['Aia pikkus','—','h','Maa-ameti kaardil aeda pole. Lisa allpool „Aed krundipiirile“','fence'];})(),
     ['Lähim naabermaja',fmt(Y.nb.d)+' m','d','Seinast seinani','nb'],...(Y.tr.length?[['Lähim puu',fmt(Y.tr[0].d)+' m',h.treesReal?'d':'h',h.treesReal?'Maa-ameti kõrgusmudelist':'Puud on näidis, LOD0 andmetega täpsed','tree']]:[]));
   const T=tplOf(h),base=['fp','per','h','eave','roof','wall','lot','yard','nb','tree'],keys=T&&!showAllRows?T.show:(T?SHOWK.map(k=>k[0]):base),vis=R.filter(r=>keys.includes(r[4]));
   $('rows').innerHTML=(T?`<div class="tplbar">${ticon(T,16)}<span>Mall: <b>${T.name}</b></span><button type="button" class="lnk" id="rowAll">${showAllRows?'Näita malli mõõte':'Kõik mõõdud ('+R.length+')'}</button></div>`:'')+vis.map(r=>`<div class="row"><div class="k"><span>${r[0]}${badge(r[2])}</span><small>${r[3]}</small></div><b>${r[1]}</b></div>`).join('');
@@ -2269,7 +2269,7 @@ function lotScene(h,grp){const [x0,y0,x1,y1]=h.lot,d=h.door;
     if(PP){/* krundipiir: hele 0,3 m riba maas, et krunt oleks näha ka seal, kus aeda pole (mitte aed) */const bl=[],w=.15;PP.forEach((a,k)=>{const b=PP[(k+1)%PP.length],L=Math.hypot(b[0]-a[0],b[1]-a[1])||1,nx=-(b[1]-a[1])/L*w,ny=(b[0]-a[0])/L*w;
         const q=[[a[0]-nx,a[1]-ny],[b[0]-nx,b[1]-ny],[b[0]+nx,b[1]+ny],[a[0]+nx,a[1]+ny]];[0,1,2,0,2,3].forEach(i=>bl.push(...v(q[i][0],q[i][1],.07)));});
       const bg=new THREE.BufferGeometry();bg.setAttribute('position',new THREE.Float32BufferAttribute(bl,3));const lm=new THREE.Mesh(bg,new THREE.MeshBasicMaterial({color:0xF4F2EE,transparent:true,opacity:.85,side:THREE.DoubleSide,depthWrite:false}));lm.name='krundipiir';lm.renderOrder=2;grp.add(lm);}}
-  else if(PP){/* päris katastripiir: aed piiri mööda, värav seal, kus sissesõit piiri lõikab */
+  if(h.fenceAll&&PP){/* käsitsi lisatud „Aed krundipiirile“: aed kogu piiri mööda, värav seal, kus sissesõit piiri lõikab */
     const ex=d.nx,ey=d.ny,gp=(x,y)=>{const t=(x-d.mx)*ex+(y-d.my)*ey;return t>0&&Math.abs((x-d.mx)*ey-(y-d.my)*ex)<2.2;};
     let tg=1e9;PP.forEach((a,k)=>{const b=PP[(k+1)%PP.length],sx=b[0]-a[0],sy=b[1]-a[1],den=ex*sy-ey*sx;if(Math.abs(den)<1e-9)return;
       const t=((a[0]-d.mx)*sy-(a[1]-d.my)*sx)/den,u=((a[0]-d.mx)*ey-(a[1]-d.my)*ex)/den;if(t>0&&u>=0&&u<=1)tg=Math.min(tg,t);});
@@ -5868,6 +5868,84 @@ function need(h){if(!h||!h.ehr||h.l2)return;const e=String(h.ehr);
   loadLod2(e).then(m=>{const raw=l2Raw(m);if(!raw){L2[e]=false;delete L2W[e];return;}L2[e]=raw;const W=L2W[e]||[];delete L2W[e];W.forEach(x=>{if(attach(x))l2Refresh(x);});}).catch(()=>{delete L2[e];});}
 function l2Refresh(h){if(HOUSES[cur]===h&&typeof build==='function'&&!$('body').hidden){build();renderPanel();}else{try{applyRoofType(h);}catch(_){}}}
 HOUSES.forEach(need);
+})();
+
+/* ---------- 26.10: lisad maja külge (rõdu, terrass, juurdeehitus, aed krundipiirile) ----------
+   Maa-ameti LOD2-s on ainult maja põhimaht, ETAK piirdeis pole kõiki aedu. Kasutaja lisab need siin.
+   Salvestus acct.parts[EHR], koordinaadid vaate raamis (maja keskpunkt, pikk külg x-teljel). Märge: „Käsitsi“. */
+(()=>{
+const PT={terr:{n:'Terrass',w:4,d:3,h:.35},rodu:{n:'Rõdu',w:3,d:1.5,h:1},juur:{n:'Juurdeehitus',w:4,d:3,h:3},aed:{n:'Aed krundipiirile'}};
+let placing=null; // {t} või {i} (liiguta olemasolevat)
+const css=document.createElement('style');css.textContent=`.src-b.k{border:1px solid var(--line);color:var(--muted)}
+#partsBox{margin-top:14px;border-top:1px solid var(--line);padding-top:12px}#partsBox h4{margin:0 0 4px;font:600 13px inherit}#partsBox p{margin:0 0 8px;font-size:12px;color:var(--muted)}
+#partsBox .pbtn{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px}#partsBox .pbtn button{border:1px solid var(--line);background:var(--bg);border-radius:999px;padding:6px 11px;font:500 12.5px inherit;cursor:pointer;color:inherit}
+#partsBox .pbtn button[aria-pressed="true"]{background:var(--ink,#16130F);color:var(--bg,#fff)}
+#partsBox .pit{border:1px solid var(--line);border-radius:10px;padding:8px 10px;margin-bottom:6px;font-size:12.5px}#partsBox .pit b{display:flex;justify-content:space-between;align-items:center;gap:6px}
+#partsBox .pit .pf{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}#partsBox .pit label{display:flex;align-items:center;gap:4px;color:var(--muted)}#partsBox .pit input{width:54px;padding:3px 5px;border:1px solid var(--line);border-radius:6px;font:inherit;background:var(--bg);color:inherit}
+#partsBox .pit .lnk{font-size:12px}`;document.head.appendChild(css);
+const list=h=>{acct.parts=acct.parts||{};return acct.parts[h.ehr]||(acct.parts[h.ehr]=[]);};
+const keep=()=>{try{save();}catch(_){}};
+const n1=x=>fmt(x,1);
+function corners(p){const c=Math.cos(p.r),s=Math.sin(p.r),ux=c,uy=s,nx=-s,ny=c;
+  return [[-1,-1],[1,-1],[1,1],[-1,1]].map(([a,b])=>[p.x+ux*a*p.w/2+nx*b*p.d/2,p.y+uy*a*p.w/2+ny*b*p.d/2]);}
+/* klõpsupunkt -> maja lähima seina vastu, sügavus seinast välja */
+function snap(h,p,q){const P=h.pts;let best=null;P.forEach((a,k)=>{const b=P[(k+1)%P.length],dx=b[0]-a[0],dy=b[1]-a[1],L=Math.hypot(dx,dy);if(L<.5)return;
+    let t=((q[0]-a[0])*dx+(q[1]-a[1])*dy)/(L*L);t=Math.max(0,Math.min(1,t));const fx=a[0]+dx*t,fy=a[1]+dy*t,dd=Math.hypot(q[0]-fx,q[1]-fy);
+    let nx=dy/L,ny=-dx/L;if(pip([(a[0]+b[0])/2+nx*.2,(a[1]+b[1])/2+ny*.2],P)){nx=-nx;ny=-ny;}
+    if(!best||dd<best.dd)best={dd,a,dx,dy,L,t,nx,ny,inside:pip(q,P)};});
+  if(!best||(!best.inside&&best.dd>4)){p.x=q[0];p.y=q[1];return p;}
+  const w=Math.min(p.w,best.L),tt=Math.max(w/2/best.L,Math.min(1-w/2/best.L,best.t));p.w=w;
+  p.r=Math.atan2(best.ny,best.nx)-Math.PI/2;p.x=best.a[0]+best.dx*tt+best.nx*(p.d/2+.02);p.y=best.a[1]+best.dy*tt+best.ny*(p.d/2+.02);return p;}
+function newPart(h,t,q){const d=PT[t],p={t,w:d.w,d:d.d,h:d.h,r:0,x:0,y:0};if(t==='rodu')p.z=+Math.max(.5,Math.min(2.8,(+h.eave||4)-1.3)).toFixed(1);return snap(h,p,q);}
+const aedOf=h=>list(h).find(p=>p.t==='aed');
+function perim(P){return P.reduce((s,a,k)=>{const b=P[(k+1)%P.length];return s+Math.hypot(b[0]-a[0],b[1]-a[1]);},0);}
+window.v3dFenceLen=h=>{const real=(h.fences||[]).reduce((s,f)=>s+Math.hypot(f[2]-f[0],f[3]-f[1]),0),P=h.parcel&&h.parcel.pts;
+  return{real,man:aedOf(h)&&P?Math.max(0,perim(P)-4.4):0};};
+
+/* 3D */
+function addParts(h){if(!group)return;const old=group.getObjectByName('parts');if(old)group.remove(old);const G=new THREE.Group();G.name='parts';group.add(G);
+  const wood=std({color:0x9C7650,roughness:.85}),wallM=std({color:0xF1EEE8,roughness:.9}),roofM=std({color:0x45403B,roughness:.9}),glass=new THREE.MeshStandardMaterial({color:0xBFD6DD,transparent:true,opacity:.35,side:THREE.DoubleSide,roughness:.1});
+  const box=(Q,z0,z1,mat)=>{const m=extrude(Q,z1-z0,mat);m.position.y=z0;m.castShadow=m.receiveShadow=true;G.add(m);return m;};
+  list(h).forEach(p=>{if(p.t==='aed')return;const Q=corners(p);
+    if(p.t==='terr')box(Q,0,p.h,wood);
+    else if(p.t==='juur'){box(Q,0,p.h,wallM);const e=corners(Object.assign({},p,{w:p.w+.3,d:p.d+.15,x:p.x+(-Math.sin(p.r))*.075,y:p.y+Math.cos(p.r)*.075}));box(e,p.h,p.h+.25,roofM);}
+    else if(p.t==='rodu'){const z=p.z||2.8;box(Q,z,z+.18,wood);const t=z+.18,top=t+(p.h||1);
+      [[Q[1],Q[2]],[Q[2],Q[3]],[Q[3],Q[0]]].forEach(([a,b])=>{const g=quad(v(a[0],a[1],t),v(b[0],b[1],t),v(b[0],b[1],top),v(a[0],a[1],top),glass,[[0,0],[1,0],[1,1],[0,1]]);G.add(g);bar([a[0],a[1],top],[b[0],b[1],top],.03,M.dark||roofM,G);});
+      if(z>1)[Q[2],Q[3]].forEach(c=>bar([c[0],c[1],0],[c[0],c[1],z],.06,M.dark||roofM,G));}});}
+
+/* paneel */
+function renderParts(){const h=HOUSES[cur];if(!h)return;let B=$('partsBox');if(!B){B=document.createElement('div');B.id='partsBox';$('rows').after(B);}
+  const L=list(h),fl=window.v3dFenceLen(h);
+  B.innerHTML=`<h4>Lisad maja külge</h4><p>Maa-ameti andmetes on ainult maja põhimaht. Rõdu, terrass, juurdeehitus ja aed, mida kaardil pole, lisa siia. Need on märgitud „Käsitsi“.</p>
+  <div class="pbtn">${['terr','rodu','juur'].map(t=>`<button type="button" data-add="${t}" aria-pressed="${placing&&placing.t===t}">+ ${PT[t].n}</button>`).join('')}
+  <button type="button" data-fence aria-pressed="${!!aedOf(h)}" ${h.parcel&&h.parcel.pts?'':'disabled title="Krundipiir pole veel laetud"'}>${aedOf(h)?'✓ ':'+ '}Aed krundipiirile</button></div>
+  ${placing?`<p><b>Klõpsa 3D-vaates kohta</b>, kuhu ${placing.i!=null?'see liigub':'see tuleb'}. Maja lähedal kinnitub see seina külge. <button type="button" class="lnk" data-cancel>Tühista</button></p>`:''}
+  ${L.map((p,i)=>p.t==='aed'?`<div class="pit"><b><span>Aed krundipiirile <span class="src-b k">Käsitsi</span></span><span>${n1(fl.man)} m</span></b></div>`:
+    `<div class="pit"><b><span>${PT[p.t].n} <span class="src-b k">Käsitsi</span></span><span>${n1(p.w*p.d)} m²</span></b><div class="pf">
+    <label>Laius<input type="number" step="0.1" min="0.5" max="40" data-i="${i}" data-k="w" value="${n1(p.w).replace(',','.')}"></label>
+    <label>Sügavus<input type="number" step="0.1" min="0.5" max="40" data-i="${i}" data-k="d" value="${n1(p.d).replace(',','.')}"></label>
+    <label>${p.t==='rodu'?'Piire':'Kõrgus'}<input type="number" step="0.1" min="0.1" max="15" data-i="${i}" data-k="h" value="${n1(p.h).replace(',','.')}"></label>
+    ${p.t==='rodu'?`<label>Maast<input type="number" step="0.1" min="0" max="20" data-i="${i}" data-k="z" value="${n1(p.z||2.8).replace(',','.')}"></label>`:''}
+    <button type="button" class="lnk" data-rot="${i}">Pööra 90°</button><button type="button" class="lnk" data-mv="${i}">Liiguta</button><button type="button" class="lnk" data-del="${i}">Kustuta</button></div></div>`).join('')}`;
+  B.querySelectorAll('[data-add]').forEach(b=>b.onclick=()=>{placing=placing&&placing.t===b.dataset.add?null:{t:b.dataset.add};renderParts();});
+  const cn=B.querySelector('[data-cancel]');if(cn)cn.onclick=()=>{placing=null;renderParts();};
+  const fb=B.querySelector('[data-fence]');if(fb)fb.onclick=()=>{const A=aedOf(h);if(A)L.splice(L.indexOf(A),1);else L.push({t:'aed'});h.fenceAll=!A;keep();build();renderPanel();};
+  B.querySelectorAll('input[data-k]').forEach(I=>I.onchange=()=>{const p=L[+I.dataset.i],x=parseFloat(String(I.value).replace(',','.'));if(!p||!(x>=0))return;
+    const k=I.dataset.k;if(k==='d'&&p.t!=='aed'){const nx=-Math.sin(p.r),ny=Math.cos(p.r),dd=(x-p.d)/2;p.x+=nx*dd;p.y+=ny*dd;}p[k]=x;keep();build();renderPanel();});
+  B.querySelectorAll('[data-rot]').forEach(b=>b.onclick=()=>{const p=L[+b.dataset.rot];p.r+=Math.PI/2;keep();build();renderPanel();});
+  B.querySelectorAll('[data-mv]').forEach(b=>b.onclick=()=>{placing={i:+b.dataset.mv,t:L[+b.dataset.mv].t};renderParts();});
+  B.querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>{L.splice(+b.dataset.del,1);keep();build();renderPanel();});}
+
+/* klõps 3D-s: paigutus */
+canvas.addEventListener('pointerup',e=>{if(!placing||!downXY||Math.hypot(e.clientX-downXY[0],e.clientY-downXY[1])>5)return;
+  const b=canvas.getBoundingClientRect();mouse.set((e.clientX-b.left)/b.width*2-1,-(e.clientY-b.top)/b.height*2+1);ray.setFromCamera(mouse,camera);
+  const hit=ray.intersectObjects([group,ground],true).find(x=>x.object.isMesh&&x.object.visible);if(!hit)return;
+  e.stopImmediatePropagation();const h=HOUSES[cur],q=[hit.point.x,-hit.point.z],L=list(h);
+  if(placing.i!=null&&L[placing.i])snap(h,L[placing.i],q);else L.push(newPart(h,placing.t,q));
+  placing=null;keep();build();renderPanel();toast('Lisatud. Mõõdud saad muuta paremal.');},true);
+
+const _b=build;build=function(){try{const h=HOUSES[cur];if(h)h.fenceAll=!!aedOf(h);}catch(_){}const r=_b.apply(this,arguments);try{addParts(HOUSES[cur]);}catch(err){console.warn('lisad',err);}return r;};
+const _rp=renderPanel;renderPanel=function(){const r=_rp.apply(this,arguments);try{renderParts();}catch(err){console.warn('lisad',err);}return r;};
 })();
 
 /* ---------- 22.10: 3D-mudeli allalaadimine eri formaatides (GLB, USDZ, OBJ, STL) ---------- */
