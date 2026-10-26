@@ -1579,6 +1579,7 @@ img.ld{background:linear-gradient(90deg,var(--soft) 25%,var(--paper) 50%,var(--s
         <form class="card" id="rulesF"><div class="fgrid">
           <label class="fl" for="rDisc">Kliendi soodustus %<input id="rDisc" type="number" min="0" max="90"><small>Sooduskoodiga kliendi allahindlus</small></label>
           <label class="fl" for="rDiscN">Soodustusega kasutusi<input id="rDiscN" type="number" min="0" max="500"><small>Mitu esimest kasutust saavad soodustuse</small></label>
+          <label class="fl" for="rDiscA">Soodustus pärast seda %<input id="rDiscA" type="number" min="0" max="90"><small>Koodiga kliendi allahindlus alatiseks, kui esimesed kasutused on läbi</small></label>
           <label class="fl" for="rComm">Partneri komisjon %<input id="rComm" type="number" min="0" max="90"><small>Protsent kliendi tasutud väärtusest</small></label>
           <label class="fl" for="rCommN">Komisjoni aken (kasutusi)<input id="rCommN" type="number" min="0" max="1000"><small>0 = alatiseks (praegu). Number = ainult nii mitu esimest kasutust toovad partnerile raha</small></label>
           <label class="fl" for="rEur">Krediidi väärtus €<input id="rEur" type="number" min="0" step="0.01"><small>10 krediiti = 5 € → 0,50</small></label>
@@ -1692,9 +1693,9 @@ img.ld{background:linear-gradient(90deg,var(--soft) 25%,var(--paper) 50%,var(--s
         <div class="tbl"><table><thead><tr><th>Kuupäev</th><th>Kirjeldus</th><th>Krediidid</th><th>Summa</th></tr></thead><tbody id="hist"></tbody></table></div></div>
     </div>
     <div class="spane" data-pane="referral" hidden>
-      <h2>Sooduskood</h2><p class="lead">Partneri kood annab −20% esimeselt 20 objektivaatelt ja esituspildilt.</p>
-      <div class="refhero"><div class="tag" style="color:#8F877E">Partnerprogramm</div><h3>Said koodi partnerilt? Lisa see ja säästa 20% esimesel 20 korral.</h3>
-        <p>Objektivaade ja esituspilt on koodiga 20% soodsamad. Soodustus rakendub automaatselt, kuni 20 kasutust on täis.</p></div>
+      <h2>Sooduskood</h2><p class="lead">Partneri kood annab −20% esimeselt 20 kasutuselt ja pärast seda −5% alatiseks.</p>
+      <div class="refhero"><div class="tag" style="color:#8F877E">Partnerprogramm</div><h3>Said koodi partnerilt? Lisa see ja säästa 20% esimesel 20 korral, edasi 5% alatiseks.</h3>
+        <p>Kõik tööriistad on koodiga esimesed 20 kasutust 20% soodsamad ja pärast seda alatiseks 5% soodsamad. Soodustus rakendub automaatselt.</p></div>
       <div class="card"><div class="tag">Sinu kood</div><div id="promoBox"></div><span class="fhint">Ühel kontol saab olla üks sooduskood.</span></div>
     </div>
     <div class="spane" data-pane="widget" hidden>
@@ -1711,7 +1712,7 @@ img.ld{background:linear-gradient(90deg,var(--soft) 25%,var(--paper) 50%,var(--s
           <button type="button" class="wopt" data-m="min"><span class="wmk"><span class="wc sm"><i class="t2"></i><span class="wr"><i class="bi"></i><i class="bb"></i></span></span></span><b>Minimalistlik</b><small>Väike ja õhuke: ainult pealkiri ja aadressi lahter. Sobib igale lehele, 3D avaneb uues aknas.</small></button>
           <button type="button" class="wopt" data-m="dark"><span class="wmk"><span class="wc dk"><i class="t1"></i><i class="t2"></i><i class="t3"></i><span class="wr"><i class="bi"></i><i class="bb"></i></span></span></span><b>Tume</b><small>Sama mis klassikaline, aga tumedal taustal. Paistab heledal kodulehel kohe silma.</small></button>
         </div></div>
-        <div class="uses"><b>Vidinaga −30% alatiseks: iga päring 7 krediiti (3,50 €) tavalise 10 asemel.</b>Vidin ise on tasuta. Päringuga tuleb kaasa kliendi nimi, e-post ja aadress ning maja 3D-vaade ja mõõdud. Objekt on kohe sinu töölaual.</div>
+        <div class="uses"><b>Vidin ja päringud on tasuta. Maksad sama hinda mis tööriistadel.</b>Maja 3D päringuga <span class="vpObj">1 krediit</span>, iga pilt kliendi hoovis <span class="vpPic">1,8 krediiti</span>. Päringuga tuleb kaasa kliendi nimi, e-post ja aadress ning maja 3D-vaade ja mõõdud. Objekt on kohe sinu töölaual.</div>
         <div style="display:flex;gap:10px;flex-wrap:wrap"><button type="button" class="apply" id="wSave">Näita eelvaadet minu kodulehel</button><button type="button" class="ghost" id="wCopy">Kopeeri kodulehe kood</button></div>
         <label class="fl" for="wCode"><span id="wCodeL">Kood kodulehele (kleebi sinna, kus kast peab olema)</span><textarea id="wCode" class="codebox" rows="3" readonly></textarea><small>Töötab WordPressis, Wixis, Webflow's ja igal tavalisel kodulehel. Nupuna: kasuta lihtsalt linki koodi seest.</small></label>
       </div>
@@ -1750,7 +1751,7 @@ img.ld{background:linear-gradient(90deg,var(--soft) 25%,var(--paper) 50%,var(--s
       <div style="display:flex;gap:10px;flex-wrap:wrap"><button type="button" class="apply" id="prAdd">+ Lisa toode</button><button type="button" class="ghost" id="prTry">Proovi oma hoovis</button></div>
       <div class="prgrid" id="prGrid"></div>
       <div class="uses"><b>Head tootepildid annavad head tulemused</b>Lisa 2–3 pilti eri nurkadest, kus toode on tervikuna näha, ühtlase tausta ja päevavalgusega. Päris mõõdud aitavad AI-l panna toote kliendi pildile õiges suuruses.</div>
-      <div class="uses"><b>Hind</b>Iga pilt kliendi hoovis 2 krediiti (1 €). Päring vidinast 7 krediiti (3,50 €). Tootepildid peavad olema sinu omad või sul peab olema õigus neid kasutada.</div>
+      <div class="uses"><b>Hind</b>Iga pilt kliendi hoovis <span class="vpPic">1,8 krediiti</span>, sama mis Toode pildile. Päring ise on tasuta. Tootepildid peavad olema sinu omad või sul peab olema õigus neid kasutada.</div>
     </div>
     <div class="spane" data-pane="seller" hidden>
       <h2>Teeni Vaade3D-ga</h2><p class="lead">Tutvusta Vaade3D-d firmadele: katusefirmad, telkide rendid, saunade müüjad ja kõik, kes müüvad midagi kodu või hoovi jaoks. Iga firma, kes liitub sinu koodiga, toob sulle raha.</p>
@@ -2589,16 +2590,17 @@ var PLANS={credits:{id:'credits',name:'Krediidid',eur:0,objN:0,design:false,pic:
 function curPlan(){return null;const pl=acct.plan&&PLANS[acct.plan.id];if(!pl||pl.id==='credits')return null;const ym=today().slice(0,7);if(acct.plan.month!==ym){acct.plan.month=ym;acct.plan.used=0;}return pl;}
 function planCovers(kind){const pl=curPlan();if(!pl)return false;if(kind==='obj')return (acct.plan.used||0)<pl.objN;if(kind==='design')return pl.design;if(kind==='pic')return pl.pic;return false;}
 function planLeft(){const pl=curPlan();return pl?Math.max(0,pl.objN-(acct.plan.used||0)):0;}
-function basePrice(kind){kind=kind||'obj';const b=COSTS[kind]||10;return promoActive()?+(b*(1-acct.promo.pct/100)).toFixed(2):b;}
+function promoAfter(){const p=acct.promo,a=p?+(p.after??(acct.admRules&&acct.admRules.discA)??5):0;return p&&!(p.left>0)&&a>0?a:0;}
+function basePrice(kind){kind=kind||'obj';const b=COSTS[kind]||10;if(promoActive())return +(b*(1-acct.promo.pct/100)).toFixed(2);const a=promoAfter();return a?+(b*(1-a/100)).toFixed(2):b;}
 function price(kind){kind=kind||'obj';return planCovers(kind)?0:basePrice(kind);}
 function crTxt(n){n=+(+n).toFixed(2);return String(n).replace('.',',')+(n===1?' krediit':' krediiti');}
-function priceTxt(kind){kind=kind||'obj';if(planCovers(kind))return curPlan().name+' paketis'+(kind==='obj'?` (${planLeft()} alles)`:'');const p=price(kind);return promoActive()?`${String(p).replace('.',',')} krediiti (−${acct.promo.pct}%)`:crTxt(+p);}
+function priceTxt(kind){kind=kind||'obj';if(planCovers(kind))return curPlan().name+' paketis'+(kind==='obj'?` (${planLeft()} alles)`:'');const p=price(kind);return promoActive()?`${String(p).replace('.',',')} krediiti (−${acct.promo.pct}%)`:promoAfter()?`${crTxt(+p)} (−${promoAfter()}%)`:crTxt(+p);}
 function charge(label,kind){kind=kind||'obj';if(planCovers(kind)){const pl=curPlan();if(kind==='obj')acct.plan.used=(acct.plan.used||0)+1;acct.hist.push({d:today(),t:label+' · '+pl.name+' paketis',c:0,e:'—',k:kind});save();return 0;}
   const p=price(kind),pr=promoActive();acct.credits=+(acct.credits-p).toFixed(2);acct.hist.push({d:today(),t:label+(pr?` · kood ${pr.code} −${pr.pct}%`:''),c:-p,e:'—',k:kind});if(pr)pr.left--;save();return p;}
 function myCode(){return ((acct.company||acct.name||'OBJEKT').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^A-Za-z0-9]/g,'').toUpperCase().slice(0,12)||'OBJEKT')+'20';}
 function applyPromo(code){code=(code||'').trim().toUpperCase();if(!code)return 'Sisesta kood.';if(acct.promo)return 'Kontole on kood juba lisatud. Ühel kontol saab olla üks kood.';
   const P=PROMOS[code];if(!P)return 'Sellist koodi ei leitud.';acct.promo={code,pct:P.pct,left:P.uses,total:P.uses};save();renderPromo();renderAcct();toast(`Kood ${code} lisatud · −${P.pct}% esimesed ${P.uses} korda`);return '';}
-function promoHTML(id){const p=acct.promo;if(p){const used=p.total-p.left;return `<div class="promo-ok" style="flex-direction:column;align-items:stretch;gap:8px">${p.left>0?`<span>✓ Kood <b style="font-family:var(--mono)">${p.code}</b> aktiivne · −${p.pct}% igalt objektivaatelt ja esituspildilt</span>`:`<span>Kood <b style="font-family:var(--mono)">${p.code}</b> on täielikult kasutatud</span>`}
+function promoHTML(id){const p=acct.promo;if(p){const used=p.total-p.left;return `<div class="promo-ok" style="flex-direction:column;align-items:stretch;gap:8px">${p.left>0?`<span>✓ Kood <b style="font-family:var(--mono)">${p.code}</b> aktiivne · −${p.pct}% kõigilt tööriistadelt, pärast ${p.total} kasutust −${p.after??5}% alatiseks</span>`:`<span>✓ Kood <b style="font-family:var(--mono)">${p.code}</b> aktiivne · −${p.after??5}% alatiseks (esimesed ${p.total} kasutust −${p.pct}% on läbi)</span>`}
     <div class="prog" style="background:rgba(47,125,79,.18)"><i style="width:${used/p.total*100}%;background:var(--ok)"></i></div><span style="font-weight:500">Kasutatud ${used} / ${p.total} · jäänud ${p.left}</span></div>`;}return `<form class="promo" data-pf="${id}"><input id="${id}" type="text" placeholder="Sisesta sooduskood" aria-label="Sooduskood" autocomplete="off"><button class="ghost" type="submit">Lisa kood</button></form><p class="err" id="${id}Err" style="margin-top:6px"></p>`;}
 function renderPromo(){$('promoBox').innerHTML=promoHTML('promoIn');$('promoBox2').innerHTML=acct.promo?promoHTML('promoIn2'):'';
   document.querySelectorAll('[data-pf]').forEach(f=>f.onsubmit=e=>{e.preventDefault();const id=f.dataset.pf,err=applyPromo($(id).value);if(err)$(id+'Err').textContent=err;});
@@ -3091,7 +3093,7 @@ function wReqStudio(r){if(!r)return;const s=stNewSession();s.title='Pildisoov ·
 /* ---------- seller program ---------- */
 function sellerCode(){const pt=acct.partners.find(x=>x.seller&&x.email===acct.email);return pt?pt.code:null;}
 function renderSeller(){const r=R(),code=sellerCode();
-  $('slSteps').innerHTML=[['01','Saad oma koodi','Hakka müüjaks ja saad isikliku koodi ning lingi.'],['02','Tutvusta firmale','Näita demo: maja 3D-s või firma toode kliendi hoovis. Firma liitub sinu lingiga.'],['03','Teeni iga kasutuse pealt',r.commN>0?`Sina saad ${r.comm}% iga firma esimese ${r.commN} kasutuse väärtusest. Firma saab −${r.disc}% esimeselt ${r.discN} kasutuselt.`:`Sina saad ${r.comm}% kõigest, mida sinu toodud firma maksab, alatiseks. Firma saab −${r.disc}% esimeselt ${r.discN} kasutuselt.`]].map(x=>`<div class="slr"><i>${x[0]}</i><b>${x[1]}</b><span>${x[2]}</span></div>`).join('');
+  $('slSteps').innerHTML=[['01','Saad oma koodi','Hakka müüjaks ja saad isikliku koodi ning lingi.'],['02','Tutvusta firmale','Näita demo: maja 3D-s või firma toode kliendi hoovis. Firma liitub sinu lingiga.'],['03','Teeni iga kasutuse pealt',r.commN>0?`Sina saad ${r.comm}% iga firma esimese ${r.commN} kasutuse väärtusest. Firma saab −${r.disc}% esimeselt ${r.discN} kasutuselt, edasi −${r.discA??5}% alatiseks.`:`Sina saad ${r.comm}% kõigest, mida sinu toodud firma maksab, alatiseks. Firma saab −${r.disc}% esimeselt ${r.discN} kasutuselt, edasi −${r.discA??5}% alatiseks.`]].map(x=>`<div class="slr"><i>${x[0]}</i><b>${x[1]}</b><span>${x[2]}</span></div>`).join('');
   if(!code){$('slBox').innerHTML=`<div class="ct"><b>Hakka müüjaks</b><span class="fhint">Tasuta, ilma kohustusteta</span></div><span>Sobib igaühele: ehitusvaldkonna inimesele, turundajale, tudengile. Sa ei pea ise äppi kasutama. <b>Teenid ${r.comm}% kõigest, mida sinu toodud firmad Vaade3D-s maksavad, ja seda alatiseks.</b></span><div><button type="button" class="apply" id="slJoin">Hakka müüjaks</button></div><span class="fhint">Väljamakse tehakse, kui teenitud summa on vähemalt ${eur(r.min)}. Eraisikuna müües arvesta, et komisjon on maksustatav tulu.</span>`;
     $('slJoin').onclick=()=>{const base=(acct.name||'MUUJA').split(' ')[0].toUpperCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^A-Z]/g,'').slice(0,8)||'MUUJA';let c=base+(10+Math.floor(Math.random()*89));while(acct.partners.some(x=>x.code===c))c=base+(10+Math.floor(Math.random()*89));
       acct.partners.push({code:c,owner:acct.name||'Müüja',email:acct.email,iban:'',created:today(),seller:true});save();syncPromos();renderSeller();toast('Oled müüja · kood '+c);};}
@@ -3347,7 +3349,7 @@ $('navHome').onclick=()=>show('home');$('logoBtn').onclick=()=>show('home');
 
 /* ---------- ADMIN: analytics, users, partners, payouts ---------- */
 acct.isAdmin=acct.isAdmin!==false;
-acct.admRules=Object.assign({disc:20,discN:20,comm:25,commN:0,eur:.5,min:20},acct.admRules||{});if(!acct.admRules.lifeMig){acct.admRules.commN=0;acct.admRules.lifeMig=1;}if(!acct.admRules.c25Mig){acct.admRules.comm=25;acct.admRules.c25Mig=1;}
+acct.admRules=Object.assign({disc:20,discN:20,discA:5,comm:20,commN:0,eur:.5,min:20},acct.admRules||{});if(!acct.admRules.c20Mig){acct.admRules.comm=20;if(acct.admRules.discA==null)acct.admRules.discA=5;acct.admRules.c20Mig=1;}if(!acct.admRules.lifeMig){acct.admRules.commN=0;acct.admRules.lifeMig=1;}if(!acct.admRules.c25Mig){acct.admRules.c25Mig=1;}
 const commCap=()=>acct.admRules.commN>0?acct.admRules.commN:Infinity,commTxt=()=>acct.admRules.commN>0?`esimese ${acct.admRules.commN} kasutuse`:'kõigi kasutuste (alatiseks)';
 acct.partners=acct.partners||[{code:'MAXNOULIK',owner:'Max Nõulik',email:'',iban:'',created:'2026-09-01'}];
 acct.payouts=acct.payouts||[];
@@ -3471,8 +3473,8 @@ const LIKES=['3D-vaade','Mõõdud ja pinnad','AI-abiline','Esituspilt','Kiirus',
 const EVN={signup:'registreerus',purchase:'ostis krediite',obj:'lõi objektivaate',pic:'genereeris esituspildi',promo:'lisas sooduskoodi',lead:'sai päringu kodulehelt'};
 function renderActivity(){const f=$('aF').value,ev=allUsers().flatMap(u=>u.ev.map(e=>({...e,u}))).filter(e=>f==='all'||e.t===f).sort((a,b)=>a.d<b.d?1:-1).slice(0,150);
   $('feed').innerHTML=ev.map(e=>`<div class="fi"><span class="dot d-${e.t}"></span><div><b>${e.u.name}</b> ${e.t==='purchase'&&e.eur<0?'raha tagastati':(EVN[e.t]||e.t)}${e.t==='purchase'?` · ${e.cr} krediiti · ${eur(e.eur)}`:''}${e.t==='lead'?` · ${String(e.cr).replace('.',',')} krediiti`:''}${e.t==='promo'?` · <span class="codepill">${e.code}</span>`:''}${(e.t==='obj'||e.t==='pic')?` · ${String(e.cr).replace('.',',')} krediiti`:''}<small class="td2">${e.u.company}</small></div><time>${e.d.split('-').reverse().join('.')}</time></div>`).join('');}
-function renderRules(){const r=R();$('rDisc').value=r.disc;$('rDiscN').value=r.discN;$('rComm').value=r.comm;$('rCommN').value=r.commN;$('rEur').value=r.eur;$('rMin').value=r.min;
-  const d=10*(1-r.disc/100);$('rulesEx').innerHTML=`<b>Näide ühe kliendi kohta</b><ul><li>Esimesed ${r.discN} kasutust maksavad kliendile ${String(d).replace('.',',')} krediiti (${eur(d*r.eur)}), edasi 10 krediiti (${eur(10*r.eur)}).</li>
+function renderRules(){const r=R();$('rDisc').value=r.disc;$('rDiscN').value=r.discN;$('rDiscA').value=r.discA??5;$('rComm').value=r.comm;$('rCommN').value=r.commN;$('rEur').value=r.eur;$('rMin').value=r.min;
+  const d=10*(1-r.disc/100);$('rulesEx').innerHTML=`<b>Näide ühe kliendi kohta</b><ul><li>Esimesed ${r.discN} kasutust maksavad kliendile ${String(d).replace('.',',')} krediiti (${eur(d*r.eur)}), edasi ${String(+(10*(1-(r.discA??5)/100)).toFixed(2)).replace('.',',')} krediiti (−${r.discA??5}%, alatiseks).</li>
    <li>${r.commN>0?`Partner saab ${r.comm}% kliendi esimese ${r.commN} kasutuse väärtusest: ${r.discN} × ${eur(d*r.eur*r.comm/100)} + ${Math.max(0,r.commN-r.discN)} × ${eur(10*r.eur*r.comm/100)} = <b>${eur(Math.min(r.discN,r.commN)*d*r.eur*r.comm/100+Math.max(0,r.commN-r.discN)*10*r.eur*r.comm/100)}</b>`:`Partner saab ${r.comm}% <strong>alatiseks</strong> kõigest, mida tema toodud klient kulutab: soodushinnaga objektivaade ${eur(d*r.eur*r.comm/100)}, tavahinnaga ${eur(10*r.eur*r.comm/100)} iga kasutuse kohta. Näiteks firma, kes teeb kuus 20 objektivaadet, toob partnerile ~${eur(20*10*r.eur*r.comm/100)} kuus`} ühe aktiivse kliendi pealt.</li>
    <li>Väljamakse tehakse, kui partneri maksmata summa on vähemalt ${eur(r.min)}.</li></ul>`;}
 function fbAll(){return allUsers().flatMap(u=>(u.fb||[]).map(f=>({...f,u})));}
@@ -3620,7 +3622,7 @@ function renderAdmin(tab){tab=tab||document.querySelector('[data-atab][aria-curr
 document.querySelectorAll('[data-atab]').forEach(b=>b.onclick=()=>renderAdmin(b.dataset.atab));
 document.querySelectorAll('#rng button').forEach(b=>b.onclick=()=>{admRange=+b.dataset.d;document.querySelectorAll('#rng button').forEach(x=>x.setAttribute('aria-pressed',x===b));renderOverview();});
 $('uQ').addEventListener('input',renderUsers);$('uF').onchange=renderUsers;$('aF').onchange=renderActivity;$('admBack').onclick=()=>show('home');
-$('rulesF').onsubmit=e=>{e.preventDefault();const n=id=>Math.max(0,+$(id).value||0);acct.admRules={disc:Math.min(90,n('rDisc')),discN:n('rDiscN'),comm:Math.min(90,n('rComm')),commN:n('rCommN'),eur:n('rEur'),min:n('rMin')};save();syncPromos();renderRules();toast('Reeglid salvestatud');};
+$('rulesF').onsubmit=e=>{e.preventDefault();const n=id=>Math.max(0,+$(id).value||0);acct.admRules={...acct.admRules,disc:Math.min(90,n('rDisc')),discN:n('rDiscN'),discA:Math.min(90,n('rDiscA')),comm:Math.min(90,n('rComm')),commN:n('rCommN'),eur:n('rEur'),min:n('rMin')};save();syncPromos();renderRules();toast('Reeglid salvestatud');};
 $('addPartner').onclick=async()=>{const ok=await ask2('Lisa partner','Partner saab oma sooduskoodi. Tema kliendid saavad soodustuse ja partner komisjoni programmi reeglite järgi.','Lisa partner',
   `<div style="display:flex;flex-direction:column;gap:10px"><label class="fl" for="npCode">Kood<input id="npCode" type="text" placeholder="NT KATUSEPRO" style="text-transform:uppercase;font-family:var(--mono)"></label><label class="fl" for="npOwner">Partneri nimi<input id="npOwner" type="text"></label><label class="fl" for="npMail">E-post<input id="npMail" type="email"></label><label class="fl" for="npIban">IBAN<input id="npIban" type="text" placeholder="EE00 …"></label></div>`);
   if(!ok)return;const code=($('npCode').value||'').trim().toUpperCase().replace(/[^A-Z0-9]/g,''),owner=($('npOwner').value||'').trim();
@@ -3723,9 +3725,9 @@ async function clLoad(){const sb=CL.sb;const {data:{user}}=await sb.auth.getUser
   acct.email=user.email;acct.name=pr.name||acct.name||'';acct.company=co.name;acct.niche=co.niche||acct.niche;acct.cphone=co.phone||'';acct.web=co.web||'';acct.reg=co.reg_code||'';acct.logo=co.logo_url||null;acct.logoOnImg=co.logo_on_images!==false;
   const arr=(v,d)=>Array.isArray(v)&&v.length?v:d;acct.services=arr(co.services,acct.services);acct.areas=arr(co.areas,acct.areas);acct.roofMat=arr(co.roof_mat,acct.roofMat);acct.wallMat=arr(co.wall_mat,acct.wallMat);
   clLedger(led);
-  acct.promo=co.partner_code?{code:co.partner_code,pct:+st.promo_pct,left:co.promo_left,total:st.promo_uses}:null;
-  COSTS.obj=+st.price_obj;COSTS.pic=+st.price_pic;COSTS.design=+st.price_design;if(st.price_3d!=null)COSTS['3d']=+st.price_3d;
-  acct.admRules=Object.assign({},acct.admRules,{disc:+st.promo_pct,discN:st.promo_uses,comm:+st.partner_pct,commN:st.partner_uses,eur:+st.credit_eur,min:+st.payout_min});
+  acct.promo=co.partner_code?{code:co.partner_code,pct:+st.promo_pct,left:co.promo_left,total:st.promo_uses,after:+(st.promo_after_pct??5)}:null;
+  COSTS.obj=+st.price_obj;COSTS.pic=+st.price_pic;COSTS.design=+st.price_design;if(st.price_3d!=null)COSTS['3d']=+st.price_3d;if(st.price_lead!=null)COSTS.lead=+st.price_lead;
+  acct.admRules=Object.assign({},acct.admRules,{disc:+st.promo_pct,discN:st.promo_uses,discA:+(st.promo_after_pct??5),comm:+st.partner_pct,commN:st.partner_uses,eur:+st.credit_eur,min:+st.payout_min});
   // objektid: serveri omad; uue konto puhul jäävad näidismajad näha
   if((obj||[]).length){acct.objects=obj.map(o=>o.ehr);acct.objModels={};obj.forEach(o=>{if(o.model_url)acct.objModels[o.ehr]=o.model_url;});acct.jobs={};acct.htpl={};acct.roofTypes={};obj.forEach(o=>{if(o.job)acct.jobs[o.ehr]=o.job;if(o.tpl)acct.htpl[o.ehr]=o.tpl;if(o.roof_type)acct.roofTypes[o.ehr]=o.roof_type;});
     const want=new Set(acct.objects);for(let k=HOUSES.length-1;k>=0;k--)if(!want.has(HOUSES[k].ehr))HOUSES.splice(k,1);
@@ -3767,7 +3769,7 @@ async function clSync(){if(!CL.cid||CL.busy){if(CL.cid){clearTimeout(CL.syncT);C
           CL.objs.add(e);CL.objLabel=null;}else if(JSON.stringify((old.jobs||{})[e])!==JSON.stringify(row.job)||(old.rt||{})[e]!==row.roof_type)await sb.from('objects').update({job:row.job,roof_type:row.roof_type}).eq('company_id',cid).eq('ehr',e).is('deleted_at',null);}}
     if(ch('del')){const del=(acct.deleted||[]).filter(e=>!(old.del||[]).includes(e));if(del.length){await sb.from('objects').update({deleted_at:new Date().toISOString()}).eq('company_id',cid).in('ehr',del).is('deleted_at',null);del.forEach(e=>CL.objs.delete(e));acct.objects=(acct.objects||[]).filter(e=>!del.includes(e));}}
     if((acct.feedback||[]).length>(old.fb||0)){for(const f of acct.feedback.slice(old.fb||0))await sb.from('feedback').insert({company_id:cid,stars:(+f.stars>=1&&+f.stars<=5)?+f.stars:null,nps:(f.nps!==null&&+f.nps>=0&&+f.nps<=10)?+f.nps:null,likes:f.like||[],fixes:f.fix||[],comment:String(f.txt||'').slice(0,2000)||null});}
-    if(CL.admin&&ch('ar')&&acct.admRules){const r=acct.admRules;chk(await sb.from('settings').update({promo_pct:+r.disc,promo_uses:+r.discN,partner_pct:+r.comm,partner_uses:+r.commN,credit_eur:+r.eur,payout_min:+r.min}).eq('id',1));}
+    if(CL.admin&&ch('ar')&&acct.admRules){const r=acct.admRules;chk(await sb.from('settings').update({promo_pct:+r.disc,promo_uses:+r.discN,promo_after_pct:+(r.discA??5),partner_pct:+r.comm,partner_uses:+r.commN,credit_eur:+r.eur,payout_min:+r.min}).eq('id',1));}
     if(ch('iban')){const p=acct.partners.find(x=>x.cloud);if(p)await sb.from('partners').update({iban:p.iban||null}).eq('code',p.code);}
     CL.snap=clSnap();clRaw('oai_acct',acct);
   }catch(e){console.warn('sync',e);const m=String(e&&e.message||'');
@@ -6617,7 +6619,7 @@ const css=document.createElement('style');css.textContent=`.stat.cr.low{backgrou
 .rates.r3{grid-template-columns:repeat(auto-fit,minmax(150px,1fr))!important}.rates.r3 .rate span{white-space:nowrap;font-size:11.5px}`;document.head.appendChild(css);
 /* vaikehinnad (server kirjutab üle) */
 Object.assign(COSTS,{obj:COSTS.obj===10?8:COSTS.obj,pic:COSTS.pic===4?3.6:COSTS.pic,design:COSTS.design===2?1.8:COSTS.design});
-if(COSTS['3d']==null)COSTS['3d']=6;if(COSTS.video==null)COSTS.video=5.4;
+if(COSTS['3d']==null)COSTS['3d']=3;if(COSTS.video==null)COSTS.video=5.4;
 /* hind komaga: 5,4 krediiti */
 const _pt=priceTxt;priceTxt=function(){return String(_pt.apply(this,arguments)).replace(/(\d)\.(\d)/g,'$1,$2');};
 const n=v=>String(+(+v).toFixed(2)).replace('.',',');
@@ -6731,6 +6733,21 @@ function choose(){if($('mhDlg'))return;const o=basePrice('obj'),f=+(o+basePrice(
 window.v3dHouseChoice=choose;
 document.addEventListener('click',e=>{const c=e.target.closest&&e.target.closest('.tcard[data-t="maja"]');if(!c)return;e.preventDefault();e.stopImmediatePropagation();choose();},true);
 })();
+
+/* ---------- 26.10: hind igal tööriistakaardil (Maja 3D: kaks valikut vaikselt) ---------- */
+try{(()=>{
+const css=document.createElement('style');css.textContent='#tGrid .tpr{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 6px;font:500 12px var(--mono);color:var(--muted);margin-top:-2px}#tGrid .tpr b{font:700 12.5px var(--mono);color:var(--ink)}#tGrid .tpr em{font-style:normal;opacity:.85}';document.head.appendChild(css);
+const eur=n=>{const v=n*((acct.admRules&&+acct.admRules.eur)||0.5);return (Number.isInteger(+v.toFixed(2))?String(+v.toFixed(2)):v.toFixed(2)).replace('.',',')+' €';};
+const P=k=>{const v=basePrice(k);return isFinite(v)?v:0;};
+const ROW={maja:()=>{const o=P('obj'),f=+(o+P('3d')).toFixed(2);return `<b>${crTxt(o)}</b><span>${eur(o)}</span><em>· fotodega ${crTxt(f)}</em>`;},
+  pane:()=>`<b>${crTxt(P('design'))}</b><span>pilt · ${eur(P('design'))}</span>`,
+  vaba:()=>`<b>${crTxt(P('design'))}</b><span>pilt · ${eur(P('design'))}</span>`,
+  mudel3d:()=>`<b>${crTxt(P('3d'))}</b><span>mudel · ${eur(P('3d'))}</span>`,
+  vidin:()=>`<b>Sama hind</b><span>mis tööriistal, mille vidinas valid</span><em>· päring tasuta</em>`};
+function put(){document.querySelectorAll('.vpObj').forEach(e=>e.textContent=crTxt(P('obj')));document.querySelectorAll('.vpPic').forEach(e=>e.textContent=crTxt(P('design')));const g=$('tGrid');if(!g)return;g.querySelectorAll('.tcard').forEach(c=>{const f=ROW[c.dataset.t];if(!f)return;let r=c.querySelector('.tpr');if(!r){r=document.createElement('div');r.className='tpr';const tm=c.querySelector('.tm');tm?c.insertBefore(r,tm):c.appendChild(r);}const h=f();if(r.innerHTML!==h)r.innerHTML=h;});}
+const _r=renderTpls;renderTpls=function(){const x=_r.apply(this,arguments);try{put();}catch(_){}return x;};
+try{put();}catch(_){}setInterval(()=>{try{put();}catch(_){}},4000);
+})();}catch(e){console.warn('[kaardihind]',e);}
 
 restoreRT();renderList();renderPanel();build();updFotos();chatReset();setTab(false);renderAcct();
   if(CLOUD)clBoot();else if(!startFromHash()){if(DEV_AUTOLOGIN||store.get('oai_session',null))enter();else $('login').hidden=false;}tick();}

@@ -51,7 +51,7 @@ await customer('Kati Klient','kati@gmail.com');
 ok(await cuntil(()=>PS&&/renders/.test(PS.res||'')),'klient: pilt kohe (2 toodet)');
 ok(await CE(()=>document.getElementById('plPanel').textContent.includes('Aitäh')),'klient: päring juba saadetud');
 const pr=sql(`select prompt from renders where company_id='${cid}' order by created_at desc limit 1`);ok(/product 1: Peotelk/.test(pr)&&/product 2: Päikesepaneelid/.test(pr)&&/roof slope/.test(pr)&&/Choose the most natural spot/.test(pr),'juhis: telk punktis, paneelid katusel AI valikul',pr.slice(0,300));
-ok(b0-bal()===9,'firmalt: päring 7 + pilt 2 krediiti',[b0,bal()]);
+ok(b0-bal()===2,'firmalt: ainult pilt 2 krediiti, päring tasuta',[b0,bal()]);
 const mails=(await (await fetch(G+'/_log')).json()).filter(x=>x[0]==='mail');ok(mails.length===1&&/pildiga/.test(mails[0][1].subject),'firma sai ühe kirja koos pildiga',mails.map(m=>m[1].subject));
 // kinnitusega režiim
 await api('/rest/v1/widgets?company_id=eq.'+cid,{place_opts:{mode:'review',max_products:2,lead_first:true}},T,'PATCH');

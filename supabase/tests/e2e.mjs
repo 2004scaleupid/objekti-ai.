@@ -86,6 +86,7 @@ await v.fill('#wIn','Kibuvitsa tee 9');await v.evaluate(()=>document.getElementB
 await v.fill('#ldN','Kalle Kask');await v.fill('#ldE','kalle@klient.ee');await v.click('#leadF [type=submit]');
 ok(await (async()=>{for(let k=0;k<30;k++){if(await v.evaluate(()=>/Aitäh/.test(document.querySelector('.cvlead h4')?.textContent||'')))return true;await v.waitForTimeout(200);}return false;})(),'päring saadetud');
 ok(sql(`select name||'|'||email from leads where company_id='${cid}'`)==='Kalle Kask|kalle@klient.ee','päring on serveris');
+ok(sql(`select kind||'|'||(-delta) from credit_ledger where company_id='${cid}' and label like '%vidinast%'`).split('|')[0]==='obj','maja 3D päring vidinast = Maja 3D hind (obj), mitte päringutasu',sql(`select kind||'|'||delta from credit_ledger where company_id='${cid}' and label like '%vidinast%'`));
 const mails=await (await fetch(G+'/_log')).json();const mm=mails.filter(x=>x[0]==='mail');ok(mm.length===1&&mm[0][1].to[0]==='mari@katus.ee','firma sai e-kirja',mm.map(x=>x[1].to));
 // toote link otse
 await v.goto('about:blank');await v.goto(plink,{waitUntil:'domcontentloaded'});await v.waitForTimeout(3000);
@@ -94,7 +95,7 @@ const b1=dbBal();
 await v.evaluate(()=>{const c=document.createElement('canvas');c.width=640;c.height=480;c.getContext('2d').fillRect(0,0,640,480);PS.photo=c.toDataURL('image/jpeg',.8);PS.pins[PS.sel[0]]={x:50,y:60};PS.active=null;plDraw();});
 await v.fill('#plN','Kalle');await v.fill('#plE','kalle2@klient.ee');await v.fill('#plA','Kibuvitsa tee 9');await v.evaluate(()=>{plGenerate();});
 ok(await (async()=>{for(let k=0;k<40;k++){if(await v.evaluate(()=>PS&&/^https:/.test(PS.res||'')))return true;await v.waitForTimeout(250);}return false;})(),'AI pilt kliendi hoovis tehti (päring enne pilti)');
-ok(Math.abs(dbBal()-(b1-7-1.6))<1e-9,'firmalt võeti päring 7 + pilt 1,6 krediiti (soodusega disaini hind)',dbBal()-b1);
+ok(Math.abs(dbBal()-(b1-1.6))<1e-9,'pildiga päring: firmalt võeti ainult pilt 1,6 krediiti (soodusega disaini hind), päring tasuta',dbBal()-b1);
 ok(/^https:\/\/x\.supabase\.co\/storage\/v1\/object\/public\/renders\//.test(sql(`select image_url from leads where email='kalle2@klient.ee'`)),'päringuga läks kaasa AI pilt');
 await v.screenshot({path:D+'e2e-widget.png'});await b2.close();
 
@@ -128,7 +129,7 @@ await page.goto('https://app.vaade3d.ee/#paid=cs_cust');await until(()=>typeof a
 await ev(()=>{document.getElementById('logoutS').click();});await page.waitForLoadState('domcontentloaded');await until(()=>typeof acct!=='undefined'&&!document.getElementById('login').hidden,15000);
 await page.fill('#lEmail','max@seller.ee');await page.fill('#lPass','parool123');await page.click('#lSubmit');await until(()=>!document.getElementById('home').hidden,20000);
 await ev(()=>show('settings','seller'));await W(1500);
-ok(/Teenitud 26,8/.test(await ev(()=>document.getElementById('slSum').textContent)),'müüja näeb 25% tulu',await ev(()=>document.getElementById('slSum').textContent));
+ok(/Teenitud 21,5/.test(await ev(()=>document.getElementById('slSum').textContent)),'müüja näeb 20% tulu (alatiseks)',await ev(()=>document.getElementById('slSum').textContent));
 await page.screenshot({path:D+'e2e-seller.png'});
 // vale parool
 await ev(()=>{document.getElementById('logoutS').click();});await W(1500);await until(()=>typeof acct!=='undefined'&&!document.getElementById('login').hidden,15000);await page.fill('#lEmail','max@seller.ee');await page.fill('#lPass','vale');await page.click('#lSubmit');await W(1500);

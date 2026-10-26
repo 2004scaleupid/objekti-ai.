@@ -1,4 +1,4 @@
-// Avalik: päring vidinast. Salvestab nime, e-posti ja aadressi, võtab firmalt krediidid ja saadab e-kirja.
+// Avalik: päring vidinast. Salvestab nime, e-posti ja aadressi, päring ise on tasuta, maja 3D ilma pildita = Maja 3D hind; saadab e-kirja.
 import { cors, json, fail, admin, rateLimit, clientIp, spend, sendMail, esc, body, isEmail, isOurImage, tfetch, ownerEmails } from "../_shared/util.ts";
 
 const num = (v: unknown) => (typeof v === "number" && isFinite(v) && v >= 0 && v < 1e6 ? Math.round(v * 10) / 10 : null);
@@ -39,18 +39,22 @@ Deno.serve(async (req) => {
   };
   const { data: row, error } = await db.from("leads").insert(lead).select().single();
   if (error) return fail("salvestamine ebaõnnestus", 500);
-  // krediidid: kui saldo ei piisa, lubame väikese võla (kuni 3 päringut), et klient ei kaoks; edasi päringuid ei võeta
+  // 26.10: vidin maksab sama mis tööriistad. Päring ise on tasuta; pilt kliendi hoovis on juba makstud (widget-place, nagu Toode pildile).
+  // Maja 3D-ga päring (ilma pildita) = Maja 3D hind (obj). Kui saldo ei piisa, lubame väikese võla (kuni 3 korda), et klient ei kaoks.
   let paid = true;
-  try { await spend(w.company_id, "lead", "Päring vidinast · " + address.replace(/,.*$/, ""), row.id); }
-  catch {
-    paid = false;
-    const [{ data: s }, { data: bal }] = await Promise.all([db.from("settings").select("price_lead").eq("id", 1).single(), db.from("company_balance").select("credits").eq("company_id", w.company_id).maybeSingle()]);
-    const price = Number(s?.price_lead ?? 7), credits = Number(bal?.credits ?? 0);
-    if (credits - price < -3 * price) {
-      await db.from("leads").delete().eq("id", row.id);
-      return fail(`Seda vormi ei saa hetkel kasutada. Võta palun otse ühendust${c?.phone ? ": " + c.phone : "."}`, 503);
+  const withImg = !!(b.pending_image || lead.image_url);
+  if (!withImg) {
+    try { await spend(w.company_id, "obj", "Maja 3D vidinast · " + address.replace(/,.*$/, ""), row.id); }
+    catch {
+      paid = false;
+      const [{ data: s }, { data: bal }] = await Promise.all([db.from("settings").select("price_obj").eq("id", 1).single(), db.from("company_balance").select("credits").eq("company_id", w.company_id).maybeSingle()]);
+      const price = Number(s?.price_obj ?? 1), credits = Number(bal?.credits ?? 0);
+      if (credits - price < -3 * price) {
+        await db.from("leads").delete().eq("id", row.id);
+        return fail(`Seda vormi ei saa hetkel kasutada. Võta palun otse ühendust${c?.phone ? ": " + c.phone : "."}`, 503);
+      }
+      await db.from("credit_ledger").insert({ company_id: w.company_id, delta: -price, kind: "obj", label: "Maja 3D vidinast (võlg) · " + address.replace(/,.*$/, ""), ref: row.id });
     }
-    await db.from("credit_ledger").insert({ company_id: w.company_id, delta: -price, kind: "lead", label: "Päring vidinast (võlg) · " + address.replace(/,.*$/, ""), ref: row.id });
   }
   // vidina pildisoov: firma saab kirja alles koos pildiga (widget-place saadab selle)
   if (b.pending_image) { await db.from("leads").update({ delivered: { paid, pending_image: true } }).eq("id", row.id); return json({ ok: true, tok: row.tok }); }
