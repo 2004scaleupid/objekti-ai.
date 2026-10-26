@@ -1153,6 +1153,7 @@ input[type=checkbox]{accent-color:var(--accent)}
   .body{height:auto!important;flex:1;min-height:0}
   .studio.pcol{grid-template-columns:52px minmax(0,1fr)}
   .studio.pcol .stpanel{display:none}
+  .studio.p3.pcol{grid-template-columns:minmax(0,1fr)} /* 3D fotost: tööriistariba peidus, sisu ei tohi minna 52 px veergu */
   .stthread{padding-left:clamp(16px,3vw,48px);padding-right:clamp(16px,3vw,48px)}
   .stthread>*{max-width:1240px}
   .stbox{max-width:1000px}
@@ -5098,7 +5099,8 @@ function m3MyRow(){const el=$('stMy3d');if(!el)return;const M=p3Cloud()?m3All():
 function m3SideHtml(){const M=m3All().slice(0,3);return `<div class="stcard"><h3>Minu 3D-mudelid</h3><div class="m3li2">${M.map(m=>`<div class="m3li"><button type="button" class="m3lt" data-m3o="${stEsc(m.url)}">${m3Img(m)}<span><b>${stEsc(m3Title(m))}</b><small>${stEsc(m3Date(m)||'Objektiga seotud')}</small></span></button><button type="button" class="ghost" data-m3o="${stEsc(m.url)}" aria-label="Ava ${stEsc(m3Name(m))}">Ava</button></div>`).join('')}</div><button type="button" class="ghost" data-m3all style="align-self:flex-start">Kõik mudelid</button></div>`;}
 document.addEventListener('click',e=>{const o=e.target.closest&&e.target.closest('[data-m3o]'),a=e.target.closest&&e.target.closest('[data-m3all]');
   if(o){const u=o.dataset.m3o;if(safeUrl(u))m3Open(m3ByUrl(u),true);}else if(a)m3Picker(a);});
-function m3ByUrl(u){return m3All().find(x=>x.url===u)||{id:p3Path(u).split('/')[1],url:u,tpl:null,d:new Date().toISOString(),img:''};}
+// värske mudel pole veel kontol (loend uueneb hiljem): aadress sama töö sessioonist, muidu näitas „Lisa aadress“ seotud mudelil
+function m3ByUrl(u){const s=stSess(),e=s&&s.p3job&&s.p3job.url===u?s.p3ehr||null:null;return m3All().find(x=>x.url===u)||{id:p3Path(u).split('/')[1],url:u,tpl:null,d:new Date().toISOString(),img:'',ehr:e};}
 function m3Open(m,fresh){if(!m||!(safeUrl(m.url)||/^lod2:\d{5,12}$/.test(m.url)))return;if(fresh||STU.tpl!=='vaba')openStudio('vaba');let s=stSess();if(!s)s=stNewSession();
   s.model={ref:String(m.id),url:m.url,name:m3Name(m),scale:null,items:[],ehr:m.ehr||null,fit:null,garden:!!m.garden,gopt:{}};if(!s.title||s.title==='Uus töö')s.title=s.model.name;STU.edit=null;M3.tool='orbit';M3.pts=[];stSave();stRender();m3Load(s.model);}
 async function m3Load(m){if(!CL.sb||!CL.cid){m3Lod2(m);return;}try{const {data}=await CL.sb.from('model_marks').select('scale,items,public,ehr,fit').eq('company_id',CL.cid).eq('ref',m.ref).maybeSingle();
@@ -5127,7 +5129,8 @@ function m3OffHtml(m){if(!p3Cloud()||m3Room(m))return '';const L=m.ehr&&M3L2[m.e
   const cf=m.fit&&m.fit.conf&&m.fit.conf.ok&&m3AutoOn(m)?`<span class="fhint m3cf">${m3ConfTxt(m.fit.conf)}</span>`:'';
   return `<div class="stcard"><h3>Ametlikud mõõdud (${m3Yr(L)})</h3><span class="fhint">${stEsc(m3AddrTxt(m.ehr))}${chg}</span>${cf}${tg}${m3GardenHtml(m)}${R.map(r=>`<div class="row"><div class="k"><span>${r[0]}</span></div><b>${r[1]}</b></div>`).join('')}<span class="fhint">${LOD2_SRC}</span></div>`;}
 function m3Lod2(m){if(!m||!m.ehr)return;if(m.ehr in M3L2){m3AutoFit();return;}
-  loadLod2(m.ehr).then(async L=>{if(L)L.site=await Promise.race([m3SiteLoad(m,L).catch(()=>null),new Promise(r=>setTimeout(()=>r(null),6000))]);M3L2[m.ehr]=L;m3AutoFit();if(!$('studio').hidden)stRenderPanel();});}
+  // ümbrus: esimesel korral (aia andmed luuakse serveris) 6 s ei piisanud -> ümbruse hääl kadus vaikselt ja suund võis pöörduda
+  loadLod2(m.ehr).then(async L=>{if(L)L.site=await Promise.race([m3SiteLoad(m,L).catch(()=>null),new Promise(r=>setTimeout(()=>r(null),15000))]);M3L2[m.ehr]=L;m3AutoFit();if(!$('studio').hidden)stRenderPanel();});}
 /* Maja ümbrus suuna kontrolliks (ainult asukohad, LOD2 maja keskmest meetrites): krundi piir, piirded, teised hooned.
    Krunt ja piirded aia andmetest (garden, tasuta, vahemälus), hooned LOD2 kildudest. Puudub -> ümbruse hääl jääb ära. */
 async function m3SiteLoad(m,L){const site={E:[],B:[],P:null};let meta=null;
@@ -5136,7 +5139,9 @@ async function m3SiteLoad(m,L){const site={E:[],B:[],P:null};let meta=null;
   const ring=f=>{const r=[];for(let i=0;i+1<f.length;i+=2)r.push([f[i],f[i+1]]);return r;},seg=R=>R.forEach((p,i)=>site.E.push([p,R[(i+1)%R.length]]));
   if(meta){const par=(meta.parcels||[]).find(p=>pip([0,0],ring(p.g[0])));if(par){site.P=ring(par.g[0]);seg(site.P);}
     try{if(!window.V3DGarden){await new Promise((res,rej)=>{const sc=document.createElement('script');sc.src='js/garden.js?v=9';sc.onload=res;sc.onerror=rej;document.head.appendChild(sc);});}
-      if(meta.files&&meta.files.fences)V3DGarden.fencesFrom(await V3DGarden.img(meta.files.fences),meta.r).forEach(([a,b,x,y])=>site.E.push([[a,b],[x,y]]));}catch(_){}}
+      // piirded Maa-ameti WMS-ist on aeglased: eraldi 4 s piir, krunt ja hooned piisavad ka ilma
+      const fi=meta.files&&meta.files.fences?await Promise.race([V3DGarden.img(meta.files.fences),new Promise(r=>setTimeout(()=>r(null),4000))]):null;
+      if(fi)V3DGarden.fencesFrom(fi,meta.r).forEach(([a,b,x,y])=>site.E.push([[a,b],[x,y]]));}catch(_){}}
   const K=new Set();for(const dx of [-40,40])for(const dy of [-40,40])K.add(Math.floor((c[0]+dx)/250)+'_'+Math.floor((c[1]+dy)/250));
   const tiles=await Promise.all([...K].map(k=>window.lod2Get('geo/'+k+'.json').catch(()=>({}))));
   tiles.forEach(T=>Object.entries(T||{}).forEach(([e,b])=>{if(e===String(m.ehr)||!b||!b.c||!b.g)return;const dx=b.c[0]-c[0],dy=b.c[1]-c[1];if(Math.hypot(dx,dy)>40)return;
@@ -5314,7 +5319,10 @@ function m3Fit(V,L,rot0){if(!V||!V.model||!L||!L.g||!L.g.length||!(L.ridge>0))re
       ev.push(['kattuvus',sg(best.iou,b.iou,.03,false)]);
       // tugevad märgid (seinad, ümbrus, katuse kõrgus) ei tohi otsusele vastu rääkida, muidu suund ebakindel
       const strong=['seinad','ümbrus','katuse kõrgus'];for(const [nm,v] of ev){if(!v)continue;if(!pick){pick=v;why.push(nm);}else if(v!==pick&&strong.includes(nm)&&strong.includes(why[0]))clash=true;}
-      if(pick<0)best=b;dir={sure:!!pick&&!clash,why};}}
+      // halva sobituse korral (kattuvus < 0,8 või kõrgus > 8 % mööda) on kindel ainult siis, kui seinad või ümbrus toetavad otsust:
+      // Raudürdi 30 uus fotomudel – katuse kõrgus (vahe 0,12 m) ja kattuvus (0,05) olid mõlemad vales suunas -> „Suund ebakindel“ + „Pööra 180°“
+      const good=best.iou>=.8&&Math.abs(L.ridge/Hm/s-1)<=.08,shape=ev.some(([nm,v])=>(nm==='seinad'||nm==='ümbrus')&&v===pick);
+      if(pick<0)best=b;dir={sure:!!pick&&!clash&&(good||shape),why};}}
   const alt=C[(C.indexOf(best)+2)%4];
   // peatelg on peaaegu ruudukujulisel majal ebatäpne: täpsusta nurka ±10° (1°), siis ±1° (0,2°)
   for(const [w,st] of [[10,1],[1,.2]]){const t0=best.th;for(let d=-w;d<=w;d+=st){const r=iouAt(t0+d*Math.PI/180);if(r.iou>best.iou)best=r;}}
