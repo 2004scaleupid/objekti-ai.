@@ -6274,10 +6274,12 @@ const draw=()=>{const n=$('mhN');n.hidden=!PH.length;n.className='mhn';n.innerHT
 $('mhAdd').onclick=()=>$('mhFile').click();
 $('mhFile').onchange=e=>{const f=[...e.target.files].filter(x=>/^image\//.test(x.type)||/\.(jpe?g|png|webp|heic|heif)$/i.test(x.name||''));e.target.value='';PH=PH.concat(f).slice(0,12);draw();if(f.length)toast(PH.length<4?'Lisa kokku 4 fotot: eest, vasakult, tagant ja paremalt':'Fotod lisatud. Sisesta aadress ja vajuta „Loo objekt“.');};
 /* aadress avatud -> kohe 3D fotodest sama maja EHR-iga (mõõtkava LOD2-st) */
-F.addEventListener('submit',()=>{if(!PH.length)return;const files=PH.slice(),q=$('homeIn').value,m=findAddr(q);if(!m.length||(m.length>1&&norm(m[0][0])!==norm(q)))return;const ehr=m[0][1],t0=Date.now();
+// fotod järgivad iga avatud aadressi: ka soovituse valik ja juba olemasolev objekt (varem ainult „Loo objekt“ vajutus -> fotod kadusid vaikselt)
+const _oa=openAddress;openAddress=function(q,input,A){if(PH.length){let ehr=A&&A.ehr;if(!ehr){const m=findAddr(q||$('homeIn').value);if(m.length&&!(m.length>1&&norm(m[0][0])!==norm(q||'')))ehr=m[0][1];}if(ehr)phFollow(String(ehr));}return _oa.apply(this,arguments);};
+function phFollow(ehr){const files=PH.slice(),t0=Date.now();
   const iv=setInterval(()=>{const h=HOUSES[cur];if(Date.now()-t0>180000){clearInterval(iv);return;}
-    if(!$('body').hidden&&h&&h.ehr===ehr){clearInterval(iv);PH=[];draw();
-      setTimeout(()=>{const T=tplById(h.tpl);openStudio('mudel3d',files,{subject:'building',lock:true,ehr:h.ehr,label:(T?T.name:'Maja 3D')+' · '+h.short});toast('Maja on 3D-s. Nüüd teeme fotodest päris välimusega mudeli, mõõdud tulevad LOD2-st.');},700);}},400);},true);
+    if(!$('body').hidden&&h&&String(h.ehr)===ehr){clearInterval(iv);PH=[];draw();
+      setTimeout(()=>{const T=tplById(h.tpl);openStudio('mudel3d',files,{subject:'building',lock:true,ehr:h.ehr,label:(T?T.name:'Maja 3D')+' · '+h.short});toast('Maja on 3D-s. Nüüd teeme fotodest päris välimusega mudeli, mõõdud tulevad LOD2-st.');},700);}},400);}
 /* maja paneel: selgem tekst */
 const box=$('p3Box');if(box){const t=box.querySelector('.tag');if(t)t.textContent='Päris välimusega 3D (fotodega)';const b=$('p3Btn');if(b){b.textContent='Lisa maja fotod → päris 3D-mudel · '+priceTxt('3d');b.className='send';b.style.alignSelf='stretch';}
   const hn=box.querySelector('.fhint');if(hn)hn.textContent='Praegu näed maja LOD2 andmetest. Lisa 4 fotot (eest, vasakult, tagant, paremalt): AI teeb maja päris välimusega 3D-mudeli ja mõõdud tulevad Maa-ameti LOD2 andmetest. See on parim tulemus kliendile näitamiseks.';
