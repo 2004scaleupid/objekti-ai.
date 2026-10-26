@@ -1,7 +1,7 @@
 // Päris otsast-lõpuni test: päris äpp + päris supabase-js + päris PostgREST/RLS + päris Edge Functions (välised teenused matkitud)
 import { chromium } from 'playwright';import fs from 'fs';import crypto from 'crypto';import { execFileSync } from 'child_process';
 import { ANON } from '/var/tmp/h/keys.mjs';
-const G='http://127.0.0.1:54321',D='/home/claude/viimsi/t/';
+const G='http://127.0.0.1:54321',D='/home/claude/viimsi/t/';const DS=JSON.parse(fs.readFileSync('/home/claude/viimsi/ds.json','utf8'));
 const sql=q=>execFileSync('psql',['-h','/var/tmp/v3dpg','-p','5499','-U','postgres','-d','v3d','-tAq','-c',q],{encoding:'utf8'}).trim();
 execFileSync('python3',[D+'mklocal.py',`{url:'https://x.supabase.co',key:'${ANON}'}`,D+'e2e.html']);
 const html=fs.readFileSync(D+'e2e.html','utf8'),UMD=fs.readFileSync('/root/.cache/deno/npm/registry.npmjs.org/@supabase/supabase-js/2.45.4/dist/umd/supabase.js','utf8');
@@ -10,12 +10,22 @@ const b=await chromium.launch({executablePath:'/opt/pw-browsers/chromium_headles
 async function mkctx(br=b){const ctx=await br.newContext({viewport:{width:1366,height:900}});
   await ctx.route('https://fonts.googleapis.com/**',r=>r.abort());
   await ctx.route('https://checkout.stripe.com/**',r=>r.fulfill({body:'<html><body>Stripe test</body></html>',contentType:'text/html'}));
-  await ctx.route('https://app.vaade3d.ee/**',r=>r.fulfill({body:html,contentType:'text/html; charset=utf-8'}));
+  await ctx.route('https://app.vaade3d.ee/**',r=>{const u=new URL(r.request().url()),f='/home/claude/objekti-ai'+u.pathname;
+    if(/^\/(js|css|media|examples|vendor|data)\//.test(u.pathname)&&fs.existsSync(f)){const ext=f.split('.').pop();return r.fulfill({body:fs.readFileSync(f),contentType:{js:'application/javascript',css:'text/css',json:'application/json',jpg:'image/jpeg',webp:'image/webp',mp4:'video/mp4',webm:'video/webm',glb:'model/gltf-binary'}[ext]||'application/octet-stream'});}
+    return r.fulfill({body:html,contentType:'text/html; charset=utf-8'});});
   await ctx.route(/\/node_modules\//,r=>{const u=new URL(r.request().url());r.fulfill({body:fs.readFileSync(D+u.pathname.replace(/^.*?\/node_modules/,'node_modules')),contentType:'application/javascript; charset=utf-8'});});
   await ctx.route('https://cdn.jsdelivr.net/npm/@supabase/**',r=>r.fulfill({body:UMD,contentType:'application/javascript; charset=utf-8'}));
   await ctx.route('https://x.supabase.co/**',async r=>{const q=r.request(),u=new URL(q.url());if(q.method()==='OPTIONS')return r.fulfill({status:204,headers:{'access-control-allow-origin':'*','access-control-allow-headers':'*','access-control-allow-methods':'*'}});
     const h={...q.headers()};delete h.host;const ip=h['x-test-ip']||'8.8.8.8';h['cf-connecting-ip']=ip;
     try{const res=await fetch(G+u.pathname+u.search,{method:q.method(),headers:h,body:['GET','HEAD'].includes(q.method())?undefined:q.postDataBuffer()});const buf=Buffer.from(await res.arrayBuffer());const rh=Object.fromEntries(res.headers);rh['access-control-allow-origin']='*';rh['access-control-expose-headers']='*';delete rh['content-encoding'];delete rh['content-length'];delete rh['transfer-encoding'];r.fulfill({status:res.status,headers:rh,body:buf});}catch(e){r.fulfill({status:502,body:String(e)});}});
+  /* 26.10: Maa-ameti teenused matkitud: In-ADS aadressid vana Viimsi andmestiku järgi, LOD2 kildud repo failidest */
+  await ctx.route('https://inaadress.maaamet.ee/**',r=>{const q=(new URL(r.request().url()).searchParams.get('address')||'').toLowerCase().trim();
+    const rows=DS.A.filter(a=>a[0].toLowerCase().startsWith(q)||a[1]===q).slice(0,10).map(a=>({liik:'E',tunnus:a[1],ads_oid:a[2],ipikkaadress:a[0]+', Viimsi vald, Harju maakond',viitepunkt_x:DS.o[0]+a[4],viitepunkt_y:DS.o[1]+a[5]}));
+    r.fulfill({body:JSON.stringify({addresses:rows}),contentType:'application/json',headers:{'access-control-allow-origin':'*'}});});
+  await ctx.route(/x\.supabase\.co\/storage\/v1\/object\/public\/lod2\//,r=>{const m=new URL(r.request().url()).pathname.match(/lod2\/v1\/(\d{3})\.json/);
+    const f=m&&'/home/claude/lod2work/tiles/'+m[1]+'.json';if(f&&fs.existsSync(f))return r.fulfill({body:fs.readFileSync(f),contentType:'application/json',headers:{'access-control-allow-origin':'*'}});
+    r.fulfill({status:404,body:'{}',headers:{'access-control-allow-origin':'*'}});});
+  await ctx.route(/fotoladu\.maaamet\.ee|livekluster\.ehr\.ee|challenges\.cloudflare\.com/,r=>r.abort());
   return ctx;}
 const ctx=await mkctx();const page=await ctx.newPage();const errs=[];page.on('pageerror',e=>errs.push('PAGE '+e.message+' @ '+String(e.stack).split('\n').slice(1,3).join(' ').slice(0,200)));page.on('response',r=>{if(r.status()>=400)errs.push('HTTP '+r.status()+' '+r.url().slice(0,90));});page.on('console',m=>{if(m.type()==='error'&&!/ERR_FAILED|fonts/.test(m.text()))errs.push('CONSOLE '+m.text().slice(0,200));});
 const W=t=>page.waitForTimeout(t),ev=f=>page.evaluate(f),until=async(f,ms=8000)=>{const t=Date.now();while(Date.now()-t<ms){if(await page.evaluate(f).catch(()=>false))return true;await W(200);}return false;};
@@ -31,7 +41,7 @@ ok(await ev(()=>!document.getElementById('upFields').hidden&&document.getElement
 await page.goto('https://app.vaade3d.ee/#ref='+CODE.toLowerCase());await W(2500);
 ok(await ev(()=>!document.getElementById('login').hidden&&document.getElementById('skipBtn').hidden),'avaneb sisselogimine, demo nupp peidus');
 await ev(()=>setTab(true));await page.fill('#lEmail','mari@katus.ee');await page.fill('#lPass','parool123');await page.fill('#lName','Mari Maasikas');await page.fill('#lComp','Katus OÜ');await page.selectOption('#lNiche',{index:1});await page.selectOption('#lSrc',{index:1});ok(await ev(()=>!document.getElementById('lRefW').hidden&&document.getElementById('lRef').readOnly&&document.getElementById('lRef').value),'partneri lingiga: kood lisatud ja lukus');
-ok(await ev(()=>!!document.querySelector('#lKind button[data-k="firm"]')),'registreerimisel konto tüübi valik');await page.click('#lKind button[data-k="firm"]');await page.click('#lSubmit');ok(await until(()=>!document.getElementById('home').hidden,20000),'konto loodud ja töölaud avanes',await ev(()=>document.getElementById('lErr').textContent));
+ok(await ev(()=>!!document.querySelector('#lKind button[data-k="firm"]')),'registreerimisel konto tüübi valik');await page.click('#lKind button[data-k="firm"]');await page.check('#lTerms').catch(()=>{});await page.click('#lSubmit');ok(await until(()=>!document.getElementById('home').hidden,20000),'konto loodud ja töölaud avanes',await ev(()=>document.getElementById('lErr').textContent));
 const cid=sql(`select company_id from profiles where email='mari@katus.ee'`);const dbBal=()=>+sql(`select coalesce(sum(delta),0) from credit_ledger where company_id='${cid}'`);
 ok(await ev(()=>acct.credits)===30&&dbBal()===30,'saldo 30 tuleb serverist');
 ok(await ev(()=>acct.promo&&acct.promo.left===20),'müüja kood: 20 soodustusega kasutust');
@@ -39,7 +49,7 @@ ok(await ev(()=>!!CL.wid),'vidina ID olemas (loodi liitumisel)');
 
 console.log('\n== Objekt ==');
 await ev(()=>{openAddress('Kibuvitsa tee 9',document.getElementById('homeIn'));});await W(700);await page.click('#dYes');
-ok(await until(()=>CL.objs&&CL.objs.has('120681093'),8000),'objekt salvestati serverisse');
+ok(await until(()=>CL.objs&&CL.objs.has('120681093'),8000),'objekt salvestati serverisse',await ev(()=>({objs:CL.objs&&[...CL.objs],houses:HOUSES.map(h=>h.short+':'+h.ehr),cur,toast:document.getElementById('toast').textContent,dlg:!!document.querySelector('.modal:not([hidden]),#dlg:not([hidden])')})));console.log('ERRS',JSON.stringify(errs.slice(-8)));
 ok(dbBal()===22&&sql(`select count(*) from objects where company_id='${cid}'`)==='1','server võttis 8 krediiti',dbBal());
 // krediidita objekt ei jää alles
 sql(`insert into credit_ledger(company_id,delta,kind,label) values ('${cid}',-22,'admin','test')`);await ev(()=>clRefresh());

@@ -12,12 +12,21 @@ await api('/auth/v1/signup',{email:'stuudio@firma.ee',password:'parool123',data:
 const b=await chromium.launch({executablePath:'/opt/pw-browsers/chromium_headless_shell-1194/chrome-linux/headless_shell',args:['--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
 const ctx=await b.newContext({viewport:{width:1366,height:900}});
 await ctx.route('https://fonts.googleapis.com/**',r=>r.abort());
-await ctx.route('https://app.vaade3d.ee/**',r=>r.fulfill({body:html,contentType:'text/html; charset=utf-8'}));
+await ctx.route(/fonts\.gstatic|challenges\.cloudflare|fotoladu|livekluster/,r=>r.abort());await ctx.route('https://app.vaade3d.ee/**',r=>{const u=new URL(r.request().url()),f='/home/claude/objekti-ai'+u.pathname;
+    if(/^\/(js|css|media|examples|vendor)\//.test(u.pathname)&&fs.existsSync(f)){const ext=f.split('.').pop();return r.fulfill({body:fs.readFileSync(f),contentType:{js:'application/javascript',css:'text/css',json:'application/json',jpg:'image/jpeg',webp:'image/webp',mp4:'video/mp4',webm:'video/webm'}[ext]||'application/octet-stream'});}
+    return r.fulfill({body:html,contentType:'text/html; charset=utf-8'});});
 await ctx.route(/\/node_modules\//,r=>{const u=new URL(r.request().url());r.fulfill({body:fs.readFileSync(D+u.pathname.replace(/^.*?\/node_modules/,'node_modules')),contentType:'application/javascript; charset=utf-8'});});
 await ctx.route('https://cdn.jsdelivr.net/npm/@supabase/**',r=>r.fulfill({body:UMD,contentType:'application/javascript; charset=utf-8'}));
 await ctx.route('https://x.supabase.co/**',async r=>{const q=r.request(),u=new URL(q.url());if(q.method()==='OPTIONS')return r.fulfill({status:204,headers:{'access-control-allow-origin':'*','access-control-allow-headers':'*','access-control-allow-methods':'*'}});
   const h={...q.headers()};delete h.host;h['cf-connecting-ip']='9.9.9.9';
   const res=await fetch(G+u.pathname+u.search,{method:q.method(),headers:h,body:['GET','HEAD'].includes(q.method())?undefined:q.postDataBuffer()});const buf=Buffer.from(await res.arrayBuffer());const rh=Object.fromEntries(res.headers);rh['access-control-allow-origin']='*';delete rh['content-encoding'];delete rh['content-length'];delete rh['transfer-encoding'];r.fulfill({status:res.status,headers:rh,body:buf});});
+const DS=JSON.parse(fs.readFileSync('/home/claude/viimsi/ds.json','utf8'));
+await ctx.route('https://inaadress.maaamet.ee/**',r=>{const q=(new URL(r.request().url()).searchParams.get('address')||'').toLowerCase().trim();
+  const rows=DS.A.filter(a=>a[0].toLowerCase().startsWith(q)||a[1]===q).slice(0,10).map(a=>({liik:'E',tunnus:a[1],ads_oid:a[2],ipikkaadress:a[0]+', Viimsi vald, Harju maakond',viitepunkt_x:DS.o[0]+a[4],viitepunkt_y:DS.o[1]+a[5]}));
+  r.fulfill({body:JSON.stringify({addresses:rows}),contentType:'application/json',headers:{'access-control-allow-origin':'*'}});});
+await ctx.route(/x\.supabase\.co\/storage\/v1\/object\/public\/lod2\//,r=>{const m=new URL(r.request().url()).pathname.match(/lod2\/v1\/(\d{3})\.json/);const f=m&&'/home/claude/lod2work/tiles/'+m[1]+'.json';
+  if(f&&fs.existsSync(f))return r.fulfill({body:fs.readFileSync(f),contentType:'application/json',headers:{'access-control-allow-origin':'*'}});r.fulfill({status:404,body:'{}',headers:{'access-control-allow-origin':'*'}});});
+await ctx.route(/fotoladu\.maaamet\.ee|livekluster\.ehr\.ee|challenges\.cloudflare\.com/,r=>r.abort());
 const page=await ctx.newPage();const errs=[];page.on('pageerror',e=>errs.push(e.message+' @ '+String(e.stack).split('\n').slice(1,3).join(' ')));page.on('dialog',d=>d.dismiss());
 const W=t=>page.waitForTimeout(t),E=f=>page.evaluate(f),until=async(f,ms=10000)=>{const t=Date.now();while(Date.now()-t<ms){if(await page.evaluate(f).catch(()=>false))return true;await W(200);}return false;};
 
@@ -25,22 +34,22 @@ const kie=async()=>(await (await fetch(G+'/_log')).json()).filter(x=>x[0]==='kie
 await page.goto('https://app.vaade3d.ee/');await W(2000);
 await page.fill('#lEmail','stuudio@firma.ee');await page.fill('#lPass','parool123');await page.click('#lSubmit');ok(await until(()=>!document.getElementById('home').hidden,20000),'sisse logitud');
 const cid=sql(`select company_id from profiles where email='stuudio@firma.ee'`);const bal=()=>+sql(`select coalesce(sum(delta),0) from credit_ledger where company_id='${cid}'`);
-await page.click('.tcard[data-t="vaba"]');await W(500);ok(await E(()=>!document.getElementById('studio').hidden&&document.getElementById('studio').classList.contains('fresh')),'Vaba idee avab tühja stuudio');
+await page.waitForSelector('#kindDlg [data-k="firm"]',{timeout:6000}).then(()=>page.click('#kindDlg [data-k="firm"]')).catch(()=>{});await page.waitForTimeout(300);await page.click('.tcard[data-t="vaba"]');await W(500);ok(await E(()=>!document.getElementById('studio').hidden&&document.getElementById('studio').classList.contains('fresh')),'Vaba idee avab tühja stuudio');
 // 1) foto + tekst -> design, 2 varianti
 await page.click('#stDemo');await W(400);await page.fill('#stIn','Lisa katusele päikesepaneelid');const b0=bal();await page.click('#stGenBtn');
-ok(await until(()=>{const s=acct.studio[0];return s&&!s.msgs[s.msgs.length-1].pending;},20000),'pilt valmis');
+ok(await until(()=>{const s=acct.studio[0];return s&&s.msgs.length>=2&&s.msgs[s.msgs.length-1].role==='a'&&!s.msgs[s.msgs.length-1].pending;},40000),'pilt valmis');
 const r1=await E(()=>{const m=acct.studio[0].msgs;return {out:m[1].out,err:m[1].err,base:acct.studio[0].base};});
 ok(r1.out&&r1.out.length===2&&/storage\/v1\/object\/public\/renders/.test(r1.out[0])&&!r1.err,'2 varianti serverist',r1);
 ok(bal()===b0-2,'server võttis 2 krediiti',[b0,bal()]);
 const rs1=await E(()=>document.getElementById('stRes').textContent);ok(rs1.includes('−2 krediiti')&&rs1.includes('saldo '+String(bal()).replace('.',',')+' krediiti'),'chatis kulu ja serveri saldo',rs1);
 // 2) jätkamine valitud pildiga (1 tulemus, sisend = eelmine tulemus)
 await page.fill('#stIn','Tee katus punaseks');await page.click('#stGenBtn');
-ok(await until(()=>{const s=acct.studio[0];return !s.msgs[s.msgs.length-1].pending;},20000),'teine muudatus valmis');
+ok(await until(()=>{const s=acct.studio[0],m=s.msgs[s.msgs.length-1];return s.msgs.length%2===0&&m.role==='a'&&!m.pending;},40000),'teine muudatus valmis');
 const r2=await E(()=>{const m=acct.studio[0].msgs;return {out:m[3].out,err:m[3].err};});ok(r2.out&&r2.out.length===1,'jätkamine: 1 tulemus',r2);
 const last=sql(`select input_urls[1] from renders where company_id='${cid}' order by created_at desc limit 1`);ok(r1.out.includes(last)||/renders/.test(last),'jätkamisel kasutati eelmist AI-pilti',last);
 // 2b) märgitud ala -> server saab foto + märgitud koopia, prompt kirjeldab ala
 await E(()=>{stSess().marks.push({t:'rect',c:'#E5482D',a:[.2,.2],b:[.6,.4]});stRenderMarks();});await page.fill('#stIn','Pane alale 1 päikesepaneelid');await page.click('#stGenBtn');
-ok(await until(()=>{const s=acct.studio[0];return !s.msgs[s.msgs.length-1].pending;},20000),'märgiga muudatus valmis');
+ok(await until(()=>{const s=acct.studio[0],m=s.msgs[s.msgs.length-1];return s.msgs.length%2===0&&m.role==='a'&&!m.pending;},40000),'märgiga muudatus valmis');
 const mk=sql(`select array_length(input_urls,1)||'|'||prompt from renders where company_id='${cid}' order by created_at desc limit 1`);
 ok(mk.startsWith('2|')&&/Area 1 \("ala 1"\)/.test(mk)&&/x 20–60%/.test(mk)&&/Never draw the markings/.test(mk),'märgid: 2 sisendpilti ja ala kirjeldus promptis',mk.slice(0,300));
 ok(await E(()=>{const s=stSess();return s.imgs[s.tray[0]].k==='ai'&&s.imgs[s.tray[0]].marks.length===0;}),'pärast genereerimist on tulemus pilt 1 (märkideta)');
@@ -54,16 +63,17 @@ ok(await E(()=>!!document.querySelector('#stThread [data-juh]')),'vastuses on �
 await page.click('#stNew2');await W(300);await page.fill('#stIn','Moodne puitmaja männimetsas');const b1=bal();await page.click('#stGenBtn');
 ok(await until(()=>{const s=acct.studio[0];return s.msgs.length===2&&!s.msgs[1].pending;},20000),'tekstist pilt valmis');
 ok(bal()===b1-4&&sql(`select kind from renders where company_id='${cid}' order by created_at desc limit 1`)==='pic','tekstist pilt: kind pic, 4 krediiti',[b1,bal()]);
-// 4) teemat hoidev prompt (sisekujundus)
-await page.click('#stNew2');await W(300);await page.click('.stchip[data-t="sisek"]');await W(200);
-ok(await E(()=>document.getElementById('stGenBtn').disabled),'sisekujundus ilma fotota: Genereeri keelatud');
-await page.setInputFiles('#stFile',{name:'tuba.jpg',mimeType:'image/jpeg',buffer:Buffer.from(fs.readFileSync(D+'tpl.png'))}).catch(()=>{});await W(800);
-await page.fill('#stIn','Skandinaavia stiil');await page.click('#stGenBtn');
-ok(await until(()=>{const s=acct.studio[0];return s.msgs.length===2&&!s.msgs[1].pending;},20000),'sisekujundus valmis');
-const pr=sql(`select prompt from renders where company_id='${cid}' order by created_at desc limit 1`);ok(/Sisekujundus/.test(pr)&&/Skandinaavia stiil/.test(pr),'prompt sisaldab teemat ja soovi');
-ok(sql(`select tpl from renders where company_id='${cid}' order by created_at desc limit 1`)==='sisek','render märgitud mallile sisek');
+// 4) teemat hoidev prompt (Toode pildile); Sisekujundus ja Uus välimus pole enam valikus
+await page.click('#stNew2');await W(300);
+ok(await E(()=>!document.querySelector('.stchip[data-t="sisek"],.stchip[data-t="muuda"],.tcard[data-t="sisek"],.tcard[data-t="muuda"]')),'Sisekujundust ja Uut välimust pole valikus');
+await page.click('.stchip[data-t="pane"]');await W(200);
+await page.setInputFiles('#stFile',{name:'hoov.jpg',mimeType:'image/jpeg',buffer:Buffer.from(fs.readFileSync(D+'tpl.png'))}).catch(()=>{});await W(800);
+await page.fill('#stIn','Pane saun muru keskele');await page.click('#stGenBtn');
+ok(await until(()=>{const s=acct.studio[0];return s.msgs.length===2&&s.msgs[1].role==='a'&&!s.msgs[1].pending;},40000),'Toode pildile valmis');
+const pr=sql(`select prompt from renders where company_id='${cid}' order by created_at desc limit 1`);ok(/saun muru keskele/.test(pr),'prompt sisaldab soovi',pr.slice(0,200));
+ok(sql(`select tpl from renders where company_id='${cid}' order by created_at desc limit 1`)==='pane','render märgitud mallile pane');
 // 5) aadressitöö -> 3D-vaade
-await page.click('#stNew2');await W(300);await page.click('.stchip[data-t="katus"]');await W(200);await page.fill('#stIn','Kibuvitsa tee 9');await W(300);await page.keyboard.press('Enter');await W(1200);
+await page.click('#stNew2');await W(300);await page.click('.stchip[data-t="maja"]');await W(200);await page.fill('#stIn','Kibuvitsa tee 9');await W(300);await page.keyboard.press('Enter');await W(1200);
 ok(await E(()=>!document.getElementById('dlg').hidden||!document.getElementById('body').hidden),'aadress avab objekti loomise');
 ok(!errs.length,'JS vigu pole',errs);
 console.log(`\nKOKKU: ${pass} läbi, ${fails.length} ebaõnnestus`);if(fails.length)console.log(fails.map(f=>' - '+f).join('\n'));await b.close();

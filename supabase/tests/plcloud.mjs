@@ -12,7 +12,9 @@ await api('/auth/v1/signup',{email:'telgid@firma.ee',password:'parool123',data:{
 const b=await chromium.launch({executablePath:'/opt/pw-browsers/chromium_headless_shell-1194/chrome-linux/headless_shell',args:['--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
 const ctx=await b.newContext({viewport:{width:1366,height:900}});
 await ctx.route('https://fonts.googleapis.com/**',r=>r.abort());
-await ctx.route('https://app.vaade3d.ee/**',r=>r.fulfill({body:html,contentType:'text/html; charset=utf-8'}));
+await ctx.route(/fonts\.gstatic|challenges\.cloudflare|fotoladu|livekluster/,r=>r.abort());await ctx.route('https://app.vaade3d.ee/**',r=>{const u=new URL(r.request().url()),f='/home/claude/objekti-ai'+u.pathname;
+    if(/^\/(js|css|media|examples|vendor)\//.test(u.pathname)&&fs.existsSync(f)){const ext=f.split('.').pop();return r.fulfill({body:fs.readFileSync(f),contentType:{js:'application/javascript',css:'text/css',json:'application/json',jpg:'image/jpeg',webp:'image/webp',mp4:'video/mp4',webm:'video/webm'}[ext]||'application/octet-stream'});}
+    return r.fulfill({body:html,contentType:'text/html; charset=utf-8'});});
 await ctx.route(/\/node_modules\//,r=>{const u=new URL(r.request().url());r.fulfill({body:fs.readFileSync(D+u.pathname.replace(/^.*?\/node_modules/,'node_modules')),contentType:'application/javascript; charset=utf-8'});});
 await ctx.route('https://cdn.jsdelivr.net/npm/@supabase/**',r=>r.fulfill({body:UMD,contentType:'application/javascript; charset=utf-8'}));
 await ctx.route('https://x.supabase.co/**',async r=>{const q=r.request(),u=new URL(q.url());if(q.method()==='OPTIONS')return r.fulfill({status:204,headers:{'access-control-allow-origin':'*','access-control-allow-headers':'*','access-control-allow-methods':'*'}});
@@ -28,7 +30,9 @@ for(const [n,pl] of [['Peotelk 6×12','ground'],['Päikesepaneelid 10 kW','roof'
 await api('/rest/v1/widgets?company_id=eq.'+cid,{features:'both',place_opts:{mode:'instant',max_products:2,lead_first:true}},T,'PATCH');
 const b64=o=>Buffer.from(JSON.stringify(o)).toString('base64').replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
 // klient kodulehe vidinas
-async function newCx(){const cx=await b.newContext({viewport:{width:1366,height:900}});await cx.route('https://fonts.googleapis.com/**',r=>r.abort());await cx.route('https://app.vaade3d.ee/**',r=>r.fulfill({body:html,contentType:'text/html; charset=utf-8'}));
+async function newCx(){const cx=await b.newContext({viewport:{width:1366,height:900}});await cx.route('https://fonts.googleapis.com/**',r=>r.abort());await cx.route(/fonts\.gstatic|challenges\.cloudflare|fotoladu|livekluster|inaadress/,r=>r.abort());await cx.route('https://app.vaade3d.ee/**',r=>{const u=new URL(r.request().url()),f='/home/claude/objekti-ai'+u.pathname;
+    if(/^\/(js|css|media|examples|vendor)\//.test(u.pathname)&&fs.existsSync(f)){const ext=f.split('.').pop();return r.fulfill({body:fs.readFileSync(f),contentType:{js:'application/javascript',css:'text/css',json:'application/json',jpg:'image/jpeg',webp:'image/webp',mp4:'video/mp4',webm:'video/webm'}[ext]||'application/octet-stream'});}
+    return r.fulfill({body:html,contentType:'text/html; charset=utf-8'});});
 await cx.route(/\/node_modules\//,r=>{const u=new URL(r.request().url());r.fulfill({body:fs.readFileSync(D+u.pathname.replace(/^.*?\/node_modules/,'node_modules')),contentType:'application/javascript; charset=utf-8'});});
 await cx.route('https://cdn.jsdelivr.net/npm/@supabase/**',r=>r.fulfill({body:UMD,contentType:'application/javascript; charset=utf-8'}));
 await cx.route('https://x.supabase.co/**',async r=>{const q=r.request(),u=new URL(q.url());if(q.method()==='OPTIONS')return r.fulfill({status:204,headers:{'access-control-allow-origin':'*','access-control-allow-headers':'*','access-control-allow-methods':'*'}});
@@ -61,7 +65,7 @@ await page.goto('https://app.vaade3d.ee/');await W(2000);await page.fill('#lEmai
 await E(()=>show('settings','widget'));ok(await until(()=>document.querySelectorAll('#wReqList .wrq').length===2),'firma näeb 2 pildisoovi');
 ok(await E(()=>document.getElementById('wReqCount').textContent.includes('1 ootab')),'1 ootab kinnitust');
 await fetch(G+'/_log',{method:'DELETE'});
-await page.click('#wReqList [data-wsend]');await W(400);await page.fill('#wsMsg','Tere Pille! Siin on teie pilt.');await page.click('#dYes');
+await page.evaluate(()=>{const b=document.querySelector('#kindDlg [data-k="firm"]');if(b)b.click();});await page.waitForTimeout(300);await page.click('#wReqList [data-wsend]');await W(400);await page.fill('#wsMsg','Tere Pille! Siin on teie pilt.');await page.click('#dYes');
 ok(await until(()=>WREQ.length&&WREQ.every(r=>r.status==='sent')),'pärast saatmist: saadetud');
 const m2=(await (await fetch(G+'/_log')).json()).filter(x=>x[0]==='mail');ok(m2.length===1&&m2[0][1].to[0]==='pille@gmail.com'&&m2[0][1].html.includes('Tere Pille'),'klient sai kirja sõnumi ja pildiga');
 const tok=sql(`select token from widget_requests where company_id='${cid}' and status='sent' order by created_at desc limit 1`);

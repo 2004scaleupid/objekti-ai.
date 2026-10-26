@@ -1985,7 +1985,9 @@ var TICON={chair:'<path d="M7 3h10v8H7z"/><path d="M5 11h14v3H5zM7 14v7M17 14v7"
 function TPLS(){return (typeof acct!=='undefined'&&acct.tpls)||TPL_DEF;}
 // Sisekujundus ja toa 3D: ainult adminile, kuni kvaliteet on kinnitatud (kood jääb). CL võib olla veel loomata -> try.
 function roomAdm(){try{return !!(CLOUD&&CL.admin);}catch(_){return false;}}
-const tplOk=t=>!!t&&(t.id!=='sisek'||roomAdm());
+/* 26.10: Sisekujundus ja Uus välimus pole kasutusel (kood jääb, kõigile peidus, ka adminile) */
+const TPL_OFF=new Set(['sisek','muuda']);
+const tplOk=t=>!!t&&!TPL_OFF.has(t.id);
 function tplById(id){return TPLS().find(t=>t.id===id&&tplOk(t));}
 function tplOf(h){return h&&h.tpl?tplById(h.tpl):null;}
 function ticon(t,sz){return `<svg width="${sz||20}" height="${sz||20}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${TICON[t.icon]||TICON.star}</svg>`;}
@@ -2218,6 +2220,8 @@ function gableRoof(w,eave,grp,all){const T=HOUSES[cur].roofType;
   parts.forEach(p=>{p.name='roofpart';grp.add(p);});
 }
 function pick(arr,seed){return arr[Math.abs(Math.round(seed*997))%arr.length];}
+function nbFoot(b,grp){if(!b||!b.p||b.p.length<3)return;M.nbFoot=M.nbFoot||new THREE.MeshStandardMaterial({color:0xC9C4BA,roughness:1,transparent:true,opacity:.55,depthWrite:false});
+  const m=new THREE.Mesh(new THREE.ShapeGeometry(shapeOf(b.p)).rotateX(-Math.PI/2),M.nbFoot);m.position.y=.03;m.receiveShadow=true;grp.add(m);}
 function nbHouse(b,grp){const g=b.g,s=b.p[0][0]+b.p[0][1];
   const wm=(Math.abs(Math.round(s))%6===0)?M.nbWood:pick(M.nbW,s);
   if(!g){const m=extrude(b.p,b.h,b.h<4?M.nbWood:wm);grp.add(m);const r=new THREE.Mesh(new THREE.ShapeGeometry(shapeOf(b.p)).rotateX(-Math.PI/2),M.nbFlat);r.position.y=b.h+.02;r.receiveShadow=true;grp.add(r);return;}
@@ -2292,7 +2296,8 @@ function build(){applyRoofType(HOUSES[cur]);
   if(group){scene.remove(group);group.traverse(o=>{o.geometry&&o.geometry.dispose()});}
   mkMats();group=new THREE.Group();scene.add(group);
   const h=HOUSES[cur],P=h.pts;
-  h.nb.forEach(b=>nbHouse(b,group));trees(h.trees,group);lotScene(h,group);treeline(group);
+  /* 26.10: objektivaates ainult see maja; naabrid on maapinnal kerge jalajäljena (kaugused jäävad mõõdetavaks) */
+  h.nb.forEach(b=>nbFoot(b,group));trees(h.trees,group);lotScene(h,group);treeline(group);
   {const c=document.createElement('canvas');c.width=c.height=128;const g=c.getContext('2d');const gr=g.createRadialGradient(64,64,8,64,64,64);gr.addColorStop(0,'rgba(0,0,0,.38)');gr.addColorStop(1,'rgba(0,0,0,0)');g.fillStyle=gr;g.fillRect(0,0,128,128);
    const ao=new THREE.Mesh(new THREE.PlaneGeometry(26,26),new THREE.MeshBasicMaterial({map:new THREE.CanvasTexture(c),transparent:true,depthWrite:false}));ao.rotation.x=-Math.PI/2;ao.position.y=.035;group.add(ao);}
   const ap=new THREE.Mesh(new THREE.ShapeGeometry(shapeOf(P.map(p=>[p[0]*1.13,p[1]*1.13]))).rotateX(-Math.PI/2),M.pave);ap.position.y=.04;ap.receiveShadow=true;group.add(ap);
@@ -3662,7 +3667,8 @@ function clWelcome(fromForm,isNew){return new Promise(res=>{const nm=String(acct
   if(fromForm){const L=$('login');let w=L.querySelector('.lwel');if(!w){w=document.createElement('div');w.className='lwel';w.innerHTML='<span class="stlogo blogo" aria-hidden="true"></span><h2></h2><p class="wsub"></p>';L.querySelector('.lform').appendChild(w);}w.querySelector('h2').textContent=t;w.querySelector('.wsub').textContent=isNew?welcomeTxt():'';L.classList.add('wel');}
   else{$('bootT').innerHTML=stEsc(t)+(isNew?`<small class="wsub">${stEsc(welcomeTxt())}</small>`:'');$('boot').classList.add('wel');}
   // uus konto: tervituskrediidid ka äpis (tervitus on lühike)
-  if(isNew)setTimeout(()=>toast(welcomeTxt()),1600);
+  /* tervitus ainult üks kord; mitte pärast makset (muidu kataks „+N krediiti lisatud“ teate vana saldoga) */
+  if(isNew&&!acct.welToast&&!/#paid=/.test(location.hash)){acct.welToast=1;try{save();}catch(_){}setTimeout(()=>toast(welcomeTxt()),1600);}
   setTimeout(fin,1050);});}
 function clIntoApp(fromForm,after){const L=$('login'),B=$('boot');(fromForm?L:B).classList.add('out');
   setTimeout(()=>{B.hidden=true;B.classList.remove('out','wel');L.classList.remove('wel','out');const a=$('app');a.classList.add('appin');enter();
@@ -6061,10 +6067,10 @@ const R=[
   ['pane',/\b(saun|aiamaja|telk|bassein|kasvuhoone|batuut|pergola)\w*\b.*\b(hoov|aed|aia|krunt|krundi|plats)/i,'Tahad näha ehitist või toodet oma hoovis õiges suuruses.','vaba'],
   ['maja',/\b(mõõt|pindala|m2|m²|ruutmeet|kalle|kalded|kui suur|katuse pind|seinte pind)/i,'Tahad maja mõõte: katuse ja seinte pinnad tulevad riigi 3D-andmetest.',null],
   ['muuda',/\b(värv|tooni|toon|materjal|fassaad|katus|aken|aknad|uks|voodri|krohv|plekk|kivi|tumehall|must|valge|hall|muuda|vaheta|uus välimus|teip|velg)/i,'Tahad muuta olemasoleva asja värvi, materjali või stiili, kuju jääb samaks.','maja']];
-function rules(t){for(const [id,re,why,alt] of R)if(re.test(t)&&(id!=='sisek'||roomAdm())){let al=alt===id?null:alt;if(al==='maja'&&!/maja|majal|katus|fassaad|sein/i.test(t))al='vaba';return{id,why,alt:al};}return null;}
+function rules(t){for(const [id,re,why,alt] of R)if(re.test(t)&&!TPL_OFF.has(id)){let al=alt===id||TPL_OFF.has(alt)?null:alt;if(al==='maja'&&!/maja|majal|katus|fassaad|sein/i.test(t))al='vaba';return{id,why,alt:al};}return null;}
 async function ai(t){if(typeof CLOUD==='undefined'||!CLOUD||typeof CL==='undefined'||!CL.cid)return null;
-  const q=`Vali Vaade3D tööriist kasutaja soovi jaoks. Tööriistad: vaba (vaba idee, ükskõik mis pilt kirjelduse järgi), pane (pane asi päris fotole õiges suuruses), muuda (muuda värvi, materjali või stiili, kuju jääb), mudel3d (fotodest 3D-mudel alla laadimiseks), maja (maja 3D ja mõõdud aadressi järgi). Vasta ainult ühel real kujul: id | üks lühike lause eesti keeles, miks see sobib.\nSoov: "${t.replace(/"/g,"'").slice(0,400)}"`;
-  try{const r=await clFn('ai-chat',{role:'Vaade3D kasutajale',context:{},messages:[{role:'user',content:q}]});const s=String(r&&r.text||'');const m=s.match(/\b(vaba|pane|muuda|mudel3d|maja)\b\s*[|:–-]?\s*(.*)/i);
+  const q=`Vali Vaade3D tööriist kasutaja soovi jaoks. Tööriistad: vaba (vaba idee, ükskõik mis pilt kirjelduse järgi), pane (pane asi päris fotole õiges suuruses), mudel3d (fotodest 3D-mudel alla laadimiseks), maja (maja 3D ja mõõdud aadressi järgi). Vasta ainult ühel real kujul: id | üks lühike lause eesti keeles, miks see sobib.\nSoov: "${t.replace(/"/g,"'").slice(0,400)}"`;
+  try{const r=await clFn('ai-chat',{role:'Vaade3D kasutajale',context:{},messages:[{role:'user',content:q}]});const s=String(r&&r.text||'');const m=s.match(/\b(vaba|pane|mudel3d|maja)\b\s*[|:–-]?\s*(.*)/i);
     if(m)return{id:m[1].toLowerCase(),why:(m[2]||'').replace(/^[\s|:–-]+/,'').trim().slice(0,200)||'See sobib sinu soovile kõige paremini.',alt:null};}catch(_){}return null;}
 function ico(k){return typeof TICON!=='undefined'&&TICON[k]?`<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${TICON[k]}</svg>`:'';}
 function start(id,t){let tx=t.trim();if(id==='maja'){const m=tx.match(/[A-ZÕÄÖÜŠŽ][\wõäöüšž-]*(\s[\wõäöüšž-]+)*\s(tee|tn|tänav|mnt|maantee|pst|puiestee|põik|allee)\s*\d+[a-z]?/i);tx=m?m[0]:'';}openStudio(id);if(tx){setTimeout(()=>{$('stIn').value=tx;try{stAuto();stSync();}catch(_){}},80);}}
@@ -6591,7 +6597,7 @@ try{(()=>{const css=document.createElement('style');css.textContent='@media (min
     clearInterval(tcT);tcT=setInterval(()=>{if(!document.body.contains(x)){clearInterval(tcT);return;}go((k+1)%S.length);},3800);};
   const _r=renderTpls;renderTpls=function(){const r=_r.apply(this,arguments);const g=$('tGrid');if(!g)return r;const priv=acct.kind==='private';
     let v=g.querySelector('.tcard[data-t="vidin"]');if(!v){v=document.createElement('button');v.type='button';v.className='tcard';v.dataset.t='vidin';
-      v.innerHTML=`<span class="tex" style="position:relative"><img src="media/vidin-demo.jpg" alt="Kodulehe vidin: klient märgib fotol koha ja valib toote" style="width:100%;height:100%;object-fit:cover;object-position:40% 45%"><span class="tl"><i class="pa">Päris vidin · demo</i></span></span><b>Kodulehe vidin</b><p>Klient paneb sinu lehel foto, valib toote ja märgib koha. Sina saad päringu koos pildiga.</p><div class="tm"><span>Koduleht → päring</span><span>Vaata demot<span class="ar" aria-hidden="true">→</span></span></div>`;
+      v.innerHTML=`<span class="tex" style="position:relative"><img src="media/vidin-leht.jpg" alt="Kodulehe vidin firma kodulehel: klient sisestab aadressi või proovib toodet oma hoovis" style="width:100%;height:100%;object-fit:cover;object-position:50% 40%"><span class="tl"><i class="pa">Vidin firma lehel · demo</i></span></span><b>Kodulehe vidin</b><p>Klient paneb sinu lehel foto, valib toote ja märgib koha. Sina saad päringu koos pildiga.</p><div class="tm"><span>Koduleht → päring</span><span>Vaata demot<span class="ar" aria-hidden="true">→</span></span></div>`;
       v.onclick=demo;}
     ['maja','pane','muuda'].forEach(id=>{const b=g.querySelector(`.tcard[data-t="${id}"]`);if(b)g.appendChild(b);});if(priv)v.remove();else g.appendChild(v);
     ['mudel3d','vaba'].forEach(id=>{const b=g.querySelector(`.tcard[data-t="${id}"]`);if(b)g.appendChild(b);});
