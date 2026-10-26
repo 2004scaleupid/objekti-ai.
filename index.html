@@ -6899,9 +6899,9 @@ window.wSvcDraw=wSvcDraw;
 const _rw=renderWidgetPane;renderWidgetPane=function(){const r=_rw.apply(this,arguments);try{wSvcDraw();}catch(e){console.warn('[wsvc]',e);}return r;};
 
 /* ---------- avalik vidin ---------- */
-const TX={et:{place:'Proovi meie toodet oma hoovis',idea:'Näita oma ideed pildil',m3:'Tee 3D-mudel oma fotodest',h3:'Lisa maja fotod: päris välimusega 3D',or:'või',ideaT:'Näita oma ideed pildil',ideaP:'Lae üles foto ja kirjuta, mida tahad näha. AI teeb pildi, kuidas see välja näeks.',photo:'Vali foto',chg:'Vaheta fotot',what:'Mida tahad pildil näha?',whatPh:'Nt uus terrass maja ette, tumehall katus, aiamaja hoovi nurka',you:'Sinu andmed',name:'Nimi',email:'E-post',addr:'Aadress',priv:'Andmed lähevad ainult firmale. Vaade3D neid ei kasuta ega jaga.',go:'Tee pilt · tasuta',send:'Saada firmale',m3T:'3D-mudel sinu fotodest',m3P:'Lae 1–4 fotot asjast eri külgedelt. AI teeb pööratava 3D-mudeli.',h3T:'Maja päris välimusega 3D-s',h3P:'Lisa 4 fotot majast: eest, vasakult, tagant ja paremalt. AI teeb päris välimusega 3D-mudeli, mõõdud tulevad Maa-ametist.',slots:['Eest','Vasakult','Tagant','Paremalt'],go3:'Tee 3D-mudel · tasuta',wait:'Teen pilti… umbes 30 sekundit.',wait3:'Teen 3D-mudelit… umbes 4 minutit. Võid selle akna lahti jätta.',chk:'Kontrollin fotosid…',thanks:'Aitäh!',rev:'{f} vaatab selle üle ja saadab tulemuse sulle e-postile.',rev3:'Fotod on saadetud. {f} teeb sinust 3D-mudeli ja saadab selle e-postile.',done:'Valmis! {f} sai ka sinu päringu.',anyway:'Jätka ikkagi',bad:'Fotod ei sobi päris hästi:',need4:'Lisa kõik 4 fotot',need1:'Lisa vähemalt 1 foto',needT:'Kirjuta, mida tahad näha',needL:'Sisesta nimi, e-post ja aadress',demo:'Demo: päris vidinas teeb AI siia tulemuse.',fail:'Ei õnnestunud. Proovi teise fotoga.'},
- en:{place:'Try our product on your photo',idea:'Show your idea on a photo',m3:'Make a 3D model from your photos',h3:'Add house photos: realistic 3D',or:'or',ideaT:'Show your idea on a photo',ideaP:'Upload a photo and describe what you want to see. AI shows how it would look.',photo:'Choose photo',chg:'Change photo',what:'What do you want to see?',whatPh:'E.g. a new deck in front of the house, a dark grey roof',you:'Your details',name:'Name',email:'E-mail',addr:'Address',priv:'Your details go only to the company.',go:'Make image · free',send:'Send to the company',m3T:'3D model from your photos',m3P:'Upload 1–4 photos of the object from different sides. AI makes a 3D model you can rotate.',h3T:'Your house in realistic 3D',h3P:'Add 4 photos of the house: front, left, back and right.',slots:['Front','Left','Back','Right'],go3:'Make 3D model · free',wait:'Making the image… about 30 seconds.',wait3:'Making the 3D model… about 4 minutes. You can keep this window open.',chk:'Checking photos…',thanks:'Thank you!',rev:'{f} will review it and e-mail you the result.',rev3:'Photos sent. {f} will make the 3D model and e-mail it to you.',done:'Done! {f} also got your request.',anyway:'Continue anyway',bad:'The photos are not ideal:',need4:'Add all 4 photos',need1:'Add at least 1 photo',needT:'Describe what you want to see',needL:'Enter name, e-mail and address',demo:'Demo: in the real widget AI makes the result here.',fail:'Did not work. Try another photo.'},
- ru:{place:'Примерьте наш товар на своём фото',idea:'Покажите свою идею на фото',m3:'3D-модель из ваших фото',h3:'Добавьте фото дома: реалистичный 3D',or:'или',ideaT:'Покажите свою идею на фото',ideaP:'Загрузите фото и опишите, что хотите увидеть.',photo:'Выбрать фото',chg:'Заменить фото',what:'Что хотите увидеть?',whatPh:'Напр. новая терраса перед домом',you:'Ваши данные',name:'Имя',email:'E-mail',addr:'Адрес',priv:'Данные получает только фирма.',go:'Создать · бесплатно',send:'Отправить фирме',m3T:'3D-модель из ваших фото',m3P:'Загрузите 1–4 фото предмета с разных сторон.',h3T:'Ваш дом в реалистичном 3D',h3P:'Добавьте 4 фото дома: спереди, слева, сзади и справа.',slots:['Спереди','Слева','Сзади','Справа'],go3:'Создать 3D · бесплатно',wait:'Создаю изображение… около 30 секунд.',wait3:'Создаю 3D-модель… около 4 минут.',chk:'Проверяю фото…',thanks:'Спасибо!',rev:'{f} проверит и пришлёт результат на e-mail.',rev3:'Фото отправлены. {f} сделает 3D-модель и пришлёт её.',done:'Готово! {f} получил ваш запрос.',anyway:'Продолжить',bad:'Фото не совсем подходят:',need4:'Добавьте все 4 фото',need1:'Добавьте хотя бы 1 фото',needT:'Опишите, что хотите увидеть',needL:'Введите имя, e-mail и адрес',demo:'Демо: в настоящем виджете здесь будет результат.',fail:'Не получилось. Попробуйте другое фото.'}};
+const TX={et:{undo:'Tagasi',mk:'Soovi korral: puuduta fotol kohta või lohista ala, kuhu muudatus käib.',mkd:'Märki saad lohistada ja ala nurkadest venitada.',place:'Proovi meie toodet oma hoovis',idea:'Näita oma ideed pildil',m3:'Tee 3D-mudel oma fotodest',h3:'Lisa maja fotod: päris välimusega 3D',or:'või',ideaT:'Näita oma ideed pildil',ideaP:'Lae üles foto ja kirjuta, mida tahad näha. AI teeb pildi, kuidas see välja näeks.',photo:'Vali foto',chg:'Vaheta fotot',what:'Mida tahad pildil näha?',whatPh:'Nt uus terrass maja ette, tumehall katus, aiamaja hoovi nurka',you:'Sinu andmed',name:'Nimi',email:'E-post',addr:'Aadress',priv:'Andmed lähevad ainult firmale. Vaade3D neid ei kasuta ega jaga.',go:'Tee pilt · tasuta',send:'Saada firmale',m3T:'3D-mudel sinu fotodest',m3P:'Lae 1–4 fotot asjast eri külgedelt. AI teeb pööratava 3D-mudeli.',h3T:'Maja päris välimusega 3D-s',h3P:'Lisa 4 fotot majast: eest, vasakult, tagant ja paremalt. AI teeb päris välimusega 3D-mudeli, mõõdud tulevad Maa-ametist.',slots:['Eest','Vasakult','Tagant','Paremalt'],go3:'Tee 3D-mudel · tasuta',wait:'Teen pilti… umbes 30 sekundit.',wait3:'Teen 3D-mudelit… umbes 4 minutit. Võid selle akna lahti jätta.',chk:'Kontrollin fotosid…',thanks:'Aitäh!',rev:'{f} vaatab selle üle ja saadab tulemuse sulle e-postile.',rev3:'Fotod on saadetud. {f} teeb sinust 3D-mudeli ja saadab selle e-postile.',done:'Valmis! {f} sai ka sinu päringu.',anyway:'Jätka ikkagi',bad:'Fotod ei sobi päris hästi:',need4:'Lisa kõik 4 fotot',need1:'Lisa vähemalt 1 foto',needT:'Kirjuta, mida tahad näha',needL:'Sisesta nimi, e-post ja aadress',demo:'Demo: päris vidinas teeb AI siia tulemuse.',fail:'Ei õnnestunud. Proovi teise fotoga.'},
+ en:{undo:'Undo',mk:'Optional: tap a spot or drag an area on the photo where the change goes.',mkd:'Drag the marker to move it, stretch the area by its corners.',place:'Try our product on your photo',idea:'Show your idea on a photo',m3:'Make a 3D model from your photos',h3:'Add house photos: realistic 3D',or:'or',ideaT:'Show your idea on a photo',ideaP:'Upload a photo and describe what you want to see. AI shows how it would look.',photo:'Choose photo',chg:'Change photo',what:'What do you want to see?',whatPh:'E.g. a new deck in front of the house, a dark grey roof',you:'Your details',name:'Name',email:'E-mail',addr:'Address',priv:'Your details go only to the company.',go:'Make image · free',send:'Send to the company',m3T:'3D model from your photos',m3P:'Upload 1–4 photos of the object from different sides. AI makes a 3D model you can rotate.',h3T:'Your house in realistic 3D',h3P:'Add 4 photos of the house: front, left, back and right.',slots:['Front','Left','Back','Right'],go3:'Make 3D model · free',wait:'Making the image… about 30 seconds.',wait3:'Making the 3D model… about 4 minutes. You can keep this window open.',chk:'Checking photos…',thanks:'Thank you!',rev:'{f} will review it and e-mail you the result.',rev3:'Photos sent. {f} will make the 3D model and e-mail it to you.',done:'Done! {f} also got your request.',anyway:'Continue anyway',bad:'The photos are not ideal:',need4:'Add all 4 photos',need1:'Add at least 1 photo',needT:'Describe what you want to see',needL:'Enter name, e-mail and address',demo:'Demo: in the real widget AI makes the result here.',fail:'Did not work. Try another photo.'},
+ ru:{undo:'Назад',mk:'По желанию: коснитесь места или выделите область на фото.',mkd:'Метку можно перетащить, область растянуть за углы.',place:'Примерьте наш товар на своём фото',idea:'Покажите свою идею на фото',m3:'3D-модель из ваших фото',h3:'Добавьте фото дома: реалистичный 3D',or:'или',ideaT:'Покажите свою идею на фото',ideaP:'Загрузите фото и опишите, что хотите увидеть.',photo:'Выбрать фото',chg:'Заменить фото',what:'Что хотите увидеть?',whatPh:'Напр. новая терраса перед домом',you:'Ваши данные',name:'Имя',email:'E-mail',addr:'Адрес',priv:'Данные получает только фирма.',go:'Создать · бесплатно',send:'Отправить фирме',m3T:'3D-модель из ваших фото',m3P:'Загрузите 1–4 фото предмета с разных сторон.',h3T:'Ваш дом в реалистичном 3D',h3P:'Добавьте 4 фото дома: спереди, слева, сзади и справа.',slots:['Спереди','Слева','Сзади','Справа'],go3:'Создать 3D · бесплатно',wait:'Создаю изображение… около 30 секунд.',wait3:'Создаю 3D-модель… около 4 минут.',chk:'Проверяю фото…',thanks:'Спасибо!',rev:'{f} проверит и пришлёт результат на e-mail.',rev3:'Фото отправлены. {f} сделает 3D-модель и пришлёт её.',done:'Готово! {f} получил ваш запрос.',anyway:'Продолжить',bad:'Фото не совсем подходят:',need4:'Добавьте все 4 фото',need1:'Добавьте хотя бы 1 фото',needT:'Опишите, что хотите увидеть',needL:'Введите имя, e-mail и адрес',demo:'Демо: в настоящем виджете здесь будет результат.',fail:'Не получилось. Попробуйте другое фото.'}};
 const L=p=>{const l=(plCfg(p)||{}).lang;return TX[l]||TX.et;};
 const ico={idea:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18h6M10 22h4M12 2a7 7 0 0 0-4 12.7V17h8v-2.3A7 7 0 0 0 12 2z"/></svg>',m3:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2 3 7v10l9 5 9-5V7z"/><path d="m3 7 9 5 9-5M12 12v10"/></svg>'};
 const PLI='<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="15" rx="2"/><circle cx="9" cy="11" r="2"/><path d="m21 17-5-5-8 8"/></svg>';
@@ -6926,6 +6926,22 @@ function applySvc(p,opts){const S=wFeats(p.f),c=$('wCard');if(!c)return;
   if(S.has('place')&&pb){const li=b.querySelector('.wsvb');if(li){const or=li.querySelector('.or');if(or)or.after(pb);else li.prepend(pb);}}
   [a,b].forEach(x=>x.querySelectorAll('[data-wsv]').forEach(y=>y.onclick=()=>wSvcOpen(y.dataset.wsv,p,{preview:opts.preview,addr:($('wIn')||{}).value||''})));}
 
+const mkHtml=m=>!m?'':m.area?`<i class="plbox" style="left:${m.area[0]}%;top:${m.area[1]}%;width:${m.area[2]-m.area[0]}%;height:${m.area[3]-m.area[1]}%"><em>1</em></i>`:`<i class="plpin" style="left:${m.x}%;top:${m.y}%"><em>1</em></i>`;
+const msnap=()=>{W.mhist=W.mhist||[];W.mhist.push(JSON.stringify(W.mark));if(W.mhist.length>25)W.mhist.shift();};
+function bindIdeaMark(){const wrap=$('wsxMk'),img=$('wsxPh');if(!wrap||!img)return;img.draggable=false;
+  const pc=e=>{const r=img.getBoundingClientRect();return [Math.max(0,Math.min(100,(e.clientX-r.left)/r.width*100)),Math.max(0,Math.min(100,(e.clientY-r.top)/r.height*100))];};
+  let s0=null,box=null;const far=p=>Math.abs(p[0]-s0[0])>=3||Math.abs(p[1]-s0[1])>=3,r1=v=>+v.toFixed(1);
+  img.onpointerdown=e=>{s0=pc(e);try{img.setPointerCapture(e.pointerId);}catch(_){}e.preventDefault();};
+  img.onpointermove=e=>{if(!s0)return;const p=pc(e);if(!far(p))return;if(!box){box=document.createElement('i');box.className='plbox';wrap.appendChild(box);}box.style.cssText=`left:${Math.min(s0[0],p[0])}%;top:${Math.min(s0[1],p[1])}%;width:${Math.abs(p[0]-s0[0])}%;height:${Math.abs(p[1]-s0[1])}%`;};
+  img.onpointerup=e=>{if(!s0)return;const p=pc(e);msnap();if(!far(p))W.mark={x:r1(p[0]),y:r1(p[1])};else{const a=[Math.min(s0[0],p[0]),Math.min(s0[1],p[1]),Math.max(s0[0],p[0]),Math.max(s0[1],p[1])].map(r1);W.mark={x:r1((a[0]+a[2])/2),y:r1((a[1]+a[3])/2),area:a};}s0=null;box=null;draw();};
+  img.onpointercancel=()=>{s0=null;if(box)box.remove();box=null;};
+  const el=wrap.querySelector('.plpin,.plbox');if(el&&window.v3dBindMark)window.v3dBindMark(el,img,()=>W.mark,m=>{W.mark=m;},()=>draw(),msnap);
+  const u=$('wsxUndo');if(u)u.onclick=e=>{e.stopPropagation();const v=W.mhist.pop();W.mark=v?JSON.parse(v):null;draw();};}
+async function ideaGuide(photo,m){try{const im=await new Promise((res,rej)=>{const i=new Image();i.onload=()=>res(i);i.onerror=rej;i.src=photo;});const sc=Math.min(1,1024/Math.max(im.width,im.height)),Wd=Math.round(im.width*sc),Hd=Math.round(im.height*sc);
+  const c=document.createElement('canvas');c.width=Wd;c.height=Hd;const x=c.getContext('2d');x.drawImage(im,0,0,Wd,Hd);const lw=Math.max(3,Wd/220),fs=Math.max(16,Wd/30);x.lineWidth=lw;x.font=`700 ${fs}px system-ui,sans-serif`;x.strokeStyle='#FF5A1F';x.fillStyle='rgba(255,90,31,.18)';let lx,ly;
+  if(m.area){const [a,b,c2,d]=m.area.map((v,i)=>v/100*(i%2?Hd:Wd));x.setLineDash([lw*3,lw*2]);x.fillRect(a,b,c2-a,d-b);x.strokeRect(a,b,c2-a,d-b);x.setLineDash([]);lx=a;ly=b;}
+  else{const cx=m.x/100*Wd,cy=m.y/100*Hd,r=Math.max(14,Wd/40);x.beginPath();x.arc(cx,cy,r,0,7);x.fill();x.stroke();lx=cx+r;ly=cy-r;}
+  const tw=x.measureText('1').width+fs*.5;x.fillStyle='#FF5A1F';x.fillRect(lx,Math.max(0,ly-fs*1.1),tw,fs*1.1);x.fillStyle='#fff';x.fillText('1',lx+fs*.25,Math.max(fs*.9,ly-fs*.2));return c.toDataURL('image/jpeg',.82);}catch(_){return null;}}
 let W=null;
 function close(){const d=$('wsxDlg');if(d)d.remove();if(W&&W.timer)clearTimeout(W.timer);W=null;}
 function wSvcOpen(kind,p,o){o=o||{};close();if(kind==='place'){openPlace({mode:'widget',p,preview:o.preview});return;}const T=L(p),firm=p.c||'Ettevõte',cfg=plCfg(p);
@@ -6943,6 +6959,7 @@ function draw(){if(!W)return;const d=$('wsxDlg');if(!d)return;const b=d.querySel
     if(W.res&&W.res.model)h+=`<iframe src="${E(W.res.model)}" title="3D-mudel" allow="fullscreen"></iframe>`;}
   else{h+=`<p>${E(pp)}</p>`;
     if(three()){const n=sub?4:4;h+=`<div class="slots">${W.photos.map((u,i)=>`<button type="button" class="slot" data-sl="${i}">${u?`<img src="${E(u)}" alt="">`:`<b>+</b>${E(sub?T.slots[i]:(i===0?T.photo:T.slots[i]))}`}</button>`).join('')}</div>`;}
+    else if(W.kind==='idea'&&W.photo)h+=`<div class="mkw" id="wsxMk"><img id="wsxPh" src="${E(W.photo)}" alt="">${mkHtml(W.mark)}${(W.mhist||[]).length?`<div class="mkbar"><button type="button" id="wsxUndo">↶ ${E(T.undo||'Tagasi')}</button></div>`:''}</div><span class="mkhint">${E(W.mark?(T.mkd||''):(T.mk||''))}</span><button type="button" class="linkbtn" id="wsxChg" style="align-self:flex-start">${E(T.chg)}</button>`;
     else h+=`<button type="button" class="one" id="wsxOne">${W.photo?`<img src="${E(W.photo)}" alt="">`:E(T.photo)}</button>`;
     if(W.kind==='idea')h+=`<label class="fl">${E(T.what)}<textarea id="wsxNote" rows="2" maxlength="300" placeholder="${E(T.whatPh)}">${E(W.note)}</textarea></label>`;
     if(W.chk)h+=`<div class="msg bad"><b>${E(T.bad)}</b> ${E(W.chk.summary||'')}${(W.chk.tips||[]).length?'<br>'+W.chk.tips.map(E).join('<br>'):''}</div>`;
@@ -6952,7 +6969,9 @@ function draw(){if(!W)return;const d=$('wsxDlg');if(!d)return;const b=d.querySel
     if(W.err)h+=`<div class="msg bad">${E(W.err)}</div>`;}
   b.innerHTML=h;b.querySelector('.x').onclick=()=>{if(W&&W.state==='busy'&&three()&&!confirm('Sulgeda? Mudel valmib ikkagi ja firma saadab selle sulle.'))return;close();};
   const pick=(cb,multi)=>{const f=document.createElement('input');f.type='file';f.accept='image/*';if(multi)f.multiple=true;f.onchange=()=>cb([...f.files]);f.click();};
-  const one=$('wsxOne');if(one)one.onclick=()=>pick(async fs=>{if(!fs[0])return;try{W.photo=await shrink(fs[0]);W.err='';draw();}catch(_){toast('Pilti ei õnnestunud avada');}});
+  const pick1=()=>pick(async fs=>{if(!fs[0])return;try{W.photo=await shrink(fs[0]);W.mark=null;W.mhist=[];W.err='';draw();}catch(_){toast('Pilti ei õnnestunud avada');}});
+  const one=$('wsxOne');if(one)one.onclick=pick1;const chg=$('wsxChg');if(chg)chg.onclick=pick1;
+  if($('wsxMk'))bindIdeaMark();
   b.querySelectorAll('[data-sl]').forEach(x=>x.onclick=()=>pick(async fs=>{let i=+x.dataset.sl;for(const f of fs){if(i>3)break;try{W.photos[i]=await shrink(f,2048,.85);}catch(_){}i++;}W.chk=null;W.err='';draw();},true));
   const nt=$('wsxNote');if(nt)nt.oninput=e=>{W.note=e.target.value;};
   const keep=()=>{['wsxN','wsxE','wsxA'].forEach(id=>{const el=$(id);if(el)W['v'+id]=el.value;});};
@@ -6975,7 +6994,8 @@ async function go(force){if(!W)return;const T=W.T,fn=W.p.c||'Ettevõte',rv=W.cfg
   try{
     if(W.kind==='idea'){
       if(demo){await sleep(1200);W.state='done';W.msg=rv?T.rev.replace('{f}',fn):T.demo;W.res={img:W.photo};draw();return;}
-      const r=await clFn('widget-place',{id:W.p.id,kind:'idea',photo:W.photo,note:W.note.trim(),lead_tok:lead.tok},{pub:true});
+      const guide=W.mark?await ideaGuide(W.photo,W.mark):null;
+      const r=await clFn('widget-place',{id:W.p.id,kind:'idea',photo:W.photo,note:W.note.trim(),lead_tok:lead.tok,...(guide?{guide,mark:W.mark}:{})},{pub:true});
       W.state='done';if(r.review){W.msg=T.thanks+' '+T.rev.replace('{f}',fn);W.res=null;}else{W.msg=T.done.replace('{f}',fn);W.res={img:r.url};}draw();return;}
     const subject=sub?'building':'object',photos=sub?W.photos:ph;
     if(demo){await sleep(1200);W.state='done';W.msg=rv?T.thanks+' '+T.rev3.replace('{f}',fn):T.demo;W.res=rv?null:{img:sub?'examples/building-poster.webp':photos[0]};draw();return;}
@@ -7152,6 +7172,55 @@ document.addEventListener('click',e=>{const t=e.target;if(!t.closest)return;
   if(t.closest('#wSave')){acct.wTested=1;save();setTimeout(draw,50);}},true);
 ['wColor','wMail'].forEach(id=>{const el=$(id);if(el)el.addEventListener('change',()=>setTimeout(draw,50));});
 })();}catch(e){console.warn('[vidina õpetus]',e);}
+
+/* ---------- 26.10: märkide muutmine fotol – märki saab lohistada, ala nurkadest venitada, „Tagasi“ võtab viimase muudatuse tagasi (Toode pildile ja Vaba idee vidinas) ---------- */
+try{(()=>{
+const css=document.createElement('style');css.textContent=`
+.plimg .mke,.mkw .mke{pointer-events:auto!important;cursor:grab;touch-action:none}.plimg .mke:active,.mkw .mke:active{cursor:grabbing}
+.mkc{position:absolute;width:16px;height:16px;border-radius:50%;background:#fff;border:2.5px solid var(--accent);transform:translate(-50%,-50%);cursor:nwse-resize;touch-action:none;box-shadow:0 1px 4px rgba(0,0,0,.35);z-index:3}
+.mkc[data-c="1"],.mkc[data-c="3"]{cursor:nesw-resize}.mkc[data-c="0"]{left:0;top:0}.mkc[data-c="1"]{left:100%;top:0}.mkc[data-c="2"]{left:100%;top:100%}.mkc[data-c="3"]{left:0;top:100%}
+@media (pointer:coarse){.mkc{width:24px;height:24px}}.plbox.mke em{left:50%;top:-6px;transform:translate(-50%,-100%)}
+.mkbar{position:absolute;top:10px;right:10px;display:flex;gap:6px;z-index:4;line-height:normal}
+.mkbar button{border:0;border-radius:999px;padding:7px 12px;font:600 12.5px var(--display);background:rgba(22,19,15,.82);color:#fff;cursor:pointer}
+.mkbar button:hover{background:rgba(22,19,15,.95)}
+.mkw{position:relative;display:block;line-height:0;border-radius:12px;overflow:hidden;background:#000}
+.mkw img{width:100%;max-height:340px;object-fit:contain;display:block;cursor:crosshair;user-select:none;-webkit-user-drag:none;touch-action:none}
+.mkw .plbox,.mkw .plpin{position:absolute}
+.mkhint{font-size:12.5px;color:var(--muted);line-height:1.45}
+`;document.head.appendChild(css);
+const cl=v=>Math.max(0,Math.min(100,v)),r1=v=>+v.toFixed(1);
+/** Üks märk: lohista liigutab, ala nurgad venitavad. get() -> {x,y,area?}; set(pin) salvestab; done() joonistab uuesti. */
+function bindMark(el,img,get,set,done,before){
+  const pc=e=>{const r=img.getBoundingClientRect();return [(e.clientX-r.left)/r.width*100,(e.clientY-r.top)/r.height*100];};
+  el.addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();const c=e.target.closest('.mkc'),p0=pc(e),m0=JSON.parse(JSON.stringify(get()||{}));if(!m0||m0.x==null)return;
+    let moved=false;try{el.setPointerCapture(e.pointerId);}catch(_){}
+    const mv=ev=>{const p=pc(ev),dx=p[0]-p0[0],dy=p[1]-p0[1];if(!moved&&Math.abs(dx)<.6&&Math.abs(dy)<.6)return;if(!moved){moved=true;before&&before();}
+      const m=JSON.parse(JSON.stringify(m0));
+      if(m.area&&c){const k=+c.dataset.c,a=m.area.slice();if(k===0||k===3)a[0]=cl(m0.area[0]+dx);else a[2]=cl(m0.area[2]+dx);if(k===0||k===1)a[1]=cl(m0.area[1]+dy);else a[3]=cl(m0.area[3]+dy);
+        const A=[Math.min(a[0],a[2]),Math.min(a[1],a[3]),Math.max(a[0],a[2]),Math.max(a[1],a[3])];if(A[2]-A[0]<3)A[2]=Math.min(100,A[0]+3);if(A[3]-A[1]<3)A[3]=Math.min(100,A[1]+3);m.area=A.map(r1);}
+      else if(m.area){const w=m0.area[2]-m0.area[0],h=m0.area[3]-m0.area[1];const x0=Math.max(0,Math.min(100-w,m0.area[0]+dx)),y0=Math.max(0,Math.min(100-h,m0.area[1]+dy));m.area=[x0,y0,x0+w,y0+h].map(r1);}
+      else{m.x=r1(cl(m0.x+dx));m.y=r1(cl(m0.y+dy));}
+      if(m.area){m.x=r1((m.area[0]+m.area[2])/2);m.y=r1((m.area[1]+m.area[3])/2);el.style.left=m.area[0]+'%';el.style.top=m.area[1]+'%';el.style.width=(m.area[2]-m.area[0])+'%';el.style.height=(m.area[3]-m.area[1])+'%';}
+      else{el.style.left=m.x+'%';el.style.top=m.y+'%';}
+      el._m=m;};
+    const up=()=>{el.removeEventListener('pointermove',mv);el.removeEventListener('pointerup',up);el.removeEventListener('pointercancel',up);if(moved&&el._m){set(el._m);done();}};
+    el.addEventListener('pointermove',mv);el.addEventListener('pointerup',up);el.addEventListener('pointercancel',up);});
+  if(el.classList.contains('plbox')&&!el.querySelector('.mkc'))for(let k=0;k<4;k++){const h=document.createElement('b');h.className='mkc';h.dataset.c=k;el.appendChild(h);}
+  el.classList.add('mke');}
+window.v3dBindMark=bindMark;
+
+/* Toode pildile: olemasolevad märgid liigutatavaks + Tagasi */
+const _pd=plDraw;plDraw=function(){const r=_pd.apply(this,arguments);try{enh();}catch(e){console.warn('[märgid]',e);}return r;};
+const snap=()=>{if(!PS)return;PS.hist=PS.hist||[];const s=JSON.stringify(PS.pins);if(PS.hist[PS.hist.length-1]!==s)PS.hist.push(s);if(PS.hist.length>25)PS.hist.shift();};
+function enh(){if(!PS||PS.res||PS.review||!PS.photo)return;const wrap=document.querySelector('#plStage .plimg'),img=$('plPh');if(!wrap||!img)return;
+  const P=prodList(),sel=PS.sel.map(id=>P.find(x=>x.id===id)).filter(Boolean);
+  const ids=sel.filter(pr=>{const pn=PS.pins[pr.id];return pn&&!pn.auto;}).map(pr=>pr.id);
+  [...wrap.querySelectorAll('.plpin,.plbox')].forEach((el,i)=>{const id=ids[i];if(!id)return;bindMark(el,img,()=>PS.pins[id],m=>{PS.pins[id]=m;},()=>plDraw(),snap);});
+  img.addEventListener('pointerdown',snap,true);
+  if((PS.hist||[]).length){const b=document.createElement('div');b.className='mkbar';b.innerHTML=`<button type="button" id="mkUndo">↶ ${plL()==='en'?'Undo':plL()==='ru'?'Назад':'Tagasi'}</button>`;wrap.appendChild(b);
+    $('mkUndo').onclick=e=>{e.stopPropagation();const s=PS.hist.pop();if(s==null)return;PS.pins=JSON.parse(s);PS.active=PS.sel.find(id=>!PS.pins[id])||null;plDraw();};}
+  if(ids.length){const h=document.querySelector('#plStage .plhint');if(h&&!/lohista/i.test(h.textContent))h.textContent+=(h.textContent?' · ':'')+(plL()==='en'?'drag a marker to move it':plL()==='ru'?'метку можно перетащить':'märki saad lohistada');}}
+})();}catch(e){console.warn('[märkide muutmine]',e);}
 
 restoreRT();renderList();renderPanel();build();updFotos();chatReset();setTab(false);renderAcct();
   if(CLOUD)clBoot();else if(!startFromHash()){if(DEV_AUTOLOGIN||store.get('oai_session',null))enter();else $('login').hidden=false;}tick();}

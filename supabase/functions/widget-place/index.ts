@@ -57,8 +57,14 @@ Deno.serve(async (req) => {
   const names = kind === "idea" ? ["Vaba idee"] : P.map(({ p }) => String(p.name).replace(/[^\p{L}\p{N} ,.×x\-]/gu, "").slice(0, 80));
   const lines: string[] = ["Image 1 is the customer's photo (the scene). Keep its framing, camera angle and everything that is not part of the request."];
   // juhendpilt (sama foto nummerdatud märkidega), kui klient märkis koha või ala
-  const hasGuide = isPhoto(b.guide) && String(b.guide).length < 2_500_000 && P.some(({ i }) => !i.auto);
-  if (hasGuide) lines.push("Image 2 is the same photo with numbered orange markers showing where each product goes. Use it only as a placement guide: the markers, numbers and dashed boxes must NOT appear in the result.");
+  // vaba idee: klient võis märkida ühe punkti või ala, kuhu muudatus käib
+  const mk0 = kind === "idea" && b.mark && typeof b.mark === "object" ? b.mark as Record<string, unknown> : null;
+  const mkA = mk0 && Array.isArray(mk0.area) && mk0.area.length === 4 ? (mk0.area as unknown[]).map((v) => Math.max(0, Math.min(100, Number(v) || 0))) : null;
+  const mkP = mk0 && Number.isFinite(Number(mk0.x)) && Number.isFinite(Number(mk0.y)) ? [Math.max(0, Math.min(100, Number(mk0.x))), Math.max(0, Math.min(100, Number(mk0.y)))] : null;
+  const hasGuide = isPhoto(b.guide) && String(b.guide).length < 2_500_000 && (kind === "idea" ? !!(mkA || mkP) : P.some(({ i }) => !i.auto));
+  if (hasGuide) lines.push(kind === "idea"
+    ? "Image 2 is the same photo with an orange marker (number 1) showing where the change goes. Use it only as a guide: the marker, number and dashed box must NOT appear in the result."
+    : "Image 2 is the same photo with numbered orange markers showing where each product goes. Use it only as a placement guide: the markers, numbers and dashed boxes must NOT appear in the result.");
   let img = hasGuide ? 3 : 2;
   const per = P.length > 1 ? 1 : 3;
   const pimgs: string[] = [];
@@ -76,7 +82,8 @@ Deno.serve(async (req) => {
     lines.push(`${at} Add EXACTLY this product to image 1, ${pl}. ${where}${size} Keep the product's exact design, colours and proportions from its images.`);
   });
   const note = kind === "idea" ? idea : o.allow_note ? String(b.note || "").replace(/["\\]/g, "'").slice(0, 300) : "";
-  if (kind === "idea") lines.push(`Change image 1 exactly as the customer asks (the request is in Estonian): "${idea}". Make only the change that is asked, realistic and in correct perspective and real-world scale. Keep the rest of the photo identical. If the request is unclear or not possible, make the most natural realistic version of it.`);
+  const where1 = !hasGuide ? "" : mkA ? ` Make the change only inside the marked area (x ${mkA[0].toFixed(0)}–${mkA[2].toFixed(0)}%, y ${mkA[1].toFixed(0)}–${mkA[3].toFixed(0)}% of image 1).` : mkP ? ` Make the change at the marked point (${mkP[0].toFixed(0)}% from the left and ${mkP[1].toFixed(0)}% from the top of image 1).` : "";
+  if (kind === "idea") lines.push(`Change image 1 exactly as the customer asks (the request is in Estonian): "${idea}".${where1} Make only the change that is asked, realistic and in correct perspective and real-world scale. Keep the rest of the photo identical. If the request is unclear or not possible, make the most natural realistic version of it.`);
   else if (note) lines.push(`The customer's wish (Estonian): "${note}".`);
   const st = o.customer_style && STYLES[String(b.style)] ? String(b.style) : o.style;
   lines.push(`Match the scene's light direction and colour and add realistic shadows. Do not change anything else. ${STYLES[st]} No text, no watermark.`);
