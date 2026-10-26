@@ -2002,7 +2002,7 @@ const fmt=(v,d=1)=>v.toLocaleString('et-EE',{minimumFractionDigits:d,maximumFrac
 function segC(p,a,b){const dx=b[0]-a[0],dy=b[1]-a[1],L2=dx*dx+dy*dy;let t=L2?((p[0]-a[0])*dx+(p[1]-a[1])*dy)/L2:0;t=Math.max(0,Math.min(1,t));const q=[a[0]+dx*t,a[1]+dy*t];return{d:Math.hypot(p[0]-q[0],p[1]-q[1]),q};}
 function polyC(p,P){let best={d:1e9};P.forEach((a,i)=>{const r=segC(p,a,P[(i+1)%P.length]);if(r.d<best.d)best=r;});return best;}
 function polyPoly(A,B){let best={d:1e9};A.forEach(a=>{const r=polyC(a,B);if(r.d<best.d)best={d:r.d,p:a,q:r.q};});B.forEach(b=>{const r=polyC(b,A);if(r.d<best.d)best={d:r.d,p:r.q,q:b};});return best;}
-function yard(h){const [x0,y0,x1,y1]=h.lot,lw=x1-x0,ll=y1-y0,area=lw*ll;
+function yard(h){const [x0,y0,x1,y1]=h.lot,lw=x1-x0,ll=y1-y0,area=h.parcel?h.parcel.p:lw*ll;
   let nb={d:1e9};h.nb.forEach(b=>{const r=polyPoly(h.pts,b.p);if(r.d<nb.d)nb=r;});
   const tr=h.trees.map(t=>({t,...polyC([t[0],t[1]],h.pts)})).sort((a,b)=>a.d-b.d);
   return{lw,ll,area,yard:area-h.footprint,nb,tr};}
@@ -2048,7 +2048,7 @@ function renderPanel(){applyRoofType(HOUSES[cur]);setTimeout(()=>{const h=HOUSES
     (()=>{const s=sunFace(h);return['Päikesepoolne tahk',s.area?fmt(s.area,0)+' m²':'—','h',s.txt,'south'];})(),
     ['Seinte pind',fmt(h.wall)+' m²','h',(h.roofType==='gable'||h.roofType==='lod2'?'Viilud sees, ':'')+'aknad maha arvamata','wall']];
   if(h.manual)R.forEach(r=>{const t={fp:'Sisestatud käsitsi (LOD2 mudelit pole)',per:'Sisestatud mõõtudest',eave:'Sisestatud käsitsi',h:h.manual.rt==='flat'?'Lamekatusel = räästas':'Räästast ja 30° kaldest'}[r[4]];if(t){r[2]='h';r[3]=t;}});
-  const Y=yard(h);R.push(['Krunt (aiaga)',fmt(Y.lw)+' × '+fmt(Y.ll)+' m','h','~'+fmt(Y.area,0)+' m², katastripiir täpsustub','lot'],['Hoovi pind',fmt(Y.yard,0)+' m²','h','Krunt miinus maja','yard'],
+  const Y=yard(h);R.push(h.parcel?['Krunt',fmt(Y.area,0)+' m²','d','Katastriüksus '+h.parcel.t+' · '+fmt(Y.lw)+' × '+fmt(Y.ll)+' m','lot']:['Krunt (aiaga)',fmt(Y.lw)+' × '+fmt(Y.ll)+' m','h','~'+fmt(Y.area,0)+' m², katastripiir täpsustub','lot'],['Hoovi pind',fmt(Y.yard,0)+' m²','h','Krunt miinus maja','yard'],
     ['Aia pikkus',fmt(2*(Y.lw+Y.ll),0)+' m','h','Krundi ümbermõõt, väravad maha arvamata','fence'],
     ['Lähim naabermaja',fmt(Y.nb.d)+' m','d','Seinast seinani','nb'],['Lähim puu',fmt(Y.tr[0].d)+' m','h','Puud on näidis, LOD0 andmetega täpsed','tree']);
   const T=tplOf(h),base=['fp','per','h','eave','roof','wall','lot','yard','nb','tree'],keys=T&&!showAllRows?T.show:(T?SHOWK.map(k=>k[0]):base),vis=R.filter(r=>keys.includes(r[4]));
@@ -2485,7 +2485,16 @@ canvas.addEventListener('pointerup',e=>{if(!mMode&&downXY&&Math.hypot(e.clientX-
   mPts.push(p);mRedraw();});
 function drawMLabels(w,hh){if(selInfo){const p=selInfo.p.clone().project(camera),el=$('selLab');el.style.left=((p.x+1)/2*w)+'px';el.style.top=((1-p.y)/2*hh-26)+'px';el.hidden=p.z>1;}const els=$('mlabels').children;mLab.forEach((l,i)=>{const el=els[i];if(!el)return;const p=l.p.clone().project(camera);el.hidden=p.z>1;el.textContent=l.t;el.style.left=((p.x+1)/2*w)+'px';el.style.top=((1-p.y)/2*hh)+'px';});}
 
-function select(i){cur=i;setTimeout(()=>typeof renderAcct==='function'&&renderAcct(),0);renderList();renderPanel();build();updFotos();setRen(false);mPts=[];mClosed=false;mRedraw();chatReset();}
+// päris krunt katastrist (aia andmed: tasuta, vahemälus) asendab hinnangu „kast kuni naabrini“ (Herne tn 20: 153 m² vs päris 1703 m²).
+// Vaate raam: LOD2 meetrid, nihutatud maja keskmesse (h.x, h.y) ja pööratud h.north kraadi vastupäeva.
+async function lotCadastre(h){if(!h||h.parcel!==undefined||!h.ehr||!(CLOUD&&CL.cid))return;h.parcel=null;
+  try{const r=await clFn('garden',{ehr:String(h.ehr)}),meta=await (await fetch(r.meta)).json(),ring=f=>{const o=[];for(let i=0;i+1<f.length;i+=2)o.push([f[i],f[i+1]]);return o;};
+    const par=(meta.parcels||[]).find(p=>pip([0,0],ring(p.g[0])));if(!par)return;
+    const th=(h.north||0)*Math.PI/180,c=Math.cos(th),sn=Math.sin(th),dx=meta.c[0]-h.x,dy=meta.c[1]-h.y;
+    const P=ring(par.g[0]).map(([x,y])=>[+((x+dx)*c-(y+dy)*sn).toFixed(2),+((x+dx)*sn+(y+dy)*c).toFixed(2)]),xs=P.map(q=>q[0]),ys=P.map(q=>q[1]);
+    h.parcel={p:+(par.p||Math.abs(pArea(P))).toFixed(0),t:par.t,pts:P};h.lot=[Math.min(...xs),Math.min(...ys),Math.max(...xs),Math.max(...ys)];
+    if(HOUSES[cur]===h){renderPanel();build();}}catch(_){h.parcel=undefined;}}
+function select(i){cur=i;setTimeout(()=>lotCadastre(HOUSES[i]),0);setTimeout(()=>typeof renderAcct==='function'&&renderAcct(),0);renderList();renderPanel();build();updFotos();setRen(false);mPts=[];mClosed=false;mRedraw();chatReset();}
 const seg=[['hiNone','none'],['hiWall','wall'],['hiRoof','roof']];
 seg.forEach(([id,val])=>$(id).onclick=()=>{hi=val;seg.forEach(([j])=>$(j).setAttribute('aria-pressed',j===id));applyHi();});
 $('dimBtn').onclick=()=>{showDims=!showDims;$('dimBtn').setAttribute('aria-pressed',showDims);};
