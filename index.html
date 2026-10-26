@@ -2319,13 +2319,15 @@ function applyHi(){if(!group)return;const ph=photos[cur]||{};group.getObjectByNa
   if(o.name==='roofpart')o.material=hi==='roof'?M.hi:M.roof;
   if(o.userData.edge!==undefined&&o.name!=='walls')o.visible=!ph[o.userData.edge];});}
 function recolor(){if(!M.wall)return;M.wall.color.set(wallCol);M.roof.color.set(roofCol);group&&group.traverse(o=>{if(o.name==='walls'&&o.userData.base)o.userData.base.color.set(wallCol);});}
-function setView(){const h=HOUSES[cur],l=h.lot,r=Math.max(26,Math.hypot(l[2]-l[0],l[3]-l[1]),(h.height||0)*1.6),cx=(l[0]+l[2])/2,cy=(l[1]+l[3])/2,tz=Math.max(1.5,(h.height||0)*.3); // kõrge kortermaja: kaugemalt ja kõrgemalt
+// kaamera maja peale (mitte krundi keskele: päris krunt võib olla 100 m pikk riba); kõrge kortermaja: kaugemalt ja kõrgemalt
+function setView(){const h=HOUSES[cur],xs=h.pts.map(p=>p[0]),ys=h.pts.map(p=>p[1]),l=[Math.min(...xs)-4,Math.min(...ys)-4,Math.max(...xs)+4,Math.max(...ys)+4],r=Math.max(26,Math.hypot(l[2]-l[0],l[3]-l[1]),(h.height||0)*1.6),cx=(l[0]+l[2])/2,cy=(l[1]+l[3])/2,tz=Math.max(1.5,(h.height||0)*.3);
   if(topView){camera.position.set(cx+.01,r*2.9,-cy+.01);controls.target.set(cx,0,-cy);controls.update();return;}
-  const D=r*2.3,H=r*1.4,base=Math.atan2(-1.9,1.75);let best=null;
-  for(let k=0;k<16;k++){const az=base+(k%2?1:-1)*Math.ceil(k/2)*Math.PI/8,px=cx+Math.cos(az)*D,py=cy+Math.sin(az)*D;let blocked=0;
+  const D=r*2.3,base=Math.atan2(-1.9,1.75);let best=null;
+  // tihe linnasüda (Pärnu Rüütli 25): igast suunast varjab naabermaja -> proovi kõrgemalt, enne kui leppida vähim varjatuga
+  for(const H of [r*1.4,r*2.4])for(let k=0;k<16;k++){const az=base+(k%2?1:-1)*Math.ceil(k/2)*Math.PI/8,px=cx+Math.cos(az)*D,py=cy+Math.sin(az)*D;let blocked=0;
     for(let t=.12;t<=1;t+=.04){const x=cx+(px-cx)*t,y=cy+(py-cy)*t,z=tz+(H-tz)*t;h.nb.forEach(b=>{if(b.h+1>z&&pip([x,y],b.p))blocked++;});}
-    if(!best||blocked<best.b){best={b:blocked,px,py};}if(blocked===0)break;}
-  camera.position.set(best.px,H,-best.py);controls.target.set(cx,tz,-cy);controls.update();}
+    if(!best||blocked<best.b){best={b:blocked,px,py,H};}if(blocked===0)break;}
+  camera.position.set(best.px,best.H,-best.py);controls.target.set(cx,tz,-cy);controls.update();}
 function resize(){const w=view.clientWidth,h=view.clientHeight;renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix();}
 new ResizeObserver(resize).observe(view);resize();
 
