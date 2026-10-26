@@ -6814,16 +6814,16 @@ function choose(){if($('mhDlg'))return;const o=basePrice('obj'),f=+(o+basePrice(
   d.innerHTML=`<div class="box"><button type="button" class="x" aria-label="Sulge">×</button>
   <h2 id="mhDlgT">Maja 3D ja mõõdud: vali, kuidas teeme</h2><p class="sub">Mõõdud (katus, kalded, seinad, krunt) tulevad mõlemal juhul Maa- ja Ruumiameti andmetest. Erinevus on välimuses.</p>
   <div class="opts">
-   <button type="button" class="opt" data-k="lihtne"><span class="ph"><img src="media/maja-lihtne.jpg" alt="Näidis: maja 3D Maa-ameti andmetest, lihtsustatud välimusega"><i class="tg">Näidis · kiire 3D</i></span>
-    <span class="bd"><span class="hd"><b>Kiire 3D andmetest</b><span class="pr">${crTxt(o)} · ${eur(o)}</span></span>
-     <p>Sisesta ainult aadress. Näed maja 3D-s koos päris katuse, kallete ja pindadega. Välimus on lihtsustatud: hall katus, heledad seinad.</p>
-     <ul><li><span>Vaja</span>Maja aadress</li><li><span>Valmis</span>Kohe</li><li><span>Sobib</span>Kiire hinnapakkumine, mõõdud</li></ul>
-     <span class="go">Vali kiire 3D</span></span></button>
    <button type="button" class="opt best" data-k="foto"><span class="ph"><img class="ct" src="examples/building-poster.webp" alt="Näidis: päris välimusega 3D-mudel maja fotodest"><img class="in" src="examples/building-1.webp" alt="Üks neljast fotost"><i class="tg best">Näidis · fotodest</i></span>
     <span class="bd"><span class="hd"><b>Päris välimus fotodega</b><span class="pr">${crTxt(f)} · ${eur(f)}</span></span>
      <p>Sisesta aadress ja lisa 4 fotot majast. AI teeb päris välimusega 3D-mudeli: värvid, aknad, uksed, rõdu. Mõõdud tulevad Maa-ametist.</p>
      <ul><li><span>Vaja</span>Aadress + 4 fotot (eest, vasakult, tagant, paremalt)</li><li><span>Valmis</span>Umbes 4 minutiga</li><li><span>Sobib</span>Kliendile näitamiseks, esitlus</li></ul>
      <span class="go">Vali fotodega</span></span></button>
+   <button type="button" class="opt" data-k="lihtne"><span class="ph"><img src="media/maja-lihtne.jpg" alt="Näidis: maja 3D Maa-ameti andmetest, lihtsustatud välimusega"><i class="tg">Näidis · kiire 3D</i></span>
+    <span class="bd"><span class="hd"><b>Kiire 3D andmetest</b><span class="pr">${crTxt(o)} · ${eur(o)}</span></span>
+     <p>Sisesta ainult aadress. Näed maja 3D-s koos päris katuse, kallete ja pindadega. Välimus on lihtsustatud: hall katus, heledad seinad.</p>
+     <ul><li><span>Vaja</span>Maja aadress</li><li><span>Valmis</span>Kohe</li><li><span>Sobib</span>Kiire hinnapakkumine, mõõdud</li></ul>
+     <span class="go">Vali kiire 3D</span></span></button>
   </div></div>`;
   document.body.appendChild(d);d.querySelector('.x').onclick=close;d.addEventListener('click',e=>{if(e.target===d)close();});
   d.querySelectorAll('.opt').forEach(b=>b.onclick=()=>pick(b.dataset.k));document.addEventListener('keydown',esc,true);setTimeout(()=>{const b=d.querySelector('.opt');b&&b.focus();},30);}
@@ -6852,7 +6852,7 @@ const css=document.createElement('style');css.textContent=`
 .wsvc{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px;margin-top:6px}
 .wsv{display:flex;flex-direction:column;gap:6px;text-align:left;border:1px solid var(--line);border-radius:12px;padding:12px 14px;background:var(--paper);color:var(--ink);font:inherit;cursor:pointer;position:relative}
 .wsv:hover{border-color:var(--ink)}.wsv[aria-pressed="true"]{border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 14%,transparent)}
-.wsv .hd{display:flex;align-items:center;gap:8px}.wsv .hd b{font-size:14.5px;flex:1}
+.wsv .hd{display:flex;align-items:center;gap:8px}.wsv .wpop{font:600 10.5px var(--display);font-style:normal;background:var(--accent);color:#fff;border-radius:999px;padding:3px 8px;white-space:nowrap}.wsv .hd b{font-size:14.5px;flex:1}
 .wsv .ck{width:20px;height:20px;border-radius:6px;border:1.5px solid var(--line);display:flex;align-items:center;justify-content:center;flex:none;font-size:13px;color:#fff}
 .wsv[aria-pressed="true"] .ck{background:var(--accent);border-color:var(--accent)}
 .wsv small{color:var(--muted);font-size:12.5px;line-height:1.45}.wsv .pr{font:600 12px var(--mono);color:var(--ink)}.wsv .pr span{color:var(--muted);font-weight:500}
@@ -6889,7 +6889,7 @@ const SVC=[
 function cur(){return wFeats(($('wFeat')||{}).value||acct.wFeat);}
 function setF(S){if(!S.size){toast('Vali vähemalt üks teenus');return false;}const v=wFeatStr(S);const el=$('wFeat');if(el){el.value=v;el.dispatchEvent(new Event('change'));}else{acct.wFeat=v;save();}return true;}
 function wSvcDraw(){const box=$('wSvc');if(!box)return;const S=cur();
-  box.innerHTML=SVC.map(x=>`<button type="button" class="wsv" data-svf="${x.f}" aria-pressed="${S.has(x.f)}"><span class="hd"><span class="ck">${S.has(x.f)?'✓':''}</span><b>${x.n}</b></span><small>${x.d}</small><span class="pr">${x.pr()}</span>${x.f==='house'&&S.has('house')?`<span class="sub" role="checkbox" data-svs="house3d" aria-pressed="${S.has('house3d')}" aria-checked="${S.has('house3d')}"><i>${S.has('house3d')?'✓':''}</i><span><b>Klient saab lisada 4 fotot</b>: päris välimusega 3D-mudel majast · +${crTxt(P('3d'))}</span></span>`:''}</button>`).join('');
+  box.innerHTML=SVC.map(x=>`<button type="button" class="wsv" data-svf="${x.f}" aria-pressed="${S.has(x.f)}"><span class="hd"><span class="ck">${S.has(x.f)?'✓':''}</span><b>${x.n}</b>${x.f==='place'?'<i class="wpop">★ Populaarne</i>':''}</span><small>${x.d}</small><span class="pr">${x.pr()}</span>${x.f==='house'&&S.has('house')?`<span class="sub" role="checkbox" data-svs="house3d" aria-pressed="${S.has('house3d')}" aria-checked="${S.has('house3d')}"><i>${S.has('house3d')?'✓':''}</i><span><b>Klient saab lisada 4 fotot</b>: päris välimusega 3D-mudel majast · +${crTxt(P('3d'))}</span></span>`:''}</button>`).join('');
   box.querySelectorAll('[data-svs]').forEach(b=>b.onclick=e=>{e.stopPropagation();const S=cur();S.has('house3d')?S.delete('house3d'):S.add('house3d');if(setF(S))wSvcDraw();});
   box.querySelectorAll('[data-svf]').forEach(b=>b.onclick=()=>{const S=cur(),f=b.dataset.svf;if(S.has(f)){S.delete(f);if(f==='house')S.delete('house3d');}else S.add(f);
     if(f==='place'&&S.has('place')&&!(prodList()||[]).length)toast('Lisa tooted lehel Minu tooted, siis saab klient neid proovida.');
@@ -7025,6 +7025,11 @@ const css=document.createElement('style');css.textContent=`
 .vsd .ck{position:absolute;top:10px;right:10px;width:26px;height:26px;border-radius:8px;background:rgba(255,255,255,.92);border:1.5px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:15px;color:#fff;z-index:2}
 .vsd .opt[aria-pressed="true"] .ck{background:var(--accent);border-color:var(--accent)}
 .vsd .rec{position:absolute;bottom:10px;left:10px;font:600 10.5px var(--mono);letter-spacing:.04em;text-transform:uppercase;background:var(--accent);color:#fff;border-radius:999px;padding:4px 9px;z-index:2}
+.vsd .opt{position:relative}.vsd .opt:focus-visible{outline:2px solid var(--accent);outline-offset:2px}.vsd .opt .ph img.ct{object-fit:contain;background:#fff;padding:6px;box-sizing:border-box}
+.vsd .hvn{position:absolute;left:50%;bottom:10px;transform:translateX(-50%);display:flex;align-items:center;gap:6px;z-index:3;background:rgba(22,19,15,.78);color:#fff;border-radius:999px;padding:3px 4px;font:600 11px var(--mono);white-space:nowrap}
+.vsd .hvn button{width:28px;height:28px;border-radius:50%;border:0;background:rgba(255,255,255,.16);color:#fff;font-size:17px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center}.vsd .hvn button:hover{background:rgba(255,255,255,.3)}
+.vsd .pop{position:absolute;top:10px;left:10px;font:600 11.5px var(--display);background:var(--accent);color:#fff;border-radius:999px;padding:5px 10px;z-index:2;box-shadow:0 4px 12px rgba(0,0,0,.25)}
+.vsd .opt .rec{bottom:auto;top:10px;left:auto;right:44px}
 .vsd .sub3{display:flex;gap:8px;align-items:flex-start;margin-top:2px;padding:8px 10px;border-radius:9px;background:var(--soft);font-size:12.5px;line-height:1.4;border:1px solid transparent}
 .vsd .sub3[aria-pressed="true"]{border-color:color-mix(in srgb,var(--accent) 45%,var(--line))}.vsd .sub3 i{font-style:normal;width:16px;height:16px;border-radius:5px;border:1.5px solid var(--line);flex:none;display:flex;align-items:center;justify-content:center;font-size:11px;color:#fff;margin-top:1px}
 .vsd .sub3[aria-pressed="true"] i{background:var(--accent);border-color:var(--accent)}
@@ -7035,6 +7040,9 @@ const css=document.createElement('style');css.textContent=`
 const E=t=>String(t==null?'':t).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const P=k=>{try{const v=basePrice(k);return isFinite(v)?v:0;}catch(_){return 0;}};
 const eur=n=>{const v=n*((acct.admRules&&+acct.admRules.eur)||0.5);return (Number.isInteger(+v.toFixed(2))?String(+v.toFixed(2)):v.toFixed(2)).replace('.',',')+' €';};
+const HV={foto:{n:'Maja 3D päris välimusega',lab:'Päris välimus · fotodega',ph:'<img class="ct" src="examples/building-poster.webp" alt="Näidis: maja päris välimusega 3D-s">',d:'Klient sisestab aadressi ja lisab 4 fotot majast. AI teeb päris välimusega 3D-mudeli, mõõdud tulevad Maa-ametist. Parim tulemus.',k:'Aadress + 4 fotot',u:'',pr:()=>`${crTxt(+(P('obj')+P('3d')).toFixed(2))} · ${eur(P('obj')+P('3d'))}`},
+  lihtne:{n:'Maja 3D ja mõõdud',lab:'Kiire 3D · andmetest',ph:'<img src="media/maja-lihtne.jpg" alt="Näidis: maja 3D Maa-ameti andmetest">',d:'Klient sisestab ainult aadressi ja näeb oma maja 3D-s koos katuse, seinte ja krundi mõõtudega. Välimus on lihtsustatud.',k:'Sisestab aadressi',u:'päringu kohta',pr:()=>`${crTxt(P('obj'))} · ${eur(P('obj'))}`}};
+const HVK=['foto','lihtne'];
 const SV=[
  {f:'house',n:'Maja 3D ja mõõdud',ph:'<img src="media/maja-lihtne.jpg" alt="Näidis: kliendi maja 3D-s">',d:'Klient sisestab aadressi ja näeb oma maja 3D-s koos katuse, seinte ja krundi mõõtudega.',k:'Sisestab aadressi',u:'päringu kohta',pr:()=>`${crTxt(P('obj'))} · ${eur(P('obj'))}`},
  {f:'place',n:'Toode pildile',ph:'<img src="media/telk-parast.jpg" alt="Näidis: telk kliendi hoovis">',d:'Klient laeb oma hoovi või toa foto ja näeb sinu toodet seal õiges suuruses.',k:'Laeb foto, valib toote',u:'pildi kohta',pr:()=>`${crTxt(P('design'))} · ${eur(P('design'))}`},
@@ -7054,7 +7062,9 @@ let D=null;
 function close(){const d=$('vsDlg');if(d)d.remove();document.removeEventListener('keydown',esc,true);D=null;}
 function esc(e){if(e.key==='Escape'){e.preventDefault();close();}}
 function open(q){if($('vsDlg'))return;const S=wFeats(acct.wFeat);const base=NICHE[acct.niche]||'';const r=base?recommend(base):{S:new Set(),why:[]};
-  D={S,rec:r.S,why:r.why,q:'',auto:!!base};
+  // kallim (parim) variant ees; odavam ainult siis, kui firma on selle ise valinud
+  const hv=S.has('house')&&!S.has('house3d')&&acct.wSvcSet?'lihtne':'foto';if(hv==='foto'&&S.has('house'))S.add('house3d');
+  D={S,rec:r.S,why:r.why,q:'',auto:!!base,hv};
   const d=document.createElement('div');d.className='mhd vsd';d.id='vsDlg';d.setAttribute('role','dialog');d.setAttribute('aria-modal','true');d.setAttribute('aria-labelledby','vsDlgT');
   document.body.appendChild(d);d.addEventListener('click',e=>{if(e.target===d)close();});document.addEventListener('keydown',esc,true);draw();
   if(typeof q==='string'&&q.trim().length>1){D.q=q.trim();go();}else setTimeout(()=>{const i=$('vsQ');i&&i.focus({preventScroll:true});},40);}
@@ -7065,19 +7075,20 @@ function draw(){const d=$('vsDlg');if(!d||!D)return;const S=D.S,R=D.rec;
   <p class="sub">Vidin ja päringud on tasuta. Maksad ainult siis, kui klient midagi teeb, sama hinda mis tööriistadel. Iga töö toob sulle kliendi nime, e-posti ja aadressi.</p>
   <div class="fnd"><input id="vsQ" type="text" placeholder="Kirjelda oma firmat, nt katusetööd, telkide rent, saunade müük" value="${E(D.q)}" aria-label="Mida sinu firma teeb"><button type="button" id="vsGo">Soovita mulle</button></div>
   ${D.why.length?`<div class="why"><b>${D.auto&&!D.q?'Sinu valdkonna järgi soovitame':'Soovitame'}:</b> ${E([...R].filter(f=>f!=='house3d').map(f=>SV.find(x=>x.f===f).n).join(', '))}${R.has('house3d')?' (koos majafotodega)':''}, sest ${E(D.why.join(', '))}.</div>`:''}
-  <div class="opts">${SV.map(x=>`<button type="button" class="opt" data-vf="${x.f}" aria-pressed="${S.has(x.f)}"><span class="ph">${x.ph}<i class="ck">${S.has(x.f)?'✓':''}</i>${R.has(x.f)?'<i class="rec">Soovitame</i>':''}</span>
+  <div class="opts">${SV.map(x0=>{const hz=x0.f==='house',x=hz?{...x0,...HV[D.hv],u:D.hv==='foto'?`fotodega päringu kohta (ilma fotodeta ${crTxt(P('obj'))})`:HV.lihtne.u}:x0;return `<div role="button" tabindex="0" class="opt" data-vf="${x.f}" aria-pressed="${S.has(x.f)}"><span class="ph">${x.ph}<i class="ck">${S.has(x.f)?'✓':''}</i>${x.f==='place'?'<i class="pop">★ Populaarne</i>':''}${R.has(x.f)&&(!hz||D.hv==='foto'||!R.has('house3d'))?'<i class="rec">Soovitame</i>':''}${hz?`<span class="hvn"><button type="button" data-hv="-1" aria-label="Eelmine valik">‹</button><span>${HVK.indexOf(D.hv)+1}/2 · ${x.lab}</span><button type="button" data-hv="1" aria-label="Järgmine valik">›</button></span>`:''}</span>
     <span class="bd"><span class="hd"><b>${x.n}</b><span class="pr">${x.pr()}</span></span><p>${x.d}</p><ul><li><span>Klient</span>${x.k}</li><li><span>Hind</span>${x.u}, sinu kontolt</li><li><span>Sina saad</span>Päringu ${x.f==='house'?'koos maja mõõtudega':x.f==='model3d'?'koos 3D-mudeliga':'koos pildiga'}</li></ul>
-    ${x.f==='house'&&S.has('house')?`<span class="sub3" data-vs3 role="checkbox" aria-pressed="${S.has('house3d')}" aria-checked="${S.has('house3d')}"><i>${S.has('house3d')?'✓':''}</i><span><b>Klient saab lisada 4 fotot:</b> päris välimusega 3D-mudel majast · +${crTxt(P('3d'))}${R.has('house3d')?' · soovitame':''}</span></span>`:''}</span></button>`).join('')}</div>
+    </span></div>`;}).join('')}</div>
   <div class="foot"><span class="sum">${sum?`Valitud ${sum} ${sum===1?'teenus':'teenust'}. Saad hiljem seadetes muuta.`:'Vali vähemalt üks teenus.'}</span><span class="bt"><button type="button" id="vsSet">Seadista vidin</button><button type="button" class="pri" id="vsDemo" ${sum?'':'disabled'}>Vaata, kuidas see minu lehel välja näeb</button></span></div></div>`;
   d.querySelector('.x').onclick=close;
   const q=$('vsQ');q.oninput=e=>{D.q=e.target.value;};q.onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();go();}};$('vsGo').onclick=go;
-  d.querySelectorAll('[data-vs3]').forEach(b=>b.onclick=e=>{e.stopPropagation();S.has('house3d')?S.delete('house3d'):S.add('house3d');draw();});
-  d.querySelectorAll('[data-vf]').forEach(b=>b.onclick=()=>{const f=b.dataset.vf;if(S.has(f)){S.delete(f);if(f==='house')S.delete('house3d');}else S.add(f);draw();});
+  const syncH=()=>{if(S.has('house')&&D.hv==='foto')S.add('house3d');else S.delete('house3d');};
+  d.querySelectorAll('[data-hv]').forEach(b=>b.onclick=e=>{e.stopPropagation();const i=(HVK.indexOf(D.hv)+(+b.dataset.hv)+HVK.length)%HVK.length;D.hv=HVK[i];syncH();draw();const n=$('vsDlg').querySelector(`[data-hv="${b.dataset.hv}"]`);n&&n.focus();});
+  d.querySelectorAll('[data-vf]').forEach(b=>{const tg=()=>{const f=b.dataset.vf;if(S.has(f))S.delete(f);else S.add(f);syncH();draw();const n=$('vsDlg').querySelector(`[data-vf="${f}"]`);n&&n.focus({preventScroll:true});};b.onclick=tg;b.onkeydown=e=>{if((e.key==='Enter'||e.key===' ')&&e.target===b){e.preventDefault();tg();}};});
   $('vsSet').onclick=()=>{if(!apply())return;close();show('settings','widget');};
   $('vsDemo').onclick=()=>{if(!apply())return;close();demo();};}
 function go(){const t=(D.q||'').trim();if(t.length<2){toast('Kirjuta paari sõnaga, mida su firma teeb');return;}const r=recommend(t);
   if(!r.S.size){D.rec=new Set(['house','idea']);D.why=['need sobivad enamikule firmadele: maja mõõdud ja kliendi enda idee pildil'];}else{D.rec=r.S;D.why=r.why;}
-  D.S=new Set(D.rec);D.auto=false;draw();const i=$('vsQ');if(i){i.focus();i.setSelectionRange(i.value.length,i.value.length);}}
+  D.S=new Set(D.rec);if(D.S.has('house'))D.hv=D.rec.has('house3d')?'foto':'lihtne';if(D.hv==='foto'&&D.S.has('house'))D.S.add('house3d');D.auto=false;draw();const i=$('vsQ');if(i){i.focus();i.setSelectionRange(i.value.length,i.value.length);}}
 function apply(){const S=D.S;if(![...S].some(f=>f!=='house3d')){toast('Vali vähemalt üks teenus');return false;}
   if(S.has('place')&&!(prodList()||[]).length)toast('Toode pildile: lisa oma tooted lehel Minu tooted.');
   acct.wFeat=wFeatStr(S);const el=$('wFeat');if(el){el.value=acct.wFeat;el.dispatchEvent(new Event('change'));}else save();
@@ -7087,6 +7098,56 @@ window.v3dWidgetChoice=open;
 document.addEventListener('click',e=>{const c=e.target.closest&&e.target.closest('#tGrid .tcard[data-t="vidin"]');if(!c)return;e.preventDefault();e.stopImmediatePropagation();open();},true);
 
 })();}catch(e){console.warn('[vidina valik]',e);}
+
+/* ---------- 26.10: vidina seadistamise õpetus etappide kaupa (seadete lehe ülaosas, iga samm näitab, kas tehtud) ---------- */
+try{(()=>{
+const css=document.createElement('style');css.textContent=`
+.wgd{display:flex;flex-direction:column;gap:10px}.wgd .ct{display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap}
+.wgd .bar{height:6px;border-radius:9px;background:var(--line);overflow:hidden}.wgd .bar i{display:block;height:100%;background:var(--accent);border-radius:9px;transition:width .4s}
+.wgd ol{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.wgd li{display:grid;grid-template-columns:30px minmax(0,1fr) auto;gap:10px;align-items:start;padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:var(--bg)}
+.wgd li.ok{opacity:.75}.wgd li .n{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font:700 13px var(--mono);background:var(--soft);color:var(--ink)}
+.wgd li.ok .n{background:var(--ok,#2F7D4F);color:#fff}.wgd li.cur{border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 12%,transparent)}.wgd li.cur .n{background:var(--accent);color:#fff}
+.wgd li b{font-size:14px;display:block}.wgd li p{margin:3px 0 0;font-size:13px;line-height:1.5;color:var(--muted)}
+.wgd li button{white-space:nowrap}
+.wgd .pf{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}.wgd .pf button{border:1px solid var(--line);background:var(--paper);border-radius:999px;padding:5px 11px;font:600 12px var(--display);color:var(--ink);cursor:pointer}.wgd .pf button[aria-pressed="true"]{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.wgd .pfs{list-style:decimal;margin:8px 0 0;padding-left:18px;font-size:13px;line-height:1.55;color:var(--ink)}.wgd .pfs li{display:list-item;border:0;padding:0;background:none;grid-template-columns:none}
+@media (max-width:560px){.wgd li{grid-template-columns:28px minmax(0,1fr)}.wgd li>button{grid-column:2;justify-self:start}}
+.wflash{animation:wFl 1.4s ease}@keyframes wFl{0%,100%{box-shadow:0 0 0 0 transparent}30%{box-shadow:0 0 0 4px color-mix(in srgb,var(--accent) 45%,transparent)}}
+`;document.head.appendChild(css);
+const E=t=>String(t==null?'':t).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const PF={wp:['WordPress',['Ava leht, kuhu vidin läheb, ja vajuta „+“ (lisa plokk).','Vali plokk „Custom HTML“ (eesti keeles „Kohandatud HTML“).','Kleebi kood ja vajuta „Uuenda“ või „Avalda“.']],
+  wix:['Wix',['Vajuta vasakul „Add Elements“ (+) → „Embed Code“ → „Embed HTML“.','Vali „Code“ ja kleebi kood. Venita kast piisavalt suureks.','Vajuta üleval „Publish“.']],
+  webflow:['Webflow',['Lohista lehele element „Embed“ (Add → Components).','Kleebi kood ja vajuta „Save & Close“.','Vajuta „Publish“.']],
+  shopify:['Shopify',['Online Store → Themes → Customize.','Lisa sektsioon „Custom Liquid“ (või „Custom HTML“).','Kleebi kood ja vajuta „Save“.']],
+  other:['Muu / arendaja',['Saada kood oma veebilehe tegijale või kleebi see HTML-i sinna, kus kast peab olema.','Nupuna saad kasutada ka ainult koodi sees olevat linki.','Kontrolli lehel, et kast avaneb.']]};
+let pf=(()=>{try{return localStorage.getItem('v3d_wpf')||'wp';}catch(_){return 'wp';}})();
+const steps=()=>{const S=wFeats(acct.wFeat),prods=(typeof prodList==='function'?prodList():[])||[];
+  const needProd=S.has('place');
+  return [
+   {id:'svc',t:'Vali, mida klient sinu lehel teha saab',p:'Maja 3D, toode pildile, vaba idee või 3D-mudel. Hind on sama mis tööriistadel, päring ise on tasuta.',ok:!!acct.wSvcSet,go:'Vali teenused',fn:()=>{acct.wSvcSet=1;save();if(window.v3dWidgetChoice)window.v3dWidgetChoice();else jump('wSvc');}},
+   ...(needProd?[{id:'prod',t:'Lisa oma tooted',p:'Toode pildile vajab sinu tooteid: 2–3 pilti, päris mõõdud ja kategooria. Ilma tooteta klient seda proovida ei saa.',ok:prods.some(x=>!x.sample),go:'Minu tooted',fn:()=>show('settings','products')}]:[]),
+   {id:'look',t:'Vali kujundus ja oma brändi värv',p:'Klassikaline toob kõige rohkem päringuid. Pane nupu värviks oma brändi värv.',ok:!!(acct.wColor&&acct.wColor.toUpperCase()!=='#E5482D')||!!acct.wLookSet,go:'Kujundus',fn:()=>{acct.wLookSet=1;save();jump('wOpts');}},
+   {id:'mail',t:'Kontrolli, kuhu päringud tulevad',p:'Iga päring tuleb kohe sinu e-postile koos kliendi nime, e-posti, aadressi ja pildi või mõõtudega.',ok:!!(acct.wMail||acct.wMailOk),go:'E-post',fn:()=>{acct.wMailOk=1;save();jump('wMail');}},
+   {id:'code',t:'Pane kood oma kodulehele',p:'Kopeeri kood ja kleebi see lehele, kus kast peab olema. Vali oma kodulehe platvorm, näitame täpsed sammud.',ok:!!acct.wCodeCopied,go:'Kopeeri kood',fn:()=>{const b=$('wCopy');if(b)b.click();jump('wCode');},pf:true},
+   {id:'test',t:'Proovi nagu klient ja vaata krediite',p:`Ava oma leht ja proovi vidinat ise. Krediite on sul ${String(acct.credits||0).replace('.',',')}; kui need saavad otsa, jätab klient lihtsalt päringu.`,ok:!!acct.wTested,go:'Proovi kohe',fn:()=>{acct.wTested=1;save();const b=$('wSave');if(b)b.click();}}];};
+function jump(id){const el=$(id);if(!el)return;const c=el.closest('.card,.qgrp,label')||el;c.scrollIntoView({block:'center',behavior:'smooth'});c.classList.remove('wflash');void c.offsetWidth;c.classList.add('wflash');}
+function draw(){const pane=document.querySelector('.spane[data-pane="widget"]');if(!pane)return;let box=$('wGuide');
+  if(!box){box=document.createElement('div');box.className='card wgd';box.id='wGuide';const lead=pane.querySelector('p.lead');(lead||pane.firstChild).after(box);}
+  const L=steps(),done=L.filter(x=>x.ok).length,cur=L.findIndex(x=>!x.ok);
+  box.innerHTML=`<div class="ct"><b>Vidin kodulehele ${L.length} sammuga</b><span class="fhint">${done===L.length?'Valmis! Vidin on sinu lehel.':`${done} / ${L.length} tehtud · umbes 10 minutit`}</span></div><div class="bar"><i style="width:${Math.round(done/L.length*100)}%"></i></div>
+  <ol>${L.map((x,i)=>`<li class="${x.ok?'ok':i===cur?'cur':''}"><span class="n">${x.ok?'✓':i+1}</span><div><b>${E(x.t)}</b><p>${E(x.p)}</p>${x.pf?`<div class="pf">${Object.entries(PF).map(([k,v])=>`<button type="button" data-pf="${k}" aria-pressed="${pf===k}">${v[0]}</button>`).join('')}</div><ol class="pfs">${PF[pf][1].map(s=>`<li>${E(s)}</li>`).join('')}</ol>`:''}</div><button type="button" class="${i===cur?'apply':'ghost'} sm" data-gs="${i}">${E(x.go)}</button></li>`).join('')}</ol>`;
+  box.querySelectorAll('[data-gs]').forEach(b=>b.onclick=()=>{const s=steps()[+b.dataset.gs];s&&s.fn();setTimeout(draw,300);});
+  box.querySelectorAll('[data-pf]').forEach(b=>b.onclick=()=>{pf=b.dataset.pf;try{localStorage.setItem('v3d_wpf',pf);}catch(_){}draw();});}
+const _rw=renderWidgetPane;renderWidgetPane=function(){const r=_rw.apply(this,arguments);try{draw();}catch(e){console.warn('[õpetus]',e);}return r;};
+// kood kopeeritud, teenused valitud, värv muudetud -> samm tehtud
+document.addEventListener('click',e=>{const t=e.target;if(!t.closest)return;
+  if(t.closest('#wCopy')){acct.wCodeCopied=1;save();setTimeout(draw,50);}
+  if(t.closest('#wSvc [data-svf],#wSvc [data-svs],#vsDemo,#vsSet')){acct.wSvcSet=1;save();setTimeout(draw,50);}
+  if(t.closest('#wOpts .wopt')){acct.wLookSet=1;save();setTimeout(draw,50);}
+  if(t.closest('#wSave')){acct.wTested=1;save();setTimeout(draw,50);}},true);
+['wColor','wMail'].forEach(id=>{const el=$(id);if(el)el.addEventListener('change',()=>setTimeout(draw,50));});
+})();}catch(e){console.warn('[vidina õpetus]',e);}
 
 restoreRT();renderList();renderPanel();build();updFotos();chatReset();setTab(false);renderAcct();
   if(CLOUD)clBoot();else if(!startFromHash()){if(DEV_AUTOLOGIN||store.get('oai_session',null))enter();else $('login').hidden=false;}tick();}
