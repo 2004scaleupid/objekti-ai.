@@ -24,5 +24,8 @@ verify_jwt = true
 # vidin kutsub ilma kontota; funktsioon kontrollib ise kasutajat (userCompany) või vidinat (widgetMe)
 verify_jwt = false
 
+[functions.house-extras]
+verify_jwt = true
+
 [functions.widget-send]
 verify_jwt = true

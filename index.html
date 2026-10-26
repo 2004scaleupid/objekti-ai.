@@ -5888,7 +5888,13 @@ const css=document.createElement('style');css.textContent=`.src-b.k{border:1px s
 #partsBox .pbtn button[aria-pressed="true"]{background:var(--ink,#16130F);color:var(--bg,#fff)}
 #partsBox .pit{border:1px solid var(--line);border-radius:10px;padding:8px 10px;margin-bottom:6px;font-size:12.5px}#partsBox .pit b{display:flex;justify-content:space-between;align-items:center;gap:6px}
 #partsBox .pit .pf{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}#partsBox .pit label{display:flex;align-items:center;gap:4px;color:var(--muted)}#partsBox .pit input{width:54px;padding:3px 5px;border:1px solid var(--line);border-radius:6px;font:inherit;background:var(--bg);color:inherit}
-#partsBox .pit .lnk{font-size:12px}`;document.head.appendChild(css);
+#partsBox .pit .lnk{font-size:12px}
+#partsBox .fxb{border:1px solid var(--line);border-radius:10px;padding:10px;margin:0 0 10px;font-size:12.5px}#partsBox .fxb h5{margin:0 0 6px;font:600 13px inherit}
+#partsBox .fxph{display:flex;flex-direction:column;gap:6px;margin:0 0 8px}#partsBox .fxph div{display:flex;align-items:center;gap:8px}#partsBox .fxph img{width:44px;height:44px;object-fit:cover;border-radius:6px;flex:none}
+#partsBox .fxph select{min-width:0;flex:1;padding:4px 6px;border:1px solid var(--line);border-radius:6px;font:inherit;background:var(--bg);color:inherit}#partsBox .fxph small{color:var(--muted)}
+#partsBox .fxit{display:flex;gap:8px;align-items:flex-start;padding:6px 0;border-top:1px solid var(--line)}#partsBox .fxit input{margin-top:2px;flex:none}#partsBox .fxit small{display:block;color:var(--muted)}
+#partsBox .fxgo{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}#partsBox .fxgo button{border-radius:999px;padding:7px 12px;font:600 12.5px inherit;cursor:pointer}
+#partsBox .fxgo .pri{background:var(--ink,#16130F);color:var(--bg,#fff);border:1px solid var(--ink,#16130F)}#partsBox .fxgo .sec{background:var(--bg);color:inherit;border:1px solid var(--line)}`;document.head.appendChild(css);
 const list=h=>{acct.parts=acct.parts||{};return acct.parts[h.ehr]||(acct.parts[h.ehr]=[]);};
 const keep=()=>{try{save();}catch(_){}};
 const n1=x=>fmt(x,1);
@@ -5907,6 +5913,86 @@ const aedOf=h=>list(h).find(p=>p.t==='aed');
 function perim(P){return P.reduce((s,a,k)=>{const b=P[(k+1)%P.length];return s+Math.hypot(b[0]-a[0],b[1]-a[1]);},0);}
 window.v3dFenceLen=h=>{const real=(h.fences||[]).reduce((s,f)=>s+Math.hypot(f[2]-f[0],f[3]-f[1]),0),P=h.parcel&&h.parcel.pts;
   return{real,man:aedOf(h)&&P?Math.max(0,perim(P)-4.4):0};};
+const srcB=p=>`<span class="src-b k">${p.src==='foto'?'Fotodelt':'Käsitsi'}</span>`;
+
+/* ---------- fotodelt (supabase/functions/house-extras): AI leiab lisad, klient kinnitab ----------
+   Vaate raam: x = ida, y = põhi, pööratud h.north kraadi vastupäeva (sama mis sunFace). */
+const DIRS=['N','NE','E','SE','S','SW','W','NW'],DIRN=['põhja','kirde','ida','kagu','lõuna','edela','lääne','loode'];
+const brg=(h,lx,ly)=>{const th=(h.north||0)*Math.PI/180,E=lx*Math.cos(th)+ly*Math.sin(th),N=-lx*Math.sin(th)+ly*Math.cos(th);return(Math.atan2(E,N)*180/Math.PI+360)%360;};
+const dir8=b=>Math.round(b/45)%8;
+/* põhiseinad (≥1,5 m) ümber maja järjekorras: välisnormaal, kompassisuund, kas viilusein */
+function wallsOf(h){const P=h.pts,W=[],gab=!/hip|flat/.test(h.roofType||'');
+  /* ühel joonel järjestikused servad (LOD2 vahepunktid) -> üks sein */
+  const E=[];P.forEach((a,k)=>{const b=P[(k+1)%P.length],L=Math.hypot(b[0]-a[0],b[1]-a[1]);if(L<.05)return;const u=[(b[0]-a[0])/L,(b[1]-a[1])/L],l=E[E.length-1];
+    if(l&&l.u[0]*u[0]+l.u[1]*u[1]>.998)l.b=b;else E.push({a,b,u});});
+  if(E.length>2){const f=E[0],l=E[E.length-1];if(f.u[0]*l.u[0]+f.u[1]*l.u[1]>.998){f.a=l.a;E.pop();}}
+  E.forEach(({a,b})=>{const dx=b[0]-a[0],dy=b[1]-a[1],L=Math.hypot(dx,dy);if(L<1.5||W.length>=24)return;
+    let nx=dy/L,ny=-dx/L;if(pip([(a[0]+b[0])/2+nx*.2,(a[1]+b[1])/2+ny*.2],P)){nx=-nx;ny=-ny;}
+    const mx=(a[0]+b[0])/2,my=(a[1]+b[1])/2;let wg=null,wd=1e9;(h.wings||[]).forEach(w=>{const r=w.r,d=Math.hypot((r[0]+r[2])/2-mx,(r[1]+r[3])/2-my);if(d<wd){wd=d;wg=w;}});
+    const rx=wg&&wg.axis==='y'?0:1,gable=gab&&Math.abs(dx/L*rx+dy/L*(1-rx))<.35,B=brg(h,nx,ny);
+    W.push({id:String.fromCharCode(65+W.length),a,b,L,nx,ny,brg:B,face:DIRS[dir8(B)],gable});});
+  return W;}
+const wName=w=>DIRN[DIRS.indexOf(w.face)]+'sein';
+/* foto suund EXIF-ist (GPSImgDirection), enne kui shrink selle ära kaotab */
+async function exifHeading(f){try{const b=new DataView(await f.slice(0,262144).arrayBuffer());if(b.getUint16(0)!==0xFFD8)return null;let o=2;
+  while(o+10<b.byteLength){const m=b.getUint16(o),L=b.getUint16(o+2);
+    if(m===0xFFE1&&b.getUint32(o+4)===0x45786966){const t=o+10,le=b.getUint16(t)===0x4949,u16=x=>b.getUint16(x,le),u32=x=>b.getUint32(x,le);
+      const tag=(p,want)=>{const n=u16(t+p);for(let i=0;i<n;i++){const e=t+p+2+i*12;if(u16(e)===want)return e;}return 0;};
+      const g=tag(u32(t+4),0x8825);if(!g)return null;const e=tag(u32(g+8),0x11);if(!e)return null;const off=t+u32(e+8),v=u32(off)/u32(off+4);return isFinite(v)?v%360:null;}
+    if((m&0xFF00)!==0xFF00)return null;o+=2+L;}}catch(_){}return null;}
+/* kaamera vaatab suunas H -> sein, mille välisnormaal on ~H+180 */
+const wallByHeading=(W,H)=>{let best=null,bd=60;W.forEach(w=>{const d=Math.abs(((w.brg-(H+180))%360+540)%360-180);if(d<bd){bd=d;best=w;}});return best;};
+/* AI rida -> sein ja punkt; „left/right“ = naaberne põhisein vastava nurga taga */
+function itemWall(W,w0,side){if(side==='facing')return w0;const k=W.indexOf(w0),lx=w0.ny,ly=-w0.nx,aLeft=w0.a[0]*lx+w0.a[1]*ly>w0.b[0]*lx+w0.b[1]*ly;
+  const prev=(aLeft&&side==='left')||(!aLeft&&side==='right');return W[(k+(prev?W.length-1:1))%W.length];}
+function itemPart(h,W,w0,it){const w=itemWall(W,w0,it.side),lx=w.ny,ly=-w.nx,aLeft=w.a[0]*lx+w.a[1]*ly>w.b[0]*lx+w.b[1]*ly,A=aLeft?w.a:w.b,B=aLeft?w.b:w.a;
+  const px=A[0]+(B[0]-A[0])*it.from,py=A[1]+(B[1]-A[1])*it.from,p={t:it.t,w:it.w,d:it.d,h:it.h,r:0,x:0,y:0,src:'foto'};if(it.t==='rodu')p.z=it.z;
+  return{w,p:snap(h,p,[px+w.nx*.3,py+w.ny*.3])};}
+const fx={}; // ehr -> {busy,err,res,ph:[{src,head}],wall:[id],sel:[bool]}
+async function fxRun(h,files){const F=fx[h.ehr]={busy:1,ph:[]};renderParts();
+  try{const W=wallsOf(h);if(W.length<3)throw Object.assign(new Error('Selle maja seinu ei õnnestunud lugeda.'),{plain:1});
+    for(const f of files.slice(0,6)){const head=f.type==='image/jpeg'||/\.jpe?g$/i.test(f.name||'')?await exifHeading(f):null;F.ph.push({src:await shrink(f,1568,.85),head});}
+    const r=await clFn('house-extras',{photos:F.ph.map(p=>p.src),walls:W.map(w=>({id:w.id,len:+w.L.toFixed(1),face:w.face,gable:w.gable})),eave:+h.eave||4,ridge:+h.height||(+h.eave||4)+3});
+    F.res=r;F.wall=r.photos.map((p,i)=>{const e=F.ph[i].head!=null&&wallByHeading(W,F.ph[i].head);return e?e.id:p.wall||W[0].id;});F.byExif=F.ph.map((p,i)=>!!(p.head!=null&&wallByHeading(W,p.head)));
+    F.sel=r.items.map(()=>true);fxMark(h,F);}
+  catch(e){/* funktsioon puudub või server maas (404, 5xx, võrguviga) -> „pole saadaval“; meie enda vead (502 AI, 429) näitavad oma teksti */
+    const own=/^(Fotode vaatamine|Liiga palju)/.test(String(e&&e.message||''));
+    F.unav=!e.plain&&(!e.status||e.status===404||(e.status>=500&&!own));
+    F.err=F.unav?'Proovi mõne minuti pärast uuesti. Rõdu, terrassi ja aia saad lisada ka käsitsi allpool.':e.plain?e.message:(clErr(e)||'Fotode vaatamine ebaõnnestus, proovi uuesti.');}
+  F.busy=0;renderParts();}
+/* juba lisatud: sama liik ~2,5 m raadiuses või aed olemas -> vaikimisi maha märgitud */
+function fxMark(h,F){const W=wallsOf(h),L=list(h);F.dup=F.res.items.map(it=>{if(it.t==='aed')return !!aedOf(h);const w0=W.find(w=>w.id===F.wall[it.photo]);if(!w0)return false;const {p}=itemPart(h,W,w0,it);
+  return L.some(q=>q.t===it.t&&Math.hypot(q.x-p.x,q.y-p.y)<2.5);});F.sel=F.sel.map((s,i)=>s&&!F.dup[i]);}
+function fxAdd(h,F,all){const W=wallsOf(h),L=list(h);let n=0;
+  F.res.items.forEach((it,i)=>{if(F.dup[i]||!(all||F.sel[i]))return;
+    if(it.t==='aed'){if(!aedOf(h)&&h.parcel&&h.parcel.pts){L.push({t:'aed',src:'foto'});h.fenceAll=true;n++;}return;}
+    const w0=W.find(w=>w.id===F.wall[it.photo]);if(!w0)return;L.push(itemPart(h,W,w0,it).p);n++;});
+  delete fx[h.ehr];keep();build();renderPanel();toast(n?`Lisatud fotodelt: ${n}. Mõõdud saad muuta allpool.`:'Midagi ei lisatud.');}
+function fxHtml(h){const F=fx[h.ehr];if(!F)return '';const e=stEsc;
+  if(F.busy)return `<div class="fxb" role="status"><h5>Vaatan fotosid…</h5><p>AI otsib rõdu, terrassi, juurdeehitust ja aeda. See võtab kuni minuti.</p></div>`;
+  if(F.err)return `<div class="fxb" role="alert"><h5>${F.unav?'Fotodelt otsimine pole hetkel saadaval':'Fotodelt otsimine ei õnnestunud'}</h5><p>${e(F.err)}</p><div class="fxgo"><button type="button" class="sec" data-fx-x>Sulge</button></div></div>`;
+  const W=wallsOf(h),R=F.res,side={facing:'',left:'',right:''};
+  const ph=`<div class="fxph">${F.ph.map((p,i)=>`<div><img src="${p.src}" alt="Foto ${i+1}"><label style="flex:1;display:flex;flex-direction:column;gap:2px"><small>Foto ${i+1} näitab${F.byExif[i]?' (foto kompassist)':R.photos[i].conf<.5?' (AI pole kindel, kontrolli)':''}:</small>
+    <select data-fx-w="${i}">${W.map(w=>`<option value="${w.id}" ${F.wall[i]===w.id?'selected':''}>${wName(w)} · ${fmt(w.L,1)} m${w.gable?' · viilusein':''}</option>`).join('')}</select></label></div>`).join('')}</div>`;
+  if(!R.items.length)return `<div class="fxb"><h5>Fotodelt ei leidnud rõdu, terrassi ega aeda</h5><p>${e(R.summary||'')} Lisa need käsitsi allpool.</p>${ph}<div class="fxgo"><button type="button" class="sec" data-fx-x>Sulge</button></div></div>`;
+  const rows=R.items.map((it,i)=>{const w0=W.find(w=>w.id===F.wall[it.photo]),w=w0&&itemWall(W,w0,it.side),where=w?DIRN[DIRS.indexOf(w.face)]+'külg':'';
+    const size=it.t==='aed'?(h.parcel&&h.parcel.pts?'kogu krundipiir':'krundipiir pole laetud'):it.t==='rodu'?`~${fmt(it.w,1)} m lai, põrand ~${fmt(it.z,1)} m`:it.t==='juur'?`~${fmt(it.w,1)} × ${fmt(it.d,1)} m, kõrgus ~${fmt(it.h,1)} m`:`~${fmt(it.w,1)} × ${fmt(it.d,1)} m`;
+    return `<label class="fxit"><input type="checkbox" data-fx-s="${i}" ${F.sel[i]?'checked':''} ${F.dup[i]||(it.t==='aed'&&!(h.parcel&&h.parcel.pts))?'disabled':''}><span><b>${PT[it.t].n}</b>${it.t==='aed'?'':' · '+where} · ${size}${F.dup[i]?' · <i>juba lisatud</i>':''}<small>${e(it.note||'')} · foto ${it.photo+1}</small></span></label>`;}).join('');
+  const k=F.sel.filter(Boolean).length;
+  return `<div class="fxb"><h5>Leidsin fotodelt:</h5>${R.summary?`<p>${e(R.summary)}</p>`:''}${ph}${rows}
+    <div class="fxgo"><button type="button" class="pri" data-fx-all>Lisa kõik</button><button type="button" class="sec" data-fx-add ${k?'':'disabled'}>Lisa valitud (${k})</button><button type="button" class="sec" data-fx-x>Tühista</button></div></div>`;}
+function fxBind(B,h){const F=fx[h.ehr];
+  const go=B.querySelector('[data-fx]'),inp=B.querySelector('#fxIn');
+  if(go)go.onclick=()=>{if(!(CLOUD&&CL.cid)){toast('Fotodelt otsimine töötab kontoga.');return;}inp.value='';inp.click();};
+  if(inp)inp.onchange=()=>{const f=[...inp.files].filter(x=>/^image\//.test(x.type)||/\.(jpe?g|png|webp|heic|heif)$/i.test(x.name||''));if(f.length)fxRun(h,f);};
+  const re=B.querySelector('[data-fx-p3]');if(re)re.onclick=async()=>{const P=STU.p3,u=[...(P.photos||[]).filter(Boolean),...P.pool].filter((x,i,a)=>a.indexOf(x)===i).slice(0,6);
+    fxRun(h,await Promise.all(u.map(async(x,i)=>new File([await (await fetch(x)).blob()],'p3-'+i+'.jpg',{type:'image/jpeg'}))));};
+  if(!F)return;
+  B.querySelectorAll('[data-fx-x]').forEach(b=>b.onclick=()=>{delete fx[h.ehr];renderParts();});
+  B.querySelectorAll('[data-fx-w]').forEach(s=>s.onchange=()=>{F.wall[+s.dataset.fxW]=s.value;F.sel=F.res.items.map(()=>true);fxMark(h,F);renderParts();});
+  B.querySelectorAll('[data-fx-s]').forEach(c=>c.onchange=()=>{F.sel[+c.dataset.fxS]=c.checked;renderParts();});
+  const all=B.querySelector('[data-fx-all]');if(all)all.onclick=()=>fxAdd(h,F,true);
+  const ad=B.querySelector('[data-fx-add]');if(ad)ad.onclick=()=>fxAdd(h,F,false);}
 
 /* 3D */
 function addParts(h){if(!group)return;const old=group.getObjectByName('parts');if(old)group.remove(old);const G=new THREE.Group();G.name='parts';group.add(G);
@@ -5922,17 +6008,21 @@ function addParts(h){if(!group)return;const old=group.getObjectByName('parts');i
 /* paneel */
 function renderParts(){const h=HOUSES[cur];if(!h)return;let B=$('partsBox');if(!B){B=document.createElement('div');B.id='partsBox';$('rows').after(B);}
   const L=list(h),fl=window.v3dFenceLen(h);
-  B.innerHTML=`<h4>Lisad maja külge</h4><p>Maa-ameti andmetes on ainult maja põhimaht. Rõdu, terrass, juurdeehitus ja aed, mida kaardil pole, lisa siia. Need on märgitud „Käsitsi“.</p>
+  const p3n=STU.p3&&STU.p3.ehr===h.ehr?new Set([...(STU.p3.photos||[]).filter(Boolean),...(STU.p3.pool||[])]).size:0;
+  B.innerHTML=`<h4>Lisad maja külge</h4><p>Maa-ameti andmetes on ainult maja põhimaht. Rõdu, terrass, juurdeehitus ja aed, mida kaardil pole, lisa siia. Need on märgitud „Käsitsi“ või „Fotodelt“.</p>
+  ${fx[h.ehr]?'':`<div class="pbtn"><button type="button" data-fx>📷 Leia fotodelt</button>${p3n?`<button type="button" data-fx-p3>Kasuta 3D-mudeli fotosid (${Math.min(6,p3n)})</button>`:''}</div><p>Lisa 2–4 fotot majast. AI otsib rõdu, terrassi, juurdeehituse ja aia.</p>`}
+  <input type="file" id="fxIn" accept="image/*,.heic,.heif" multiple hidden>${fxHtml(h)}
   <div class="pbtn">${['terr','rodu','juur'].map(t=>`<button type="button" data-add="${t}" aria-pressed="${placing&&placing.t===t}">+ ${PT[t].n}</button>`).join('')}
   <button type="button" data-fence aria-pressed="${!!aedOf(h)}" ${h.parcel&&h.parcel.pts?'':'disabled title="Krundipiir pole veel laetud"'}>${aedOf(h)?'✓ ':'+ '}Aed krundipiirile</button></div>
   ${placing?`<p><b>Klõpsa 3D-vaates kohta</b>, kuhu ${placing.i!=null?'see liigub':'see tuleb'}. Maja lähedal kinnitub see seina külge. <button type="button" class="lnk" data-cancel>Tühista</button></p>`:''}
-  ${L.map((p,i)=>p.t==='aed'?`<div class="pit"><b><span>Aed krundipiirile <span class="src-b k">Käsitsi</span></span><span>${n1(fl.man)} m</span></b></div>`:
-    `<div class="pit"><b><span>${PT[p.t].n} <span class="src-b k">Käsitsi</span></span><span>${n1(p.w*p.d)} m²</span></b><div class="pf">
+  ${L.map((p,i)=>p.t==='aed'?`<div class="pit"><b><span>Aed krundipiirile ${srcB(p)}</span><span>${n1(fl.man)} m</span></b></div>`:
+    `<div class="pit"><b><span>${PT[p.t].n} ${srcB(p)}</span><span>${n1(p.w*p.d)} m²</span></b><div class="pf">
     <label>Laius<input type="number" step="0.1" min="0.5" max="40" data-i="${i}" data-k="w" value="${n1(p.w).replace(',','.')}"></label>
     <label>Sügavus<input type="number" step="0.1" min="0.5" max="40" data-i="${i}" data-k="d" value="${n1(p.d).replace(',','.')}"></label>
     <label>${p.t==='rodu'?'Piire':'Kõrgus'}<input type="number" step="0.1" min="0.1" max="15" data-i="${i}" data-k="h" value="${n1(p.h).replace(',','.')}"></label>
     ${p.t==='rodu'?`<label>Maast<input type="number" step="0.1" min="0" max="20" data-i="${i}" data-k="z" value="${n1(p.z||2.8).replace(',','.')}"></label>`:''}
     <button type="button" class="lnk" data-rot="${i}">Pööra 90°</button><button type="button" class="lnk" data-mv="${i}">Liiguta</button><button type="button" class="lnk" data-del="${i}">Kustuta</button></div></div>`).join('')}`;
+  fxBind(B,h);
   B.querySelectorAll('[data-add]').forEach(b=>b.onclick=()=>{placing=placing&&placing.t===b.dataset.add?null:{t:b.dataset.add};renderParts();});
   const cn=B.querySelector('[data-cancel]');if(cn)cn.onclick=()=>{placing=null;renderParts();};
   const fb=B.querySelector('[data-fence]');if(fb)fb.onclick=()=>{const A=aedOf(h);if(A)L.splice(L.indexOf(A),1);else L.push({t:'aed'});h.fenceAll=!A;keep();build();renderPanel();};
