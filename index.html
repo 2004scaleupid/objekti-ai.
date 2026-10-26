@@ -2591,8 +2591,8 @@ function planCovers(kind){const pl=curPlan();if(!pl)return false;if(kind==='obj'
 function planLeft(){const pl=curPlan();return pl?Math.max(0,pl.objN-(acct.plan.used||0)):0;}
 function basePrice(kind){kind=kind||'obj';const b=COSTS[kind]||10;return promoActive()?+(b*(1-acct.promo.pct/100)).toFixed(2):b;}
 function price(kind){kind=kind||'obj';return planCovers(kind)?0:basePrice(kind);}
-function crTxt(n){return String(+n.toFixed(2)).replace('.',',')+' krediiti';}
-function priceTxt(kind){kind=kind||'obj';if(planCovers(kind))return curPlan().name+' paketis'+(kind==='obj'?` (${planLeft()} alles)`:'');const p=price(kind);return promoActive()?`${String(p).replace('.',',')} krediiti (−${acct.promo.pct}%)`:p+' krediiti';}
+function crTxt(n){n=+(+n).toFixed(2);return String(n).replace('.',',')+(n===1?' krediit':' krediiti');}
+function priceTxt(kind){kind=kind||'obj';if(planCovers(kind))return curPlan().name+' paketis'+(kind==='obj'?` (${planLeft()} alles)`:'');const p=price(kind);return promoActive()?`${String(p).replace('.',',')} krediiti (−${acct.promo.pct}%)`:crTxt(+p);}
 function charge(label,kind){kind=kind||'obj';if(planCovers(kind)){const pl=curPlan();if(kind==='obj')acct.plan.used=(acct.plan.used||0)+1;acct.hist.push({d:today(),t:label+' · '+pl.name+' paketis',c:0,e:'—',k:kind});save();return 0;}
   const p=price(kind),pr=promoActive();acct.credits=+(acct.credits-p).toFixed(2);acct.hist.push({d:today(),t:label+(pr?` · kood ${pr.code} −${pr.pct}%`:''),c:-p,e:'—',k:kind});if(pr)pr.left--;save();return p;}
 function myCode(){return ((acct.company||acct.name||'OBJEKT').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^A-Za-z0-9]/g,'').toUpperCase().slice(0,12)||'OBJEKT')+'20';}
@@ -6236,7 +6236,7 @@ function mount(){const c=document.querySelector('#tGrid .tcard[data-t="maja"]');
   c.querySelectorAll('.tex,.ti').forEach(x=>x.remove());
   const s=document.createElement('span');s.className='tex tmaja';
   s.innerHTML='<img class="po" src="examples/building-poster.webp" alt="" loading="lazy"><span class="tl"><i class="pa">Näidis · maja, aed ja mõõdud</i></span><span class="hint3d">↻ lohista</span>';c.insertBefore(s,c.firstChild);
-  const go=new IntersectionObserver(es=>{if(!es.some(e=>e.isIntersecting))return;go.disconnect();const f=document.createElement('iframe');f.src='examples/raudurdi30/index.html';f.title='Näidis: maja 3D-mudel aias koos Maa-ameti mõõtudega';f.setAttribute('loading','lazy');s.insertBefore(f,s.querySelector('.tl'));});go.observe(s);}
+  const go=new IntersectionObserver(es=>{if(!es.some(e=>e.isIntersecting))return;go.disconnect();const f=document.createElement('iframe');f.src='examples/raudurdi30/index.html';f.title='Näidis: maja 3D-mudel aias koos Maa-ameti mõõtudega';f.setAttribute('loading','lazy');f.addEventListener('load',()=>{try{const d=f.contentDocument;let x0=0,y0=0,t0=0;d.addEventListener('pointerdown',e=>{x0=e.clientX;y0=e.clientY;t0=Date.now();},true);d.addEventListener('pointerup',e=>{if(Math.hypot(e.clientX-x0,e.clientY-y0)<6&&Date.now()-t0<500)c.click();},true);}catch(_){}});s.insertBefore(f,s.querySelector('.tl'));});go.observe(s);}
 const _rt=renderTpls;renderTpls=function(){const r=_rt.apply(this,arguments);mount();return r;};
 try{mount();}catch(_){}
 })();
@@ -6601,9 +6601,58 @@ try{(()=>{const css=document.createElement('style');css.textContent='@media (min
       v.onclick=demo;}
     ['maja','pane','muuda'].forEach(id=>{const b=g.querySelector(`.tcard[data-t="${id}"]`);if(b)g.appendChild(b);});if(priv)v.remove();else g.appendChild(v);
     ['mudel3d','vaba'].forEach(id=>{const b=g.querySelector(`.tcard[data-t="${id}"]`);if(b)g.appendChild(b);});
-    const cs=[...g.querySelectorAll('.tcard')];cs.forEach(b=>b.classList.remove('w3'));if(cs.length%3===2)cs.slice(-2).forEach(b=>b.classList.add('w3'));
+    /* 26.10: kõik kaardid ühe suurusega, viimasesse ritta võib jääda tühi koht (laiad kaardid venitasid pilti) */g.querySelectorAll('.tcard.w3').forEach(b=>b.classList.remove('w3'));
     const pn=g.querySelector('.tcard[data-t="pane"]');if(pn)setTimeout(()=>carousel(pn),0);return r;};
   if($('tGrid'))renderTpls();})();}catch(e){console.warn('[tööriistad]',e);}
+
+/* ---------- 26.10: Maja 3D ja mõõdud: kohe valik – kiire 3D Maa-ameti andmetest või päris välimus fotodega (2 kaarti näidistega) ---------- */
+(()=>{
+const css=document.createElement('style');css.textContent=`
+.mhd{position:fixed;inset:0;z-index:80;background:rgba(15,12,10,.66);display:flex;align-items:center;justify-content:center;padding:16px;overflow:auto}
+.mhd .box{background:var(--paper);color:var(--ink);border-radius:18px;padding:22px;max-width:860px;width:100%;display:flex;flex-direction:column;gap:14px;position:relative;box-shadow:0 24px 70px rgba(0,0,0,.35)}
+.mhd h2{margin:0;font-size:21px;letter-spacing:-.02em;padding-right:36px}.mhd .sub{margin:-6px 0 0;color:var(--muted);font-size:14px}
+.mhd .x{position:absolute;top:12px;right:12px;width:36px;height:36px;border-radius:50%;border:0;background:var(--soft);color:var(--ink);font-size:20px;cursor:pointer}
+.mhd .opts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}@media (max-width:640px){.mhd .opts{grid-template-columns:minmax(0,1fr)}}
+.mhd .opt{display:flex;flex-direction:column;text-align:left;border:1.5px solid var(--line);background:var(--bg);border-radius:14px;overflow:hidden;padding:0;cursor:pointer;font:inherit;color:inherit;min-width:0}
+.mhd .opt:hover,.mhd .opt:focus-visible{border-color:var(--accent);box-shadow:0 0 0 3px rgba(229,72,45,.14)}
+.mhd .ph{position:relative;aspect-ratio:16/9;background:#fff;overflow:hidden}.mhd .ph img{width:100%;height:100%;object-fit:cover;display:block}.mhd .ph img.ct{object-fit:contain;padding:8px;box-sizing:border-box}
+.mhd .ph img.in{height:auto;position:absolute;left:10px;bottom:10px;width:30%;max-width:120px;aspect-ratio:16/9;object-fit:cover;border:2px solid #fff;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,.25);padding:0}
+.mhd .ph .tg{position:absolute;z-index:2;top:10px;left:10px;font:600 10.5px var(--mono);letter-spacing:.04em;text-transform:uppercase;background:rgba(22,19,15,.82);color:#fff;border-radius:999px;padding:4px 9px}
+.mhd .ph .tg.best{background:var(--accent)}
+.mhd .bd{padding:14px 16px 16px;display:flex;flex-direction:column;gap:8px;flex:1}
+.mhd .hd{display:flex;justify-content:space-between;align-items:baseline;gap:10px}.mhd .hd b{font-size:16.5px}.mhd .hd .pr{font:700 13px var(--mono);color:var(--accent);white-space:nowrap}
+.mhd .bd p{margin:0;font-size:13.5px;line-height:1.5;color:var(--muted)}
+.mhd .bd ul{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:4px;font-size:13px}.mhd .bd li{display:flex;gap:8px}.mhd .bd li span{color:var(--muted);min-width:64px}
+.mhd .go{margin-top:auto;align-self:flex-start;background:var(--ink);color:var(--paper);border-radius:9px;padding:9px 14px;font:600 13.5px var(--display)}
+.mhd .opt.best .go{background:var(--accent);color:#fff}`;document.head.appendChild(css);
+const eur=n=>(n*(+((acct.admRules&&acct.admRules.eur)||0.5))).toFixed(2).replace('.',',')+' €';
+function close(){const d=$('mhDlg');if(d)d.remove();document.removeEventListener('keydown',esc,true);}
+function esc(e){if(e.key==='Escape'){e.preventDefault();close();}}
+function pick(k){close();const inp=$('homeIn'),H=$('ncHouse');if(H)H.scrollIntoView({block:'center',behavior:'smooth'});
+  if(k==='foto'){const f=$('mhFile');if(f)f.click();toast('Vali 4 fotot majast: eest, vasakult, tagant ja paremalt. Siis sisesta aadress ja vajuta „Loo objekt“.');}
+  else toast('Sisesta maja aadress ja vajuta „Loo objekt“.');
+  setTimeout(()=>{try{inp&&inp.focus({preventScroll:true});}catch(_){}},350);}
+function choose(){if($('mhDlg'))return;const o=basePrice('obj'),f=+(o+basePrice('3d')).toFixed(2);
+  const d=document.createElement('div');d.className='mhd';d.id='mhDlg';d.setAttribute('role','dialog');d.setAttribute('aria-modal','true');d.setAttribute('aria-labelledby','mhDlgT');
+  d.innerHTML=`<div class="box"><button type="button" class="x" aria-label="Sulge">×</button>
+  <h2 id="mhDlgT">Maja 3D ja mõõdud: vali, kuidas teeme</h2><p class="sub">Mõõdud (katus, kalded, seinad, krunt) tulevad mõlemal juhul Maa- ja Ruumiameti andmetest. Erinevus on välimuses.</p>
+  <div class="opts">
+   <button type="button" class="opt" data-k="lihtne"><span class="ph"><img src="media/maja-lihtne.jpg" alt="Näidis: maja 3D Maa-ameti andmetest, lihtsustatud välimusega"><i class="tg">Näidis · kiire 3D</i></span>
+    <span class="bd"><span class="hd"><b>Kiire 3D andmetest</b><span class="pr">${crTxt(o)} · ${eur(o)}</span></span>
+     <p>Sisesta ainult aadress. Näed maja 3D-s koos päris katuse, kallete ja pindadega. Välimus on lihtsustatud: hall katus, heledad seinad.</p>
+     <ul><li><span>Vaja</span>Maja aadress</li><li><span>Valmis</span>Kohe</li><li><span>Sobib</span>Kiire hinnapakkumine, mõõdud</li></ul>
+     <span class="go">Vali kiire 3D</span></span></button>
+   <button type="button" class="opt best" data-k="foto"><span class="ph"><img class="ct" src="examples/building-poster.webp" alt="Näidis: päris välimusega 3D-mudel maja fotodest"><img class="in" src="examples/building-1.webp" alt="Üks neljast fotost"><i class="tg best">Näidis · fotodest</i></span>
+    <span class="bd"><span class="hd"><b>Päris välimus fotodega</b><span class="pr">${crTxt(f)} · ${eur(f)}</span></span>
+     <p>Sisesta aadress ja lisa 4 fotot majast. AI teeb päris välimusega 3D-mudeli: värvid, aknad, uksed, rõdu. Mõõdud tulevad Maa-ametist.</p>
+     <ul><li><span>Vaja</span>Aadress + 4 fotot (eest, vasakult, tagant, paremalt)</li><li><span>Valmis</span>Umbes 4 minutiga</li><li><span>Sobib</span>Kliendile näitamiseks, esitlus</li></ul>
+     <span class="go">Vali fotodega</span></span></button>
+  </div></div>`;
+  document.body.appendChild(d);d.querySelector('.x').onclick=close;d.addEventListener('click',e=>{if(e.target===d)close();});
+  d.querySelectorAll('.opt').forEach(b=>b.onclick=()=>pick(b.dataset.k));document.addEventListener('keydown',esc,true);setTimeout(()=>{const b=d.querySelector('.opt');b&&b.focus();},30);}
+window.v3dHouseChoice=choose;
+document.addEventListener('click',e=>{const c=e.target.closest&&e.target.closest('.tcard[data-t="maja"]');if(!c)return;e.preventDefault();e.stopImmediatePropagation();choose();},true);
+})();
 
 restoreRT();renderList();renderPanel();build();updFotos();chatReset();setTab(false);renderAcct();
   if(CLOUD)clBoot();else if(!startFromHash()){if(DEV_AUTOLOGIN||store.get('oai_session',null))enter();else $('login').hidden=false;}tick();}
