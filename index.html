@@ -6490,15 +6490,26 @@ const _ci=clInit;clInit=async function(){const sb=await _ci.apply(this,arguments
 })();
 }catch(e){console.warn("blokk: seanss",e);}
 
-/* 3 sihtrühma: firmadele maja 3D, toode pildile ja kodulehe vidin; kõigile 3D-mudel ja vaba idee (vidina kaart avab seaded) */
-try{(()=>{const css=document.createElement('style');css.textContent='@media (min-width:900px){#tGrid{grid-template-columns:repeat(6,minmax(0,1fr))!important}#tGrid .tcard{grid-column:span 2}#tGrid .tcard.w3{grid-column:span 3}}#tGrid .tvbox{position:absolute;left:30%;top:50%;width:42%;height:32%;border:2px dashed #FF5A1F;background:rgba(255,90,31,.18);border-radius:4px}#tGrid .tvbox em{position:absolute;left:-2px;top:-2px;transform:translateY(-100%);background:#FF5A1F;color:#fff;font:700 10px/1 system-ui;font-style:normal;padding:2px 5px;border-radius:4px}';document.head.appendChild(css);
-  const _r=renderTpls;renderTpls=function(){const r=_r.apply(this,arguments);const g=$('tGrid');if(!g)return r;
+/* 3 sihtrühma: firmadele maja 3D, toode pildile, uus välimus, kodulehe vidin; kõigile 3D-mudel ja vaba idee */
+try{(()=>{const css=document.createElement('style');css.textContent='@media (min-width:900px){#tGrid{grid-template-columns:repeat(6,minmax(0,1fr))!important}#tGrid .tcard{grid-column:span 2}#tGrid .tcard.w3{grid-column:span 3}}#tGrid .tcs{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity .7s}#tGrid .tcs.on{opacity:1}#tGrid .tdots{position:absolute;right:10px;bottom:9px;display:flex;gap:5px;z-index:2}#tGrid .tdots i{width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.45)}#tGrid .tdots i.on{background:#fff}';document.head.appendChild(css);
+  // vidin: päris vidina pilt; klõps avab demolehe, kus vidinat saab proovida
+  const demo=()=>{const wp=widgetPayload;try{window.widgetPayload=()=>{const p=wp();return {...p,f:p.f==='house'?'both':p.f};};siteMock();}finally{window.widgetPayload=wp;}};
+  // toode pildile: 3 näidist karusellina (tellingud video, päikesepaneelid, telk)
+  let tcT=null;const carousel=b=>{const x=b.querySelector('.tex');if(!x||x.querySelector('.tcs'))return;x.style.position='relative';
+    const S=[['Tellingud · video',null],['Päikesepaneelid · AI','media/paike-parast.jpg'],['Telk hoovis · AI','media/telk-parast.jpg']];
+    S.forEach(([,u])=>{if(!u)return;const im=document.createElement('img');im.className='tcs';im.src=u;im.alt='';im.loading='lazy';x.appendChild(im);});
+    const d=document.createElement('span');d.className='tdots';d.innerHTML=S.map((_,k)=>`<i class="${k?'':'on'}"></i>`).join('');x.appendChild(d);
+    const lab=x.querySelector('.tl .pa'),ims=[...x.querySelectorAll('.tcs')];let k=0;
+    const go=n=>{k=n;ims.forEach((im,q)=>im.classList.toggle('on',q===k-1));d.querySelectorAll('i').forEach((t,q)=>t.classList.toggle('on',q===k));if(lab)lab.textContent=S[k][0];};go(0);
+    clearInterval(tcT);tcT=setInterval(()=>{if(!document.body.contains(x)){clearInterval(tcT);return;}go((k+1)%S.length);},3800);};
+  const _r=renderTpls;renderTpls=function(){const r=_r.apply(this,arguments);const g=$('tGrid');if(!g)return r;const priv=acct.kind==='private';
     let v=g.querySelector('.tcard[data-t="vidin"]');if(!v){v=document.createElement('button');v.type='button';v.className='tcard';v.dataset.t='vidin';
-      v.innerHTML=`<span class="tex" style="position:relative"><img src="${typeof PLACE!=='undefined'&&PLACE.park?PLACE.park:''}" alt="" style="width:100%;height:100%;object-fit:cover"><i class="tvbox"><em>1</em></i><span class="tl"><i class="pa">Sinu kodulehel</i></span></span><b>Kodulehe vidin</b><p>Klient paneb sinu lehel foto, valib toote ja märgib koha. Sina saad päringu koos pildiga.</p><div class="tm"><span>Koduleht → päring</span><span>Seadista<span class="ar" aria-hidden="true">→</span></span></div>`;
-      v.onclick=()=>show('settings','widget');}
-    const priv=acct.kind==='private';['maja','pane','muuda'].forEach(id=>{const b=g.querySelector(`.tcard[data-t="${id}"]`);if(b)g.appendChild(b);});if(priv)v.remove();else g.appendChild(v);
+      v.innerHTML=`<span class="tex" style="position:relative"><img src="media/vidin-demo.jpg" alt="Kodulehe vidin: klient märgib fotol koha ja valib toote" style="width:100%;height:100%;object-fit:cover;object-position:40% 45%"><span class="tl"><i class="pa">Päris vidin · demo</i></span></span><b>Kodulehe vidin</b><p>Klient paneb sinu lehel foto, valib toote ja märgib koha. Sina saad päringu koos pildiga.</p><div class="tm"><span>Koduleht → päring</span><span>Vaata demot<span class="ar" aria-hidden="true">→</span></span></div>`;
+      v.onclick=demo;}
+    ['maja','pane','muuda'].forEach(id=>{const b=g.querySelector(`.tcard[data-t="${id}"]`);if(b)g.appendChild(b);});if(priv)v.remove();else g.appendChild(v);
     ['mudel3d','vaba'].forEach(id=>{const b=g.querySelector(`.tcard[data-t="${id}"]`);if(b)g.appendChild(b);});
-    const cs=[...g.querySelectorAll('.tcard')];cs.forEach(b=>b.classList.remove('w3'));if(cs.length%3===2)cs.slice(-2).forEach(b=>b.classList.add('w3'));return r;};
+    const cs=[...g.querySelectorAll('.tcard')];cs.forEach(b=>b.classList.remove('w3'));if(cs.length%3===2)cs.slice(-2).forEach(b=>b.classList.add('w3'));
+    const pn=g.querySelector('.tcard[data-t="pane"]');if(pn)setTimeout(()=>carousel(pn),0);return r;};
   if($('tGrid'))renderTpls();})();}catch(e){console.warn('[tööriistad]',e);}
 
 restoreRT();renderList();renderPanel();build();updFotos();chatReset();setTab(false);renderAcct();
