@@ -2050,7 +2050,7 @@ function renderPanel(){applyRoofType(HOUSES[cur]);setTimeout(()=>{const h=HOUSES
   if(h.manual)R.forEach(r=>{const t={fp:'Sisestatud käsitsi (LOD2 mudelit pole)',per:'Sisestatud mõõtudest',eave:'Sisestatud käsitsi',h:h.manual.rt==='flat'?'Lamekatusel = räästas':'Räästast ja 30° kaldest'}[r[4]];if(t){r[2]='h';r[3]=t;}});
   const Y=yard(h);R.push(h.parcel?['Krunt',fmt(Y.area,0)+' m²','d','Katastriüksus '+h.parcel.t+' · '+fmt(Y.lw)+' × '+fmt(Y.ll)+' m','lot']:['Krunt (aiaga)',fmt(Y.lw)+' × '+fmt(Y.ll)+' m','h','~'+fmt(Y.area,0)+' m², katastripiir täpsustub','lot'],['Hoovi pind',fmt(Y.yard,0)+' m²','h','Krunt miinus maja','yard'],
     ['Aia pikkus',fmt(2*(Y.lw+Y.ll),0)+' m','h','Krundi ümbermõõt, väravad maha arvamata','fence'],
-    ['Lähim naabermaja',fmt(Y.nb.d)+' m','d','Seinast seinani','nb'],['Lähim puu',fmt(Y.tr[0].d)+' m','h','Puud on näidis, LOD0 andmetega täpsed','tree']);
+    ['Lähim naabermaja',fmt(Y.nb.d)+' m','d','Seinast seinani','nb'],...(Y.tr.length?[['Lähim puu',fmt(Y.tr[0].d)+' m',h.treesReal?'d':'h',h.treesReal?'Maa-ameti kõrgusmudelist':'Puud on näidis, LOD0 andmetega täpsed','tree']]:[]));
   const T=tplOf(h),base=['fp','per','h','eave','roof','wall','lot','yard','nb','tree'],keys=T&&!showAllRows?T.show:(T?SHOWK.map(k=>k[0]):base),vis=R.filter(r=>keys.includes(r[4]));
   $('rows').innerHTML=(T?`<div class="tplbar">${ticon(T,16)}<span>Mall: <b>${T.name}</b></span><button type="button" class="lnk" id="rowAll">${showAllRows?'Näita malli mõõte':'Kõik mõõdud ('+R.length+')'}</button></div>`:'')+vis.map(r=>`<div class="row"><div class="k"><span>${r[0]}${badge(r[2])}</span><small>${r[3]}</small></div><b>${r[1]}</b></div>`).join('');
   if($('rowAll'))$('rowAll').onclick=()=>{showAllRows=!showAllRows;renderPanel();};
@@ -2495,6 +2495,15 @@ async function lotCadastre(h){if(!h||h.parcel!==undefined||!h.ehr||!(CLOUD&&CL.c
     const th=(h.north||0)*Math.PI/180,c=Math.cos(th),sn=Math.sin(th),dx=meta.c[0]-h.x,dy=meta.c[1]-h.y;
     const P=ring(par.g[0]).map(([x,y])=>[+((x+dx)*c-(y+dy)*sn).toFixed(2),+((x+dx)*sn+(y+dy)*c).toFixed(2)]),xs=P.map(q=>q[0]),ys=P.map(q=>q[1]);
     h.parcel={p:+(par.p||Math.abs(pArea(P))).toFixed(0),t:par.t,pts:P};h.lot=[Math.min(...xs),Math.min(...ys),Math.max(...xs),Math.max(...ys)];
+    // päris puud Maa-ameti kõrgusmudelist (sama mis „Aed ja ümbrus“), näidispuude asemel; hooned maskiga välja
+    try{if(!window.V3DGarden)await new Promise((ok,no)=>{const sc=document.createElement('script');sc.src='js/garden.js?v=9';sc.onload=ok;sc.onerror=no;document.head.appendChild(sc);});
+      const nd=await V3DGarden.img(meta.files.ndsm),W=nd.width,R=meta.r,px=2*R/W,toM=([x,y])=>[x*c+y*sn-dx,-x*sn+y*c-dy],toV=([x,y])=>[(x+dx)*c-(y+dy)*sn,(x+dx)*sn+(y+dy)*c];
+      const mk=document.createElement('canvas');mk.width=mk.height=W;const g=mk.getContext('2d',{willReadFrequently:true});g.fillStyle=g.strokeStyle='#fff';g.lineWidth=2/px;
+      [h.pts,...h.nb.map(b=>b.p)].forEach(Rg=>{g.beginPath();Rg.map(toM).forEach(([x,y],k)=>{const a=(x+R)/px,b=(R-y)/px;k?g.lineTo(a,b):g.moveTo(a,b);});g.closePath();g.fill();g.stroke();});
+      const MD=g.getImageData(0,0,W,W).data,mask=new Uint8Array(W*W);for(let i=0;i<W*W;i++)mask[i]=MD[i*4+3]>10?1:0;
+      const L0=h.lot,near=(x,y)=>{const [u,v]=toV([x,y]);return u>L0[0]-12&&u<L0[2]+12&&v>L0[1]-12&&v<L0[3]+12;};
+      const T=V3DGarden.treesFrom(nd,mask,R,near).filter(t=>t.h>=4&&t.r>=2).slice(0,40);
+      h.trees=T.map(t=>{const [x,y]=toV([t.x,t.y]);return [+x.toFixed(1),+y.toFixed(1),+t.h.toFixed(1),t.r/t.h<.3?'s':'b'];});h.treesReal=1;}catch(_){}
     if(HOUSES[cur]===h){renderPanel();build();}}catch(_){h.parcel=undefined;}}
 function select(i){cur=i;setTimeout(()=>lotCadastre(HOUSES[i]),0);setTimeout(()=>typeof renderAcct==='function'&&renderAcct(),0);renderList();renderPanel();build();updFotos();setRen(false);mPts=[];mClosed=false;mRedraw();chatReset();}
 const seg=[['hiNone','none'],['hiWall','wall'],['hiRoof','roof']];
