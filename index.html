@@ -1857,9 +1857,10 @@ function rectHits(r,P,m){const R=[[r[0]-m,r[1]-m],[r[2]+m,r[1]-m],[r[2]+m,r[3]+m
   if(P.some(p=>p[0]>R[0][0]&&p[0]<R[1][0]&&p[1]>R[0][1]&&p[1]<R[2][1]))return true;if(R.some(q=>pip(q,P)))return true;
   for(let i=0;i<4;i++)for(let j=0;j<P.length;j++)if(segX(R[i],R[(i+1)%4],P[j],P[(j+1)%P.length]))return true;return false;}
 const T30=Math.tan(Math.PI/6);
-function pArea(P){let s=0;for(let i=0;i<P.length;i++){const a=P[i],b=P[(i+1)%P.length];s+=a[0]*b[1]-b[0]*a[1];}return s/2;}
-function pCen(P){let A=0,X=0,Y=0;for(let i=0;i<P.length;i++){const a=P[i],b=P[(i+1)%P.length],c=a[0]*b[1]-b[0]*a[1];A+=c;X+=(a[0]+b[0])*c;Y+=(a[1]+b[1])*c;}
-  return Math.abs(A)>1e-9?[X/(3*A),Y/(3*A)]:[P.reduce((s,p)=>s+p[0],0)/P.length,P.reduce((s,p)=>s+p[1],0)/P.length];}
+/* arvutus esimese punkti suhtes: L-EST koordinaadid (~6,5 mln m) kaotavad korrutistes täpsuse, raskuskese nihkus kuni ~6 m */
+function pArea(P){if(!P.length)return 0;const ox=P[0][0],oy=P[0][1];let s=0;for(let i=0;i<P.length;i++){const a=P[i],b=P[(i+1)%P.length];s+=(a[0]-ox)*(b[1]-oy)-(b[0]-ox)*(a[1]-oy);}return s/2;}
+function pCen(P){if(!P.length)return[0,0];const ox=P[0][0],oy=P[0][1];let A=0,X=0,Y=0;for(let i=0;i<P.length;i++){const a=[P[i][0]-ox,P[i][1]-oy],q=P[(i+1)%P.length],b=[q[0]-ox,q[1]-oy],c=a[0]*b[1]-b[0]*a[1];A+=c;X+=(a[0]+b[0])*c;Y+=(a[1]+b[1])*c;}
+  return Math.abs(A)>1e-9?[ox+X/(3*A),oy+Y/(3*A)]:[P.reduce((s,p)=>s+p[0],0)/P.length,P.reduce((s,p)=>s+p[1],0)/P.length];}
 function bnds(P){const xs=P.map(p=>p[0]),ys=P.map(p=>p[1]);return[Math.min(...xs),Math.min(...ys),Math.max(...xs),Math.max(...ys)];}
 const boxA=b=>Math.max(0,b[2]-b[0])*Math.max(0,b[3]-b[1]);
 function hull2(P){const a=P.slice().sort((p,q)=>p[0]-q[0]||p[1]-q[1]),cr=(o,p,q)=>(p[0]-o[0])*(q[1]-o[1])-(p[1]-o[1])*(q[0]-o[0]),lo=[],up=[];
