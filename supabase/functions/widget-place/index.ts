@@ -1,6 +1,7 @@
 // Avalik: külastaja foto + 1–3 firma toodet -> AI pilt. Kulu läheb firmale, piirangud IP, kliendi, päeva ja kuu kaupa.
 // Režiim "instant": klient näeb pilti kohe. Režiim "review": firma vaatab pildi üle ja saadab selle kliendile ise.
-import { opts, STYLES } from "./opts.ts";
+// kind "idea" (Vaba idee): ilma tooteta, kliendi foto + kirjeldus. Hind sama mis Toode pildile (design).
+import { opts, STYLES, feats } from "./opts.ts";
 import { cors, json, fail, admin, rateLimit, clientIp, spend, refund, kieImage, storeImage, body, isPhoto, isOurImage, refundStale, sendMail, esc, ownerEmails, env } from "../_shared/util.ts";
 
 type Item = { product_id: string; x?: number; y?: number; area?: number[]; auto?: boolean };
@@ -22,13 +23,16 @@ Deno.serve(async (req) => {
   if (!isPhoto(b.photo)) return fail("Lae üles foto");
   const db = admin();
   const { data: w } = await db.from("widgets").select("company_id,active,features,daily_img_cap,notify_email,place_opts").eq("public_id", id).maybeSingle();
-  if (!w || !w.active || w.features === "house") return fail("not found", 404);
+  const kind = b.kind === "idea" ? "idea" : "place";
+  if (!w || !w.active || !feats(w.features).has(kind)) return fail("not found", 404);
   const o = opts(w.place_opts);
+  const idea = kind === "idea" ? String(b.note || "").replace(/["\\]/g, "'").replace(/[\r\n\t]+/g, " ").trim().slice(0, 300) : "";
+  if (kind === "idea" && idea.length < 3) return fail("Kirjuta, mida tahad pildil näha", 400);
   // tooted: uus kuju items[], vana kuju product_id + point
   let items: Item[] = Array.isArray(b.items) ? (b.items as Item[]) : b.product_id ? [{ product_id: String(b.product_id), x: Number((b.point as Record<string, unknown>)?.x), y: Number((b.point as Record<string, unknown>)?.y) }] : [];
-  items = items.slice(0, o.max_products).filter((i) => i && /^[0-9a-f-]{36}$/.test(String(i.product_id)));
-  if (!items.length) return fail("Vali toode", 400);
-  const { data: prods } = await db.from("products").select("*").eq("company_id", w.company_id).eq("active", true).in("id", items.map((i) => i.product_id));
+  items = kind === "idea" ? [] : items.slice(0, o.max_products).filter((i) => i && /^[0-9a-f-]{36}$/.test(String(i.product_id)));
+  if (kind === "place" && !items.length) return fail("Vali toode", 400);
+  const { data: prods } = items.length ? await db.from("products").select("*").eq("company_id", w.company_id).eq("active", true).in("id", items.map((i) => i.product_id)) : { data: [] };
   const P = items.map((i) => ({ i, p: (prods || []).find((x) => x.id === i.product_id) })).filter((x) => x.p);
   if (P.length !== items.length) return fail("toodet ei leitud", 404);
   // kliendi päring (nimi, e-post, aadress) enne pilti, kui firma nii valis
@@ -50,7 +54,7 @@ Deno.serve(async (req) => {
   }
   await refundStale(w.company_id);
   // AI juhis: iga toode oma kohaga, paigalduskoha järgi
-  const names = P.map(({ p }) => String(p.name).replace(/[^\p{L}\p{N} ,.×x\-]/gu, "").slice(0, 80));
+  const names = kind === "idea" ? ["Vaba idee"] : P.map(({ p }) => String(p.name).replace(/[^\p{L}\p{N} ,.×x\-]/gu, "").slice(0, 80));
   const lines: string[] = ["Image 1 is the customer's photo (the scene). Keep its framing, camera angle and everything that is not part of the request."];
   // juhendpilt (sama foto nummerdatud märkidega), kui klient märkis koha või ala
   const hasGuide = isPhoto(b.guide) && String(b.guide).length < 2_500_000 && P.some(({ i }) => !i.auto);
@@ -71,15 +75,16 @@ Deno.serve(async (req) => {
     else if (!i.auto && Number.isFinite(Number(i.x)) && Number.isFinite(Number(i.y))) where = `Place it at the point ${mk}(${Math.max(0, Math.min(100, Number(i.x))).toFixed(0)}% from the left and ${Math.max(0, Math.min(100, Number(i.y))).toFixed(0)}% from the top of image 1).`;
     lines.push(`${at} Add EXACTLY this product to image 1, ${pl}. ${where}${size} Keep the product's exact design, colours and proportions from its images.`);
   });
-  const note = o.allow_note ? String(b.note || "").replace(/["\\]/g, "'").slice(0, 300) : "";
-  if (note) lines.push(`The customer's wish (Estonian): "${note}".`);
+  const note = kind === "idea" ? idea : o.allow_note ? String(b.note || "").replace(/["\\]/g, "'").slice(0, 300) : "";
+  if (kind === "idea") lines.push(`Change image 1 exactly as the customer asks (the request is in Estonian): "${idea}". Make only the change that is asked, realistic and in correct perspective and real-world scale. Keep the rest of the photo identical. If the request is unclear or not possible, make the most natural realistic version of it.`);
+  else if (note) lines.push(`The customer's wish (Estonian): "${note}".`);
   const st = o.customer_style && STYLES[String(b.style)] ? String(b.style) : o.style;
   lines.push(`Match the scene's light direction and colour and add realistic shadows. Do not change anything else. ${STYLES[st]} No text, no watermark.`);
   const prompt = lines.join("\n");
   const rid = crypto.randomUUID(), label = "Vidin: " + names.join(" + ").slice(0, 90);
   try { for (let u = 0; u < units; u++) await spend(w.company_id, "design", label, u ? rid + ":hd" : rid); }
   catch { if (units > 1) await refund(rid); return json({ error: "budget", message: "Teenus pole hetkel saadaval. Jäta päring ja firma võtab sinuga ühendust." }, 503); }
-  await db.from("renders").insert({ id: rid, company_id: w.company_id, kind: "place", prompt, via_widget: true, product_id: P[0].p.id });
+  await db.from("renders").insert({ id: rid, company_id: w.company_id, kind: "place", prompt, via_widget: true, product_id: P[0]?.p.id ?? null });
   // kliendi foto: meie hoidlasse (sama koht nagu AI tulemused), et firma näeks seda päringu juures
   const pm = String(b.photo).match(/^data:(image\/(?:jpeg|png|webp));base64,(.+)$/)!;
   const bytes = Uint8Array.from(atob(pm[2]), (c) => c.charCodeAt(0));
@@ -95,7 +100,7 @@ Deno.serve(async (req) => {
     if (!gu.error) { const u = db.storage.from("renders").getPublicUrl(gpath).data.publicUrl, h = env("PUBLIC_STORAGE_URL"); guideUrl = h ? u.replace(env("SUPABASE_URL"), h) : u; }
   }
   const itemsSaved = P.map(({ p, i }) => ({ product_id: p.id, name: p.name, placement: p.placement, x: i.x ?? null, y: i.y ?? null, area: i.area ?? null, auto: !!i.auto }));
-  const { data: wr } = await db.from("widget_requests").insert({ company_id: w.company_id, lead_id: lead?.id || null, mode: o.mode, status: "pending", photo_path: photoUrl, items: itemsSaved, note: note || null, style: st }).select("id,token").single();
+  const { data: wr } = await db.from("widget_requests").insert({ company_id: w.company_id, lead_id: lead?.id || null, kind, mode: o.mode, status: "pending", photo_path: photoUrl, items: kind === "idea" ? [{ name: "Vaba idee" }] : itemsSaved, note: note || null, style: st }).select("id,token").single();
   try {
     if (!photoUrl) throw new Error("foto salvestamine ebaõnnestus");
     if (hasGuide && !guideUrl) throw new Error("juhendpildi salvestamine ebaõnnestus");
@@ -109,7 +114,7 @@ Deno.serve(async (req) => {
       await db.from("leads").update({ image_url: url, product: names.join(" + ").slice(0, 120) }).eq("id", lead.id);
       const to = await ownerEmails(w.company_id, w.notify_email);
       const html = `<div style="font:15px/1.5 system-ui,sans-serif;color:#16130F;max-width:560px"><h2 style="margin:0 0 8px">${sent ? "Uus päring koos pildiga" : "Uus pildisoov: vaata üle ja saada kliendile"}</h2>
-        <p>${esc(lead.name)} (${esc(lead.email)}) proovis kodulehe vidinas: <b>${esc(names.join(", "))}</b>.${note ? " Soov: „" + esc(note) + "“." : ""}</p>
+        <p>${esc(lead.name)} (${esc(lead.email)}) ${kind === "idea" ? "näitas kodulehe vidinas oma ideed" : "proovis kodulehe vidinas: <b>" + esc(names.join(", ")) + "</b>"}.${note ? " Soov: „" + esc(note) + "“." : ""}</p>
         <img src="${esc(url)}" style="width:100%;border-radius:10px" alt=""><p>Aadress: ${esc(lead.address)}</p>
         <p style="font-size:13px;color:#777">${sent ? "Klient nägi seda pilti kohe." : "Klient ootab pilti. Ava Vaade3D, vaata pilt üle (vajadusel paranda stuudios) ja vajuta „Saada kliendile“."} Vasta sellele kirjale, vastus läheb otse kliendile.</p></div>`;
       const mail = await sendMail(to, sent ? `Uus päring pildiga: ${names[0]} · ${lead.name}` : `Pildisoov ootab kinnitust: ${lead.name}`, html, lead.email);

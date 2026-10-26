@@ -21,3 +21,12 @@ export function opts(o: Record<string, unknown> | null) {
   };
 }
 
+// Vidina teenused (widgets.features): komaga loend; vana 'both' = maja + toode pildile.
+export const FEATS = ["house", "house3d", "place", "idea", "model3d"] as const;
+export function feats(f: unknown): Set<string> {
+  const s = String(f || "house");
+  if (s === "both") return new Set(["house", "place"]);
+  return new Set(s.split(",").filter((x) => (FEATS as readonly string[]).includes(x)));
+}
+/** Vidina kuu eelarve kasutus (krediidid, mis on läinud vidina AI-töödele sel kuul). */
+export function monthStart() { const ms = new Date(); ms.setUTCDate(1); ms.setUTCHours(0, 0, 0, 0); return ms.toISOString(); }

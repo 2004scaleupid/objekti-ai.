@@ -4,6 +4,7 @@
 // status: äpp küsib iga ~10 s; kui Tripo on valmis, kopeerime .glb meie 'models' kausta
 // Krediidid võetakse alguses; iga vea korral (ja 25 min ajapiirangul) tagastatakse.
 import { buildGarden } from "../_shared/garden.ts";
+import { widgetMe, subjectOk, limits, label as wLabel, instantStarted, instantDone, submitPhotos, type WMe } from "./widget.ts";
 import { cors, json, fail, failText, userCompany, spend, refund, kieImage, storeImage, uploadDataUrl, admin, body, rateLimit, isPhoto, refundStale, secret, tfetch, env } from "../_shared/util.ts";
 
 const MUAPI = () => env("MUAPI_API_BASE", "https://api.muapi.ai/api/v1");
@@ -264,19 +265,24 @@ export function normalizePool(a: Record<string, unknown>, n: number, want: Subje
 export async function handler(req: Request): Promise<Response> {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
   if (req.method !== "POST") return fail("POST only", 405);
-  const me = await userCompany(req);
-  if (!me) return fail("unauthorized", 401);
   let b: Record<string, unknown>;
   try { b = await body(req, 36_000_000); } catch { return fail("Pildid on liiga suured", 413); }
+  // kodulehe vidin (avalik, ilma kontota): firma tuleb vidinast, kliendi päring peab olema enne
+  let wm: WMe | null = null;
+  if (typeof b.widget === "string") { const x = await widgetMe(b); if (x instanceof Response) return x; wm = x; }
+  const me = wm ? { companyId: wm.companyId } : await userCompany(req);
+  if (!me) return fail("unauthorized", 401);
   const db = admin();
+  if (wm && b.action !== "status" && b.action !== "submit" && wm.widget.mode !== "instant") return fail("Saada fotod firmale, mudeli teeb firma.", 400);
 
   // ---------- olek ----------
   if (b.action === "status") {
     await refundStale(me.companyId);
     const id = String(b.id || "");
-    const { data: r } = await db.from("renders").select("id,status,stage,ext_id,output_url,error,input_urls,product_id,ehr,garden")
+    const { data: r } = await db.from("renders").select("id,status,stage,ext_id,output_url,error,input_urls,product_id,ehr,garden,via_widget")
       .eq("id", id).eq("company_id", me.companyId).eq("kind", "3d").maybeSingle();
-    if (!r) return fail("not found", 404);
+    if (!r || (wm && !r.via_widget)) return fail("not found", 404);
+    if (wm && r.status === "done" && r.output_url) await instantDone(me.companyId, id, r.output_url).catch((e) => console.error("vidin 3d valmis", (e as Error).message));
     if (r.status === "failed") { const n = await refund(id); return json({ ...view(r), error: failText(n), refunded: n }); }
     if (r.status !== "pending" || r.stage !== "modelling" || !r.ext_id) return json(view(r));
     try {
@@ -302,6 +308,7 @@ export async function handler(req: Request): Promise<Response> {
       const host = env("PUBLIC_STORAGE_URL");
       if (host) url = url.replace(env("SUPABASE_URL"), host);
       await db.from("renders").update({ status: "done", stage: null, output_url: url }).eq("id", id);
+      if (r.via_widget) await instantDone(me.companyId, id, url).catch((e) => console.error("vidin 3d valmis", (e as Error).message));
       // aed ja ümbrus: Maa-ameti andmed taustal vahemällu, et vaade avaneks kiiresti
       if (r.garden && r.ehr) {
         const job = buildGarden(r.ehr).catch((e) => console.error("garden", r.ehr, (e as Error).message));
@@ -320,8 +327,17 @@ export async function handler(req: Request): Promise<Response> {
   }
 
   const photos = Array.isArray(b.photos) ? b.photos.map(String) : [];
-  if (!photos.length || photos.length > MAX_POOL) return fail(`Lisa 1–${MAX_POOL} fotot`);
+  if (!photos.length || photos.length > (wm ? 4 : MAX_POOL)) return fail(`Lisa 1–${wm ? 4 : MAX_POOL} fotot`);
   if (photos.some((u) => !isPhoto(u))) return fail("vigane pilt");
+  if (wm && b.subject != null && !(isSubject(b.subject) && subjectOk(wm, b.subject))) return fail("See vidin ei paku seda", 400);
+
+  // ---------- vidin, ülevaatusega: fotod firmale ----------
+  if (b.action === "submit") {
+    if (!wm) return fail("bad action");
+    if (!isSubject(b.subject)) return fail("Vali, mis fotodel on");
+    const r = await submitPhotos(wm, req, b.subject, photos);
+    return r instanceof Response ? r : json(r);
+  }
 
   // ---------- fotokontroll ----------
   if (b.action === "check") {
@@ -333,6 +349,7 @@ export async function handler(req: Request): Promise<Response> {
     if (single && photos.length !== 1) return fail("Ühe pildi režiimis on vaja täpselt 1 pilti");
     const pool = !single && photos.length > (want ? SUBJECTS[want].max : 4);
     if (!(await rateLimit("3dchk:" + me.companyId, 40, 3600))) return fail("Liiga palju kontrolle lühikese ajaga. Proovi hiljem.", 429);
+    if (wm && !(await rateLimit("w3dchk:" + wm.widget.id + ":" + wm.lead!.email, 6, 3600))) return fail("Liiga palju kontrolle lühikese ajaga. Proovi hiljem.", 429);
     let res;
     try {
       let r1;
@@ -366,28 +383,29 @@ export async function handler(req: Request): Promise<Response> {
   const t = await readTok(b.check);
   const pass = !!t && t.c === me.companyId && t.s === subject && t.exp > Date.now() && t.h === await photosHash(photos) && !!t.one === single && (t.ok || (b.force === true && t.soft));
   if (!pass) return fail("Fotod pole kontrollitud või kontroll ei läinud läbi. Kontrolli fotod uuesti.", 409);
+  if (wm) { const lim = await limits(wm, req); if (lim) return lim; }
   await refundStale(me.companyId);
   if (!(await rateLimit("3d:" + me.companyId, 10, 3600))) return fail("Liiga palju 3D-mudeleid lühikese ajaga. Proovi hiljem.", 429);
   let objectId: string | null = null;
-  if (typeof b.object_id === "string") {
+  if (!wm && typeof b.object_id === "string") {
     const { data: o } = await db.from("objects").select("id").eq("id", b.object_id).eq("company_id", me.companyId).maybeSingle();
     objectId = o?.id ?? null;
   }
   let productId: string | null = null;
-  if (typeof b.product_id === "string") {
+  if (!wm && typeof b.product_id === "string") {
     const { data: p } = await db.from("products").select("id").eq("id", b.product_id).eq("company_id", me.companyId).maybeSingle();
     productId = p?.id ?? null;
   }
   // hoone aadress (EHR kood) -> ametlikud mõõdud ja automaatne mõõtkava (Maa-ameti LOD2)
   const ehr = subject === "building" && typeof b.ehr === "string" && /^\d{5,12}$/.test(b.ehr) ? b.ehr : null;
   const garden = !!ehr && b.garden === true;
-  const label = String(b.label || "Fotod → 3D-mudel").slice(0, 120);
+  const label = wm ? wLabel(subject, wm.lead) : String(b.label || "Fotod → 3D-mudel").slice(0, 120);
   const prompt = cleanPrompt(subject);
   const id = crypto.randomUUID();
   let credits: number;
   try { credits = await spend(me.companyId, "3d", label, id); }
-  catch (e) { const m = (e as Error).message; return fail(m, m === "insufficient_credits" ? 402 : 400); }
-  await db.from("renders").insert({ id, company_id: me.companyId, object_id: objectId, kind: "3d", product_id: productId, ehr, garden, tpl: b.tpl ? String(b.tpl).slice(0, 40) : null, prompt: `[${subject}${single ? " 1 pilt" : ""}] ${prompt}`, stage: "cleaning" });
+  catch (e) { const m = (e as Error).message; if (wm) return fail("Teenus pole hetkel saadaval. Firma võtab sinuga ühendust.", 503); return fail(m, m === "insufficient_credits" ? 402 : 400); }
+  await db.from("renders").insert({ id, company_id: me.companyId, object_id: objectId, kind: "3d", via_widget: !!wm, product_id: productId, ehr, garden, tpl: b.tpl ? String(b.tpl).slice(0, 40) : null, prompt: `[${subject}${single ? " 1 pilt" : ""}] ${prompt}`, stage: "cleaning" });
   try {
     const ins = await Promise.all(photos.map((u, i) => uploadDataUrl(u, `${me.companyId}/in/${id}-${i}`)));
     // puhastused paralleelselt; tulemus meie kausta ILMA firma logota (logo ei tohi mudeli tekstuuri sattuda)
@@ -399,6 +417,7 @@ export async function handler(req: Request): Promise<Response> {
     }));
     const tr = await startTripo(cleaned);
     await db.from("renders").update({ stage: "modelling", ext_id: tr.id, input_urls: cleaned }).eq("id", id);
+    if (wm) await instantStarted(wm, id, subject, cleaned).catch((e) => console.error("vidin 3d", (e as Error).message));
     // kulu admini ülevaatesse: Kie n × ~0,02 $ + Tripo
     await db.from("ai_usage").insert({ company_id: me.companyId, kind: "3d", model: "nano-banana-2-1(" + [...new Set(vias)].join("/") + ")+" + tr.model, cost_usd: vias.reduce((a, v) => a + (v === "muapi" ? 0.03 : 0.02), 0) + tr.cost }).then(() => {}, () => {});
     return json({ id, status: "pending", stage: "modelling", cleaned, credits, subject, sides: S.slots });
