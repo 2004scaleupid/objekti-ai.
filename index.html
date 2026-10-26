@@ -4965,14 +4965,28 @@ let P3V=null;
 function p3Dispose(){if(!P3V)return;P3V.stop();if(P3V.el)P3V.el.remove();P3V.r.domElement.remove();if(P3V.ro)P3V.ro.disconnect();if(P3V.env)P3V.env.dispose();P3V.r.dispose();P3V=null;}
 // Maa-ameti LOD2 maja kehana (meetrid; x = ida, y = üles, z = -põhi), katusetahud + seinad
 function lod2Mesh(L){const g=new THREE.Group(),EM=new THREE.LineBasicMaterial({color:0x2a2622,transparent:true,opacity:.35}),
-  RM=new THREE.MeshStandardMaterial({color:0xC9C4BC,roughness:.85,side:THREE.DoubleSide}),WM=new THREE.MeshStandardMaterial({color:0xF4F2EE,roughness:.92,side:THREE.DoubleSide});
+  RM=new THREE.MeshStandardMaterial({color:0xA39A8F,roughness:.85,side:THREE.DoubleSide}),WM=new THREE.MeshStandardMaterial({color:0xF4F2EE,roughness:.92,side:THREE.DoubleSide});
   const add=(P,mat)=>{if(P.length<3)return;const n=new THREE.Vector3();P.forEach((a,k)=>{const b=P[(k+1)%P.length];n.x+=(a.y-b.y)*(a.z+b.z);n.y+=(a.z-b.z)*(a.x+b.x);n.z+=(a.x-b.x)*(a.y+b.y);});
     const ax=Math.abs(n.x),ay=Math.abs(n.y),az=Math.abs(n.z),[u,w]=ax>=ay&&ax>=az?['y','z']:ay>=az?['x','z']:['x','y'];
     const geo=new THREE.BufferGeometry().setFromPoints(P);geo.setIndex(THREE.ShapeUtils.triangulateShape(P.map(p=>new THREE.Vector2(p[u],p[w])),[]).flat());geo.computeVertexNormals();
     const m=new THREE.Mesh(geo,mat);m.castShadow=m.receiveShadow=true;g.add(m,new THREE.LineSegments(new THREE.EdgesGeometry(geo,20),EM));};
   const V3=f=>{const P=[];for(let i=0;i+2<f.length;i+=3)P.push(new THREE.Vector3(f[i],f[i+2],-f[i+1]));return P;};
   (L.f||[]).forEach(f=>add(V3(f[3]),RM));(L.w||[]).forEach(w=>add(V3(w[2]),WM));
-  (L.g||[]).forEach(r=>{const P=[];for(let i=0;i+1<r.length;i+=2)P.push(new THREE.Vector3(r[i],0,-r[i+1]));add(P,WM);});return g;}
+  (L.g||[]).forEach(r=>{const P=[];for(let i=0;i+1<r.length;i+=2)P.push(new THREE.Vector3(r[i],0,-r[i+1]));add(P,WM);});
+  /* seinad: LOD2-s pole seinapindu, ainult põhiplaan + katus. Iga põhiplaani serva sein maast katuse servani (viilud kaasa), et katus ei hõljuks */
+  const RV=[];(L.f||[]).forEach(f=>{const c=f[3];for(let i=0;i+2<c.length;i+=3)RV.push([c[i],c[i+1],c[i+2]]);});
+  const EV=+L.eave>0?+L.eave:(RV.length?Math.min(...RV.map(p=>p[2])):3),D=.35;
+  if(!(L.w&&L.w.length))(L.g||[]).forEach(r=>{const Q=[];for(let i=0;i+1<r.length;i+=2)Q.push([r[i],r[i+1]]);
+    Q.forEach((a,k)=>{const b=Q[(k+1)%Q.length],dx=b[0]-a[0],dy=b[1]-a[1],len=Math.hypot(dx,dy);if(len<.05)return;
+      const S=[];RV.forEach(p=>{const t=((p[0]-a[0])*dx+(p[1]-a[1])*dy)/(len*len);if(t<-.02||t>1.02)return;
+        if(Math.abs((p[0]-a[0])*dy-(p[1]-a[1])*dx)/len<=D)S.push([Math.min(1,Math.max(0,t)),p[2]]);});
+      [0,1].forEach(t=>{if(!S.some(s=>Math.abs(s[0]-t)*len<D))S.push([t,EV]);});
+      S.sort((x,y)=>x[0]-y[0]);const T=[];S.forEach(s=>{const l=T[T.length-1];if(l&&(s[0]-l[0])*len<.05){l[1]=Math.max(l[1],s[1]);}else T.push(s.slice());});
+      T[0][0]=0;T[T.length-1][0]=1;
+      const P=[new THREE.Vector3(a[0],0,-a[1]),new THREE.Vector3(b[0],0,-b[1])];
+      for(let i=T.length-1;i>=0;i--)P.push(new THREE.Vector3(a[0]+dx*T[i][0],Math.max(.3,T[i][1]),-(a[1]+dy*T[i][0])));
+      add(P,WM);});});
+  return g;}
 // v2 tuba: oma lehel room/ (three r170, valgus ja materjalid nagu docs/prototypes), vaaturis iframe'ina; mõõtmisriistad seal ei tööta
 function roomFrame(box,V,url,J){V.stop();V.r.domElement.remove();const f=document.createElement('iframe');f.className='p3room';f.title='Tuba 3D-s, keera hiire või sõrmega';
   f.src='room/?e=1&u='+encodeURIComponent(url);box.prepend(f);V.el=f;V.sc=null;V.model={userData:{room:J}};V.ok=true;box.classList.add('ready');if(V.onReady)V.onReady();try{m3RenderBar();stRenderPanel();m3Hint();}catch(_){}}
