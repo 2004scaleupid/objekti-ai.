@@ -318,6 +318,14 @@ body.cvm .panel>*:not(#cvPanel){display:none!important}
 .view canvas{position:absolute;inset:0;width:100%;height:100%;display:block;cursor:grab}
 .view canvas:active{cursor:grabbing}
 .labels{position:absolute;inset:0;pointer-events:none}
+.omsvg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;overflow:visible}.omsvg polygon{fill:rgba(229,72,45,.16);stroke:#E5482D;stroke-width:2.5;stroke-dasharray:6 4}.omsvg polyline{fill:none;stroke:#E5482D;stroke-width:3;stroke-dasharray:6 4}
+.dim.omp{border-radius:999px;min-width:22px;text-align:center;font-weight:700}.dim.omt{background:#fff;color:var(--ink);font:600 12px var(--display);max-width:220px;white-space:normal}
+.omdel{position:absolute;transform:translate(-50%,-50%);pointer-events:auto;font:600 12px var(--display);background:var(--ink);color:#fff;border:0;border-radius:999px;padding:6px 12px;min-height:32px;cursor:pointer;box-shadow:0 2px 6px rgba(0,0,0,.25)}
+.omin{position:absolute;transform:translate(-50%,-140%);z-index:5;font:500 14px var(--display);padding:8px 10px;border:2px solid #E5482D;border-radius:8px;background:#fff;color:var(--ink);width:min(240px,70vw)}
+.ommenu{position:absolute;z-index:6;background:var(--paper);border:1px solid var(--line);border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.18);padding:6px;display:flex;flex-direction:column;gap:2px;width:230px;max-height:260px;overflow:auto}.ommenu b{font-size:12px;padding:4px 6px;color:var(--muted)}.ommenu button{display:flex;align-items:center;gap:8px;border:0;background:none;padding:8px 6px;border-radius:6px;text-align:left;font:500 13px var(--display);color:var(--ink);cursor:pointer}.ommenu button:hover,.ommenu button:focus-visible{background:var(--soft)}.ommenu img{width:32px;height:32px;object-fit:cover;border-radius:4px;flex:none}
+.msg .omgo{display:block;margin-top:8px}.omout{margin-top:6px}.omres{display:block;width:100%;border-radius:8px;margin-bottom:6px}
+.view:is([data-tool=brush],[data-tool=rect],[data-tool=lasso],[data-tool=point],[data-tool=arrow],[data-tool=text],[data-tool=prod],[data-tool=erase]) canvas{cursor:crosshair}
+
 .render{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:1}
 .view .ov,.view .compass{z-index:2}
 .rtag{position:absolute;left:50%;top:14px;transform:translateX(-50%);z-index:3;background:#16130F;color:#fff;font:600 12px var(--display);padding:6px 12px;border-radius:999px;white-space:nowrap}
@@ -2528,7 +2536,7 @@ function pickSurface(e){const b=canvas.getBoundingClientRect();mouse.set((e.clie
   if(m.name==='roofpart'){const n=hit.face.normal.clone().transformDirection(m.matrixWorld);const deg=Math.round(Math.acos(Math.min(1,Math.abs(n.y)))*180/Math.PI);t=`Katusetahk · ${fmtM(A)} m² · kalle ${deg}°`;}
   else if(m.name==='walls')t=`Sein ${String.fromCharCode(65+m.userData.edge)} · ${fmtM(A)} m² (bruto)`;else t=`Viil · ${fmtM(A)} m²`;
   m.material=M_SEL;selMesh=m;selInfo={p:hit.point.clone(),t};lastMeasure={tyyp:'valitud pind',kirjeldus:t,m2:+A.toFixed(2)};$('selLab').hidden=false;$('selLab').textContent=t;}
-canvas.addEventListener('pointerup',e=>{if(!mMode&&downXY&&Math.hypot(e.clientX-downXY[0],e.clientY-downXY[1])<=5&&!showRen){pickSurface(e);return;}
+canvas.addEventListener('pointerup',e=>{if(!mMode&&downXY&&Math.hypot(e.clientX-downXY[0],e.clientY-downXY[1])<=5&&!showRen&&(!window.OBT||window.OBT==='select'||window.OBT==='hand')){pickSurface(e);return;}
   if(!mMode||!downXY||Math.hypot(e.clientX-downXY[0],e.clientY-downXY[1])>5||mClosed)return;
   const b=canvas.getBoundingClientRect();mouse.set((e.clientX-b.left)/b.width*2-1,-(e.clientY-b.top)/b.height*2+1);ray.setFromCamera(mouse,camera);
   const hit=ray.intersectObjects([group,ground],true).find(x=>x.object.isMesh&&x.object.visible&&x.object.material!==mDot&&!x.object.isInstancedMesh);if(!hit)return;
@@ -4211,7 +4219,8 @@ function stShowImg(){const s=stSess(),im=$('stImg'),src=s&&s.base?stAiImg(s.base
   $('stCanvas').style.visibility='';
   if(STU.cur===src&&STU.nat){stRenderMarks();stRenderCmp();if(STU.fit)stFit();return;}
   STU.cur=src;STU.nat=null;im.onload=()=>{if(STU.cur!==src)return;STU.nat={w:im.naturalWidth||1000,h:im.naturalHeight||750};{const s2=stSess(),r=s2&&s2.imgs&&s2.imgs.find(x=>stAiImg(x.src)===src);if(r)r.nat=STU.nat;}const c=$('stCanvas');c.style.width=STU.nat.w+'px';c.style.height=STU.nat.h+'px';im.style.width=STU.nat.w+'px';im.style.height=STU.nat.h+'px';
-    requestAnimationFrame(()=>{stFit();stRenderMarks();stRenderCmp();});};
+    // kohe mahutada: muidu jäi uus pilt kuni järgmise kaadrini eelmise pildi suurendusega (3D-vaate pilt paistis pisike keskel)
+    stFit();requestAnimationFrame(()=>{stFit();stRenderMarks();stRenderCmp();});};
   im.onerror=()=>{if(STU.cur===src)toast('Pilti ei õnnestunud laadida');};im.src=src;if(im.complete&&im.naturalWidth)im.onload();}
 function stRenderFilm(){const s=stSess(),T=s?(s.tray||[]):[],f=$('stFilm');f.hidden=STU.edit==null||T.length<2;
   f.innerHTML=T.map((ix,n)=>{const x=s.imgs[ix],u=x&&stAiImg(x.src);if(!u)return '';return `<button type="button" data-f="${ix}" aria-pressed="${STU.edit===ix}" title="Märgi pilti ${n+1}"><img src="${stEsc(u)}" alt=""><span>${n+1}</span></button>`;}).join('');
@@ -5655,13 +5664,16 @@ if(!P3PUB){
 const OB={tool:'select'};
 const OB_AREA=SI('<path d="M4 18 7 5l11 3 2 10z"/><circle cx="4" cy="18" r="1.6"/><circle cx="7" cy="5" r="1.6"/><circle cx="18" cy="8" r="1.6"/><circle cx="20" cy="18" r="1.6"/>');
 const OB_DRAW={brush:1,rect:1,lasso:1,point:1,arrow:1,text:1,prod:1};
-function obTools(){const T=id=>ST_TOOLS.find(t=>t&&t.id===id);const d3=' Pildistab praeguse 3D-vaate ja avab selle märkimiseks.';
-  return [{...T('select'),n:'Pööra vaadet',d:'Lohista, et maja keerata. Rullik suurendab.'},{...T('hand'),d:'Lohista, et vaadet nihutada.'},0,
-    ...['brush','rect','lasso','point','arrow','text','prod'].map(id=>({...T(id),d:(T(id).d||'')+d3})),0,
+function obTools(){const T=id=>ST_TOOLS.find(t=>t&&t.id===id);
+  const D={brush:'Värvi otse maja või maapinna peale: sein, katus, muru…',rect:'Lohista, et märkida ala. Kuju jääb pinna peale.',lasso:'Tõmba joon ümber ala, see jääb pinna peale.',
+    point:'Kliki pinnale: punktid A, B, C… Viita neile tekstis: „punkt A“.',arrow:'Lohista või kliki kaks kohta: nool algusest lõpuni.',text:'Kliki pinnale ja kirjuta märkus, nt „uus aken siia“.',prod:'Kliki kohta, kuhu sinu toode tuleb.'};
+  const nav=' Pööra: lohista tühjalt kohalt, Alt + lohista või parem nupp.';
+  return [{...T('select'),n:'Pööra vaadet',d:'Lohista, et maja keerata. Rullik suurendab. Klõpsa märgil, et see valida ja lohistada.'},{...T('hand'),d:'Lohista, et vaadet nihutada.'},0,
+    ...['brush','rect','lasso','point','arrow','text','prod'].map(id=>({...T(id),d:D[id]+nav})),0,
     {...T('ruler'),id:'ruler',n:'Mõõda kaugust',d:'Kliki punkte maja või maapinna peal. Näed iga lõigu ja kogupikkuse.'},
     {id:'area',k:'G',n:'Mõõda pinda',d:'Kliki pinna nurgad, nt katusetahu 4 nurka. Sulge, klõpsates esimesele punktile.',i:OB_AREA},
-    {...T('erase'),n:'Kustuta mõõdud',d:'Eemaldab kõik mõõtmise punktid.',act:1},0,
-    {...T('eye'),n:'Peida mõõdud',d:'Vaata maja ilma mõõtude ja silditeta.',act:1}];}
+    {...T('erase'),d:'Klõpsa märgil, et see eemaldada.'},{...T('clear'),n:'Kustuta kõik',d:'Eemaldab kõik märgid ja mõõtmise punktid.'},0,
+    T('undo'),T('redo'),{...T('eye'),n:'Peida märgid ja mõõdud',d:'Vaata maja ilma märkide, mõõtude ja silditeta.',act:1}];}
 function obRenderRail(){const r=$('obRail');if(!r)return;const cur=typeof mMode!=='undefined'&&mMode?(mMode==='dist'?'ruler':'area'):OB.tool;
   const hidden=$('dimBtn').getAttribute('aria-pressed')!=='true'&&$('distBtn').getAttribute('aria-pressed')!=='true';
   r.innerHTML=obTools().map(t=>{if(!t)return '<span class="sep"></span>';const pressed=t.id==='eye'?hidden:!t.act&&cur===t.id;
@@ -5669,19 +5681,13 @@ function obRenderRail(){const r=$('obRail');if(!r)return;const cur=typeof mMode!
   r.querySelectorAll('.sttool').forEach(b=>{b.onclick=()=>{stTip(null);obTool(b.dataset.tool);};b.onpointerenter=e=>{if(e.pointerType==='mouse')stTip(b);};b.onpointerleave=()=>stTip(null);b.onfocus=()=>{if(b.matches(':focus-visible'))stTip(b);};b.onblur=()=>stTip(null);});
   $('view').dataset.tool=cur;}
 function obSetPan(on){try{controls.mouseButtons.LEFT=on?THREE.MOUSE.PAN:THREE.MOUSE.ROTATE;controls.touches.ONE=on?THREE.TOUCH.PAN:THREE.TOUCH.ROTATE;}catch(e){}}
-function obTool(id){if(OB_DRAW[id])return obToStudio(id);
-  if(id==='ruler'||id==='area'){const m=id==='ruler'?'dist':'area';setMode(m);OB.tool='select';obSetPan(false);return obRenderRail();}
-  if(id==='erase'){$('mClr').click();return obRenderRail();}
+function obTool(id){
+  if(id==='ruler'||id==='area'){const m=id==='ruler'?'dist':'area';setMode(m);OB.tool='select';omTool();obSetPan(false);return obRenderRail();}
+  if(id==='clear'){$('mClr').click();omClearAll();return obRenderRail();}
+  if(id==='undo'||id==='redo'){id==='undo'?omUndo():omRedo();return;}
   if(id==='eye'){const show=$('dimBtn').getAttribute('aria-pressed')!=='true'&&$('distBtn').getAttribute('aria-pressed')!=='true';
-    ['dimBtn','distBtn'].forEach(k=>{if(($(k).getAttribute('aria-pressed')==='true')!==show)$(k).click();});$('mlabels').style.visibility=show?'':'hidden';return obRenderRail();}
-  if(mMode)setMode(mMode);OB.tool=id;obSetPan(id==='hand');obRenderRail();}
-function obSnap(){const r=$('render');let src=null;
-  if(r&&!r.hidden&&r.src&&stAiImg(r.src))return r.src;
-  renderer.render(scene,camera);const w=canvas.width,h=canvas.height,k=Math.min(1,1600/Math.max(w,h)),cv=document.createElement('canvas');cv.width=Math.round(w*k);cv.height=Math.round(h*k);
-  cv.getContext('2d').drawImage(canvas,0,0,cv.width,cv.height);return cv.toDataURL('image/jpeg',.9);}
-function obToStudio(tool){const h=HOUSES[cur];if(!h)return;let src;try{src=obSnap();}catch(e){toast('3D-vaadet ei õnnestunud pildistada');return;}
-  const prev=acct.activeTpl;openStudio('vaba');acct.activeTpl=prev;const ix=stAddPic(src,'up');const s=stSess();s.title=h.short+' · 3D-vaade';s.obj=h.ehr;stSave();stEdit(ix,tool);
-  toast('Pildistasin 3D-vaate. Märgi, mida muuta, ja kirjuta all, mida teha.');}
+    ['dimBtn','distBtn'].forEach(k=>{if(($(k).getAttribute('aria-pressed')==='true')!==show)$(k).click();});$('mlabels').style.visibility=show?'':'hidden';omShow(show);return obRenderRail();}
+  if(mMode)setMode(mMode);OB.tool=id;omTool();obSetPan(id==='hand');obRenderRail();}
 function obBack(){const s=stSess();if(!s||!s.obj)return;const i=HOUSES.findIndex(h=>h.ehr===s.obj);if(i<0){toast('Seda objekti pole enam');return;}show('app');if(i!==cur)select(i);}
 $('stTo3d').onclick=obBack;
 function obRenderPick(){const h=HOUSES[cur];$('obPickT').textContent=h?h.short:'Objektid';
@@ -5693,6 +5699,171 @@ document.addEventListener('click',e=>{if(!e.target.closest||!e.target.closest('.
 {const _sm=setMode;setMode=function(m){_sm(m);try{obRenderRail();}catch(e){}};}
 document.addEventListener('keydown',e=>{if($('body').hidden||document.body.classList.contains('cvm'))return;const tg=e.target;if(tg&&(tg.tagName==='INPUT'||tg.tagName==='TEXTAREA'||tg.isContentEditable)||e.metaKey||e.ctrlKey||e.altKey)return;
   if(document.querySelector('.modal:not([hidden]),.dlg:not([hidden])'))return;const t=obTools().find(x=>x&&x.k&&x.k.length===1&&x.k.toLowerCase()===e.key.toLowerCase());if(t){e.preventDefault();obTool(t.id);}});
+/* ---------- 27.10: märgid 3D-s. Objektivaade jääb alati 3D-ks: pintsel, ala, punkt, nool, silt ja toode tulevad pinnale (sama raycast mis mõõtmisel).
+   Salvestus acct.marks3d[EHR], stseeni koordinaadid (sama raam mis mõõtmisel). Pilt AI-le tehakse alles „Tee pilt“ peale, siis võetakse ka krediidid. */
+const OM={g:new THREE.Group(),sel:null,undo:[],redo:[],d:null,arrowA:null,space:false,tex:{},lab:[]};OM.g.name='marks3d';scene.add(OM.g);
+const omPv=new THREE.Group();scene.add(omPv);
+const OM_M=new THREE.MeshBasicMaterial({color:0xE5482D}),OM_H=new THREE.MeshBasicMaterial({color:0xF2B705}),
+  OM_F=new THREE.MeshBasicMaterial({color:0xE5482D,transparent:true,opacity:.3,side:THREE.DoubleSide,depthWrite:false,polygonOffset:true,polygonOffsetFactor:-2});
+const omLay=document.createElement('div');omLay.className='labels';omLay.id='omLab';$('view').appendChild(omLay);
+const omSvg=document.createElementNS('http://www.w3.org/2000/svg','svg');omSvg.setAttribute('class','omsvg');omSvg.setAttribute('aria-hidden','true');$('view').appendChild(omSvg);
+const omV=a=>new THREE.Vector3(a[0],a[1],a[2]),omA=v=>[+v.x.toFixed(3),+v.y.toFixed(3),+v.z.toFixed(3)];
+function omList(){const h=HOUSES[cur];if(!h||!h.ehr)return [];acct.marks3d=acct.marks3d||{};return acct.marks3d[h.ehr]||(acct.marks3d[h.ehr]=[]);}
+function omSnapUndo(){OM.undo.push(JSON.stringify(omList()));if(OM.undo.length>60)OM.undo.shift();OM.redo=[];}
+function omPut(L){const h=HOUSES[cur];if(!h||!h.ehr)return;acct.marks3d[h.ehr]=L;OM.sel=null;save();omDraw();}
+function omUndo(){if(!OM.undo.length){toast('Pole midagi tagasi võtta');return;}OM.redo.push(JSON.stringify(omList()));omPut(JSON.parse(OM.undo.pop()));}
+function omRedo(){if(!OM.redo.length)return;OM.undo.push(JSON.stringify(omList()));omPut(JSON.parse(OM.redo.pop()));}
+function omAdd(m){omSnapUndo();m.id='m'+Date.now().toString(36)+Math.random().toString(36).slice(2,5);omList().push(m);save();omDraw();}
+function omDel(id){const L=omList(),i=L.findIndex(m=>m.id===id);if(i<0)return;omSnapUndo();L.splice(i,1);OM.sel=null;save();omDraw();}
+function omClearAll(){if(!omList().length)return;omSnapUndo();omPut([]);}
+function omShow(on){OM.g.visible=on;omLay.style.visibility=on?'':'hidden';}
+function omRay(x,y){const b=canvas.getBoundingClientRect();mouse.set((x-b.left)/b.width*2-1,-(y-b.top)/b.height*2+1);ray.setFromCamera(mouse,camera);}
+// pinnapunkt 4 cm pinnast väljas (kaamera poole), et märk ei vilguks pinna sees
+function omHit(x,y){omRay(x,y);const hit=ray.intersectObjects([group,ground],true).find(o=>o.object.isMesh&&o.object.visible&&o.object.material!==mDot&&!o.object.isInstancedMesh);
+  if(!hit)return null;const n=hit.face?hit.face.normal.clone().transformDirection(hit.object.matrixWorld):new THREE.Vector3(0,1,0);if(n.dot(ray.ray.direction)>0)n.negate();
+  return hit.point.clone().add(n.multiplyScalar(.04));}
+// märgid on õhukesed (nool 7 cm): esmalt toote pilt (raycast), siis ekraanil kuni 14 px joonest; ala sees = 10 px, et ala sees olev punkt jääks ette
+function omMarkAt(x,y){if(!OM.g.visible)return null;omRay(x,y);const SP=[];OM.g.traverse(o=>{if(o.isSprite)SP.push(o);});const h=ray.intersectObjects(SP,false)[0];let o=h&&h.object;while(o&&!o.userData.mid)o=o.parent;if(o)return o.userData.mid;
+  const b=canvas.getBoundingClientRect(),S=a=>{const q=omV(a).project(camera);return q.z>1?null:[b.left+(q.x+1)/2*b.width,b.top+(1-q.y)/2*b.height];};let best=null,bd=14;
+  omList().forEach(m=>{const Q=m.p.map(S).filter(Boolean);if(!Q.length)return;let d=(m.t==='rect'||m.t==='lasso')&&Q.length>2&&pip([x,y],Q)?10:1e9;
+    for(let i=0;i<Q.length;i++)d=Math.min(d,segC([x,y],Q[i],Q[Math.min(i+1,Q.length-1)]).d);if(d<bd){bd=d;best=m.id;}});return best;}
+function omTube(P,closed,mat,r){if(P.length<2)return null;return new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(P,closed,'catmullrom',0),Math.min(400,P.length*3),r,6,closed),mat);}
+function omFill(P){if(P.length<3)return null;const n=new THREE.Vector3();for(let i=0;i<P.length;i++){const a=P[i],b=P[(i+1)%P.length];n.x+=(a.y-b.y)*(a.z+b.z);n.y+=(a.z-b.z)*(a.x+b.x);n.z+=(a.x-b.x)*(a.y+b.y);}
+  if(n.lengthSq()<1e-9)return null;n.normalize();const u=new THREE.Vector3(1,0,0);if(Math.abs(n.dot(u))>.9)u.set(0,1,0);u.sub(n.clone().multiplyScalar(n.dot(u))).normalize();const w=n.clone().cross(u);
+  let T;try{T=THREE.ShapeUtils.triangulateShape(P.map(p=>new THREE.Vector2(p.dot(u),p.dot(w))),[]);}catch(_){return null;}if(!T.length)return null;
+  const pos=[];T.forEach(t=>t.forEach(k=>pos.push(P[k].x,P[k].y,P[k].z)));const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));return new THREE.Mesh(g,OM_F);}
+function omTex(u,sp,H){let t=OM.tex[u];if(!t){t=OM.tex[u]=new THREE.TextureLoader().setCrossOrigin('anonymous').load(stAiImg(u)||u,()=>omDraw());t.encoding=THREE.sRGBEncoding;}
+  if(t.image&&t.image.width)sp.scale.set(H*t.image.width/t.image.height,H,1);return t;}
+function omObj(m){const P=m.p.map(omV),M=OM.sel===m.id?OM_H:OM_M,g=new THREE.Group();g.userData.mid=m.id;
+  if(m.t==='brush'){const t=omTube(P,false,M,.09);if(t)g.add(t);}
+  else if(m.t==='rect'||m.t==='lasso'){const t=omTube(P,true,M,.06);if(t)g.add(t);const f=omFill(P);if(f)g.add(f);}
+  else if(m.t==='point'||m.t==='text'){const s=new THREE.Mesh(new THREE.SphereGeometry(m.t==='point'?.22:.12,14,10),M);s.position.copy(P[0]);g.add(s);}
+  else if(m.t==='arrow'&&P.length>1){const A=P[0],B=P[1],d=B.clone().sub(A),L=d.length();if(L<.05)return null;const hl=Math.min(.6,L*.35),dir=d.normalize(),q=new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0,1,0),dir);
+    const sh=new THREE.Mesh(new THREE.CylinderGeometry(.07,.07,L-hl,8),M);sh.position.copy(A).addScaledVector(dir,(L-hl)/2);sh.quaternion.copy(q);
+    const hd=new THREE.Mesh(new THREE.ConeGeometry(.22,hl,12),M);hd.position.copy(B).addScaledVector(dir,-hl/2);hd.quaternion.copy(q);g.add(sh,hd);}
+  else if(m.t==='prod'){const pr=prodList().find(x=>x.id===m.pid),u=pr&&pr.imgs[0],H=+(pr&&pr.H)||1.5,sp=new THREE.Sprite(new THREE.SpriteMaterial({color:u?0xffffff:0xE5482D}));
+    sp.center.set(.5,0);sp.scale.set(H,H,1);if(u)sp.material.map=omTex(u,sp,H);sp.position.copy(P[0]);const b=new THREE.Mesh(new THREE.SphereGeometry(.12,10,8),M);b.position.copy(P[0]);g.add(sp,b);}
+  return g.children.length?g:null;}
+function omDraw(){OM.g.traverse(o=>{if(o.geometry)o.geometry.dispose();if(o.isSprite)o.material.dispose();});OM.g.clear();OM.lab=[];let a=0;const PL=prodList(),up=k=>new THREE.Vector3(0,k,0);
+  omList().forEach(m=>{const g=omObj(m);if(!g)return;OM.g.add(g);const V=m.p.map(omV),c=V.reduce((s,v)=>s.add(v),new THREE.Vector3()).multiplyScalar(1/V.length);
+    if(m.t==='brush'||m.t==='rect'||m.t==='lasso')OM.lab.push({p:c,t:String(++a)});
+    else if(m.t==='point')OM.lab.push({p:V[0].clone().add(up(.55)),t:m.s,cls:'omp'});
+    else if(m.t==='text')OM.lab.push({p:V[0].clone().add(up(.4)),t:m.s,cls:'omt'});
+    else if(m.t==='prod')OM.lab.push({p:V[0].clone().add(up(-.3)),t:'toode '+(PL.findIndex(x=>x.id===m.pid)+1)});
+    if(m.id===OM.sel)OM.lab.push({p:c.clone().add(up(1.1)),del:m.id});});
+  omLay.innerHTML=OM.lab.map(l=>l.del?`<button type="button" class="omdel" data-del="${stEsc(l.del)}">Kustuta märk</button>`:`<div class="dim ${l.cls||''}">${stEsc(l.t)}</div>`).join('');
+  omLay.querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>omDel(b.dataset.del));}
+function omLabels(w,hh){const els=omLay.children;OM.lab.forEach((l,i)=>{const el=els[i];if(!el)return;const p=l.p.clone().project(camera),vis=OM.g.visible&&p.z<1;el.hidden=!vis;if(vis){el.style.left=((p.x+1)/2*w)+'px';el.style.top=((1-p.y)/2*hh)+'px';}});}
+{const _dl=drawMLabels;drawMLabels=function(w,hh){_dl(w,hh);omLabels(w,hh);};}
+function omPrev(d){omPv.children.forEach(o=>o.geometry&&o.geometry.dispose());omPv.clear();omSvg.innerHTML='';if(!d)return;
+  if(d.t==='brush'){const t=omTube(d.pts,false,OM_M,.09);if(t)omPv.add(t);}
+  if(d.t==='dot'){const s=new THREE.Mesh(new THREE.SphereGeometry(.18,12,8),OM_M);s.position.copy(d.p);omPv.add(s);}}
+function omPrev2(d){const b=$('view').getBoundingClientRect(),q=([x,y])=>`${(x-b.left).toFixed(1)},${(y-b.top).toFixed(1)}`,e=d.scr[d.scr.length-1];
+  const pts=d.t==='rect'?[[d.x,d.y],[e[0],d.y],e,[d.x,e[1]]]:d.t==='lasso'?d.scr:[[d.x,d.y],e];
+  omSvg.innerHTML=d.t==='arrow'?`<polyline points="${pts.map(q).join(' ')}"/>`:`<polygon points="${pts.map(q).join(' ')}"/>`;}
+// ala: ekraanil kontuur iga ~9 px tagant, iga punkt pinnale (pinnast mööda jäävad punktid jäetakse välja)
+function omOutline(d){const e=d.scr[d.scr.length-1];let S=[];
+  if(d.t==='rect'){if(Math.abs(e[0]-d.x)<8||Math.abs(e[1]-d.y)<8)return [];const C=[[d.x,d.y],[e[0],d.y],e,[d.x,e[1]]];
+    C.forEach((a,k)=>{const b=C[(k+1)%4],n=Math.max(1,Math.ceil(Math.hypot(b[0]-a[0],b[1]-a[1])/9));for(let i=0;i<n;i++)S.push([a[0]+(b[0]-a[0])*i/n,a[1]+(b[1]-a[1])*i/n]);});}
+  else d.scr.forEach(p=>{const l=S[S.length-1];if(!l||Math.hypot(p[0]-l[0],p[1]-l[1])>=9)S.push(p);});
+  return S.map(([x,y])=>omHit(x,y)).filter(Boolean);}
+function omLetter(){const u=new Set(omList().filter(m=>m.t==='point').map(m=>m.s));for(let i=0;i<26;i++){const c=String.fromCharCode(65+i);if(!u.has(c))return c;}return 'Z';}
+function omText(x,y,p){const b=$('view').getBoundingClientRect(),i=document.createElement('input');i.className='omin';i.maxLength=80;i.placeholder='Märkus, Enter salvestab';i.setAttribute('aria-label','Sildi tekst');
+  i.style.left=(x-b.left)+'px';i.style.top=(y-b.top)+'px';$('view').appendChild(i);setTimeout(()=>i.focus(),0);
+  let done=0;const end=ok=>{if(done)return;done=1;const t=i.value.trim();i.remove();if(ok&&t)omAdd({t:'text',p:[omA(p)],s:t});};
+  i.onkeydown=e=>{e.stopPropagation();if(e.key==='Enter')end(1);if(e.key==='Escape')end(0);};i.onblur=()=>end(1);}
+function omProd(x,y,p){const P=prodList(),put=id=>omAdd({t:'prod',p:[omA(p)],pid:id});if(P.length<2){put(P[0].id);return;}
+  const b=$('view').getBoundingClientRect(),m=document.createElement('div');m.className='ommenu';m.setAttribute('role','menu');m.setAttribute('aria-label','Vali toode');
+  m.style.left=Math.max(8,Math.min(x-b.left,b.width-240))+'px';m.style.top=Math.max(8,Math.min(y-b.top,b.height-270))+'px';
+  m.innerHTML='<b>Vali toode</b>'+P.map((q,k)=>`<button type="button" role="menuitem" data-p="${stEsc(q.id)}">${q.imgs[0]?`<img src="${stEsc(stAiImg(q.imgs[0])||q.imgs[0])}" alt="">`:''}<span>${k+1}. ${stEsc(q.name)}</span></button>`).join('');
+  $('view').appendChild(m);const out=e=>{if(!m.contains(e.target))close();},close=()=>{m.remove();document.removeEventListener('pointerdown',out,true);};
+  setTimeout(()=>document.addEventListener('pointerdown',out,true),0);m.addEventListener('keydown',e=>{if(e.key==='Escape')close();});
+  m.querySelectorAll('button').forEach(bt=>bt.onclick=()=>{close();put(bt.dataset.p);});m.querySelector('button').focus();}
+function omTool(){const T=OB.tool,draw=!!OB_DRAW[T];window.OBT=T;OM.arrowA=null;omPrev(null);
+  try{controls.mouseButtons.RIGHT=draw?THREE.MOUSE.ROTATE:THREE.MOUSE.PAN;controls.touches.TWO=draw?THREE.TOUCH.DOLLY_ROTATE:THREE.TOUCH.DOLLY_PAN;}catch(_){}
+  if(T!=='select'&&OM.sel){OM.sel=null;omDraw();}
+  if(draw&&!acct.omHint){acct.omHint=1;save();toast('Joonista hiirega · pööra: lohista tühjalt kohalt või Alt + lohista');}}
+/* sisend: vaate peal püüdmisfaasis, enne OrbitControls'i. Joonistamine algab ainult pinnalt; tühjalt kohalt, Alt/Option, parem nupp, tühik ja 2 sõrme pööravad/nihutavad */
+$('view').addEventListener('pointerdown',e=>{if(e.target!==canvas||showRen||mMode)return;const T=OB.tool;
+  if(OM.d){if(e.pointerType==='touch'){OM.d=null;omPrev(null);controls.enabled=true;}return;}
+  if(e.button!==0||e.altKey||OM.space||e.isPrimary===false)return;const x=e.clientX,y=e.clientY;
+  if(T==='select'||T==='erase'){const id=omMarkAt(x,y);if(!id){if(OM.sel){OM.sel=null;omDraw();}return;}
+    e.stopPropagation();controls.enabled=false;try{canvas.setPointerCapture(e.pointerId);}catch(_){}
+    if(T==='erase'){OM.d={t:'erase',id,x,y};return;}
+    const m=omList().find(q=>q.id===id);OM.sel=id;omDraw();OM.d={t:'move',id,x,y,h0:omHit(x,y),orig:m.p.map(a=>a.slice())};return;}
+  // kaugem kui 70 m (horisont, kauge muru) = tühi koht: pööramine, sest Maci puuteplaadiga on parem nupp ebamugav
+  if(!OB_DRAW[T])return;const h=omHit(x,y);if(!h||h.distanceTo(controls.target)>70)return;
+  e.stopPropagation();controls.enabled=false;try{canvas.setPointerCapture(e.pointerId);}catch(_){}
+  OM.d={t:T,x,y,pts:[h],scr:[[x,y]]};if(T==='brush')omPrev(OM.d);},true);
+$('view').addEventListener('pointermove',e=>{const d=OM.d;if(!d||d.t==='erase'||e.isPrimary===false)return;const x=e.clientX,y=e.clientY;
+  if(d.t==='move'){const h=omHit(x,y),m=omList().find(q=>q.id===d.id);if(!h||!d.h0||!m)return;if(!d.moved){d.moved=1;omSnapUndo();}
+    const dv=h.sub(d.h0);m.p=d.orig.map(a=>[+(a[0]+dv.x).toFixed(3),+(a[1]+dv.y).toFixed(3),+(a[2]+dv.z).toFixed(3)]);omDraw();return;}
+  if(d.t==='brush'){const h=omHit(x,y);if(h&&h.distanceTo(d.pts[d.pts.length-1])>.06){d.pts.push(h);omPrev(d);}return;}
+  if(d.t==='rect'||d.t==='lasso'||d.t==='arrow'){d.scr.push([x,y]);if(Math.hypot(x-d.x,y-d.y)>4)omPrev2(d);}},true);
+$('view').addEventListener('pointerup',e=>{const d=OM.d;if(!d||e.isPrimary===false)return;OM.d=null;controls.enabled=true;e.stopPropagation();omPrev(null);
+  const x=e.clientX,y=e.clientY,click=Math.hypot(x-d.x,y-d.y)<6;
+  if(d.t==='erase'){if(click&&omMarkAt(x,y)===d.id)omDel(d.id);return;}
+  if(d.t==='move'){if(d.moved)save();return;}
+  if(d.t==='brush'){if(d.pts.length>1)omAdd({t:'brush',p:d.pts.map(omA)});else toast('Lohista, et värvida');return;}
+  if(d.t==='rect'||d.t==='lasso'){const P=omOutline(d);if(P.length>2)omAdd({t:d.t,p:P.map(omA)});else if(!click)toast('Ala jäi pinnast välja. Märgi maja või maapinna peale.');return;}
+  if(d.t==='point'){omAdd({t:'point',p:[omA(d.pts[0])],s:omLetter()});return;}
+  if(d.t==='arrow'){if(!click){const b=omHit(x,y);if(b){OM.arrowA=null;omAdd({t:'arrow',p:[omA(d.pts[0]),omA(b)]});}return;}
+    if(!OM.arrowA){OM.arrowA=d.pts[0];omPrev({t:'dot',p:d.pts[0]});toast('Kliki noole lõpp-punkti');return;}
+    const a=OM.arrowA;OM.arrowA=null;omAdd({t:'arrow',p:[omA(a),omA(d.pts[0])]});return;}
+  if(d.t==='text'){omText(x,y,d.pts[0]);return;}
+  if(d.t==='prod')omProd(x,y,d.pts[0]);},true);
+$('view').addEventListener('pointercancel',()=>{if(OM.d){OM.d=null;controls.enabled=true;omPrev(null);}},true);
+document.addEventListener('keydown',e=>{if($('body').hidden)return;const tg=e.target;if(tg&&(tg.tagName==='INPUT'||tg.tagName==='TEXTAREA'||tg.isContentEditable))return;
+  if(document.querySelector('.modal:not([hidden]),.dlg:not([hidden])'))return;
+  if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==='z'){e.preventDefault();e.shiftKey?omRedo():omUndo();return;}
+  if(e.key==='Escape'&&(OB.tool!=='select'||OM.arrowA)){obTool('select');return;}
+  if((e.key==='Delete'||e.key==='Backspace')&&OM.sel){e.preventDefault();omDel(OM.sel);return;}
+  if(e.key===' '&&!e.repeat&&!OM.space){OM.space=true;e.preventDefault();obSetPan(true);}});
+document.addEventListener('keyup',e=>{if(e.key===' '&&OM.space){OM.space=false;obSetPan(OB.tool==='hand');}});
+{const _s=select;select=function(){OM.d=null;OM.arrowA=null;OM.sel=null;OM.undo=[];OM.redo=[];omPrev(null);const r=_s.apply(this,arguments);omDraw();return r;};}
+/* AI: muutmissoov + märgid → täissuuruses pilt praegusest vaatest (puhas + märkidega) samasse ai-image töösse mis Vaba idee. Kasutaja jääb 3D-sse. */
+function omShot(marks){const dims=group&&group.getObjectByName('dims'),dl=group&&group.getObjectByName('distl'),keep=[OM.g.visible,dims&&dims.visible,dl&&dl.visible,mGroup.visible];
+  OM.g.visible=marks;if(dims)dims.visible=false;if(dl)dl.visible=false;mGroup.visible=false;omPv.visible=false;
+  try{renderer.render(scene,camera);const W=canvas.width,H=canvas.height,k=Math.min(1,2048/Math.max(W,H)),cv=document.createElement('canvas');cv.width=Math.round(W*k);cv.height=Math.round(H*k);
+    const g=cv.getContext('2d');g.drawImage(canvas,0,0,cv.width,cv.height);
+    if(marks){const s=cv.width/canvas.clientWidth;g.font=`700 ${Math.round(14*s)}px system-ui,sans-serif`;g.textAlign='center';g.textBaseline='middle';
+      OM.lab.forEach(l=>{if(l.del)return;const p=l.p.clone().project(camera);if(p.z>1)return;const x=(p.x+1)/2*cv.width,y=(1-p.y)/2*cv.height,tw=g.measureText(l.t).width+12*s,th=22*s;
+        g.fillStyle=l.cls==='omt'?'#fff':'#E5482D';g.fillRect(x-tw/2,y-th/2,tw,th);g.fillStyle=l.cls==='omt'?'#16130F':'#fff';g.fillText(l.t,x,y);});}
+    return cv.toDataURL('image/jpeg',.88);}
+  finally{OM.g.visible=keep[0];if(dims)dims.visible=keep[1];if(dl)dl.visible=keep[2];mGroup.visible=keep[3];omPv.visible=true;}}
+function omLegend(){const P=prodList(),L=[];let a=0;const at=v=>{const p=v.clone().project(camera);return `(${Math.round((p.x+1)*50)}%, ${Math.round((1-p.y)*50)}%)`;};
+  omList().forEach(m=>{const V=m.p.map(omV),c=V.reduce((s,v)=>s.add(v),new THREE.Vector3()).multiplyScalar(1/V.length);
+    if(m.t==='brush'||m.t==='rect'||m.t==='lasso'){a++;L.push(`ala ${a} (area ${a}): ${m.t==='brush'?'painted stroke':'outlined area'} centred at ${at(c)}`);}
+    else if(m.t==='point')L.push(`punkt ${m.s} (point ${m.s}) at ${at(V[0])}`);
+    else if(m.t==='arrow')L.push(`arrow from ${at(V[0])} to ${at(V[1])}`);
+    else if(m.t==='text')L.push(`text label "${String(m.s).replace(/"/g,"'")}" at ${at(V[0])}`);
+    else if(m.t==='prod'){const k=P.findIndex(x=>x.id===m.pid);L.push(`toode ${k+1} (product ${k+1}${k>=0?', '+stClean(P[k].name):''}) placed at ${at(V[0])}`);}});
+  return L.length?['Markings on picture 1 (positions are % from the top-left corner of picture 1):\n'+L.join('\n')]:[];}
+function omOffer(q){addMsg('user',q);const d=document.createElement('div');d.className='msg a';
+  d.innerHTML=`<span>Teen praegusest 3D-vaatest pildi koos märkidega (${omList().length}) ja AI muudab seda: „${stEsc(q)}“. Krediidid võetakse alles nupust.</span><button type="button" class="send omgo">Tee pilt · ${stEsc(priceTxt('design'))}</button>`;
+  $('msgs').appendChild(d);$('msgs').scrollTop=1e6;const b=d.querySelector('.omgo');b.onclick=async()=>{b.disabled=true;if(await omGen(q,d))b.remove();else b.disabled=false;};}
+async function omGen(text,bub){const h=HOUSES[cur];if(!h)return false;const pk='design';if(!await canPay(price(pk),'Vaba idee'))return false;
+  let clean,marked;try{clean=omShot(false);marked=omShot(true);}catch(e){toast('3D-vaadet ei õnnestunud pildistada');return false;}
+  const ids=[...new Set(omList().filter(m=>m.t==='prod').map(m=>m.pid))],prods=prodList().filter(p=>ids.includes(p.id)),kind=prods.length?'place':'design';
+  const images=[clean,marked],roles=['Image 1 is the user\'s picture 1 ("pilt 1"): a 3D view of the house and its surroundings.','Image 2 is picture 1 with the user\'s markings drawn on top. Use it only to see where the changes go.'];
+  const per=prods.length>1?1:3;prods.forEach(p=>{const L=(p.imgs||[]).slice(0,per);if(!L.length)return;const a=images.length+1;L.forEach(u=>{if(images.length<5)images.push(u);});const b=images.length;if(b>=a)roles.push(`Image${b>a?'s':''} ${a}${b>a?'–'+b:''} show product ${prodList().findIndex(x=>x.id===p.id)+1} (${stClean(p.name)}).`);});
+  const prompt=stPrompt2({kind,T:tplById('vaba'),text,style:null,roles,legend:omLegend(),prods,npics:1}),label='Vaba idee · '+h.short;
+  const st=document.createElement('div');st.className='fhint';st.textContent='Teen pilti…';bub.appendChild(st);$('msgs').scrollTop=1e6;
+  try{charge(label,pk);renderAcct();let urls;
+    if(CLOUD&&CL.cid){const r=await clFn('ai-image',{kind,prompt,text,images,label,tpl:'vaba',n:1,size:'auto'});if(typeof r.credits==='number')acct.credits=r.credits;
+      if(r.same){renderAcct();st.textContent='AI ei muutnud pilti, krediidid tagastati. Kirjuta soov täpsemalt.';return true;}urls=(r.urls&&r.urls.length?r.urls:[r.url]).filter(Boolean);}
+    else{await new Promise(r=>setTimeout(r,1200));urls=[marked];}
+    if(!urls.length)throw new Error('AI ei tagastanud pilti');
+    const s={id:'s'+Date.now(),tpl:'vaba',title:(h.short+' · '+text).slice(0,60),date:new Date().toLocaleDateString('et-EE'),obj:h.ehr,
+      msgs:[{role:'u',text,gen:1,pics:[clean],marks:omList().length,d:Date.now()},{role:'a',gen:1,out:urls,text:'Valmis',cr:price(pk),d:Date.now()}],
+      imgs:[{src:clean,k:'up',marks:[]},...urls.map(u=>({src:u,k:'ai',marks:[]}))],tray:[1,0],base:null,marks:[],thumb:urls[0]};
+    acct.studio=[s,...(acct.studio||[])].slice(0,12);save();renderAcct();
+    st.className='omout';st.innerHTML=`<img class="omres" src="${stEsc(stAiImg(urls[0])||urls[0])}" alt="AI muudetud pilt: ${stEsc(text)}"><button type="button" class="ghost">Ava Vaba ideel</button>`;
+    st.querySelector('button').onclick=()=>{openStudio('vaba');stOpenSession(s.id);};$('msgs').scrollTop=1e6;return true;}
+  catch(e){const cloud=CLOUD&&CL.cid;if(!cloud)acct.credits=+(acct.credits+price(pk)).toFixed(2);renderAcct();st.textContent=(clErr(e)||'Pilti ei tulnud.')+(cloud?refTxt(e,' Krediidid tagastati.'):' Krediidid tagastati.');return false;}}
+{const _a=ask;ask=function(q){if(q&&q.trim()&&omList().length&&stIsEdit(q))return omOffer(q.trim());return _a.apply(this,arguments);};}
+window.OBT=OB.tool;omDraw();
+
 
 /* ---------- 22.10: konto tüüp (firma / eraisik) + üks „Maja ülevaade“ mall ---------- */
 (()=>{
