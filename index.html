@@ -1942,7 +1942,7 @@ function makeHouse(a){const [addr,ehr,ads,nbRaw,cx,cy,north,flat,wg,eave,height,
   for(let k=0;k<6000&&T.length<38;k++){const x=-60+r()*120,y=-60+r()*120;if(x>lot[0]-1.5&&x<lot[2]+1.5&&y>lot[1]-1.5&&y<lot[3]+1.5)continue;if(ok(x,y,4.5))T.push([+x.toFixed(1),+y.toFixed(1),+(7+r()*6).toFixed(1),['b','b','m','s','s'][k%5]]);}
   const short=addr.replace(/,.*$/,''),area=addr.includes(',')?addr.replace(/^[^,]*,\s*/,''):'';
   const sq=wings.length===1&&Math.max(wings[0].r[2]-wings[0].r[0],wings[0].r[3]-wings[0].r[1])/Math.min(wings[0].r[2]-wings[0].r[0],wings[0].r[3]-wings[0].r[1])<1.3;
-  return{roofType:sq?'hip':'gable',eave0:eave,wall0:wall,address:addr,short,area,ehr,ads,updated:'2025',height,eave,footprint,perimeter,pts,edges,wings,roof,wall,north,nb,lot,door,trees:T,x:+cx.toFixed(1),y:+cy.toFixed(1),status:'Mustand',date:new Date().toLocaleDateString('et-EE')};}
+  return{roofType:sq?'hip':'gable',eave0:eave,wall0:wall,address:addr,short,area,ehr,ads,updated:'2025',height,eave,footprint,perimeter,pts,edges,wings,roof,wall,north,nb,lot,door,trees:T,x:+cx.toFixed(1),y:+cy.toFixed(1),status:'Mustand',date:(typeof acct!=='undefined'&&acct.objDate&&acct.objDate[ehr])||new Date().toLocaleDateString('et-EE')};}
 const norm=s=>String(s||'').toLowerCase().replace(/,?\s*[a-zõäöü-]+ maakond\s*$/,'').replace(/\s+/g,' ').trim();
 /* Maa-ameti aadressiotsing (In-ADS, avalik, CORS lubatud): ainult hooned (EHR kood), korteri number jääb aadressi */
 const INADS='https://inaadress.maaamet.ee/inaadress/gazetteer',ADSC=new Map();
@@ -2772,7 +2772,10 @@ function renderLod2(h){const box=$('lod2Box');if(!box)return;box.hidden=true;
       ...big.map((f,i)=>['Katusetahk '+(i+1),fmt(f[0])+' m²',lod2Face(f)])];
     box.innerHTML='<div class="tag">Ametlikud mõõdud (Maa-amet)</div>'+rows.map(r=>`<div class="row"><div class="k"><span>${r[0]}</span>${r[2]?`<small>${r[2]}</small>`:''}</div><b>${r[1]}</b></div>`).join('')
       +(rest>0?`<div class="fhint" style="padding-top:6px">+ ${rest} väiksemat katusetahku</div>`:'')+`<div class="fhint" style="padding-top:8px">${LOD2_SRC} · LOD2${m.t?', mõõdistatud '+m.t.slice(0,4):''}</div><button type="button" class="ghost" id="lod2Go" style="align-self:flex-start;margin-top:8px">Mõõda 3D-s (ametlik kuju)</button>`;
-    $('lod2Go').onclick=()=>m3Open({id:'ehr:'+h.ehr,url:'lod2:'+h.ehr,ehr:h.ehr,tpl:null,d:null},true);
+    // sama objekti ametlik kuju avab olemasoleva töö (enne tekkis iga klõpsuga uus tühi töö) ja „← 3D-vaade“ viib objekti juurde tagasi
+    $('lod2Go').onclick=()=>{const u='lod2:'+h.ehr,old=(acct.studio||[]).find(x=>x.model&&x.model.url===u);
+      if(old){openStudio('vaba');stOpenSession(old.id);}else m3Open({id:'ehr:'+h.ehr,url:u,ehr:h.ehr,tpl:null,d:null},true);
+      const s=stSess();if(s){s.obj=h.ehr;stSave();stRender();}};
     box.hidden=false;});}
 /* ---------- share link + client view ---------- */
 const b64e=o=>btoa(unescape(encodeURIComponent(JSON.stringify(o)))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
@@ -3755,7 +3758,7 @@ async function clLoad(){const sb=CL.sb;const {data:{user}}=await sb.auth.getUser
   const [{data:co},{data:led},{data:obj},{data:prods},{data:w0},{data:pt},{data:rn}]=await Promise.all([
     sb.from('companies').select('*').eq('id',cid).single(),
     sb.from('credit_ledger').select('delta,eur,kind,label,created_at').eq('company_id',cid).order('created_at'),
-    sb.from('objects').select('ehr,address,job,tpl,roof_type,model_url').eq('company_id',cid).is('deleted_at',null).order('created_at'),
+    sb.from('objects').select('ehr,address,job,tpl,roof_type,model_url,created_at').eq('company_id',cid).is('deleted_at',null).order('created_at'),
     sb.from('products').select('*').eq('company_id',cid).eq('active',true).order('created_at'),
     sb.from('widgets').select('*').eq('company_id',cid).maybeSingle(),
     sb.from('partners').select('*').eq('owner_user',user.id).maybeSingle(),
@@ -3769,10 +3772,10 @@ async function clLoad(){const sb=CL.sb;const {data:{user}}=await sb.auth.getUser
   COSTS.obj=+st.price_obj;COSTS.pic=+st.price_pic;COSTS.design=+st.price_design;if(st.price_3d!=null)COSTS['3d']=+st.price_3d;if(st.price_lead!=null)COSTS.lead=+st.price_lead;
   acct.admRules=Object.assign({},acct.admRules,{disc:+st.promo_pct,discN:st.promo_uses,discA:+(st.promo_after_pct??5),comm:+st.partner_pct,commN:st.partner_uses,eur:+st.credit_eur,min:+st.payout_min});
   // objektid: serveri omad; uue konto puhul jäävad näidismajad näha
-  if((obj||[]).length){acct.objects=obj.map(o=>o.ehr);acct.objModels={};obj.forEach(o=>{if(o.model_url)acct.objModels[o.ehr]=o.model_url;});acct.jobs={};acct.htpl={};acct.roofTypes={};obj.forEach(o=>{if(o.job)acct.jobs[o.ehr]=o.job;if(o.tpl)acct.htpl[o.ehr]=o.tpl;if(o.roof_type)acct.roofTypes[o.ehr]=o.roof_type;});
+  if((obj||[]).length){acct.objects=obj.map(o=>o.ehr);acct.objDate={};obj.forEach(o=>{if(o.created_at)acct.objDate[o.ehr]=new Date(o.created_at).toLocaleDateString('et-EE');});acct.objModels={};obj.forEach(o=>{if(o.model_url)acct.objModels[o.ehr]=o.model_url;});acct.jobs={};acct.htpl={};acct.roofTypes={};obj.forEach(o=>{if(o.job)acct.jobs[o.ehr]=o.job;if(o.tpl)acct.htpl[o.ehr]=o.tpl;if(o.roof_type)acct.roofTypes[o.ehr]=o.roof_type;});
     const want=new Set(acct.objects);for(let k=HOUSES.length-1;k>=0;k--)if(!want.has(HOUSES[k].ehr))HOUSES.splice(k,1);
     acct.deleted=[];acct.objects.forEach(e=>houseRestore(e,(obj.find(o=>o.ehr===e)||{}).address));
-    HOUSES.forEach(h=>{if(acct.jobs[h.ehr])h.job=acct.jobs[h.ehr];if(acct.htpl[h.ehr])h.tpl=acct.htpl[h.ehr];if(acct.roofTypes[h.ehr])h.roofType=acct.roofTypes[h.ehr];});}
+    HOUSES.forEach(h=>{if(acct.objDate[h.ehr])h.date=acct.objDate[h.ehr];if(acct.jobs[h.ehr])h.job=acct.jobs[h.ehr];if(acct.htpl[h.ehr])h.tpl=acct.htpl[h.ehr];if(acct.roofTypes[h.ehr])h.roofType=acct.roofTypes[h.ehr];});}
   else acct.objects=[];
   CL.objs=new Set(acct.objects);
   acct.gen={};acct.genUrl={};(rn||[]).forEach(r=>{if(r.ehr){acct.gen[r.ehr]=true;acct.genUrl[r.ehr]=r.output_url;}});
