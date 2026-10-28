@@ -154,5 +154,6 @@ addEventListener('message',async e=>{if(e.origin!==location.origin||!e.data||e.d
 await Promise.race([Promise.all(loads),new Promise(r=>setTimeout(r,15000))]);
 st.remove();document.getElementById('ui').hidden=false;window.READY=true;parent!==window&&parent.postMessage({t:'room-ready'},location.origin);
 cv.addEventListener('pointerdown',()=>ctl.autoRotate=false);
-(function loop(){ctl.update();autohide();if(CMP)CMP.render();else R.render(S,cam);requestAnimationFrame(loop);})();
+// peidetud iframe (vaade suletud või teisel vaatel) ei joonista
+(function loop(){requestAnimationFrame(loop);if(document.hidden||!innerWidth||!innerHeight)return;ctl.update();autohide();if(CMP)CMP.render();else R.render(S,cam);})();
 </script></body></html>

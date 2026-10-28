@@ -2093,7 +2093,7 @@ async function saveFile(name,blob){const msg=$('dlMsg');
   catch(e){msg.textContent=e&&e.code==='declined'?'Allalaadimine katkestati.':'Faili ei saanud salvestada. Proovi uuesti.';if(!$('home').hidden)toast(msg.textContent);}}
 function snap(){renderer.render(scene,camera);return renderer.domElement;}
 function slug(){return HOUSES[cur].short.toLowerCase().replace(/ä/g,'a').replace(/ö/g,'o').replace(/õ/g,'o').replace(/ü/g,'u').replace(/[^a-z0-9]+/g,'-');}
-$('dlView').onclick=()=>{const c=snap();c.toBlob(b=>b&&saveFile(slug()+'-3d.png',b),'image/png');};
+$('dlView').onclick=()=>{const s0=snap(),c=document.createElement('canvas');c.width=s0.width;c.height=s0.height;c.getContext('2d').drawImage(s0,0,0);c.toBlob(b=>b&&saveFile(slug()+'-3d.png',b),'image/png');}; // kohe pärast joonistust kopeeritud (puhver ei jää alles)
 $('dlSheet').onclick=()=>{const src=snap(),h=HOUSES[cur],W=1800,H=1100,c=document.createElement('canvas');c.width=W;c.height=H;const g=c.getContext('2d');
   g.fillStyle='#EEEAE4';g.fillRect(0,0,W,H);
   const vw=1180,vh=H-140,sc=Math.max(vw/src.width,vh/src.height),sw=vw/sc,sh=vh/sc;
@@ -2125,9 +2125,11 @@ sw($('wallSw'),WALLC,()=>wallCol,c=>wallCol=c);
 
 /* ---------- 3D ---------- */
 const view=$('view'),canvas=$('c');
-const renderer=new THREE.WebGLRenderer({canvas,antialias:true,preserveDrawingBuffer:true});
-renderer.setPixelRatio(Math.min(devicePixelRatio,2));
-renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+// joonistus ainult vajadusel (tick): kaadrit ei hoita lugemiseks alles, pildistamine joonistab vahetult enne lugemist
+const renderer=new THREE.WebGLRenderer({canvas,antialias:true,preserveDrawingBuffer:false});
+const PR_MOVE=Math.min(devicePixelRatio||1,1.5),PR_REST=Math.min(devicePixelRatio||1,2); // liikudes 1,5, paigal terav kaader
+renderer.setPixelRatio(PR_REST);
+renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;renderer.shadowMap.autoUpdate=false;renderer.shadowMap.needsUpdate=true;
 renderer.outputEncoding=THREE.sRGBEncoding;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=.95;
 renderer.physicallyCorrectLights=false;
 const scene=new THREE.Scene();scene.fog=new THREE.Fog(0xDCE3E5,140,460);
@@ -2386,7 +2388,7 @@ function setView(){const h=HOUSES[cur],xs=h.pts.map(p=>p[0]),ys=h.pts.map(p=>p[1
     for(let t=.12;t<=1;t+=.04){const x=cx+(px-cx)*t,y=cy+(py-cy)*t,z=tz+(H-tz)*t;h.nb.forEach(b=>{if(b.h+1>z&&pip([x,y],b.p))blocked++;});}
     if(!best||blocked<best.b){best={b:blocked,px,py,H};}if(blocked===0)break;}
   camera.position.set(best.px,best.H,-best.py);controls.target.set(cx,tz,-cy);controls.update();}
-function resize(){const w=view.clientWidth,h=view.clientHeight;renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix();}
+function resize(){const w=view.clientWidth,h=view.clientHeight;renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix();invalidate(2);}
 new ResizeObserver(resize).observe(view);resize();
 
 const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -2394,20 +2396,39 @@ let occKey='',occFor=null;const occRC=new THREE.Raycaster();
 function labOcc(){if(!group||!dimData.length)return;const c=camera.position,k=c.x.toFixed(1)+','+c.y.toFixed(1)+','+c.z.toFixed(1);if(k===occKey&&occFor===dimData)return;occKey=k;occFor=dimData;
   const hs=group.getObjectByName('house');if(!hs)return;const T=[];hs.traverse(o=>{if(o.isMesh&&o.visible)T.push(o);});
   dimData.forEach(d=>{const dir=d.p.clone().sub(c),L=dir.length();occRC.set(c,dir.normalize());occRC.far=L-.3;d.occ=occRC.intersectObjects(T,false).length>0;});}
-function tick(){requestAnimationFrame(tick);
+/* joonistus vajadusel: kaamera liigub (ka hääbumine), maja kerkib või keegi kutsus invalidate(). Peidus vaates, taustal kaardil või ekraanist väljas seisab. */
+var RAF=0,DIRTY=3,CAMK='',CAMT=0,SHARP=false,OCCT=0,VIS3D=true; // var: resize() kutsub invalidate() enne seda rida
+function invalidate(n,shadow){if(shadow)renderer.shadowMap.needsUpdate=true;DIRTY=Math.max(DIRTY||0,n||2);if(!RAF)RAF=requestAnimationFrame(tick);}
+function view3dOn(){return !document.hidden&&VIS3D!==false&&canvas.offsetParent!==null;}
+function tick(){RAF=0;if(!view3dOn())return;
+  const moved=controls.update();let anim=false;
+  if(group&&grow<1){anim=true;renderer.shadowMap.needsUpdate=true;}
+  const c0=camera.position,t0=controls.target,ck=c0.x.toFixed(3)+','+c0.y.toFixed(3)+','+c0.z.toFixed(3)+'|'+t0.x.toFixed(3)+','+t0.y.toFixed(3)+','+t0.z.toFixed(3),camMoved=ck!==CAMK;if(camMoved){CAMK=ck;CAMT=performance.now();}
+  if(!(moved||anim||camMoved||DIRTY>0)){if(!SHARP)return;SHARP=false;renderer.setPixelRatio(PR_REST);renderer.shadowMap.needsUpdate=true;} // paigal: üks terav kaader
+  else{if(DIRTY>0)DIRTY--;if(moved||anim||camMoved){SHARP=true;if(renderer.getPixelRatio()!==PR_MOVE)renderer.setPixelRatio(PR_MOVE);}}
   if(group){grow=reduce?1:Math.min(1,grow+.03);const e=1-Math.pow(1-grow,3);const hs=group.getObjectByName('house');hs.scale.y=Math.max(e,.001);
-    if(grow>=1&&HOUSES[cur]&&!HOUSES[cur].thumb&&cur>=2&&!showRen){const h=HOUSES[cur];setTimeout(()=>{try{const c=document.createElement('canvas');c.width=480;c.height=300;const s=renderer.domElement,sc=Math.max(480/s.width,300/s.height);c.getContext('2d').drawImage(s,(s.width-480/sc)/2,(s.height-300/sc)/2,480/sc,300/sc,0,0,480,300);h.thumb=c.toDataURL('image/jpeg',.75);}catch(e){}},400);h.thumb='pending';}
+    if(grow>=1&&HOUSES[cur]&&!HOUSES[cur].thumb&&cur>=2&&!showRen){const h=HOUSES[cur];setTimeout(()=>{try{if(HOUSES[cur]!==h)return;renderer.render(scene,camera);const c=document.createElement('canvas');c.width=480;c.height=300;const s=renderer.domElement,sc=Math.max(480/s.width,300/s.height);c.getContext('2d').drawImage(s,(s.width-480/sc)/2,(s.height-300/sc)/2,480/sc,300/sc,0,0,480,300);h.thumb=c.toDataURL('image/jpeg',.75);}catch(e){}},400);h.thumb='pending';}
     group.getObjectByName('dims').visible=showDims&&grow>=1;group.getObjectByName('distl').visible=showDist&&grow>=1;}
-  controls.update();renderer.render(scene,camera);
+  renderer.render(scene,camera);
   const els=$('labels').children,w=view.clientWidth,hh=view.clientHeight;
-  treeFade();labOcc();
+  treeFade();
+  // sildi varjatuse kiired: alles siis, kui kaamera on 150 ms paigal
+  if(performance.now()-CAMT>=150)labOcc();else if(!OCCT)OCCT=setTimeout(()=>{OCCT=0;invalidate(1);},160);
   const placed=[],cp=camera.position;dimData.forEach((d,i)=>{const el=els[i];if(!el)return;const p=d.p.clone().project(camera);const sx=(p.x+1)/2*w,sy=(1-p.y)/2*hh;
     /* 26.10: seina mõõt ainult kaamera poole jäävatel seintel; maja taha jäävad sildid peidus; kattumine sildi päris laiusega */
     if(!d.w){el.textContent=d.t;el.hidden=false;const ow=el.offsetWidth;if(ow){d.w=ow+8;d.hh=el.offsetHeight+4;}}const dw=d.w||62,dh=d.hh||22;
     const face=!d.n||d.n[0]*(cp.x-d.m[0])+d.n[1]*(-cp.z-d.m[1])>0;
     let vis=(d.cls?showDist:showDims)&&grow>=1&&p.z<1&&face&&!d.occ&&!placed.some(q=>Math.abs(q[0]-sx)<(q[2]+dw)/2&&Math.abs(q[1]-sy)<(q[3]+dh)/2);if(vis)placed.push([sx,sy,dw,dh]);el.hidden=!vis;
     if(vis){if(el.textContent!==d.t)el.textContent=d.t;el.style.left=sx+'px';el.style.top=sy+'px';}});
-  if(typeof drawMLabels==='function')drawMLabels(w,hh);}
+  if(typeof drawMLabels==='function')drawMLabels(w,hh);
+  if(!RAF)RAF=requestAnimationFrame(tick);} // kaadri sees kutsutud invalidate() võis järgmise juba tellida
+controls.addEventListener('change',()=>invalidate(1));controls.addEventListener('start',()=>invalidate(2));
+['pointerdown','pointermove','pointerup','pointerleave','wheel'].forEach(t=>canvas.addEventListener(t,()=>invalidate(2),{passive:true}));
+['keydown','keyup'].forEach(t=>document.addEventListener(t,()=>invalidate(2)));document.addEventListener('visibilitychange',()=>invalidate(2));
+new IntersectionObserver(es=>{VIS3D=es.some(e=>e.isIntersecting);if(VIS3D)invalidate(2,true);}).observe(canvas);
+// asünkroonsed laadimised (tekstuurid, GLB, kõrgusmudeli pildid, fondid): pärast neid uus kaader, et midagi ei jääks pooleli
+{const LM=THREE.DefaultLoadingManager,ol=LM.onLoad,op=LM.onProgress;LM.onLoad=function(){invalidate(2,true);try{if(P3V&&P3V.inv)P3V.inv(3);}catch(_){}if(ol)ol.apply(this,arguments);};LM.onProgress=function(){invalidate(1);try{if(P3V&&P3V.inv)P3V.inv(2);}catch(_){}if(op)op.apply(this,arguments);};}
+if(document.fonts&&document.fonts.ready)document.fonts.ready.then(()=>invalidate(2));
 
 const photos={};let selWall=-1,img=null,pts=[];
 const COORD=[[552948.2,6594787.2],[551142.4,6596512.2]];
@@ -5080,6 +5101,8 @@ function p3Public(h){const W=wHash(h),m=String(W.m||'');if(!CLOUD||!/^[0-9a-f-]{
   return true;}
 // 3D-vaatur: pööramine, suum, pehme valgus ja vari; üks WebGL kontekst korraga
 let P3V=null;
+// stuudios klõps või sisestus võib 3D-mudeli vaadet muuta (aed, mõõdud, joondus): uus kaader
+function p3Kick(){if(P3V&&P3V.inv)P3V.inv(3);}
 function p3Dispose(){if(!P3V)return;P3V.stop();if(P3V.el)P3V.el.remove();P3V.r.domElement.remove();if(P3V.ro)P3V.ro.disconnect();if(P3V.env)P3V.env.dispose();P3V.r.dispose();P3V=null;}
 // Maa-ameti LOD2 maja kehana (meetrid; x = ida, y = üles, z = -põhi), katusetahud + seinad
 function lod2Mesh(L){const g=new THREE.Group(),EM=new THREE.LineBasicMaterial({color:0x2a2622,transparent:true,opacity:.35}),
@@ -5133,10 +5156,10 @@ function roomGlb(url){return new Promise((res,rej)=>{const V=P3V,own=!(V&&V.el&&
   if(own){f=document.createElement('iframe');f.setAttribute('aria-hidden','true');f.tabIndex=-1;f.style.cssText='position:fixed;left:-9999px;top:0;width:800px;height:600px;border:0';f.src='room/?e=1&u='+encodeURIComponent(url);document.body.appendChild(f);}
   else if(f.contentWindow&&f.contentWindow.READY)ask();});}
 function p3View(box,url,reveal,spin){if(!box)return;
-  if(P3V&&P3V.url===url){box.prepend(P3V.el||P3V.r.domElement);P3V.ro.disconnect();P3V.ro.observe(box);if(P3V.ok)box.classList.add('ready');return;}
+  if(P3V&&P3V.url===url){box.prepend(P3V.el||P3V.r.domElement);P3V.ro.disconnect();P3V.ro.observe(box);if(P3V.ok)box.classList.add('ready');if(P3V.inv)P3V.inv(3);return;}
   p3Dispose();const rv=!!reveal&&!p3RM();if(rv)box.classList.add('reveal');if(!THREE.GLTFLoader){box.querySelector('.p3load span').textContent='3D-vaatur ei laadinud. Laadi mudel alla.';return;}
   const W=box.clientWidth||600,H=box.clientHeight||450,r=new THREE.WebGLRenderer({antialias:true,alpha:true});
-  r.setPixelRatio(Math.min(devicePixelRatio,2));r.setSize(W,H);r.outputEncoding=THREE.sRGBEncoding;r.toneMapping=THREE.ACESFilmicToneMapping;r.toneMappingExposure=1.0;r.physicallyCorrectLights=true;r.shadowMap.enabled=true;r.shadowMap.type=THREE.PCFSoftShadowMap;
+  r.setPixelRatio(PR_REST);r.setSize(W,H);r.outputEncoding=THREE.sRGBEncoding;r.toneMapping=THREE.ACESFilmicToneMapping;r.toneMappingExposure=1.0;r.physicallyCorrectLights=true;r.shadowMap.enabled=true;r.shadowMap.type=THREE.PCFSoftShadowMap;
   r.domElement.setAttribute('aria-label','3D-mudel, pööra hiire või sõrmega');r.domElement.setAttribute('role','img');box.prepend(r.domElement);
   const sc=new THREE.Scene(),cam=new THREE.PerspectiveCamera(35,W/H,.01,2000),ct=new THREE.OrbitControls(cam,r.domElement);ct.enableDamping=true;ct.dampingFactor=.08;
   // PBR jaoks keskkonnavalgus (ruumi peegeldus); valgus pehme, et värvid jääksid nagu fotodel
@@ -5153,7 +5176,7 @@ function p3View(box,url,reveal,spin){if(!box)return;
     // kaamera sobitub mudeli ümbritsevasse sfääri, nii täidab mudel ~80% vaatest (ka kitsas/püstine vaade)
     const sp=new THREE.Box3().setFromObject(o).getBoundingSphere(new THREE.Sphere()),vf=cam.fov*Math.PI/180,hf=2*Math.atan(Math.tan(vf/2)*(cam.aspect||1)),dist=sp.radius/Math.sin(Math.min(vf,hf)/2);
     cam.near=dist/100;cam.far=dist*40;cam.updateProjectionMatrix();ct.target.copy(sp.center);cam.position.copy(sp.center).addScaledVector(new THREE.Vector3(1.7,1.05,2.1).normalize(),dist);ct.minDistance=sp.radius*.5;ct.maxDistance=dist*4;ct.update();V.home=cam.position.clone();
-    V.model=o;V.rad=sp.radius;V.ok=true;box.classList.add('ready');if(V.onReady)V.onReady();
+    V.model=o;V.rad=sp.radius;V.ok=true;box.classList.add('ready');if(V.onReady)V.onReady();V.inv(4);
     if(spin&&!p3RM()){ct.autoRotate=true;ct.autoRotateSpeed=1.6;const st=()=>{ct.autoRotate=false;ct.removeEventListener('start',st);};ct.addEventListener('start',st);}
     if(rv){ct.autoRotate=true;ct.autoRotateSpeed=7.5;const stop=()=>{ct.autoRotate=false;ct.removeEventListener('start',stop);};ct.addEventListener('start',stop);setTimeout(stop,8000);}};
   // lod2:<EHR> = ametlik Maa-ameti kuju (aadressiobjekt), muidu .glb
@@ -5163,8 +5186,16 @@ function p3View(box,url,reveal,spin){if(!box)return;
   else ld.load(url,gl=>done(gl.scene),
     e=>{if(bar&&e.total)bar.style.width=Math.round(e.loaded/e.total*100)+'%';},
     ()=>{if(P3V===V)box.querySelector('.p3load span').textContent='3D-mudelit ei õnnestunud avada. Laadi see alla.';});
-  V.ro=new ResizeObserver(()=>{const p=r.domElement.parentNode;if(!p)return;const w=p.clientWidth,h=p.clientHeight;if(w&&h){r.setSize(w,h);cam.aspect=w/h;cam.updateProjectionMatrix();}});V.ro.observe(box);
-  let raf=0;const loop=()=>{if(!r.domElement.isConnected){p3Dispose();return;}ct.update();if(V.onFrame)V.onFrame();if(V.tick)V.tick();r.render(sc,cam);raf=requestAnimationFrame(loop);};V.stop=()=>cancelAnimationFrame(raf);loop();}
+  V.ro=new ResizeObserver(()=>{const p=r.domElement.parentNode;if(!p)return;const w=p.clientWidth,h=p.clientHeight;if(w&&h){r.setSize(w,h);cam.aspect=w/h;cam.updateProjectionMatrix();V.inv(2);}});V.ro.observe(box);
+  // joonistus vajadusel (nagu objektivaates): lohistamine/hääbumine/automaatne pööre, laadimine või V.inv(); ekraanist väljas või taustal seisab
+  V.dirty=4;V.raf=0;V.vis=true;V.sharp=false;
+  const loop=()=>{V.raf=0;if(!r.domElement.isConnected){p3Dispose();return;}if(document.hidden||!V.vis)return;
+    const mv=ct.update()||ct.autoRotate;if(!(mv||V.dirty>0)){if(!V.sharp)return;V.sharp=false;r.setPixelRatio(PR_REST);}else{if(V.dirty>0)V.dirty--;if(mv){V.sharp=true;if(r.getPixelRatio()!==PR_MOVE)r.setPixelRatio(PR_MOVE);}}
+    if(V.onFrame)V.onFrame();if(V.tick)V.tick();r.render(sc,cam);if(!V.raf)V.raf=requestAnimationFrame(loop);};
+  V.inv=n=>{V.dirty=Math.max(V.dirty,n||2);if(!V.raf)V.raf=requestAnimationFrame(loop);};
+  ct.addEventListener('change',()=>V.inv(1));['pointerdown','pointermove','pointerup','pointerleave','wheel'].forEach(t=>r.domElement.addEventListener(t,()=>V.inv(2),{passive:true}));
+  V.io=new IntersectionObserver(es=>{V.vis=es.some(e=>e.isIntersecting);if(V.vis)V.inv(2);});V.io.observe(r.domElement);
+  V.stop=()=>{cancelAnimationFrame(V.raf);V.raf=0;V.io.disconnect();};V.inv(4);}
 // ---------- Näidiskaart (examples/examples.json): kuidas pildistada ja milline tulemus tuleb ----------
 let P3EX=null,P3EXV=null;const P3EXON={};
 function p3LoadEx(){if(P3EX)return;P3EX={};fetch('examples/examples.json').then(r=>r.ok?r.json():{}).then(j=>{P3EX=j&&typeof j==='object'?j:{};if(!$('studio').hidden&&stTheme(STU.tpl).p3)stRender();}).catch(()=>{});}
@@ -5286,7 +5317,7 @@ function m3ConformCalc(V,L,f){if(!V||!V.model||!L||!L.g||!(L.ridge>0)||!f)return
   const long=el[0]>=el[1],c={long,sd:+sd.toFixed(3),dc:[+(cl[0]-cm[0]).toFixed(3),+(cl[1]-cm[1]).toFixed(3)],beta:+(amA-f.rot).toFixed(3),ku:+ku.toFixed(4),kw:+kw.toFixed(4),kz:+kz.toFixed(4),len:+((long?ku:kw)-1).toFixed(3),wid:+((long?kw:ku)-1).toFixed(3),hgt:+(kz-1).toFixed(3),axis:+dA.toFixed(1),area:+area.toFixed(3),height:+height.toFixed(3)};
   c.why=dA>M3CF.axis?'telg':Math.abs(area)>M3CF.area?'pind':Math.abs(height)>M3CF.height?'kõrgus':[ku,kw,kz].some(k=>!(Math.abs(k-1)<=M3CF.max))?'üle 20 %':'';c.ok=!c.why;return c;}
 // mudeli venitamine (mudeli enda teljestikus, alus ja keskkoht paigal); conf=null eemaldab
-function m3ConformApply(V,c){const o=V&&V.model;if(!o)return;let G=o.userData.conf;
+function m3ConformApply(V,c){if(V&&V.inv)V.inv(3);const o=V&&V.model;if(!o)return;let G=o.userData.conf;
   if(!c){if(G){while(G.children.length)o.add(G.children[0]);o.remove(G);o.userData.conf=null;o.updateMatrixWorld(true);}return;}
   if(G&&G.userData.key===JSON.stringify(c))return;if(G)m3ConformApply(V,null);
   o.updateMatrixWorld(true);const bb=new THREE.Box3().setFromObject(o),ctr=bb.getCenter(new THREE.Vector3());const C=new THREE.Vector3(ctr.x,bb.min.y,ctr.z).sub(o.position);
@@ -5568,7 +5599,7 @@ async function m3GardenSync(){const s=stSess(),m=s&&s.model,V=P3V;if(!m||!V||!V.
   try{if(!window.V3DGarden){await new Promise((res,rej)=>{const sc=document.createElement('script');sc.src='js/garden.js?v=9';sc.onload=res;sc.onerror=()=>rej(new Error('garden.js'));document.head.appendChild(sc);});}
     const r=await clFn('garden',/^lod2:/.test(m.url)?{ehr:m.ehr}:{ref:m.ref},{q:CO_Q});T.server=Math.round(performance.now()-t0);
     const meta=await (await fetch(r.meta)).json();T.meta=Math.round(performance.now()-t0)-T.server;
-    if(P3V!==V||stSess()!==s)return;V.garden=await V3DGarden.show(V,m,meta,T);
+    if(P3V!==V||stSess()!==s)return;V.garden=await V3DGarden.show(V,m,meta,T);if(V.inv)V.inv(4);
     console.info('[aed] kokku',Math.round(performance.now()-t0)+' ms',JSON.stringify(T),'server:',JSON.stringify(r.timing||{}),r.cached?'(vahemälust)':'(Maa-ametist)');}
   catch(e){V.gErr='Aeda ei õnnestunud laadida: '+(e.message||e);console.warn('[aed]',e);}
   finally{V.gLoading=0;if(!$('studio').hidden)stRenderPanel();}}
@@ -5579,7 +5610,7 @@ function m3OffFaces(m){const L=M3L2[m.ehr],f=m.fit,V3=fl=>{const P=[];for(let i=
   (L.w||[]).forEach((W,i)=>{const P=V3(W[2]);if(P.length<3)return;const y0=Math.min(...P.map(p=>p.y)),lo=P.filter(p=>p.y-y0<.06/f.s);let a=lo[0],b=lo[0],d=-1;
     lo.forEach(p=>lo.forEach(q=>{const dd=p.distanceTo(q);if(dd>d){d=dd;a=p;b=q;}}));O.push({k:'wall',key:'w'+i,P,a,b,txt:`${fmt(W[0])} m² · ${fmtM(W[1])} m`});});return O;}
 function m3Redraw(){const s=stSess(),m=s&&s.model;if(P3V&&m)m3Draw(P3V,m,$('m3Labs'),M3.pts);}
-function m3Draw(V,m,lab,live){if(!V||!V.sc)return;if(V.m3g){V.sc.remove(V.m3g);V.m3g=null;}
+function m3Draw(V,m,lab,live){if(!V||!V.sc)return;if(V.inv)V.inv(2);if(V.m3g){V.sc.remove(V.m3g);V.m3g=null;}
   const A=[],L=(m.items||[]).filter(m3Ok),P3=it=>it.p.map(a=>new THREE.Vector3(a[0],a[1],a[2]));
   L.forEach((it,i)=>{const P=P3(it),v=m3Val(it,m.scale),n=i+1;
     if(it.t==='dist'){let t=v.txt;if(it.off!=null&&v.v!=null)t=Math.abs(v.v-it.off)<.005?`${fmtM(it.off)} m · ametlik`:`${v.txt} (ametlik ${fmtM(it.off)} m)`;A.push({k:'dist',P,txt:t,n,pri:4,lb:it.lb});}
@@ -5780,7 +5811,7 @@ function omObj(m){const P=m.p.map(omV),M=OM.sel===m.id?OM_H:OM_M,g=new THREE.Gro
   else if(m.t==='prod'){const pr=prodList().find(x=>x.id===m.pid),u=pr&&pr.imgs[0],H=+(pr&&pr.H)||1.5,sp=new THREE.Sprite(new THREE.SpriteMaterial({color:u?0xffffff:0xE5482D}));
     sp.center.set(.5,0);sp.scale.set(H,H,1);if(u)sp.material.map=omTex(u,sp,H);sp.position.copy(P[0]);const b=new THREE.Mesh(new THREE.SphereGeometry(.12,10,8),M);b.position.copy(P[0]);g.add(sp,b);}
   return g.children.length?g:null;}
-function omDraw(){OM.g.traverse(o=>{if(o.geometry)o.geometry.dispose();if(o.isSprite)o.material.dispose();});OM.g.clear();OM.lab=[];let a=0;const PL=prodList(),up=k=>new THREE.Vector3(0,k,0);
+function omDraw(){invalidate(2);OM.g.traverse(o=>{if(o.geometry)o.geometry.dispose();if(o.isSprite)o.material.dispose();});OM.g.clear();OM.lab=[];let a=0;const PL=prodList(),up=k=>new THREE.Vector3(0,k,0);
   omList().forEach(m=>{const g=omObj(m);if(!g)return;OM.g.add(g);const V=m.p.map(omV),c=V.reduce((s,v)=>s.add(v),new THREE.Vector3()).multiplyScalar(1/V.length);
     if(m.t==='brush'||m.t==='rect'||m.t==='lasso')OM.lab.push({p:c,t:String(++a)});
     else if(m.t==='point')OM.lab.push({p:V[0].clone().add(up(.55)),t:m.s,cls:'omp'});
@@ -5791,7 +5822,7 @@ function omDraw(){OM.g.traverse(o=>{if(o.geometry)o.geometry.dispose();if(o.isSp
   omLay.querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>omDel(b.dataset.del));}
 function omLabels(w,hh){const els=omLay.children;OM.lab.forEach((l,i)=>{const el=els[i];if(!el)return;const p=l.p.clone().project(camera),vis=OM.g.visible&&p.z<1;el.hidden=!vis;if(vis){el.style.left=((p.x+1)/2*w)+'px';el.style.top=((1-p.y)/2*hh)+'px';}});}
 {const _dl=drawMLabels;drawMLabels=function(w,hh){_dl(w,hh);omLabels(w,hh);};}
-function omPrev(d){omPv.children.forEach(o=>o.geometry&&o.geometry.dispose());omPv.clear();omSvg.innerHTML='';if(!d)return;
+function omPrev(d){invalidate(2);omPv.children.forEach(o=>o.geometry&&o.geometry.dispose());omPv.clear();omSvg.innerHTML='';if(!d)return;
   if(d.t==='brush'){const t=omTube(d.pts,false,OM_M,.09);if(t)omPv.add(t);}
   if(d.t==='dot'){const s=new THREE.Mesh(new THREE.SphereGeometry(.18,12,8),OM_M);s.position.copy(d.p);omPv.add(s);}}
 function omPrev2(d){const b=$('view').getBoundingClientRect(),q=([x,y])=>`${(x-b.left).toFixed(1)},${(y-b.top).toFixed(1)}`,e=d.scr[d.scr.length-1];
@@ -5954,7 +5985,7 @@ function msMid(Q){let L=0;for(let i=1;i<Q.length;i++)L+=Q[i].distanceTo(Q[i-1]);
 function msTot(m){let t=0;for(let i=0;i+1<m.p.length;i++)t+=msSeg(m,i).len;return t;}
 function msTxt(r){if(r.mode==='fail')return fmtM(r.str)+' m otse';if(r.mode==='drape'&&Math.abs(r.len-r.str)/r.str>.02)return msNarrow()?`${fmtM(r.len)} m · otse ${fmtM(r.str)}`:`${fmtM(r.len)} m pinda mööda · ${fmtM(r.str)} m otse`;return fmtM(r.len)+' m';}
 function msCyl(A,B,mat,g){const L=A.distanceTo(B);if(L<1e-3)return;const c=new THREE.Mesh(new THREE.CylinderGeometry(.07,.07,L,8),mat);c.position.copy(A).add(B).multiplyScalar(.5);c.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),B.clone().sub(A).normalize());c.renderOrder=9;g.add(c);}
-function msDraw(){MS.g.traverse(o=>{if(o.geometry)o.geometry.dispose();});MS.g.clear();MS.lab=[];
+function msDraw(){invalidate(2);MS.g.traverse(o=>{if(o.geometry)o.geometry.dispose();});MS.g.clear();MS.lab=[];
   msList().forEach(m=>{const P=m.p.map(msV),sel=MS.sel===m.id,mat=sel?MS_SEL:mDot,g=new THREE.Group();g.userData.mid=m.id;
     P.forEach(p=>{const s=new THREE.Mesh(new THREE.SphereGeometry(.2,12,8),mat);s.position.copy(p);s.renderOrder=9;g.add(s);});
     if(m.t==='dist'){let tot=0;for(let i=0;i+1<P.length;i++){const r=msSeg(m,i);const sm=r.mode==='fail'?(sel?MS_SOLIDS:MS_SOLID):mat;for(let k=0;k+1<r.pts.length;k++)msCyl(r.pts[k],r.pts[k+1],sm,g);tot+=r.len;
@@ -5982,7 +6013,7 @@ function msFace(obj){const h=HOUSES[cur],nw=msNarrow();if(!obj)return '';
     return `Katusetahk ${fmtM(meshArea(obj))} m²`;}
   if(obj.name==='walls'&&h){const L=h.edges[obj.userData.edge],H=+h.eave;return `Sein ${String.fromCharCode(65+obj.userData.edge)} · ${fmtM(L)} × ${fmtM(H)} m · ${fmtM(L*H)} m²`;}
   return `${obj.name==='gable'?'Viil':'Sein'} · ${fmtM(meshArea(obj))} m²`;}
-function msHovSet(obj){if(MS.hov===obj)return;if(MS.hov&&MS.hovMat)MS.hov.material=MS.hovMat;MS.hov=null;MS.hovMat=null;if(obj&&(MS.tg==='roof'||MS.tg==='wall')){MS.hov=obj;MS.hovMat=obj.material;obj.material=MS_HOV;}}
+function msHovSet(obj){if(MS.hov===obj)return;invalidate(1);if(MS.hov&&MS.hovMat)MS.hov.material=MS.hovMat;MS.hov=null;MS.hovMat=null;if(obj&&(MS.tg==='roof'||MS.tg==='wall')){MS.hov=obj;MS.hovMat=obj.material;obj.material=MS_HOV;}}
 function msShowFace(obj,x,y){const t=msFace(obj),b=$('view').getBoundingClientRect();if(!t){msHovEl.hidden=true;return;}msHovEl.textContent=t;msHovEl.hidden=false;msHovEl.style.left=Math.min(b.width-20,Math.max(20,x-b.left))+'px';msHovEl.style.top=Math.max(20,y-b.top-34)+'px';}
 function msSnapShow(h,x,y){if(!h||!h.snapped){msSnapEl.hidden=true;MS.snapXY=null;return;}const b=$('view').getBoundingClientRect(),q=h.p.clone().project(camera),sx=(q.x+1)/2*b.width,sy=(1-q.y)/2*b.height;
   MS.snapXY=[sx,sy];msSnapEl.hidden=false;msSnapEl.style.left=sx+'px';msSnapEl.style.top=sy+'px';}
@@ -6031,6 +6062,12 @@ function msUI(){const on=!!mMode;msPick.hidden=!on;if(!on){msSnapEl.hidden=true;
   msUI();};}
 {const _sm=setMode;setMode=function(m){if(mMode==='dist'&&MS.chain&&mPts.length>1)msEndChain();MS.ns=[];msHovSet(null);_sm(m);msUI();};}
 $('mClr').addEventListener('click',()=>{MS.ns=[];});
+// joonistus vajadusel: kõik, mis stseeni muudab, palub uue kaadri (ehitus ja aed ka varjud)
+['build','select','setView','applyHi','recolor','mRedraw','setRen','renderPanel','pickSurface'].forEach(n=>{const f=window[n];if(typeof f!=='function')return;
+  window[n]=function(){const r=f.apply(this,arguments);invalidate(3,n==='build'||n==='select'||n==='recolor');return r;};});
+$('body').addEventListener('click',()=>invalidate(3),true);$('studio').addEventListener('click',p3Kick,true);$('studio').addEventListener('input',p3Kick,true);document.addEventListener('visibilitychange',p3Kick);$('body').addEventListener('input',()=>invalidate(2),true);
+// vaate vahetus: objektivaade tagasi = uus kaader; stuudiost lahkudes 3D-mudeli vaatur suletakse (mitte ei jää taustal joonistama)
+{const _sh=show;show=function(v){const r=_sh.apply(this,arguments);if(v!=='studio'&&P3V)p3Dispose();invalidate(3,true);return r;};}
 // maja ehitatakse uuesti (nt LOD2 katus saabub pärast avamist): mõõtude teed arvutatakse uue maja järgi
 {const _b=build;build=function(){const r=_b.apply(this,arguments);MS.cand=null;if(msList().length)msDraw();return r;};}
 msDraw();
