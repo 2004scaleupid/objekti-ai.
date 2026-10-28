@@ -1,6 +1,6 @@
 // Aed ja ümbrus: { ref } (oma firma 3D-töö) või { ehr } (aadressiobjekt) -> meta.json aadress.
 // Andmed on avalikud (Maa-amet) ja vahemälus aadressi kaupa; sisselogimine + piirang hoiavad koormuse mõistlikuna.
-import { cors, body, admin, jwtUid } from "../_shared/util.ts";
+import { cors, body, admin, jwtUid, rateLimit, clientIp } from "../_shared/util.ts";
 import { buildGarden, type Timing } from "../_shared/garden.ts";
 
 Deno.serve(async (req) => {
@@ -15,8 +15,19 @@ Deno.serve(async (req) => {
   const token = (req.headers.get("Authorization") || "").replace(/^Bearer\s+/i, "");
   const uid = token ? await jwtUid(token) : null;
   T.auth = Math.round(performance.now() - t0);
-  if (!uid) return fail("unauthorized", 401);
   const db = admin();
+  // kodulehe vidina külastaja (ilma kontota): aktiivne vidin + ainult ehr; piirang IP ja vidina kaupa (Maa-ameti andmed on avalikud)
+  if (!uid && typeof b.widget === "string" && /^[a-f0-9]{6,32}$/.test(b.widget) && typeof b.ehr === "string" && /^\d{5,12}$/.test(b.ehr)) {
+    const { data: w } = await db.from("widgets").select("active").eq("public_id", b.widget).maybeSingle();
+    if (!w?.active) return fail("not found", 404);
+    if (!(await rateLimit("garden:ip:" + clientIp(req), 30, 3600)) || !(await rateLimit("garden:w:" + b.widget, 300, 86400))) return fail("Liiga palju päringuid, proovi hiljem", 429);
+    try {
+      const g = await buildGarden(b.ehr, T);
+      if (!g) return fail("Selle aadressi kohta pole Maa-ameti andmeid", 404);
+      return json({ ehr: b.ehr, meta: g.url, cached: g.cached, timing: T });
+    } catch (e) { console.error("garden w", b.ehr, (e as Error).message); return fail("Maa-ameti andmed ei laadinud, proovi hiljem", 502); }
+  }
+  if (!uid) return fail("unauthorized", 401);
   const [prof, rl] = await Promise.all([
     db.from("profiles").select("company_id").eq("user_id", uid).single(),
     db.rpc("rate_hit", { p_key: "garden:u:" + uid, p_max: 60, p_window_sec: 3600 }),

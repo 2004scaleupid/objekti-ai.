@@ -33,6 +33,7 @@ globalThis.fetch = async (input: string | URL | Request, init: RequestInit = {})
   if (u.origin === SB) {
     if (p === "/auth/v1/user") return req.headers.get("authorization") === "Bearer " + TOK ? res({ id: "u1", aud: "authenticated" }) : res({}, 401);
     if (p === "/rest/v1/profiles") return res({ company_id: "c1" });
+    if (p === "/rest/v1/widgets") return res(u.searchParams.get("public_id") === "eq.abc123" ? { active: true } : null);
     if (p === "/rest/v1/rpc/rate_hit") return res(true);
     if (p === "/rest/v1/renders") return res(u.searchParams.get("id") === "eq.r1" && u.searchParams.get("company_id") === "eq.c1" ? { ehr: "120656418" } : null);
     const up = p.match(/^\/storage\/v1\/object\/models\/(.+)$/);
@@ -83,4 +84,12 @@ Deno.test("ref -> oma firma töö EHR; võõras töö, vigane ehr ja sisselogima
   assertEquals((await call({ ref: "voras" })).status, 400);
   assertEquals((await call({ ehr: "12; drop" })).status, 400);
   assertEquals((await call({ ehr: "120656418" }, "x.y.z")).status, 401);
+});
+
+Deno.test("vidina külastaja ilma kontota: aktiivne vidin + ehr annab meta, tundmatu vidin ja ref ei anna", async () => {
+  const ok = await call({ ehr: "120656418", widget: "abc123" }, "");
+  assertEquals(ok.status, 200, JSON.stringify(ok.j)); assert(ok.j.meta);
+  assertEquals((await call({ ehr: "120656418", widget: "ffffff" }, "")).status, 404);
+  assertEquals((await call({ ref: "r1", widget: "abc123" }, "")).status, 401); // oma 3D-töö viide ainult sisselogituna
+  assertEquals((await call({ ehr: "120656418" }, "")).status, 401);
 });

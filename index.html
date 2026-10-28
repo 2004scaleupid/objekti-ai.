@@ -2550,8 +2550,8 @@ function drawMLabels(w,hh){if(selInfo){const p=selInfo.p.clone().project(camera)
 
 // päris krunt katastrist (aia andmed: tasuta, vahemälus) asendab hinnangu „kast kuni naabrini“ (Herne tn 20: 153 m² vs päris 1703 m²).
 // Vaate raam: LOD2 meetrid, nihutatud maja keskmesse (h.x, h.y) ja pööratud h.north kraadi vastupäeva.
-async function lotCadastre(h){if(!h||h.parcel!==undefined||!h.ehr||!(CLOUD&&CL.cid))return;h.parcel=null;
-  try{const r=await clFn('garden',{ehr:String(h.ehr)}),meta=await (await fetch(r.meta)).json(),ring=f=>{const o=[];for(let i=0;i+1<f.length;i+=2)o.push([f[i],f[i+1]]);return o;};
+async function lotCadastre(h){const wid=typeof cvMode!=='undefined'&&cvMode==='widget'&&CVP&&CVP.id;if(!h||h.parcel!==undefined||!h.ehr||!CLOUD||!(CL.cid||wid))return;h.parcel=null;
+  try{const r=await (CL.cid?clFn('garden',{ehr:String(h.ehr)}):clFn('garden',{ehr:String(h.ehr),widget:String(wid)},{pub:true})),meta=await (await fetch(r.meta)).json(),ring=f=>{const o=[];for(let i=0;i+1<f.length;i+=2)o.push([f[i],f[i+1]]);return o;};
     const par=(meta.parcels||[]).find(p=>pip([0,0],ring(p.g[0])));if(!par)return;
     const th=(h.north||0)*Math.PI/180,c=Math.cos(th),sn=Math.sin(th),dx=meta.c[0]-h.x,dy=meta.c[1]-h.y;
     const P=ring(par.g[0]).map(([x,y])=>[+((x+dx)*c-(y+dy)*sn).toFixed(2),+((x+dx)*sn+(y+dy)*c).toFixed(2)]),xs=P.map(q=>q[0]),ys=P.map(q=>q[1]);
@@ -2569,7 +2569,7 @@ async function lotCadastre(h){if(!h||h.parcel!==undefined||!h.ehr||!(CLOUD&&CL.c
     try{if(window.V3DGarden&&meta.files.fences){const R=meta.r,toV=([x,y])=>[(x+dx)*c-(y+dy)*sn,(x+dx)*sn+(y+dy)*c],L0=h.lot,inL=([u,v])=>u>L0[0]-6&&u<L0[2]+6&&v>L0[1]-6&&v<L0[3]+6;
       const S=V3DGarden.fencesFrom(await V3DGarden.img(meta.files.fences),R).map(([x0,y0,x1,y1])=>[...toV([x0,y0]),...toV([x1,y1])].map(q=>+q.toFixed(2))).filter(q=>inL([q[0],q[1]])||inL([q[2],q[3]]));
       h.fences=S;}}catch(_){}
-    if(HOUSES[cur]===h){renderPanel();build();}}catch(_){h.parcel=undefined;}}
+    if(HOUSES[cur]===h){renderPanel();build();if(typeof cvMode!=='undefined'&&cvMode&&$('cvNums'))$('cvNums').outerHTML=cvNums(h);}}catch(_){h.parcel=undefined;}}
 function select(i){cur=i;setTimeout(()=>lotCadastre(HOUSES[i]),0);setTimeout(()=>typeof renderAcct==='function'&&renderAcct(),0);renderList();renderPanel();build();updFotos();setRen(false);mPts=[];mClosed=false;mRedraw();chatReset();}
 const seg=[['hiNone','none'],['hiWall','wall'],['hiRoof','roof']];
 seg.forEach(([id,val])=>$(id).onclick=()=>{hi=val;seg.forEach(([j])=>$(j).setAttribute('aria-pressed',j===id));applyHi();});
@@ -2784,17 +2784,25 @@ $('shareBtn').onclick=async()=>{const h=HOUSES[cur],hasR=!!(acct.gen&&acct.gen[h
   const pr=ask2('Jaga kliendiga',`${h.short} · klient näeb maja 3D-s sinu ettevõtte nimega. See ei ole hinnapakkumine, vaid esitlus.`,'Loo link',
    `<div style="display:flex;flex-direction:column;gap:10px"><label style="display:flex;gap:8px;align-items:center;font-size:14px"><input type="checkbox" id="shD" checked style="width:auto"> Näita kliendile põhimõõte</label>${hasR?'<label style="display:flex;gap:8px;align-items:center;font-size:14px"><input type="checkbox" id="shR" checked style="width:auto"> Lisa esituspilt</label>':''}
     <label class="fl" for="shM">Sõnum kliendile (valikuline)<textarea id="shM" rows="3" style="font:500 14px var(--display);padding:10px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink)" placeholder="Tere! Siin on teie maja 3D-vaade. Kõik mõõdud on riigi andmetest."></textarea></label></div>`);
-  if(!await pr)return;const pl={v:1,e:h.ehr,a:h.address,x:h.loc?h.loc.x:undefined,y:h.loc?h.loc.y:undefined,dm:h.manual||undefined,rt:h.roofType,rc:roofCol,wc:wallCol,d:$('shD').checked?1:0,r:$('shR')&&$('shR').checked?1:0,msg:($('shM').value||'').trim().slice(0,400),...firmInfo()};
+  if(!await pr)return;const pl={v:1,e:h.ehr,a:h.address,x:h.loc?h.loc.x:undefined,y:h.loc?h.loc.y:undefined,dm:h.manual||undefined,rt:h.roofType,rc:roofCol,wc:wallCol,d:$('shD').checked?1:0,r:$('shR')&&$('shR').checked?1:0,msg:($('shM').value||'').trim().slice(0,400),...firmInfo(),
+    pa:h.parcel?{p:h.parcel.p,t:h.parcel.t,pts:h.parcel.pts.map(q=>[+(+q[0]).toFixed(1),+(+q[1]).toFixed(1)])}:undefined,tr:h.treesReal?h.trees.slice(0,40):undefined};
   const url=appBase()+'#s='+b64e(pl);acct.shares=acct.shares||[];acct.shares.push({d:today(),e:h.ehr,a:h.short});save();
   const ok=await ask2('Link on valmis','Saada see link kliendile e-posti, SMS-i või WhatsAppiga.','Ava eelvaade',`<textarea class="codebox" id="shU" rows="3" readonly>${url}</textarea><button type="button" class="ghost" id="shC" style="align-self:flex-start;margin-top:8px">Kopeeri link</button>`);
   if(ok)clientView(pl,{preview:true});};
 document.addEventListener('click',e=>{if(e.target&&e.target.id==='shC'){const t=$('shU');t.select();try{navigator.clipboard.writeText(t.value).then(()=>toast('Link kopeeritud'),()=>{document.execCommand('copy');toast('Link kopeeritud');});}catch(_){document.execCommand('copy');toast('Link kopeeritud');}}});
-function cvNums(h){const Y=yard(h);return `<div class="cvnum"><div><small>Põhiplaan</small><b>${fmt(h.footprint)} m²</b></div><div><small>Katuse pind</small><b>~${fmt(h.roof,0)} m²</b></div><div><small>Seinte pind</small><b>~${fmt(h.wall,0)} m²</b></div><div><small>Kõrgus harjani</small><b>${fmt(h.height,1)} m</b></div><div><small>Krunt</small><b>~${fmt(Y.area,0)} m²</b></div><div><small>Lähim naaber</small><b>${fmt(Y.nb.d,1)} m</b></div></div><span class="fhint">Mõõdud: Maa- ja Ruumiameti andmed, katus hinnanguline.</span>`;}
+function cvNums(h){const Y=yard(h),l2=h.roofType==='lod2',src=[l2?'katus ja seinad riigi LOD2 mudelist':'katus hinnanguline (LOD2 mudelit pole)',h.parcel?'krunt katastrist':'krunt hinnanguline'].join(', ');
+  return `<div id="cvNums"><div class="cvnum"><div><small>Põhiplaan</small><b>${fmt(h.footprint)} m²</b></div><div><small>Katuse pind</small><b>${l2?'':'~'}${fmt(h.roof,0)} m²</b></div><div><small>Seinte pind</small><b>${l2?'':'~'}${fmt(h.wall,0)} m²</b></div><div><small>Kõrgus harjani</small><b>${fmt(h.height,1)} m</b></div><div><small>Krunt</small><b>${h.parcel?'':'~'}${fmt(Y.area,0)} m²</b></div><div><small>Lähim naaber</small><b>${Y.nb.d<1e8?fmt(Y.nb.d,1)+' m':'—'}</b></div></div><span class="fhint">Mõõdud: Maa- ja Ruumiameti andmed; ${src}.</span></div>`;}
 function clientView(p,opts){opts=opts||{};const e=String(p.e||'');if(!/^\d{6,12}$/.test(e)){toast('Objekti ei leitud');return false;}
   const A=p.A||{ehr:e,full:p.a,t:String(p.a||'').replace(/,.*$/,''),x:+p.x||0,y:+p.y||0},dm=p.dm&&+p.dm.L&&+p.dm.W&&+p.dm.e?{L:+p.dm.L,W:+p.dm.W,e:+p.dm.e,rt:String(p.dm.rt||'gable')}:null;
   houseOf(A,dm).then(h=>{if(!h||h.need){toast('Objekti ei leitud');return;}cvShow(p,opts,h);}).catch(()=>toast('Maja andmed ei laadinud, proovi uuesti'));return true;}
+// jagamislingis on firma objektivaatest krunt (katastrist) ja päris puud; link on avalik, seega ainult arvud ja piiratud pikkus
+function cvLot(p,h){const ok=v=>Number.isFinite(+v)&&Math.abs(+v)<5e3;const pa=p.pa;
+  if(pa&&Array.isArray(pa.pts)&&pa.pts.length>=3&&pa.pts.length<=400&&pa.pts.every(q=>Array.isArray(q)&&ok(q[0])&&ok(q[1]))&&ok(pa.p)){const P=pa.pts.map(q=>[+q[0],+q[1]]),xs=P.map(q=>q[0]),ys=P.map(q=>q[1]);
+    h.parcel={p:Math.round(+pa.p),t:String(pa.t||'').slice(0,40),pts:P};h.lot=[Math.min(...xs),Math.min(...ys),Math.max(...xs),Math.max(...ys)];}
+  if(Array.isArray(p.tr)&&p.tr.length<=60&&p.tr.every(t=>Array.isArray(t)&&ok(t[0])&&ok(t[1])&&ok(t[2]))){h.trees=p.tr.map(t=>[+t[0],+t[1],+t[2],t[3]==='s'?'s':'b']);h.treesReal=1;}}
+let CVP=null;
 function cvShow(p,opts,h){
-  if(opts.preview&&!CVSAVE)CVSAVE={houses:HOUSES.slice(),cur,roofCol,wallCol};cvMode=opts.lead?'widget':'share';
+  if(opts.preview&&!CVSAVE)CVSAVE={houses:HOUSES.slice(),cur,roofCol,wallCol};cvMode=opts.lead?'widget':'share';CVP=p;cvLot(p,h);
   if(p.rt)h.roofType=p.rt;HOUSES.splice(0,HOUSES.length,h);
   document.body.classList.add('cvm');$('wdg').hidden=true;$('login').hidden=true;$('app').hidden=false;$('cvBar').hidden=false;$('cvPanel').hidden=false;show('app');
   if(p.rc)roofCol=p.rc;if(p.wc)wallCol=p.wc;select(0);try{recolor();}catch(e){}
