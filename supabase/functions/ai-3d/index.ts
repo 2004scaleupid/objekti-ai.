@@ -34,7 +34,8 @@ export const cleanPrompt = (s: Subject) => BASE_PROMPT.replaceAll("{SUBJECT}", S
 // Fotokontrolli vead. Kerged vead lubavad „Jätka ikkagi“, ülejäänud blokeerivad.
 const ISSUES = ["wrong_subject", "different_objects", "cut_off", "duplicate_side", "wrong_side", "backlit", "too_dark", "blurry", "occluded", "too_close", "too_far", "unsupported", "aerial", "interior"];
 // Ainult need blokeerivad: fotodest ei saa üldse üht 3D-mudelit teha. Kõik muu on hoiatus ja kasutaja võib jätkata.
-const SOFT = new Set(["cut_off", "wrong_side", "backlit", "too_dark", "blurry", "occluded", "too_close", "too_far"]);
+// „different_objects“ on ka pehme: AI eksib sama maja eri külgedega (äpi enda näidisfotod), kasutaja võib hoiatusega jätkata
+const SOFT = new Set(["cut_off", "wrong_side", "backlit", "too_dark", "blurry", "occluded", "too_close", "too_far", "different_objects"]);
 const SIDES = ["front", "left", "back", "right"];
 
 async function muKey() {
@@ -145,10 +146,11 @@ Check each photo and all photos together:
 8. "interior" (top-level true/false): true if the photos are taken INSIDE a room or building, i.e. the camera stands indoors with walls, ceiling or floor around it (a sauna with benches, a living room, kitchen, bathroom).
    It is STILL interior when a window, glass wall or the outdoors is visible, and STILL interior when one built-in structure dominates the photo (a sauna niche or cabin inside a bigger tiled room, a kitchen, a fireplace wall).
    Only a single movable piece of furniture or product that clearly fills the photo (one chair, one stove photographed up close) is NOT interior. When a room is visible around it, it is interior. Use "interior" only at the top level, never as a photo issue.
+   Also set "indoor" (true/false) on EACH photo by the same rule: true only for photos where the camera stands indoors. A house, car or garden photographed outside is "indoor": false even if other photos in the set are indoors.
 Be lenient: the photos are cleaned by AI and reconstructed afterwards, normal phone photos of the whole thing are good enough. Flag an issue only when it would clearly ruin the 3D model. When in doubt, do NOT flag. Ordinary phone photos with small imperfections must pass with "ok": true.
 Allowed issues: ${ISSUES.join(", ")}.
 Answer ONLY with JSON, no other text:
-{"subject":"building|object|vehicle|unsupported","interior":true|false,"ok":true|false,"photos":[{"slot":0,"side":"front|left|back|right|unknown","ok":true|false,"issues":[],"tip":"short Estonian tip how to retake, only if not ok"}],"summary":"1-2 short sentences in Estonian for the user"}
+{"subject":"building|object|vehicle|unsupported","interior":true|false,"ok":true|false,"photos":[{"slot":0,"side":"front|left|back|right|unknown","indoor":false,"ok":true|false,"issues":[],"tip":"short Estonian tip how to retake, only if not ok"}],"summary":"1-2 short sentences in Estonian for the user"}
 Tips and summary must be in plain Estonian, friendly, concrete (e.g. "Pildista tagakülge siis, kui päike on sinu selja taga.").`;
 
 // Valikurežiim: fotosid on rohkem kui külgi (kuni 12). AI valib igale küljele parima, Tripo saab ikka max 4.
@@ -159,11 +161,11 @@ For each side (front, left, back, right) pick the single BEST photo of that side
 Buildings and vehicles need all 4 sides. An object needs at least "front"; use other sides only if a photo clearly shows a different side.
 Never use the same photo for two sides. If no photo shows a side, set it to null. Photos of a different thing are never selected.
 Answer ONLY with JSON, no other text:
-{"subject":"building|object|vehicle|unsupported","interior":true|false,"selected":{"front":0,"left":5,"back":null,"right":7},"photos":[{"side":"front","index":0,"ok":true,"issues":[],"tip":"short Estonian tip, only if not ok"}],"unused":[{"index":3,"reason":"very short Estonian reason, e.g. sama külg uduisem"}],"summary":"1-2 short sentences in Estonian"}
+{"subject":"building|object|vehicle|unsupported","interior":true|false,"selected":{"front":0,"left":5,"back":null,"right":7},"photos":[{"side":"front","index":0,"indoor":false,"ok":true,"issues":[],"tip":"short Estonian tip, only if not ok"}],"unused":[{"index":3,"reason":"very short Estonian reason, e.g. sama külg uduisem"}],"summary":"1-2 short sentences in Estonian"}
 "photos" lists only the selected photos with the same issue rules as above.`;
 const SIDE_TIP = { building: ["Lisa foto esiküljelt", "Lisa foto vasakult küljelt", "Lisa foto tagaküljelt", "Lisa foto paremalt küljelt"], other: ["Lisa foto eest", "Lisa foto vasakult", "Lisa foto tagant", "Lisa foto paremalt"] };
 
-type Photo = { slot: number; side: string; ok: boolean; issues: string[]; tip?: string; index?: number };
+type Photo = { slot: number; side: string; ok: boolean; issues: string[]; tip?: string; index?: number; indoor?: boolean };
 async function aiCheck(photos: string[], want: Subject | null, pool = false, single = false) {
   const content: unknown[] = [];
   photos.forEach((u, i) => {
@@ -203,15 +205,22 @@ function aerial(photos: { issues: string[]; ok: boolean; tip?: string }[], kind:
   return any;
 }
 
-// Siseruumi fotod: 3D-mudel tehakse ühest asjast väljastpoolt; äpp pakub toa 3D-d (Sisekujundus + 3D) või eseme 3D-d
-export const INTERIOR_TIP = "Siseruum: tee toast 3D (Sisekujundus + 3D) või üksikust esemest 3D.";
-const INTERIOR_TIP_OBJ = "See on terve ruum: pildista üks ese lähedalt (nt pink või keris) või tee toast 3D.";
-const INTERIOR_SUM = "Need on siseruumi fotod. Siseruumist saad teha toa 3D-s või ühest esemest 3D-mudeli.";
-function interior(a: Record<string, unknown>, photos: Photo[], want: Subject | null) {
-  photos.forEach((p) => { p.issues = p.issues.filter((x) => x !== "interior"); p.ok = p.issues.length === 0; }); // ainult tervikvastus loeb
-  if (a.interior !== true) return false; // ese, mis täidab kaadri, on lubatud ka toas (AI ütleb siis interior: false)
-  photos.forEach((p) => { p.issues = ["interior"]; p.ok = false; p.tip = want === "object" ? INTERIOR_TIP_OBJ : INTERIOR_TIP; });
-  return true;
+// Siseruumi fotod: 3D-mudel tehakse ühest asjast väljastpoolt. Toa 3D on ainult adminil, seega vihje seda ei nimeta.
+export const INTERIOR_TIP = "Siseruum: 3D-mudel tehakse väljast pildistatud asjast. Toast saad teha üksiku eseme 3D.";
+const INTERIOR_TIP_OBJ = "See on terve ruum: pildista üks ese lähedalt (nt pink või keris).";
+const INTERIOR_TIP_ONE = "See foto on tehtud toas. Asenda see väljast pildistatud fotoga.";
+const INTERIOR_SUM = "Need on siseruumi fotod. Siseruumist saad teha ühest esemest 3D-mudeli.";
+const INTERIOR_SUM_SOME = "Osa fotosid on tehtud toas. Asenda need väljast pildistatud fotodega.";
+// Varem märgiti siseruumiks KÕIK fotod, kui komplektis oli kasvõi üks toafoto (ka maja välisvaade). Nüüd foto kaupa (AI „indoor“).
+// Tagastab "all" (terve komplekt toas: surnud ots), "some" (ainult need fotod vahetada) või false.
+function interior(a: Record<string, unknown>, photos: Photo[], want: Subject | null): "all" | "some" | false {
+  photos.forEach((p) => { p.issues = p.issues.filter((x) => x !== "interior"); p.ok = p.issues.length === 0; });
+  const flagged = photos.filter((p) => p.indoor === true), told = photos.some((p) => typeof p.indoor === "boolean");
+  photos.forEach((p) => delete p.indoor);
+  if (a.interior !== true && !flagged.length) return false; // ese, mis täidab kaadri, on lubatud ka toas (AI ütleb siis interior: false)
+  const all = !told || flagged.length === photos.length; // vana vastus ilma foto kaupa märgita = terve komplekt
+  (all ? photos : flagged).forEach((p) => { p.issues = ["interior"]; p.ok = false; p.tip = all ? (want === "object" ? INTERIOR_TIP_OBJ : INTERIOR_TIP) : INTERIOR_TIP_ONE; });
+  return all ? "all" : "some";
 }
 
 // AI vastus puhtaks: ainult lubatud väärtused; ok arvutab server ise (AI „ok“ üksi ei loe)
@@ -222,13 +231,13 @@ function normalize(a: Record<string, unknown>, n: number, want: Subject | null) 
   for (let i = 0; i < n; i++) {
     const p = (src.find((x: { slot?: number }) => Number(x?.slot) === i) ?? src[i] ?? {}) as Record<string, unknown>;
     const issues = [...new Set((Array.isArray(p.issues) ? p.issues : []).map(String).filter((x) => ISSUES.includes(x)))];
-    photos.push({ slot: i, side: SIDES.includes(String(p.side)) ? String(p.side) : "unknown", ok: issues.length === 0, issues, tip: issues.length && typeof p.tip === "string" ? p.tip.slice(0, 200) : undefined });
+    photos.push({ slot: i, side: SIDES.includes(String(p.side)) ? String(p.side) : "unknown", ok: issues.length === 0, issues, tip: issues.length && typeof p.tip === "string" ? p.tip.slice(0, 200) : undefined, indoor: typeof p.indoor === "boolean" ? p.indoor : undefined });
   }
   if (subject === "unsupported") photos.forEach((p) => { if (!p.issues.includes("unsupported")) { p.issues.push("unsupported"); p.ok = false; } });
   else if (want && subject !== want) photos.forEach((p) => { if (!p.issues.includes("wrong_subject")) { p.issues.push("wrong_subject"); p.ok = false; } });
-  const air = aerial(photos, want ?? (isSubject(subject) ? subject : null)), inside = interior(a, photos, want);
+  const air = aerial(photos, want ?? (isSubject(subject) ? subject : null)), ins = interior(a, photos, want), inside = ins === "all";
   const all = photos.flatMap((p) => p.issues);
-  return { subject, photos, ok: all.length === 0, soft: !inside && all.length > 0 && all.every((x) => SOFT.has(x)), interior: inside, summary: inside ? INTERIOR_SUM : air ? AERIAL_SUM : typeof a.summary === "string" ? a.summary.slice(0, 400) : "" };
+  return { subject, photos, ok: all.length === 0, soft: !ins && all.length > 0 && all.every((x) => SOFT.has(x)), interior: inside, summary: inside ? INTERIOR_SUM : ins ? INTERIOR_SUM_SOME : air ? AERIAL_SUM : typeof a.summary === "string" ? a.summary.slice(0, 400) : "" };
 }
 
 // Valikurežiimi vastus puhtaks: indeksid lubatud ja kordumatud, puuduv külg = blokeeriv viga koos juhisega
@@ -248,18 +257,18 @@ export function normalizePool(a: Record<string, unknown>, n: number, want: Subje
   const photos: Photo[] = selected.map((s, k) => {
     const p = (src.find((x) => Number(x?.index) === s.index) ?? src.find((x) => x?.side === s.side) ?? {}) as Record<string, unknown>;
     const issues = [...new Set((Array.isArray(p.issues) ? p.issues : []).map(String).filter((x) => ISSUES.includes(x)))];
-    return { slot: k, side: s.side, index: s.index, ok: issues.length === 0, issues, tip: issues.length && typeof p.tip === "string" ? p.tip.slice(0, 200) : undefined };
+    return { slot: k, side: s.side, index: s.index, ok: issues.length === 0, issues, tip: issues.length && typeof p.tip === "string" ? p.tip.slice(0, 200) : undefined, indoor: typeof p.indoor === "boolean" ? p.indoor : undefined };
   });
   if (subject === "unsupported") photos.forEach((p) => { if (!p.issues.includes("unsupported")) { p.issues.push("unsupported"); p.ok = false; } });
   else if (want && subject !== want) photos.forEach((p) => { if (!p.issues.includes("wrong_subject")) { p.issues.push("wrong_subject"); p.ok = false; } });
-  const air = aerial(photos, kind), inside = interior(a, photos, want);
+  const air = aerial(photos, kind), ins = interior(a, photos, want), inside = ins === "all";
   if (inside) missing.length = 0; // toas pole „puuduvaid külgi“
   const reasons = new Map<number, string>();
   (Array.isArray(a.unused) ? a.unused : []).forEach((u: Record<string, unknown>) => { const i = Number(u?.index); if (Number.isInteger(i) && i >= 0 && i < n && !used.has(i)) reasons.set(i, typeof u.reason === "string" ? u.reason.slice(0, 80) : ""); });
   const unused = [...Array(n).keys()].filter((i) => !used.has(i)).map((i) => ({ index: i, reason: reasons.get(i) || "" }));
   const all = photos.flatMap((p) => p.issues);
   const ok = all.length === 0 && !missing.length && !inside;
-  return { mode: "pool", subject, selected, photos, missing, unused, ok, soft: !inside && !ok && !missing.length && all.every((x) => SOFT.has(x)), interior: inside, summary: inside ? INTERIOR_SUM : air ? AERIAL_SUM : typeof a.summary === "string" ? a.summary.slice(0, 400) : "" };
+  return { mode: "pool", subject, selected, photos, missing, unused, ok, soft: !ins && !ok && !missing.length && all.every((x) => SOFT.has(x)), interior: inside, summary: inside ? INTERIOR_SUM : ins ? INTERIOR_SUM_SOME : air ? AERIAL_SUM : typeof a.summary === "string" ? a.summary.slice(0, 400) : "" };
 }
 
 export async function handler(req: Request): Promise<Response> {

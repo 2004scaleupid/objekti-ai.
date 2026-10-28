@@ -139,14 +139,19 @@ Deno.test("kontrollist ei saa mööda", async () => {
   const forged = btoa(JSON.stringify({ ...JSON.parse(atob(p.replace(/-/g, "+").replace(/_/g, "/"))), ok: true, exp: Date.now() + 1e9 })).replace(/=+$/, "") + "." + sig;
   assertEquals((await call({ subject: "building", photos: P4, check: forged })).status, 409);
   // blokeeriv viga + „Jätka ikkagi“ ei aita
-  W.check = good(); (W.check.photos as { issues: string[] }[])[1].issues = ["different_objects"];
+  W.check = good(); (W.check.photos as { issues: string[] }[])[1].issues = ["duplicate_side"];
   const bad = await call({ action: "check", subject: "building", photos: P4 });
-  assertEquals(bad.j.ok, false); assertEquals(bad.j.soft, false); assertEquals(bad.j.photos[1].issues, ["different_objects"]);
+  assertEquals(bad.j.ok, false); assertEquals(bad.j.soft, false); assertEquals(bad.j.photos[1].issues, ["duplicate_side"]);
   assertEquals((await call({ subject: "building", photos: P4, check: bad.j.token, force: true })).status, 409);
   // AI ütleb ok:true, aga vead on olemas: server ei usalda
   W.check = { ...good(), ok: true }; (W.check.photos as { issues: string[] }[])[0].issues = ["duplicate_side"];
   assertEquals((await call({ action: "check", subject: "building", photos: P4 })).j.ok, false);
   assertEquals(W.spends.length, n0);
+  // „teine hoone“ eksib sageli sama maja eri külgedega (äpi näidisfotod): hoiatusega jätkata lubatud
+  W.check = good(); (W.check.photos as { issues: string[] }[])[1].issues = ["different_objects"];
+  const diff = await call({ action: "check", subject: "building", photos: P4 });
+  assertEquals([diff.j.ok, diff.j.soft], [false, true]);
+  assertEquals((await call({ subject: "building", photos: P4, check: diff.j.token, force: true })).status, 200);
   // kerge viga: ilma force'ita ei, force'iga jah
   W.check = good(); (W.check.photos as { issues: string[] }[])[2].issues = ["occluded"];
   const soft = await call({ action: "check", subject: "building", photos: P4 });
@@ -265,6 +270,7 @@ Deno.test("kasutaja vahetab külje -> tavaline kontroll valitud 4 fotoga", async
 });
 
 Deno.test("ese 6 fotost: AI valib ühe -> image-to-3d", async () => {
+  W.balance = 100; // varasemad testid kulutasid matkitud saldo ära
   W.check = { subject: "object", selected: { front: 4 }, photos: [{ side: "front", index: 4, ok: true, issues: [] }], unused: [], summary: "" };
   const P6 = P12.slice(0, 6);
   const c = await call({ action: "check", subject: "object", photos: P6 });
@@ -325,7 +331,14 @@ Deno.test("siseruum (sauna seest): blokeerib, üks lühike juhis igal fotol, ese
   (W.check.photos as { issues: string[]; tip?: string }[]).forEach((p) => { p.issues = ["wrong_subject"]; p.tip = "Pildista saunahoonet väljastpoolt, et terve hoone oleks kaadris."; });
   const c = await call({ action: "check", subject: "building", photos: P4 });
   assertEquals([c.j.ok, c.j.soft, c.j.interior], [false, false, true]);
-  assert(c.j.photos.every((p: { issues: string[]; tip: string }) => p.issues.join() === "interior" && p.tip.includes("Sisekujundus + 3D") && !p.tip.includes("väljastpoolt")));
+  assert(c.j.photos.every((p: { issues: string[]; tip: string }) => p.issues.join() === "interior" && !p.tip.includes("Sisekujundus") && !p.tip.includes("väljastpoolt")));
+  // segakomplekt: ainult toas tehtud foto märgitakse, maja välisvaade mitte (varem märgiti kõik)
+  W.check = { ...good(), interior: true };
+  (W.check.photos as { indoor?: boolean }[]).forEach((p, i) => p.indoor = i === 0);
+  const mix = await call({ action: "check", subject: "building", photos: P4 });
+  assertEquals([mix.j.ok, mix.j.interior, mix.j.soft], [false, false, false]);
+  assertEquals(mix.j.photos.map((p: { issues: string[] }) => p.issues.join()), ["interior", "", "", ""]);
+  assert(!("indoor" in mix.j.photos[0]));
   assert(c.j.summary.includes("siseruumi"));
   assertEquals((await call({ subject: "building", photos: P4, check: c.j.token, force: true })).status, 409); // ka "Jätka ikkagi" ei aita
   // valikurežiim: toas pole „puuduvaid külgi“
@@ -340,7 +353,7 @@ Deno.test("siseruum (sauna seest): blokeerib, üks lühike juhis igal fotol, ese
   (W.check.photos as { issues: string[] }[])[0].issues = ["interior", "wrong_subject"];
   const r = await call({ action: "check", subject: "object", photos: [P4[0]] });
   assertEquals([r.j.ok, r.j.interior, r.j.photos[0].issues.join()], [false, true, "interior"]);
-  assert(r.j.photos[0].tip.includes("lähedalt") && r.j.photos[0].tip.includes("toast 3D"));
+  assert(r.j.photos[0].tip.includes("lähedalt") && !r.j.photos[0].tip.includes("toast 3D")); // toa 3D on ainult adminil
   // AI paneb "interior" ühele fotole, aga tervikuna pole siseruum -> ei loe
   W.check = good("object", 1); (W.check.photos as { issues: string[] }[])[0].issues = ["interior"];
   assertEquals((await call({ action: "check", subject: "object", photos: [P4[0]] })).j.ok, true);
