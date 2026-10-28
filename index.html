@@ -1008,13 +1008,14 @@ body.p3emb{background:transparent;margin:0;padding:0;overflow:hidden}body.p3emb 
 .p3prog{display:flex;flex-direction:column;gap:6px}.p3prog .p3bar{height:8px}.p3prog .p3bar i{transition:width 1s linear;background:linear-gradient(90deg,var(--accent),#F08A5D)}
 .p3pl{display:flex;justify-content:space-between;gap:10px;font-size:13px;color:var(--muted)}.p3pl b{color:var(--ink);font-family:var(--mono)}
 .p3tip{margin:0;min-height:1.5em;font-size:14px;font-weight:600}.p3tip.in{animation:p3tipin .5s ease}@keyframes p3tipin{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
-.p3scan{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+/* Safari: ruudud ei tohi sõltuda aspect-ratio'st gridis ja skaneerimiskiht peab jääma ruudu sisse (overflow+raadius ei lõika animeeritud lapsi) */
+.p3scan{position:relative;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;width:100%;clear:both;isolation:isolate}
 @media (max-width:560px){.p3scan{grid-template-columns:repeat(2,minmax(0,1fr))}.p3trk li{font-size:11.5px}}
-.p3scan .sc{position:relative;aspect-ratio:4/3;border-radius:10px;overflow:hidden;border:1px solid var(--line);background:#fff}
-.p3scan img{width:100%;height:100%;object-fit:cover;display:block}.p3scan.dim img{opacity:.6;filter:saturate(.6)}
-.p3scan .sc::after{content:"";position:absolute;left:0;right:0;top:-45%;height:45%;background:linear-gradient(180deg,transparent,rgba(229,72,45,.14) 70%,rgba(229,72,45,.5) 97%,transparent);animation:p3scan 2.6s linear infinite}
+.p3scan .sc{position:relative;min-width:0;height:0;padding-bottom:75%;border-radius:10px;overflow:hidden;isolation:isolate;contain:paint;-webkit-mask-image:-webkit-radial-gradient(white,black);border:1px solid var(--line);background:#fff}
+.p3scan img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}.p3scan.dim img{opacity:.6;filter:saturate(.6)}
+.p3scan .sc::after{content:"";position:absolute;left:0;right:0;top:0;height:45%;transform:translateY(-100%);will-change:transform;background:linear-gradient(180deg,transparent,rgba(229,72,45,.14) 70%,rgba(229,72,45,.5) 97%,transparent);animation:p3scan 2.6s linear infinite}
 .p3scan .sc:nth-child(2)::after{animation-delay:.65s}.p3scan .sc:nth-child(3)::after{animation-delay:1.3s}.p3scan .sc:nth-child(4)::after{animation-delay:1.95s}
-@keyframes p3scan{to{top:100%}}
+@keyframes p3scan{from{transform:translateY(-100%)}to{transform:translateY(222.3%)}} /* 222 % = ruudu kõrgus / kihi kõrgus (45 %) */
 .p3v.reveal canvas{opacity:0;transform:scale(.97);transition:opacity 1s ease,transform 1.2s ease}.p3v.reveal.ready canvas{opacity:1;transform:none}
 @media (prefers-reduced-motion:reduce){.p3trk li.on i,.p3tip.in{animation:none}.p3scan .sc::after{display:none}.p3prog .p3bar i{transition:none}.p3v.reveal canvas{opacity:1;transform:none;transition:none}}
 .p3bar{height:5px;border-radius:9px;background:var(--soft);overflow:hidden;width:100%}.p3bar i{display:block;height:100%;width:0;background:var(--accent);border-radius:9px;transition:width .2s}
@@ -1104,7 +1105,7 @@ input[type=checkbox]{accent-color:var(--accent)}
 #home .mtag b::after{content:"";position:absolute;inset:0;background:linear-gradient(110deg,transparent 30%,rgba(255,255,255,.6) 50%,transparent 70%);transform:translateX(-120%);animation:hShine 2.8s ease-in-out 1.5s infinite}
 /* foto -> 3D minidemo kaardil 02 */
 .p3d{position:absolute;right:22px;top:40px;width:104px;perspective:600px;z-index:-1;pointer-events:none}
-.p3d .p3s{position:relative;aspect-ratio:4/3;border-radius:10px;overflow:hidden;border:1px solid rgba(255,255,255,.14);box-shadow:0 18px 40px rgba(0,0,0,.45);transform:rotateY(-14deg) rotateX(6deg);animation:p3dTilt 9s ease-in-out infinite;background:#fff}
+.p3d .p3s{position:relative;aspect-ratio:4/3;border-radius:10px;overflow:hidden;isolation:isolate;-webkit-mask-image:-webkit-radial-gradient(white,black);border:1px solid rgba(255,255,255,.14);box-shadow:0 18px 40px rgba(0,0,0,.45);transform:rotateY(-14deg) rotateX(6deg);animation:p3dTilt 9s ease-in-out infinite;background:#fff}
 .p3d img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
 .p3d .b{object-fit:contain;background:#fff;clip-path:inset(0 100% 0 0);animation:p3dB 9s ease-in-out infinite}
 .p3d .c{object-fit:contain;background:radial-gradient(circle at 50% 40%,#fff,#E9E4DC);opacity:0;animation:p3dC 9s ease-in-out infinite}
