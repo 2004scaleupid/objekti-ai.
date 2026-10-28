@@ -1942,7 +1942,7 @@ function makeHouse(a){const [addr,ehr,ads,nbRaw,cx,cy,north,flat,wg,eave,height,
   for(let k=0;k<6000&&T.length<38;k++){const x=-60+r()*120,y=-60+r()*120;if(x>lot[0]-1.5&&x<lot[2]+1.5&&y>lot[1]-1.5&&y<lot[3]+1.5)continue;if(ok(x,y,4.5))T.push([+x.toFixed(1),+y.toFixed(1),+(7+r()*6).toFixed(1),['b','b','m','s','s'][k%5]]);}
   const short=addr.replace(/,.*$/,''),area=addr.includes(',')?addr.replace(/^[^,]*,\s*/,''):'';
   const sq=wings.length===1&&Math.max(wings[0].r[2]-wings[0].r[0],wings[0].r[3]-wings[0].r[1])/Math.min(wings[0].r[2]-wings[0].r[0],wings[0].r[3]-wings[0].r[1])<1.3;
-  return{roofType:sq?'hip':'gable',eave0:eave,wall0:wall,address:addr,short,area,ehr,ads,updated:'2025',height,eave,footprint,perimeter,pts,edges,wings,roof,wall,north,nb,lot,door,trees:T,x:+cx.toFixed(1),y:+cy.toFixed(1),status:'Mustand',date:(typeof acct!=='undefined'&&acct.objDate&&acct.objDate[ehr])||new Date().toLocaleDateString('et-EE')};}
+  return{roofType:sq?'hip':'gable',eave0:eave,wall0:wall,address:addr,short,area,ehr,ads,updated:'2025',height,eave,footprint,perimeter,pts,edges,wings,roof,wall,north,nb,lot,door,trees:T,x:+cx.toFixed(1),y:+cy.toFixed(1),status:'Mustand',date:(()=>{try{return acct.objDate&&acct.objDate[ehr];}catch(_){return null;}})()||new Date().toLocaleDateString('et-EE')};} // acct pole näidismajade loomisel veel olemas
 const norm=s=>String(s||'').toLowerCase().replace(/,?\s*[a-zõäöü-]+ maakond\s*$/,'').replace(/\s+/g,' ').trim();
 /* Maa-ameti aadressiotsing (In-ADS, avalik, CORS lubatud): ainult hooned (EHR kood), korteri number jääb aadressi */
 const INADS='https://inaadress.maaamet.ee/inaadress/gazetteer',ADSC=new Map();
@@ -2390,7 +2390,7 @@ function labOcc(){if(!group||!dimData.length)return;const c=camera.position,k=c.
   dimData.forEach(d=>{const dir=d.p.clone().sub(c),L=dir.length();occRC.set(c,dir.normalize());occRC.far=L-.3;d.occ=occRC.intersectObjects(T,false).length>0;});}
 function tick(){requestAnimationFrame(tick);
   if(group){grow=reduce?1:Math.min(1,grow+.03);const e=1-Math.pow(1-grow,3);const hs=group.getObjectByName('house');hs.scale.y=Math.max(e,.001);
-    if(grow>=1&&!HOUSES[cur].thumb&&cur>=2&&!showRen){const h=HOUSES[cur];setTimeout(()=>{try{const c=document.createElement('canvas');c.width=480;c.height=300;const s=renderer.domElement,sc=Math.max(480/s.width,300/s.height);c.getContext('2d').drawImage(s,(s.width-480/sc)/2,(s.height-300/sc)/2,480/sc,300/sc,0,0,480,300);h.thumb=c.toDataURL('image/jpeg',.75);}catch(e){}},400);h.thumb='pending';}
+    if(grow>=1&&HOUSES[cur]&&!HOUSES[cur].thumb&&cur>=2&&!showRen){const h=HOUSES[cur];setTimeout(()=>{try{const c=document.createElement('canvas');c.width=480;c.height=300;const s=renderer.domElement,sc=Math.max(480/s.width,300/s.height);c.getContext('2d').drawImage(s,(s.width-480/sc)/2,(s.height-300/sc)/2,480/sc,300/sc,0,0,480,300);h.thumb=c.toDataURL('image/jpeg',.75);}catch(e){}},400);h.thumb='pending';}
     group.getObjectByName('dims').visible=showDims&&grow>=1;group.getObjectByName('distl').visible=showDist&&grow>=1;}
   controls.update();renderer.render(scene,camera);
   const els=$('labels').children,w=view.clientWidth,hh=view.clientHeight;
@@ -2479,6 +2479,8 @@ function ctx(){const h=HOUSES[cur],Y=yard(h),rf=roofFaces(h),wl=wallInfo(h);
     kasutaja_viimane_moot:lastMeasure,too:h.job?jobText(h.job):null,mall:tplOf(h)?{nimi:tplOf(h).name,naita_moote:tplOf(h).show}:null,ehitisregister:h.ehrData||null,ametlikud_moodud_maa_amet:lod2Ctx(h.lod2),paikesepoolne_tahk:sunFace(h),aia_pikkus_m:+(2*(Y.lw+Y.ll)).toFixed(0),
     ettevote:typeof acct==='undefined'?null:{nimi:acct.company,tegevusalad:acct.services,piirkond:acct.areas,katusematerjalid:acct.roofMat,fassaadimaterjalid:acct.wallMat,tootjad:acct.brands,garantii_aastat:acct.warranty,varu_katus_pct:+acct.wasteR||10,varu_fassaad_pct:+acct.wasteW||8}};}
 const hist=[];
+// AI vastab Markdowniga: **paks** tekstiks, muu ohutult tekstina
+const mdB=t=>String(t||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])).replace(/\*\*([^*\n]+)\*\*/g,'<b>$1</b>');
 function addMsg(role,text){$('cpop').hidden=false;const d=document.createElement('div');d.className='msg '+(role==='user'?'u':'a');d.textContent=text;$('msgs').appendChild(d);$('msgs').scrollTop=1e6;return d;}
 function localAnswer(q){const c=ctx(),hn=c.hinnangud,q2=q.toLowerCase();
   if(/katus/.test(q2)&&acct.roofMat&&acct.roofMat[0])return`Katuse pind on ~${fmt(hn.katus_kokku_m2)} m², koos 0,55 m räästaga ~${fmt(hn.katus_kokku_koos_raastaga_m2)} m². ${acct.roofMat[0]} koos 10% varuga: ~${fmt(hn.katus_kokku_koos_raastaga_m2*1.1,0)} m². ${HOUSES[cur].roofType==='lod2'?'Kalle on riigi LOD2 andmetest: '+HOUSES[cur].l2.slopeTxt+'.':'Kalle 30° on hinnang.'}`;
@@ -2492,7 +2494,7 @@ async function ask(q){if(chatBusy||!q.trim())return;chatBusy=true;addMsg('user',
     if(!sample){bub.textContent=localAnswer(q);}
     else{const msgs=[...hist,{role:'user',content:
       'Oled Vaade3D abiline Eesti '+(tplOf(HOUSES[cur])?tplOf(HOUSES[cur]).role:'katuse- ja fassaadifirmadele')+'. Kui küsitakse kogust või materjali, arvesta ettevõtte materjalide ja tegevusaladega (andmetes "ettevote") ning lisa ettevõtte varu (varu_katus_pct ja varu_fassaad_pct) ja ütle, et varu on soovituslik. Vasta eesti keeles, lühidalt (2–5 lauset), konkreetsete numbritega. Arvuta ainult allolevate andmete põhjal, näita lühidalt arvutuskäiku ja ütle selgelt, mis on hinnang (nt 30° kalle, aknad) ja mis riigi andmetest. Kui andmetest ei piisa, ütle mida on vaja. Hindu ära paku.\n\nOBJEKTI ANDMED (JSON):\n'+JSON.stringify(ctx())+'\n\nKÜSIMUS: '+q}];
-      const r=await sample(msgs,{cache:false,modelTier:'quick',onText:({text})=>{bub.textContent=text;}});bub.textContent=r.text;
+      const r=await sample(msgs,{cache:false,modelTier:'quick',onText:({text})=>{bub.innerHTML=mdB(text);}});bub.innerHTML=mdB(r.text);
       hist.push({role:'user',content:q},{role:'assistant',content:r.text});if(hist.length>8)hist.splice(0,2);}}
   catch(e){bub.textContent=localAnswer(q)+(e&&e.code==='rate_limited'?'\n(AI-abiline on hetkel hõivatud, vastasin kohalike arvutustega.)':'');}
   chatBusy=false;}
@@ -2592,7 +2594,7 @@ setTimeout(()=>(acct.objects||[]).forEach(e=>houseRestore(e)),0); // LOD2 laadij
 function toast(t){const el=$('toast');el.textContent=t;el.hidden=false;clearTimeout(toast.t);toast.t=setTimeout(()=>el.hidden=true,2600);}
 function initials(n){return (n||'?').split(/\s+/).filter(Boolean).slice(0,2).map(w=>w[0]).join('').toUpperCase();}
 function today(){return new Date().toISOString().slice(0,10);}
-function renderAcct(){try{renderPlans();}catch(e){}try{if($('studio')&&!$('studio').hidden){stSync();stRenderPanel();}}catch(e){}try{if($('cuCr'))cuDraw();}catch(e){}$('hdrBal').textContent=acct.credits;{const low=acct.credits<price('obj')&&!planCovers('obj');$('hdrCred').classList.toggle('low',low);$('hdrAdd').hidden=!low;}$('cBal').textContent=acct.credits;$('sBal').innerHTML=acct.credits+' <span>krediiti</span>';$('sBalEur').textContent='≈ '+(acct.credits/2).toFixed(2).replace('.',',').replace(',00','')+' € väärtuses';
+function renderAcct(){try{renderPlans();}catch(e){}try{if($('studio')&&!$('studio').hidden){stSync();stRenderPanel();}}catch(e){}try{if($('cuCr'))cuDraw();}catch(e){}$('hdrBal').textContent=String(+(+acct.credits).toFixed(2)).replace('.',',');{const low=acct.credits<price('obj')&&!planCovers('obj');$('hdrCred').classList.toggle('low',low);$('hdrAdd').hidden=!low;}$('cBal').textContent=acct.credits;$('sBal').innerHTML=String(+(+acct.credits).toFixed(2)).replace('.',',')+' <span>krediiti</span>';$('sBalEur').textContent='≈ '+(acct.credits/2).toFixed(2).replace('.',',').replace(',00','')+' € väärtuses';
   $('avComp').textContent=acct.company||acct.name;$('mName').textContent=acct.name;$('mEmail').textContent=acct.email;
   const av=$('avIni');av.innerHTML=acct.logo?`<img src="${acct.logo}" alt="" style="width:100%;height:100%;object-fit:contain;border-radius:50%;background:#fff">`:initials(acct.company||acct.name);
   $('logoPrev').innerHTML=acct.logo?`<img src="${acct.logo}" alt="Logo">`:initials(acct.company||acct.name);try{renderLgPrev();}catch(_){}
@@ -2661,7 +2663,7 @@ function seg2Sync(sel){const g=sel&&sel.nextElementSibling;if(!g||!g.classList.c
 ['pLang','pStart','pView'].forEach(id=>seg2($(id)));
 const PREF={pLang:'lang',pRoof:'defRoof',pWasteR:'wasteR',pWasteW:'wasteW',pStart:'start',pView:'defView'},NOTI={nLow:'nLow',nGen:'nGen',nInv:'nInv',nRef:'nRef',nNews:'nNews'};
 function renderProfHead(){const ini=initials(acct.name);$('pavIn').outerHTML=acct.avatar?`<img id="pavIn" src="${acct.avatar}" alt="">`:`<span id="pavIn">${ini}</span>`;
-  $('phName').textContent=acct.name||'—';$('phMeta').textContent=[acct.role,acct.company].filter(Boolean).join(' · ');$('phObj').textContent=HOUSES.length+' objekti';$('phCred').textContent=acct.credits+' krediiti';
+  $('phName').textContent=acct.name||'—';$('phMeta').textContent=[acct.role,acct.company].filter(Boolean).join(' · ');$('phObj').textContent=HOUSES.length+' objekti';$('phCred').textContent=String(+(+acct.credits).toFixed(2)).replace('.',',')+' krediiti';
   $('phSince').textContent='Liige alates '+(acct.hist[0]?acct.hist[0].d.slice(5,7)+'.'+acct.hist[0].d.slice(0,4):'—');}
 $('avIn').addEventListener('change',e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{const im=new Image();im.onload=()=>{const c=document.createElement('canvas'),z=Math.min(im.width,im.height);c.width=c.height=200;c.getContext('2d').drawImage(im,(im.width-z)/2,(im.height-z)/2,z,z,0,0,200,200);acct.avatar=c.toDataURL('image/jpeg',.85);save();renderProfHead();toast('Profiilipilt uuendatud');};im.src=r.result;};r.readAsDataURL(f);e.target.value='';});
 function fillForms(){Object.entries(PREF).forEach(([id,k])=>{$(id).value=acct[k]??$(id).value;seg2Sync($(id));});Object.entries(NOTI).forEach(([id,k])=>$(id).checked=!!acct[k]);renderProfHead();renderPromo();Object.entries(CF).forEach(([id,k])=>$(id).value=acct[k]||'');renderChips();['Name','Email','Phone','Role'].forEach(k=>$('p'+k).value=acct[k.toLowerCase()]||'');$('cName').value=acct.company||'';$('cReg').value=acct.reg||'';$('cVat').value=acct.vat||'';$('cWeb').value=acct.web||'';$('cAddr').value=acct.addr||'';}
@@ -2830,7 +2832,7 @@ function cvShow(p,opts,h){
 function closePreview(){applyBrand(null);$('place').hidden=true;PS=null;if(!CVSAVE)return;HOUSES.splice(0,HOUSES.length,...CVSAVE.houses);roofCol=CVSAVE.roofCol;wallCol=CVSAVE.wallCol;const c=CVSAVE.cur;CVSAVE=null;cvMode=null;
   document.body.classList.remove('cvm');$('wSite').hidden=true;$('cvBar').hidden=true;$('cvPanel').hidden=true;$('wPrev').hidden=true;$('wdg').hidden=true;$('renBtn').hidden=false;$('app').hidden=false;
   show('app');select(Math.min(c,HOUSES.length-1));try{recolor();}catch(e){}}
-$('wPrevX').onclick=()=>{const back=cvMode==='widget'||!$('wdg').hidden||!$('wSite').hidden;closePreview();if(back){$('app').hidden=false;show('settings','widget');}};
+$('wPrevX').onclick=()=>{const back=cvMode==='widget'||!$('wdg').hidden||!$('wSite').hidden;closePreview();if(back){$('app').hidden=false;if(window.PVFROM==='home')show('home');else show('settings','widget');}window.PVFROM=null;};
 /* ---------- website widget ---------- */
 const LEAD_CR=7;
 function wStyle(){return ['classic','min','dark'].includes(acct.wMode)?acct.wMode:'classic';}
@@ -2864,7 +2866,8 @@ $('wSave').onclick=()=>{acct.wTitle=$('wTitle').value.trim();acct.wDims=$('wDims
 $('wCopy').onclick=()=>{const t=$('wCode');t.select();try{navigator.clipboard.writeText(t.value).then(()=>toast('Kood kopeeritud'),()=>{document.execCommand('copy');toast('Kood kopeeritud');});}catch(_){document.execCommand('copy');toast('Kood kopeeritud');}};
 
 /* preview: firm's own website with the chosen widget */
-function siteMock(){const p=widgetPayload(),mode='box',st=wStyle(),nm=p.c||'Sinu Firma OÜ',esc=t=>String(t).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])),title=p.t||'Vaata oma maja 3D-s';
+function siteMock(){if(!window.PVFROM)window.PVFROM=$('settings')&&!$('settings').hidden?'settings':'home'; // „Sulge eelvaade“ viib sinna tagasi
+const p=widgetPayload(),mode='box',st=wStyle(),nm=p.c||'Sinu Firma OÜ',esc=t=>String(t).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])),title=p.t||'Vaata oma maja 3D-s';
   if(!CVSAVE)CVSAVE={houses:HOUSES.slice(),cur,roofCol,wallCol};cvMode='widget';applyBrand(p.col);
   const card=`<div class="wcard ${st!=='classic'?st:''}"><div class="wf"><div class="cvbar" style="padding:0;border:0;background:none;gap:10px"><div class="cvl">${initials(nm)}</div><div class="cvt"><b>${esc(nm)}</b><small>Tasuta 3D-vaade sinu majast</small></div></div></div><h1>${esc(title)}</h1><p>Sisesta aadress ja näed oma maja 3D-mudelit koos katuse, seinte ja krundi mõõtudega. Kui soovid, saad kohe küsida pakkumist.</p><form class="wform wsF"><label><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input type="text" data-addr="1" placeholder="Nt Narva mnt 5, Tallinn" autocomplete="off" aria-label="Maja aadress"></label><button type="submit">Näita maja</button></form>${window.wSvcBtns?wSvcBtns(p):''}<div class="wpts"><span>Riigi andmed</span><span>Ei pea kohale sõitma</span><span>Tasuta</span></div><a class="wpromo" href="https://vaade3d.ee" target="_blank" rel="noopener" title="Vaade3D: maja 3D-vaade aadressi järgi"><i></i><span>Töötab <b>Vaade<em>3D</em></b>-ga</span></a></div>`;
   const bar=`<form class="wbar wsF"><b>${esc(title)} · tasuta</b><input type="text" data-addr="1" placeholder="Sinu maja aadress" autocomplete="off" aria-label="Maja aadress"><button type="submit">Näita maja</button></form>`;
@@ -3207,7 +3210,7 @@ async function openAddress(q,input,A){
   const ex=HOUSES.findIndex(h=>h.ehr===A.ehr);if(ex>=0){show('app');select(ex);toast('Objekt on juba olemas, avasin selle');return;}
   if(!await canPay(price('obj'),'Objektivaade'))return;
   toast('Laen hoone andmeid…');let h0=await houseOf(A).catch(()=>null);
-  if(h0&&h0.need){const d=await askDims(h0.A);if(!d)return;h0=await houseOf(h0.A,d).catch(()=>null);}
+  let dm=null;if(h0&&h0.need){const d=await askDims(h0.A);if(!d)return;dm=d;h0=await houseOf(h0.A,d).catch(()=>null);}
   if(!h0||h0.need){toast('Hoone andmed ei laadinud, proovi uuesti');return;}
   const Q={work:[['katus','Katus'],['fassaad','Fassaad'],['molemad','Mõlemad'],['juurde','Juurdeehitus']],
     katus:['Uus katus','Katuse vahetus','Remont','Pesemine','Värvimine','Plekitööd / rennid'],fassaad:['Soojustus','Krohvimine','Värvimine','Pesemine','Voodrilaud','Akende vahetus'],
@@ -3220,6 +3223,8 @@ async function openAddress(q,input,A){
   const upd=()=>{const w=(qx.querySelector('[data-q="work"] [aria-pressed="true"]')||{}).dataset?.v;qx.querySelectorAll('[data-show]').forEach(g=>g.hidden=!(w&&(w===g.dataset.show||w==='molemad')));};
   qx.querySelectorAll('.qchips').forEach(g=>g.querySelectorAll('button').forEach(b=>b.onclick=()=>{if(!multi[g.dataset.q])g.querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed','false'));b.setAttribute('aria-pressed',b.getAttribute('aria-pressed')!=='true');upd();}));
   if(!TA)qx.querySelector('[data-q="work"] button').click();else TA.q.forEach((x,qi)=>{if(!x[2])qx.querySelector(`[data-q="t${qi}"] button`).click();});const rq=qx.querySelector('[data-q="roof"] [data-v="auto"]');if(rq)rq.click();
+  // käsitsi mõõtudes on katus juba valitud: ei küsi uuesti
+  if(dm){const g=qx.querySelector('[data-q="roof"]'),b=g&&g.querySelector(`[data-v="${dm.rt}"]`);if(b)b.click();if(g&&g.closest('.qgrp'))g.closest('.qgrp').hidden=true;}
   const okQ=await pr;if(!okQ)return;
   if(!await canPay(P1,'Objektivaade'))return;
   const sel=k=>[...qx.querySelectorAll(`[data-q="${k}"] [aria-pressed="true"]`)].map(b=>b.dataset.v);const job=TA?{tpl:TA.id,ans:TA.q.flatMap((x,qi)=>sel('t'+qi)),work:TA.id==='fassaad'?'fassaad':'katus',katus:[],fassaad:[],roof:sel('roof')[0]||'auto'}:{work:sel('work')[0]||'katus',katus:sel('katus'),fassaad:sel('fassaad'),roof:sel('roof')[0]||'auto'};
@@ -3241,6 +3246,7 @@ function sugShow(t){sugIn=t;const q=t.value.trim();clearTimeout(sugT);if(q.lengt
     sugA=r.slice(0,6);if(!sugA.length){sugHide();return;}sugI=0;sugRender();sugPlace();sug.hidden=false;},ADSC.has(norm(q))?0:250);}
 function sugPick(i){const a=sugA[i],t=sugIn;if(!a||!t)return;t._ads=a;t.value=a.full;sugHide();
   if(t.dataset.addr==='pick'){t.dispatchEvent(new Event('adspick'));return;}if(t.id==='newAddr'){$('dYes').click();return;}if(t.id==='wIn'){$('wForm').requestSubmit();return;}
+  {const wf=t.closest&&t.closest('.wsF');if(wf){wf.requestSubmit();return;}} // vidina eelvaade: valik avab maja kohe
   const v=t.value;if(t.id==='q')t.blur();openAddress(v,t.id==='homeIn'?t:null,a);}
 document.addEventListener('input',e=>{const t=e.target;if(t.dataset&&t.dataset.addr)sugShow(t);});
 document.addEventListener('focusin',e=>{const t=e.target;if(t.dataset&&t.dataset.addr&&t.value&&t.id!=='q')sugShow(t);});
@@ -3956,7 +3962,7 @@ async function clBoot(){const h=location.hash||'';
   const slow=setTimeout(()=>{if(!$('boot').hidden){clShowLogin();$('lErr').textContent='Ühendus on aeglane. Proovi lehte uuesti laadida või logi sisse.';}},8000);
   try{await clInit();const {data}=await CL.sb.auth.getSession();
     if(data.session&&await clLoad()){clearTimeout(slow);const ff=!$('login').hidden;await clWelcome(ff,clIsNew());
-      clIntoApp(ff,()=>{if(h.startsWith('#paid='))clPaid();else if(h.startsWith('#cancel'))history.replaceState(null,'',location.pathname);});}
+      clIntoApp(ff,()=>{if(h.startsWith('#paid='))clPaid();else if(h.startsWith('#cancel')){history.replaceState(null,'',location.pathname);show('settings','billing');toast('Makse katkestati. Krediite ei võetud.');}});}
     else{clearTimeout(slow);clShowLogin();}}
   catch(e){clearTimeout(slow);clShowLogin();$('lErr').textContent=clErr(e);}}
 
@@ -4306,6 +4312,8 @@ function stSceneWarn(tpl,sc){const ok=SC_TPL[tpl];if(!ok||!sc||!sc.scene||['none
   return {to,txt:`See tundub ${(sc.scene==='interior_room'&&SC_ROOMLBL[sc.room_type])||SC_LBL[sc.scene]||'teistsugune pilt'}. Kas soovid ${SC_PART[to]}?`};}
 function stSuggList(){const th=stTheme(STU.tpl),s=stSess();if(roomOn()&&(!s||!s.base))return ROOM_SUGG;if(!s||(!s.base&&!s.msgs.length))return th.sugg||[];if(STU.busy)return [];
   const sc=stTrayImgs(s).length?stScene(s):null,inside=STU.tpl==='sisek'||(sc&&sc.scene==='interior_room');
+  // Toode pildile ilma oma toodeteta: ühe fotoga on veel puudu asja foto (pilt 2), seega jäävad „pane pildi 2 …“ soovitused
+  if(STU.tpl==='pane'&&!th.prod&&!s.msgs.length&&stTrayImgs(s).length===1)return th.sugg||[];
   if(!s.base||!s.marks.length)return s.msgs.length?(th.follow||[]):(stTrayImgs(s).length&&th.need!=='addr'&&!th.p3?stSceneChips(STU.tpl,sc):(th.sugg||[]));const L=stLabels(s.marks),P=prodList(),out=[];
   const areas=s.marks.map((m,i)=>isArea(m)?L[i]:null).filter(Boolean),pts=s.marks.map((m,i)=>m.t==='point'?L[i]:null).filter(Boolean),pr=s.marks.filter(m=>m.t==='prod'&&m.pid);
   if(pr.length){const k=P.findIndex(p=>p.id===pr[0].pid);if(k>=0)out.push(`Pane toode ${k+1} märgitud kohta`,`Pane toode ${k+1} märgitud kohta, õhtune valgus`);}
@@ -4436,7 +4444,7 @@ function stHomeCards(){try{const e=t=>String(t==null?'':t).replace(/[&<>"']/g,c=
   const L=(acct.studio||[]).filter(s=>(s.imgs&&s.imgs.length)||(s.msgs&&s.msgs.length)||(s.draft&&s.draft.trim())||s.p3job).slice().sort((a,b)=>(b.upd||0)-(a.upd||0)).slice(0,8);
   return L.map(s=>{const T=tplById(s.tpl),t1=s.imgs&&s.tray&&s.imgs[s.tray[0]],lo=(s.msgs||[]).filter(m=>m.gen&&m.out&&m.out.length).map(m=>m.out[0]).pop(),u=stAiImg((t1&&t1.src)||lo||s.thumb||''),gens=(s.msgs||[]).filter(m=>m.gen&&m.out&&m.out.length).length,done=gens>0||(s.p3job&&s.p3job.status==='done');
     const d=s.upd?new Date(s.upd).toLocaleDateString('et-EE'):(s.date||'');
-    return `<button type="button" class="ocard" data-st="${e(s.id)}">${u?`<img src="${e(u)}" alt="">`:'<span class="imgph">Pilte pole veel</span>'}${s.p3job&&s.p3job.status==='pending'?'<i class="oprog" aria-hidden="true"><b></b></i>':''}<div class="ob"><div class="ot"><b>${e(s.title&&s.title!=='Uus töö'?s.title:(T?(T.id==='vaba'?'Vaba idee':T.name):'Töö'))}</b><span class="st ${done?'':'stw'}">${done?gens+' AI-pilti':'Pooleli'}</span></div><span class="fhint">${e(T?(T.id==='vaba'?'Vaba idee':T.name):'Stuudio')} · ${e(d)}</span><div class="om"><span>${(s.tray||[]).length} pilti</span>${s.draft&&s.draft.trim()?`<span>${e(s.draft.trim().slice(0,40))}</span>`:''}</div></div></button>`;}).join('');}catch(_){return '';}}
+    return `<button type="button" class="ocard" data-st="${e(s.id)}">${u?`<img src="${e(u)}" alt="">`:'<span class="imgph">Pilte pole veel</span>'}${s.p3job&&s.p3job.status==='pending'?'<i class="oprog" aria-hidden="true"><b></b></i>':''}<div class="ob"><div class="ot"><b>${e(s.title&&s.title!=='Uus töö'?s.title:(T?(T.id==='vaba'?'Vaba idee':T.name):'Töö'))}</b><span class="st ${done?'':'stw'}">${done?(gens?gens+' AI-pilti':'3D-mudel valmis'):'Pooleli'}</span></div><span class="fhint">${e(T?(T.id==='vaba'?'Vaba idee':T.name):'Stuudio')} · ${e(d)}</span><div class="om"><span>${(s.tray||[]).length?(s.tray||[]).length+' pilti':''}</span>${s.draft&&s.draft.trim()?`<span>${e(s.draft.trim().slice(0,40))}</span>`:''}</div></div></button>`;}).join('');}catch(_){return '';}}
 function stHomeActs(){document.querySelectorAll('#ocards .ocard[data-st]').forEach(el=>{const s=(acct.studio||[]).find(x=>x.id===el.dataset.st);if(!s)return;const w=document.createElement('div');w.className='owrap';el.replaceWith(w);w.appendChild(el);
   const d=document.createElement('button');d.type='button';d.className='odel';d.title='Kustuta töö';d.setAttribute('aria-label','Kustuta töö');d.innerHTML='<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/></svg>';
   d.onclick=async e=>{e.stopPropagation();const ok=await ask2('Kustuta töö?','„'+(s.title&&s.title!=='Uus töö'?s.title:'Vaba idee')+'“ ja selle pildid kustutatakse. Seda ei saa tagasi võtta.','Kustuta');if(!ok)return;acct.studio=acct.studio.filter(x=>x.id!==s.id);if(STU.sid===s.id){STU.sid=null;STU.edit=null;}save();renderHome();toast('Töö kustutatud');};w.appendChild(d);
@@ -6269,7 +6277,7 @@ async function m3OfficialGlb(url,f){await p3Lib('exporters/GLTFExporter.js');con
     g.applyMatrix4(m.matrixWorld);const n=new THREE.Mesh(g,m.material);n.name=m.name;out.add(n);});
   const ab=await new Promise((res,rej)=>{try{new THREE.GLTFExporter().parse(out,res,{binary:true});}catch(e){rej(e);}});
   return new Blob([ab],{type:'model/gltf-binary'});}
-async function p3Download(url,fmt,btn){const base='3d-mudel';
+async function p3Download(url,fmt,btn){let base='3d-mudel';try{const m=m3ByUrl(url),t=m&&m3Title(m);const sl=t&&t!=='3D-mudel'?t.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'').slice(0,50):'';if(sl)base=sl+'-3d';}catch(_){}
   if(fmt==='glbm'){const f=m3FitFor(url);if(!f){toast('Maa-ameti mõõtudes allalaadimiseks ava mudel aadressiga ja oota, kuni mõõtkava on seadistatud.');return;}
     const t0=btn&&btn.innerHTML;if(btn){btn.disabled=true;btn.innerHTML='<b>Teen faili…</b><small>Mõni sekund</small>';}
     try{await saveFile(base+'-maa-amet.glb',await m3OfficialGlb(url,f));toast(base+'-maa-amet.glb salvestatud (meetrites)');}catch(e){console.warn(e);toast('Faili ei õnnestunud teha. Proovi originaali.');}
@@ -6926,7 +6934,7 @@ const n=v=>String(+(+v).toFixed(2)).replace('.',',');
 const eurOf=cr=>{const e=(acct.admRules&&+acct.admRules.eur)||0.5,v=cr*e;return (Number.isInteger(+v.toFixed(2))?String(+v.toFixed(2)):v.toFixed(2)).replace('.',',')+' €';};
 function rates(){const box=document.querySelector('.rates.r3');if(!box)return;
   const R=[['Maja 3D ja mõõdud','obj','Aadressist 3D, päris katus, mõõdud ja kaugused'],['3D-fail fotodest','3d','2–4 fotost pööratav 3D-mudel'],['AI pilt fotost','design','Uus välimus, toode pildile, sisekujundus'],['Esituspilt','pic','Fotorealistlik pilt maja 3D-mudelist'],['Video','video','5 s video fotost või kahe pildi vahel']];
-  box.innerHTML=R.filter(r=>COSTS[r[1]]!=null).map(([t,k,d])=>{const c=+COSTS[k];return `<div class="rate"><b>${t}</b><span>${n(c)} krediiti · ${eurOf(c)}</span><small class="fhint" style="display:block;margin-top:4px">${d}</small></div>`;}).join('');
+  box.innerHTML=R.filter(r=>COSTS[r[1]]!=null).map(([t,k,d])=>{const c=+COSTS[k];return `<div class="rate"><b>${t}</b><span>${n(c)} ${c===1?'krediit':'krediiti'} · ${eurOf(c)}</span><small class="fhint" style="display:block;margin-top:4px">${d}</small></div>`;}).join('');
   document.querySelectorAll('.pack[data-cr]').forEach(p=>{const cr=+p.dataset.cr,s=p.querySelector('small');if(s)s.textContent=`${Math.floor(cr/COSTS.obj)} maja 3D · ${Math.floor(cr/COSTS.design)} AI pilti · ${Math.floor(cr/COSTS.video)} videot`;});}
 window.v3dRates=rates;
 const _ra=renderAcct;renderAcct=function(){const r=_ra.apply(this,arguments);try{rates();}catch(_){}return r;};
