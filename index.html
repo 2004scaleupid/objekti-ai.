@@ -3723,7 +3723,12 @@ function clWelcome(fromForm,isNew){return new Promise(res=>{const nm=String(acct
   setTimeout(fin,1050);});}
 function clIntoApp(fromForm,after){const L=$('login'),B=$('boot');(fromForm?L:B).classList.add('out');
   setTimeout(()=>{B.hidden=true;B.classList.remove('out','wel');L.classList.remove('wel','out');const a=$('app');a.classList.add('appin');enter();
-    void a.offsetWidth;a.classList.remove('appin');if(after)after();},clRM()?150:350);}
+    void a.offsetWidth;a.classList.remove('appin');if(after)after();clPendingAddr();},clRM()?150:350);}
+// avalehe (vaade3d.ee) aadressiotsing: ?a=<aadress> jääb meelde ka sisselogimise/konto loomise ajaks (1 päev) ja avatakse siis
+function clPendingAddr(){let v=null;try{v=JSON.parse(localStorage.getItem('v3d_qa')||'null');localStorage.removeItem('v3d_qa');}catch(_){}
+  if(!v||typeof v.a!=='string'||Date.now()-(+v.t||0)>864e5)return;const a=v.a.slice(0,120).trim();if(a.length<3)return;
+  show('home');const i=$('homeIn');if(i){i.value=a;i.scrollIntoView({block:'center'});}setTimeout(()=>openAddress(a,i),300);}
+{const qa=new URLSearchParams(location.search).get('a');if(qa){try{localStorage.setItem('v3d_qa',JSON.stringify({a:qa.slice(0,120),t:Date.now()}));}catch(_){}history.replaceState(null,'',location.pathname+location.hash);}}
 async function clInit(){if(CL.sb)return CL.sb;await clLoadSdk();CL.sb=window.supabase.createClient(CLOUD.url,CLOUD.key,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true,storage:CL_STORE}});
   CL.sb.auth.onAuthStateChange((ev)=>{if(ev==='PASSWORD_RECOVERY')setTimeout(clNewPass,300);});return CL.sb;}
 async function clFn(name,body,opt){opt=opt||{};const h={'Content-Type':'application/json',apikey:CLOUD.key};
