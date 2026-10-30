@@ -838,6 +838,7 @@ body:not(.cvm) #mSeg{display:none}
 .osrch{display:flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:999px;padding:5px 12px;background:var(--paper);color:var(--muted)}.osrch input{border:0;background:none;outline:none;font:500 13px var(--display);color:var(--ink);width:160px}
 .odel.ogen{right:80px}
 .dlg.wide .dbox{max-width:720px}
+#p3AdS.need{color:var(--accent);font-weight:600}
 .hvk{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}@media (max-width:560px){.hvk{grid-template-columns:minmax(0,1fr)}}
 .hvo{display:flex;flex-direction:column;text-align:left;padding:0;border:1.5px solid var(--line);border-radius:12px;background:var(--bg);color:var(--ink);font:inherit;cursor:pointer;overflow:hidden;min-width:0}
 .hvo[aria-pressed="true"]{border-color:var(--accent);box-shadow:0 0 0 3px rgba(229,72,45,.16)}.hvo:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
@@ -3256,12 +3257,12 @@ async function openAddress(q,input,A){
   const chips=(k,arr)=>`<div class="qchips" data-q="${k}">`+arr.map(o=>{const [v,l]=Array.isArray(o)?o:[o,o];return `<button type="button" data-v="${v}" aria-pressed="false">${l}</button>`;}).join('')+'</div>';
   const TA=(t=>t&&t.input==='addr'&&Array.isArray(t.q)&&Array.isArray(t.show)?t:null)(tplById(acct.activeTpl));const P1=price('obj');
   /* 30.10: kohe valik, kuidas maja teeme: päris välimus fotodega (soovitame) või ainult mõõdud aadressi järgi */
-  const PV=window.v3dPH,PF=+(P1+price('3d')).toFixed(2);let hv='foto';
+  const PV=window.v3dPH,PF=+(P1+price('3d')).toFixed(2);let hv=PV&&PV.n()?'foto':'lihtne';/* fotodega kaart on esimene; vaikimisi valitud siis, kui fotod on juba lisatud */
   const yl=()=>hv==='foto'?(PV.n()>=4?'Loo objekt + 3D fotodest · '+crTxt(PF):'Lisa 4 fotot majast'):'Loo objekt · '+(P1?crTxt(P1):curPlan().name+' paketis');
   const HVH=PV?`<div class="qgrp"><b>Kuidas maja teeme?</b><div class="hvk">
-    <button type="button" class="hvo" data-hv="foto" aria-pressed="true"><span class="hvi"><img class="ct" src="examples/building-poster.webp" alt="Näidis: päris välimusega 3D-mudel maja fotodest"><img class="in" src="examples/building-1.webp" alt=""><i>Soovitame</i></span>
+    <button type="button" class="hvo" data-hv="foto" aria-pressed="${hv==='foto'}"><span class="hvi"><img class="ct" src="examples/building-poster.webp" alt="Näidis: päris välimusega 3D-mudel maja fotodest"><img class="in" src="examples/building-1.webp" alt=""><i>Soovitame</i></span>
       <span class="hvt"><b>Päris välimus fotodega</b><small>Aadress + 4 fotot majast (eest, vasakult, tagant, paremalt). AI teeb päris välimusega 3D-mudeli, mõõdud tulevad Maa-ametist.</small><span class="pp">${crTxt(PF)}</span><span class="hvn" id="hvN"></span></span></button>
-    <button type="button" class="hvo" data-hv="lihtne" aria-pressed="false"><span class="hvi"><img src="media/maja-lihtne.jpg" alt="Näidis: maja 3D Maa-ameti andmetest"></span>
+    <button type="button" class="hvo" data-hv="lihtne" aria-pressed="${hv==='lihtne'}"><span class="hvi"><img src="media/maja-lihtne.jpg" alt="Näidis: maja 3D Maa-ameti andmetest"></span>
       <span class="hvt"><b>Ainult mõõdud aadressi järgi</b><small>Valmis kohe, fotosid pole vaja. Täpsed katuse, seinte ja krundi mõõdud. Välimus on lihtsustatud.</small><span class="pp">${P1?crTxt(P1):curPlan().name+' paketis'}</span></span></button>
   </div></div>`:'';if(!PV)hv='lihtne';
   const pr=ask2('Uus objekt',`${h0.address}. Vali, kuidas maja teeme, ja vasta paarile küsimusele, et vaade ja AI-abiline oleksid sinu tööks häälestatud.`,yl(),
@@ -4757,7 +4758,7 @@ const P3ISS={interior:'Siseruum',aerial:'õhufoto – pildista maapinnalt',wrong
 function p3Cloud(){return !!(CLOUD&&CL.cid);}
 function p3New(o){o=o||{};const T=tplById(STU.tpl)||{},fix=(T.photo3d||{}).subject;const sub=P3D[o.subject]?o.subject:P3D[fix]?fix:null;
   const pool=(o.photos||[]).filter(Boolean).slice(0,P3MAXPOOL);
-  return {subject:sub,lock:!!(o.lock||fix),single:!!o.single,pool,photos:[0,1,2,3].map(i=>pool[i]||null),manual:false,unused:new Map(),asg:-1,product:o.product||null,chk:null,checking:0,force:false,gen:0,ehr:o.ehr||null,label:o.label||null,err:null};}
+  return {subject:sub,lock:!!(o.lock||fix),single:!!o.single,pool,photos:[0,1,2,3].map(i=>pool[i]||null),manual:false,unused:new Map(),asg:-1,product:o.product||null,chk:null,checking:0,force:false,gen:0,ehr:o.ehr||null,label:o.label||null,err:null,auto:!!o.auto};}
 const p3List=()=>STU.p3.photos.filter(Boolean);
 // fotodest ei saa üht 3D-eset: alati kaks teed edasi (toa 3D või eseme 3D), mitte tupik
 // üks toafoto komplektis ei ole surnud ots: server märgib ainult selle foto (vahetamiseks); terve toakomplekt = c.interior
@@ -4765,7 +4766,7 @@ const p3Dead=c=>!!c&&(c.interior||c.unsup||c.subject==='unsupported'||(c.photos|
 function p3ChkFor(){const c=STU.p3&&STU.p3.chk,L=p3List();return c&&c.subj===STU.p3.subject&&c.list.length===L.length&&c.list.every((x,i)=>x===L[i])?c:null;}
 function p3Sess(){const P=STU.p3;let s=stSess();if(!s){s=stNewSession();s.title=P.label||'3D-mudel';}Object.assign(s,{p3sub:P.subject,p3lock:P.lock,p3ehr:P.ehr,p3label:P.label,p3product:P.product,p3single:P.single});return s;}
 function p3Note(s,t){if(!s||!t||(s.msgs.at(-1)||{}).note===String(t).slice(0,300))return;s.msgs.push({role:'a',note:String(t).slice(0,300),d:Date.now()});s.msgs=s.msgs.slice(-20);}
-function p3CanSend(){const P=STU.p3,s=stSess(),D=P&&P3D[P.subject];if(!p3Cloud()||!D||P.checking||P.starting||(s&&s.p3job))return false;
+function p3CanSend(){const P=STU.p3,s=stSess(),D=P&&P3D[P.subject];if(!p3Cloud()||!D||P.checking||P.starting||(s&&s.p3job))return false;if(P.subject==='building'&&!P.ehr)return false;/* 30.10: maja ainult aadressiga */
   const n=p3List().length,c=p3ChkFor();return (P.single?n===1:n>=D.min&&n<=D.max)&&!!c&&!!c.token&&(c.ok||(c.soft&&P.force));}
 async function p3AddFiles(list,slot){if(!STU.p3)STU.p3=p3New();const P=STU.p3,s0=stSess();if(s0&&s0.p3job){toast('See 3D-mudel on juba tehtud. Alusta uut.');return;}
   const max=P.subject?P3D[P.subject].max:4,arr=[...list].filter(f=>/^image\//.test(f.type)||/\.(jpe?g|png|webp|heic|heif)$/i.test(f.name||''));
@@ -4812,7 +4813,9 @@ async function p3Check(mode){const P=STU.p3,g=P.gen,sub=P.subject;
       else P.chk={...r,list:L,subj:P.subject,unsup:true};}
     else{P.chk={...r,list:L,subj:sub};p3Note(stSess(),r.summary);}}
   catch(e){if(P.gen===g)P.err=clErr(e);}
-  finally{if(P.gen===g){P.checking=0;stSave();if(!$('studio').hidden)stRender();}}}
+  finally{if(P.gen===g){P.checking=0;stSave();if(!$('studio').hidden)stRender();
+    /* 30.10: uuest objektist tulles (krediidid kinnitatud „Uus objekt“ aknas) algab mudel ise, kui fotod sobivad */
+    if(P.auto&&STU.p3===P){const c=p3ChkFor();if(c&&c.ok&&p3CanSend()){P.auto=false;p3Start();}else if(c||P.err)P.auto=false;}}}}
 async function p3Start(){if(!p3CanSend())return;const P=STU.p3,L=p3List(),c=p3ChkFor(),sub=P.subject;
   if(!await canPay(price('3d'),'Fotod → 3D-mudel'))return;
   const s=p3Sess();let object_id;
@@ -4829,7 +4832,7 @@ async function p3Poll(sid){if(P3POLL[sid]||!CL.cid)return;P3POLL[sid]=1;
       await new Promise(r=>setTimeout(r,10000));let r=null;
       try{r=await clFn('ai-3d',{action:'status',id:j.id});}catch(e){if(e.status===404){j.status='failed';j.err='Tööd ei leitud.';}else continue;}
       if(r){j.stage=r.stage||j.stage;if(j.stage!=='cleaning'&&!j.tm)j.tm=Date.now();if(r.cleaned&&r.cleaned.length)j.cleaned=r.cleaned.filter(safeUrl);
-        if(r.status==='done'&&safeUrl(r.url)){j.status='done';j.url=r.url;p3Note(s,'3D-mudel on valmis.');p3LoadModels();const pr=r.product_id&&(acct.products||[]).find(x=>x.sid===r.product_id);if(pr){pr.model=r.url;p3Note(s,'Mudel salvestati toote „'+pr.name+'“ juurde.');}}
+        if(r.status==='done'&&safeUrl(r.url)){j.status='done';j.url=r.url;p3Note(s,'3D-mudel on valmis.');p3LoadModels();if(j.subject==='building'&&s.p3ehr&&!$('studio').hidden&&STU.sid===sid){stSave();setTimeout(()=>{if(!$('studio').hidden&&STU.sid===sid)p3Plot(s);},900);}const pr=r.product_id&&(acct.products||[]).find(x=>x.sid===r.product_id);if(pr){pr.model=r.url;p3Note(s,'Mudel salvestati toote „'+pr.name+'“ juurde.');}}
         else if(r.status==='failed'){j.status='failed';j.err=r.error||'Töö ebaõnnestus, krediidid tagastati.';p3Note(s,j.err);clRefresh();}}
       stSave();if(!$('studio').hidden&&STU.sid===sid)stRender();}}
   finally{delete P3POLL[sid];}}
@@ -4840,11 +4843,11 @@ function p3Render(){const box=$('st3d'),th=stTheme(STU.tpl);box.hidden=!th.p3;if
   if(!STU.p3)STU.p3=p3New();const P=STU.p3,s=stSess(),j=s&&s.p3job;
   if(j){if(!P.starting)p3Resume();box.innerHTML=p3JobHtml(j);if(j.status==='done'){p3View($('p3V'),j.url,!j.seen);if(!j.seen){j.seen=1;stSave();}}
     if(j.status==='pending'){p3Tick();if(!P3TICK)P3TICK=setInterval(p3Tick,1000);}
-    $('p3New').onclick=()=>openStudio(STU.tpl,null,{subject:j.subject,lock:P.lock,ehr:P.ehr,label:P.label});return;}
+    $('p3New').onclick=()=>openStudio(STU.tpl,null,{subject:j.subject,lock:P.lock,ehr:P.ehr,label:P.label});const pl=$('p3Plot');if(pl)pl.onclick=()=>p3Plot(s);return;}
   if(!(P3V&&P3EXV&&P3V.url===P3EXV))p3Dispose();const sub=P.subject,D=P3D[sub]||null,slots=P.single?['Pilt']:(D||P3D.object).slots.slice(0,D?D.max:4),c=p3ChkFor(),n=p3List().length;
   let h='';if(!p3Cloud())h+=`<p class="p3note">3D-mudel töötab ainult kontoga. Logi sisse või loo konto, siis saad fotodest mudeli teha.</p>`;
   if(!P.lock)h+=`<div class="p3sub"><b>Mis fotodel on?</b><div class="p3seg" role="group" aria-label="Mis fotodel on?">${Object.entries(P3D).map(([k,v])=>`<button type="button" data-sub="${k}" aria-pressed="${k===sub}">${v.n}</button>`).join('')}${sub?'<button type="button" class="linkbtn p3exlink" id="p3ExL">Vaata näidet</button>':''}</div><small>${P.aiSub&&P.aiSub===sub?'AI tundis ära, saad muuta. ':''}Toad, maastik ja inimesed ei sobi: 3D-mudel tehakse ühest asjast.</small></div>`;
-  if(sub==='building'&&p3Cloud()){const a=P.ehr?m3AddrTxt(P.ehr):'';h+=`<div class="p3addr"><label for="p3Ad"><b>Aadress</b> <small>(valikuline)</small></label><input id="p3Ad" type="text" data-addr="pick" autocomplete="off" maxlength="120" placeholder="nt Narva mnt 5, Tallinn" value="${stEsc(a)}"><small id="p3AdS">${a?P3AD_OK:P3AD_HINT}</small><label class="p3g"${P.ehr?'':' hidden'}><input type="checkbox" id="p3Gd"${P.garden!==false?' checked':''}> Lisa aed ja ümbrus <small>(puud, piirded, naabrid Maa-ameti andmetest; tasuta)</small></label></div>`;}
+  if(sub==='building'&&p3Cloud()){const a=P.ehr?m3AddrTxt(P.ehr):'';h+=`<div class="p3addr"><label for="p3Ad"><b>Maja aadress</b> <small>(kohustuslik)</small></label><input id="p3Ad" type="text" data-addr="pick" autocomplete="off" maxlength="120" placeholder="nt Narva mnt 5, Tallinn" value="${stEsc(a)}"><small id="p3AdS"${a?'':' class="need"'}>${a?P3AD_OK:P3AD_HINT}</small><label class="p3g"${P.ehr?'':' hidden'}><input type="checkbox" id="p3Gd"${P.garden!==false?' checked':''}> Lisa aed ja ümbrus <small>(puud, piirded, naabrid Maa-ameti andmetest; tasuta)</small></label></div>`;}
   const exS=sub||'building';if(!P.single&&!p3List().length&&!P.err&&!P.checking&&P3D[exS]){p3LoadEx();const E=P3EX&&P3EX[exS];if(p3ExOk(E))h+=`<section class="p3exm" aria-label="Näide"><div class="hd"><b>Näide</b><span>${stEsc(E.title||'')} → valmis 3D-mudel</span></div><div class="row"><div class="ph">${E.photos.slice(0,4).map(x=>`<figure><img src="${stEsc(x.src)}" alt="Näidisfoto: ${stEsc(x.label||'')}" loading="lazy"><figcaption>${stEsc(x.label||'')}</figcaption></figure>`).join('')}</div><span class="ar" aria-hidden="true">→</span><div class="p3v p3exv">${E.poster?`<img class="poster" src="${stEsc(E.poster)}" alt="Näidise valmis 3D-mudel" loading="lazy">`:''}<button type="button" class="play">Vaata 3D-s</button><div class="p3load"><span>Laadin 3D-mudelit…</span><div class="p3bar"><i></i></div></div></div></div><small>Sinu fotodest tuleb samasugune pööratav mudel 5–7 minutiga.</small></section>`;}
   let k=0;h+=`<div class="p3slots">${slots.map((nm,i)=>{const ph=P.photos[i],ms=!ph&&c&&(c.missing||[]).find(m=>m.side===P3SIDES[i]);let pr=ph&&c?c.photos[k++]:null;if(ms)pr={tip:ms.tip,issues:['missing']};const bad=(pr&&!pr.ok)||!!ms;
     return `<div class="p3slot${ph?' has':''}${bad?' bad':''}${pr&&pr.ok?' good':''}"><button type="button" class="pick" data-slot="${i}" aria-label="${ph?'Vaheta foto':'Lisa foto'}: ${stEsc(nm)}">${ph?`<img src="${stEsc(ph)}" alt="">`:'<span class="plus" aria-hidden="true">+</span>'}</button><span class="cap">${stEsc(nm)}${D&&i>=D.min?' <small>(soovi korral)</small>':''}</span>${ph?`<button type="button" class="x" data-rm="${i}" aria-label="Eemalda foto: ${stEsc(nm)}">×</button>`:''}${bad?`<span class="tip">${stEsc(p3Dead(c)?(c.interior?P3ISS.interior:'Ei sobi'):(pr.tip||pr.issues.map(x=>P3ISS[x]||x).join(', ')))}</span>`:''}</div>`;}).join('')}</div>`;
@@ -4874,9 +4877,9 @@ function p3Render(){const box=$('st3d'),th=stTheme(STU.tpl);box.hidden=!th.p3;if
     P.photos=P.photos.map(x=>x===u?null:x);if(v!=='none')P.photos[+v]=u;P.asg=-1;P.manual=true;P.unused.delete(u);p3Changed();});
   const f=$('p3Force');if(f)f.onchange=()=>{P.force=f.checked;stSync();};
   const gch=$('p3Gd');if(gch)gch.onchange=()=>{P.garden=gch.checked;};
-  const ad=$('p3Ad');if(ad){const set=a=>{P.ehr=a?a.ehr:null;if(a)ADDRN[a.ehr]=a.full;const s2=stSess();if(s2)s2.p3ehr=P.ehr;const gl=box.querySelector('.p3g');if(gl)gl.hidden=!P.ehr;$('p3AdS').textContent=a?P3AD_OK:ad.value.trim()?'Vali aadress nimekirjast. Mudel tehakse ka ilma aadressita.':P3AD_HINT;};
+  const ad=$('p3Ad');if(ad){const set=a=>{P.ehr=a?a.ehr:null;if(a)ADDRN[a.ehr]=a.full;const s2=stSess();if(s2)s2.p3ehr=P.ehr;const gl=box.querySelector('.p3g');if(gl)gl.hidden=!P.ehr;$('p3AdS').textContent=a?P3AD_OK:ad.value.trim()?'Vali aadress nimekirjast.':P3AD_HINT;$('p3AdS').classList.toggle('need',!a);stSync();};
     ad.addEventListener('adspick',()=>set(ad._ads));ad.addEventListener('input',()=>{if(P.ehr&&!(ad._ads&&ad._ads.full===ad.value))set(null);});}}
-const P3AD_HINT='Aadressiga saab mudel ametlikud mõõdud ja õige mõõtkava (Maa-amet).',P3AD_OK='✓ Seotud: ametlikud mõõdud ja mõõtkava tulevad Maa-ametist.';
+const P3AD_HINT='Sisesta maja aadress. Ilma selleta maja 3D-mudelit ei tee: mõõdud, mõõtkava, aed ja ümbrus tulevad Maa-ametist.',P3AD_OK='✓ Seotud: ametlikud mõõdud ja mõõtkava tulevad Maa-ametist.';
 // Edenemine: aeg alates algusest. Päris töö 2740abc1: puhastus 56 s, mudel ~4 min. 100% ainult siis, kui server ütleb valmis.
 const P3CLEAN=60000,P3MODEL=300000; // kokku ~6 min, päris töö Raudürdi 30: 5 min 50 s
 const p3RM=()=>!!(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches);
@@ -4894,6 +4897,8 @@ let P3TICK=0;
 function p3Tick(){const s=stSess(),j=s&&s.p3job,bar=$('p3PctBar');if(!j||j.status!=='pending'||!bar||$('studio').hidden){clearInterval(P3TICK);P3TICK=0;return;}
   const p=p3Prog(j),tp=p3TipFor(j),t=$('p3Tip');bar.style.width=p.pct.toFixed(1)+'%';$('p3Pct').textContent=Math.floor(p.pct)+'%';$('p3Eta').textContent=p3Left(p.left);$('p3Prg').setAttribute('aria-valuenow',String(Math.floor(p.pct)));
   if(t&&t.textContent!==tp){t.textContent=tp;t.classList.remove('in');void t.offsetWidth;t.classList.add('in');}}
+/* 30.10: aadressiga maja valmis -> näita kohe krundil (aed, piirded, puud, naabrid, ametlikud mõõdud), mitte üksi valgel taustal */
+function p3Plot(s){const j=s&&s.p3job;if(!j||j.status!=='done'||!safeUrl(j.url)||!s.p3ehr)return;const m=Object.assign({},m3ByUrl(j.url),{ehr:s.p3ehr,garden:true});m3Open(m,true);}
 function p3JobHtml(j){const st=j.status,cl=(j.cleaned||[]).filter(safeUrl),cur=st==='done'?4:p3Cleaning(j)?1:2;
   if(st==='failed')return `<p class="p3err">${stEsc(j.err||'Töö ebaõnnestus, krediidid tagastati.')}</p>`+(cl.length?`<div class="p3clean"><b>Puhastatud fotod</b><div>${cl.map(u=>`<img src="${stEsc(u)}" alt="Puhastatud foto" loading="lazy">`).join('')}</div></div>`:'')+`<button type="button" class="ghost" id="p3New" style="align-self:flex-start">Uus 3D-mudel</button>`;
   let h=`<ol class="p3trk" aria-label="3D-mudeli sammud">${['Fotode kontroll','Puhastan fotosid','Ehitan 3D-mudelit','Valmis'].map((t,i)=>`<li class="${i<cur?'ok':i===cur?'on':''}"${i===cur?' aria-current="step"':''}><i aria-hidden="true">${i<cur?'✓':i+1}</i><span>${t}</span></li>`).join('')}</ol>`;
@@ -4902,6 +4907,7 @@ function p3JobHtml(j){const st=j.status,cl=(j.cleaned||[]).filter(safeUrl),cur=s
     h+=`<p class="p3tip in" id="p3Tip">${stEsc(p3TipFor(j))}</p>`;
     if(ph.length)h+=`<div class="p3scan${cl.length?'':' dim'}" aria-label="${cl.length?'Puhastatud fotod':'Sinu fotod'}">${ph.map(u=>`<div class="sc"><img src="${stEsc(u)}" alt=""></div>`).join('')}</div>`;
     h+=`<small class="fhint">Võid vahepeal äpis muud teha või lehe kinni panna, edenemine jätkub siit.</small>`;}
+  if(st==='done'&&safeUrl(j.url)&&j.subject==='building'&&stSess()&&stSess().p3ehr)h+=`<button type="button" class="send" id="p3Plot" style="align-self:stretch">Vaata maja krundil: aed, piirded, puud ja mõõdud</button>`;
   if(st==='done'&&safeUrl(j.url))h+=`<div class="p3v" id="p3V"><div class="p3load"><span>Laadin 3D-mudelit…</span><div class="p3bar"><i></i></div></div></div><div class="p3act"><span class="fhint">Pööra hiire või sõrmega, suumi rattaga või kahe sõrmega.</span></div>${p3ActsCard(j.url)}`;
   if(st==='done'&&cl.length)h+=`<div class="p3clean"><b>Puhastatud fotod</b><div>${cl.map(u=>`<img src="${stEsc(u)}" alt="Puhastatud foto" loading="lazy">`).join('')}</div></div>`;
   return h+`<button type="button" class="ghost" id="p3New" style="align-self:flex-start">Uus 3D-mudel</button>`;}
@@ -6928,13 +6934,15 @@ $('mhAdd').onclick=()=>$('mhFile').click();
 $('mhFile').onchange=e=>{const f=[...e.target.files].filter(x=>/^image\//.test(x.type)||/\.(jpe?g|png|webp|heic|heif)$/i.test(x.name||''));e.target.value='';PH=PH.concat(f).slice(0,12);draw();if(f.length)toast(PH.length<4?'Lisa kokku 4 fotot: eest, vasakult, tagant ja paremalt':'Fotod lisatud. Sisesta aadress ja vajuta „Loo objekt“.');};
 /* aadress avatud -> kohe 3D fotodest sama maja EHR-iga (mõõtkava LOD2-st) */
 // fotod järgivad iga avatud aadressi: ka soovituse valik ja juba olemasolev objekt (varem ainult „Loo objekt“ vajutus -> fotod kadusid vaikselt)
-const _oa=openAddress;openAddress=function(q,input,A){if(PH.length){let ehr=A&&A.ehr;if(!ehr){const m=findAddr(q||$('homeIn').value);if(m.length&&!(m.length>1&&norm(m[0][0])!==norm(q||'')))ehr=m[0][1];}if(ehr)phFollow(String(ehr));}return _oa.apply(this,arguments);};
+/* 30.10: varem kutsuti olematut findAddr-i -> viga ja „Loo objekt + 3D fotodest“ ei teinud midagi. Uue objekti puhul käivitab fotod „Uus objekt“ aken;
+   siin ainult juba olemasolev objekt (aken ei avane): fotod lähevad selle maja 3D-sse */
+const _oa=openAddress;openAddress=async function(){const r=await _oa.apply(this,arguments);try{const h=HOUSES[cur];if(PH.length&&!FOL&&!$('body').hidden&&h&&h.ehr)phFollow(String(h.ehr));}catch(_){}return r;};
 let FOL=null;
 function phStop(clear){if(FOL){clearInterval(FOL.iv);FOL=null;}if(clear){PH=[];draw();}}
 function phFollow(ehr){phStop();const t0=Date.now();
   const iv=setInterval(()=>{const h=HOUSES[cur];if(Date.now()-t0>180000){phStop();return;}
     if(!$('body').hidden&&h&&String(h.ehr)===ehr){phStop();const files=PH.slice();PH=[];draw();if(!files.length)return;
-      setTimeout(()=>{const T=tplById(h.tpl);openStudio('mudel3d',files,{subject:'building',lock:true,ehr:h.ehr,label:(T?T.name:'Maja 3D')+' · '+h.short});toast('Maja on 3D-s. Nüüd teeme fotodest päris välimusega mudeli, mõõdud tulevad LOD2-st.');},700);}},400);FOL={ehr,iv};}
+      setTimeout(()=>{const T=tplById(h.tpl);openStudio('mudel3d',files,{subject:'building',lock:true,ehr:h.ehr,auto:true,label:(T?T.name:'Maja 3D')+' · '+h.short});toast('Maja on 3D-s. Kontrollin fotosid ja teen päris välimusega mudeli koos aia ja ümbrusega.');},700);}},400);FOL={ehr,iv};}
 /* 30.10: „Uus objekt“ aken kasutab sama fotode loendit (valik „Päris välimus fotodega“) */
 window.v3dPH={n:()=>PH.length,add:()=>$('mhFile').click(),follow:e=>phFollow(String(e)),stop:phStop,active:e=>!!FOL&&FOL.ehr===String(e)};
 /* maja paneel: selgem tekst */
