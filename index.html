@@ -837,6 +837,16 @@ body:not(.cvm) #mSeg{display:none}
 .ohead{display:flex;justify-content:space-between;align-items:center;gap:10px;min-height:32px}
 .osrch{display:flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:999px;padding:5px 12px;background:var(--paper);color:var(--muted)}.osrch input{border:0;background:none;outline:none;font:500 13px var(--display);color:var(--ink);width:160px}
 .odel.ogen{right:80px}
+.dlg.wide .dbox{max-width:720px}
+.hvk{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}@media (max-width:560px){.hvk{grid-template-columns:minmax(0,1fr)}}
+.hvo{display:flex;flex-direction:column;text-align:left;padding:0;border:1.5px solid var(--line);border-radius:12px;background:var(--bg);color:var(--ink);font:inherit;cursor:pointer;overflow:hidden;min-width:0}
+.hvo[aria-pressed="true"]{border-color:var(--accent);box-shadow:0 0 0 3px rgba(229,72,45,.16)}.hvo:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.hvi{position:relative;display:block;height:118px;background:#fff;overflow:hidden}.hvi img{width:100%;height:100%;object-fit:cover;display:block}.hvi img.ct{object-fit:contain;padding:6px;box-sizing:border-box}
+.hvi img.in{position:absolute;left:8px;bottom:8px;width:30%;max-width:96px;height:auto;aspect-ratio:16/9;object-fit:cover;border:2px solid #fff;border-radius:7px;box-shadow:0 2px 8px rgba(0,0,0,.25)}
+.hvi i{position:absolute;top:8px;left:8px;font:600 10px var(--mono);letter-spacing:.04em;text-transform:uppercase;font-style:normal;background:var(--accent);color:#fff;border-radius:999px;padding:3px 8px}
+.hvt{display:flex;flex-direction:column;gap:5px;padding:10px 12px 12px}.hvt b{font-size:15px}.hvt small{font-size:12.5px;line-height:1.45;color:var(--muted)}.hvt .pp{font:700 12.5px var(--mono);color:var(--accent)}
+.hvn{font:600 12px var(--display);color:var(--ok)}.hvn:empty{display:none}
+@media (max-width:560px){.hvo{flex-direction:row}.hvi{width:104px;height:auto;min-height:100px;flex:none}.hvi img.in{display:none}.hvi i{top:6px;left:6px;font-size:9px;padding:2px 6px}.hvt{padding:9px 11px}.hvt small{font-size:12px}}
 .dbox{max-height:calc(100vh - 32px);overflow:auto;background:var(--paper);border-radius:12px;max-width:440px;width:100%;padding:20px;display:flex;flex-direction:column;gap:14px;box-shadow:0 20px 50px rgba(0,0,0,.3)}
 .dbox h3{margin:0;font-size:18px}.dbox p{margin:0;color:var(--muted);font-size:14px;line-height:1.5}
 .dbox .btns{display:flex;gap:8px;justify-content:flex-end}
@@ -3245,16 +3255,30 @@ async function openAddress(q,input,A){
     roof:[['gable','Viilkatus'],['hip','Kelpkatus'],['flat','Lamekatus'],['auto','Ei tea']]};
   const chips=(k,arr)=>`<div class="qchips" data-q="${k}">`+arr.map(o=>{const [v,l]=Array.isArray(o)?o:[o,o];return `<button type="button" data-v="${v}" aria-pressed="false">${l}</button>`;}).join('')+'</div>';
   const TA=(t=>t&&t.input==='addr'&&Array.isArray(t.q)&&Array.isArray(t.show)?t:null)(tplById(acct.activeTpl));const P1=price('obj');
-  const pr=ask2('Uus objekt',`${h0.address}. Vasta paarile küsimusele, et vaade ja AI-abiline oleksid sinu tööks häälestatud.`,'Loo objekt · '+(P1?crTxt(P1):curPlan().name+' paketis'),
-    `${TA?(`<div class="tplbar">${ticon(TA,16)}<span>Mall: <b>${TA.name}</b></span></div>`+TA.q.map((x,qi)=>`<div class="qgrp"><b>${x[0]}</b>${chips('t'+qi,x[1])}</div>`).join('')+(TA.show.some(k=>['roof','slope','south'].includes(k))?`<div class="qgrp"><b>Milline katus majal on?</b>${chips('roof',Q.roof)}</div>`:'')):`<div class="qgrp"><b>Mis tööga on tegu?</b>${chips('work',Q.work)}</div><div class="qgrp" data-show="katus"><b>Katusetöö</b>${chips('katus',Q.katus)}</div><div class="qgrp" data-show="fassaad"><b>Fassaaditöö</b>${chips('fassaad',Q.fassaad)}</div><div class="qgrp"><b>Milline katus majal on?</b>${chips('roof',Q.roof)}</div>`}`);
-  const qx=$('dExtra'),multi={katus:1,fassaad:1};if(TA)TA.q.forEach((x,qi)=>{if(x[2])multi['t'+qi]=1;});
+  /* 30.10: kohe valik, kuidas maja teeme: päris välimus fotodega (soovitame) või ainult mõõdud aadressi järgi */
+  const PV=window.v3dPH,PF=+(P1+price('3d')).toFixed(2);let hv='foto';
+  const yl=()=>hv==='foto'?(PV.n()>=4?'Loo objekt + 3D fotodest · '+crTxt(PF):'Lisa 4 fotot majast'):'Loo objekt · '+(P1?crTxt(P1):curPlan().name+' paketis');
+  const HVH=PV?`<div class="qgrp"><b>Kuidas maja teeme?</b><div class="hvk">
+    <button type="button" class="hvo" data-hv="foto" aria-pressed="true"><span class="hvi"><img class="ct" src="examples/building-poster.webp" alt="Näidis: päris välimusega 3D-mudel maja fotodest"><img class="in" src="examples/building-1.webp" alt=""><i>Soovitame</i></span>
+      <span class="hvt"><b>Päris välimus fotodega</b><small>Aadress + 4 fotot majast (eest, vasakult, tagant, paremalt). AI teeb päris välimusega 3D-mudeli, mõõdud tulevad Maa-ametist.</small><span class="pp">${crTxt(PF)}</span><span class="hvn" id="hvN"></span></span></button>
+    <button type="button" class="hvo" data-hv="lihtne" aria-pressed="false"><span class="hvi"><img src="media/maja-lihtne.jpg" alt="Näidis: maja 3D Maa-ameti andmetest"></span>
+      <span class="hvt"><b>Ainult mõõdud aadressi järgi</b><small>Valmis kohe, fotosid pole vaja. Täpsed katuse, seinte ja krundi mõõdud. Välimus on lihtsustatud.</small><span class="pp">${P1?crTxt(P1):curPlan().name+' paketis'}</span></span></button>
+  </div></div>`:'';if(!PV)hv='lihtne';
+  const pr=ask2('Uus objekt',`${h0.address}. Vali, kuidas maja teeme, ja vasta paarile küsimusele, et vaade ja AI-abiline oleksid sinu tööks häälestatud.`,yl(),
+    `${HVH}${TA?(`<div class="tplbar">${ticon(TA,16)}<span>Mall: <b>${TA.name}</b></span></div>`+TA.q.map((x,qi)=>`<div class="qgrp"><b>${x[0]}</b>${chips('t'+qi,x[1])}</div>`).join('')+(TA.show.some(k=>['roof','slope','south'].includes(k))?`<div class="qgrp"><b>Milline katus majal on?</b>${chips('roof',Q.roof)}</div>`:'')):`<div class="qgrp"><b>Mis tööga on tegu?</b>${chips('work',Q.work)}</div><div class="qgrp" data-show="katus"><b>Katusetöö</b>${chips('katus',Q.katus)}</div><div class="qgrp" data-show="fassaad"><b>Fassaaditöö</b>${chips('fassaad',Q.fassaad)}</div><div class="qgrp"><b>Milline katus majal on?</b>${chips('roof',Q.roof)}</div>`}`);
+  const qx=$('dExtra'),multi={katus:1,fassaad:1},dlg=$('dlg'),fi=$('mhFile');dlg.classList.toggle('wide',!!PV);
+  const updHV=()=>{if(!PV)return;qx.querySelectorAll('.hvo').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.hv===hv)));$('dYes').textContent=yl();const n=PV.n(),e=$('hvN');if(e)e.textContent=n?(n>=4?'✓ '+n+' fotot lisatud':n+' fotot lisatud · lisa veel '+(4-n)):'';};
+  const onF=()=>setTimeout(updHV,0),gate=e=>{if(!(e.target.closest&&e.target.closest('#dYes')))return;if(hv==='foto'&&PV.n()<4){e.stopImmediatePropagation();e.preventDefault();PV.add();}};
+  if(PV){qx.querySelectorAll('.hvo').forEach(b=>b.onclick=()=>{hv=b.dataset.hv;updHV();if(hv==='foto'&&PV.n()<4)PV.add();});if(fi)fi.addEventListener('change',onF);dlg.addEventListener('click',gate,true);updHV();}if(TA)TA.q.forEach((x,qi)=>{if(x[2])multi['t'+qi]=1;});
   const upd=()=>{const w=(qx.querySelector('[data-q="work"] [aria-pressed="true"]')||{}).dataset?.v;qx.querySelectorAll('[data-show]').forEach(g=>g.hidden=!(w&&(w===g.dataset.show||w==='molemad')));};
   qx.querySelectorAll('.qchips').forEach(g=>g.querySelectorAll('button').forEach(b=>b.onclick=()=>{if(!multi[g.dataset.q])g.querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed','false'));b.setAttribute('aria-pressed',b.getAttribute('aria-pressed')!=='true');upd();}));
   if(!TA)qx.querySelector('[data-q="work"] button').click();else TA.q.forEach((x,qi)=>{if(!x[2])qx.querySelector(`[data-q="t${qi}"] button`).click();});const rq=qx.querySelector('[data-q="roof"] [data-v="auto"]');if(rq)rq.click();
   // käsitsi mõõtudes on katus juba valitud: ei küsi uuesti
   if(dm){const g=qx.querySelector('[data-q="roof"]'),b=g&&g.querySelector(`[data-v="${dm.rt}"]`);if(b)b.click();if(g&&g.closest('.qgrp'))g.closest('.qgrp').hidden=true;}
-  const okQ=await pr;if(!okQ)return;
-  if(!await canPay(P1,'Objektivaade'))return;
+  const okQ=await pr;dlg.classList.remove('wide');dlg.removeEventListener('click',gate,true);if(fi)fi.removeEventListener('change',onF);
+  if(!okQ){if(PV)PV.stop();return;}
+  if(!await canPay(hv==='foto'?PF:P1,hv==='foto'?'Objekt + 3D fotodest':'Objektivaade'))return;
+  if(PV){if(hv==='foto'){if(!PV.active(h0.ehr))PV.follow(h0.ehr);}else PV.stop(true);}
   const sel=k=>[...qx.querySelectorAll(`[data-q="${k}"] [aria-pressed="true"]`)].map(b=>b.dataset.v);const job=TA?{tpl:TA.id,ans:TA.q.flatMap((x,qi)=>sel('t'+qi)),work:TA.id==='fassaad'?'fassaad':'katus',katus:[],fassaad:[],roof:sel('roof')[0]||'auto'}:{work:sel('work')[0]||'katus',katus:sel('katus'),fassaad:sel('fassaad'),roof:sel('roof')[0]||'auto'};
   const paid=charge('Objektivaade · '+h0.short+(TA?' · '+TA.name:''));const h=h0;job.loc=h.loc;h.job=job;if(TA){h.tpl=TA.id;acct.htpl=Object.assign(acct.htpl||{},{[h.ehr]:TA.id});acct.tplUse=acct.tplUse||[];acct.tplUse.push({d:today(),t:TA.id});}showAllRows=false;if(job.roof==='auto'&&acct.defRoof&&acct.defRoof!=='auto')h.roofType=acct.defRoof;if(job.roof!=='auto')h.roofType=job.roof;acct.jobs=Object.assign(acct.jobs||{},{[h.ehr]:job});if(job.roof!=='auto')acct.roofTypes=Object.assign(acct.roofTypes||{},{[h.ehr]:job.roof});acct.addrs=Object.assign(acct.addrs||{},{[h.ehr]:{full:h.address,...h.loc}});acct.objects=[...(acct.objects||[]),h.ehr];save();
   HOUSES.push(h);if(input)input.value='';renderAcct();show('app');select(HOUSES.length-1);{const hv=TA?(['katus','paike'].includes(TA.id)?'hiRoof':TA.id==='fassaad'?'hiWall':null):job.work==='katus'?'hiRoof':job.work==='fassaad'?'hiWall':null;if(hv)setTimeout(()=>$(hv).click(),900);}toast('3D-vaade valmis · −'+String(paid).replace('.',',')+' krediiti');}
@@ -6905,10 +6929,14 @@ $('mhFile').onchange=e=>{const f=[...e.target.files].filter(x=>/^image\//.test(x
 /* aadress avatud -> kohe 3D fotodest sama maja EHR-iga (mõõtkava LOD2-st) */
 // fotod järgivad iga avatud aadressi: ka soovituse valik ja juba olemasolev objekt (varem ainult „Loo objekt“ vajutus -> fotod kadusid vaikselt)
 const _oa=openAddress;openAddress=function(q,input,A){if(PH.length){let ehr=A&&A.ehr;if(!ehr){const m=findAddr(q||$('homeIn').value);if(m.length&&!(m.length>1&&norm(m[0][0])!==norm(q||'')))ehr=m[0][1];}if(ehr)phFollow(String(ehr));}return _oa.apply(this,arguments);};
-function phFollow(ehr){const files=PH.slice(),t0=Date.now();
-  const iv=setInterval(()=>{const h=HOUSES[cur];if(Date.now()-t0>180000){clearInterval(iv);return;}
-    if(!$('body').hidden&&h&&String(h.ehr)===ehr){clearInterval(iv);PH=[];draw();
-      setTimeout(()=>{const T=tplById(h.tpl);openStudio('mudel3d',files,{subject:'building',lock:true,ehr:h.ehr,label:(T?T.name:'Maja 3D')+' · '+h.short});toast('Maja on 3D-s. Nüüd teeme fotodest päris välimusega mudeli, mõõdud tulevad LOD2-st.');},700);}},400);}
+let FOL=null;
+function phStop(clear){if(FOL){clearInterval(FOL.iv);FOL=null;}if(clear){PH=[];draw();}}
+function phFollow(ehr){phStop();const t0=Date.now();
+  const iv=setInterval(()=>{const h=HOUSES[cur];if(Date.now()-t0>180000){phStop();return;}
+    if(!$('body').hidden&&h&&String(h.ehr)===ehr){phStop();const files=PH.slice();PH=[];draw();if(!files.length)return;
+      setTimeout(()=>{const T=tplById(h.tpl);openStudio('mudel3d',files,{subject:'building',lock:true,ehr:h.ehr,label:(T?T.name:'Maja 3D')+' · '+h.short});toast('Maja on 3D-s. Nüüd teeme fotodest päris välimusega mudeli, mõõdud tulevad LOD2-st.');},700);}},400);FOL={ehr,iv};}
+/* 30.10: „Uus objekt“ aken kasutab sama fotode loendit (valik „Päris välimus fotodega“) */
+window.v3dPH={n:()=>PH.length,add:()=>$('mhFile').click(),follow:e=>phFollow(String(e)),stop:phStop,active:e=>!!FOL&&FOL.ehr===String(e)};
 /* maja paneel: selgem tekst */
 const box=$('p3Box');if(box){const t=box.querySelector('.tag');if(t)t.textContent='Päris välimusega 3D (fotodega)';const b=$('p3Btn');if(b){b.textContent='Lisa maja fotod → päris 3D-mudel · '+priceTxt('3d');b.className='send';b.style.alignSelf='stretch';}
   const hn=box.querySelector('.fhint');if(hn)hn.textContent='Praegu näed maja LOD2 andmetest. Lisa 4 fotot (eest, vasakult, tagant, paremalt): AI teeb maja päris välimusega 3D-mudeli ja mõõdud tulevad Maa-ameti LOD2 andmetest. See on parim tulemus kliendile näitamiseks.';
