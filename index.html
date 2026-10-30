@@ -2630,7 +2630,7 @@ if(acct.gen&&acct.gen[0]===true){acct.gen={'120656418':true};}
 function restoreRT(){for(let k=HOUSES.length-1;k>=0;k--)if((acct.deleted||[]).includes(HOUSES[k].ehr))HOUSES.splice(k,1);HOUSES.forEach(h=>{if((acct.jobs||{})[h.ehr])h.job=acct.jobs[h.ehr];if((acct.htpl||{})[h.ehr])h.tpl=acct.htpl[h.ehr];const t=(acct.roofTypes||{})[h.ehr];if(t)h.roofType=t;});}
 Object.entries(acct.roofTypes||{}).forEach(([e,t])=>{});
 setTimeout(()=>(acct.objects||[]).forEach(e=>houseRestore(e)),0); // LOD2 laadija on skriptis allpool
-function toast(t){const el=$('toast');el.textContent=t;el.hidden=false;clearTimeout(toast.t);toast.t=setTimeout(()=>el.hidden=true,2600);}
+function toast(t,ms){const el=$('toast');el.textContent=t;el.hidden=false;clearTimeout(toast.t);toast.t=setTimeout(()=>el.hidden=true,ms||2600);}
 function initials(n){return (n||'?').split(/\s+/).filter(Boolean).slice(0,2).map(w=>w[0]).join('').toUpperCase();}
 function today(){return new Date().toISOString().slice(0,10);}
 function renderAcct(){try{renderPlans();}catch(e){}try{if($('studio')&&!$('studio').hidden){stSync();stRenderPanel();}}catch(e){}try{if($('cuCr'))cuDraw();}catch(e){}$('hdrBal').textContent=String(+(+acct.credits).toFixed(2)).replace('.',',');{const low=acct.credits<price('obj')&&!planCovers('obj');$('hdrCred').classList.toggle('low',low);$('hdrAdd').hidden=!low;}$('cBal').textContent=acct.credits;$('sBal').innerHTML=String(+(+acct.credits).toFixed(2)).replace('.',',')+' <span>krediiti</span>';$('sBalEur').textContent='≈ '+(acct.credits/2).toFixed(2).replace('.',',').replace(',00','')+' € väärtuses';
@@ -3239,7 +3239,7 @@ document.querySelector('.new').onclick=async()=>{const ok=await ask2('Uus objekt
 /* objekt mis tahes Eesti hoone aadressist (In-ADS + LOD2) */
 /* tekst -> üks hoone (In-ADS); mitme vaste korral palub nimekirjast valida */
 async function adsPick(q,input){q=String(q||'').trim();if(!q)return null;if(input&&input._ads&&norm(input._ads.full)===norm(q))return input._ads;
-  let r;try{r=await adsMulti(await adsSearch(q));}catch(_){toast('Maa-ameti aadressiotsing ei vasta, proovi hetke pärast uuesti');return null;}
+  let r;try{r=await adsMulti(await adsSearch(q));}catch(_){toast(typeof CLOUD!=='undefined'&&CLOUD?'Maa-ameti aadressiotsing ei vasta, proovi hetke pärast uuesti':'Näidislehel päris aadresse otsida ei saa (Maa-ameti päringud on siin blokeeritud). Proovi Tammekännu tee 44 või ava app.vaade3d.ee',7000);return null;}
   if(!r.length){toast('Aadressi ei leitud. Kirjuta tänav, maja number ja koht, nt Narva mnt 5, Tallinn');return null;}
   const ex=r.filter(z=>norm(z.full)===norm(q)||norm(z.t)===norm(q)),n=new Set(r.map(z=>z.full)).size,one=ex.length?ex[0]:n===1?r[0]:null;
   if(!one){toast(`Leidsin ${n} aadressi, vali nimekirjast täpne aadress`);if(input){input.focus();sugShow(input);}return null;}return one;}
