@@ -1231,6 +1231,11 @@ img.ld{background:linear-gradient(90deg,var(--soft) 25%,var(--paper) 50%,var(--s
   .studio.has3d:not(.m3off) .stthread{grid-column:2;grid-row:2}
   .studio.has3d:not(.m3off) .stdock{grid-column:2;grid-row:3;position:static}
 }
+.o3lisa{position:absolute;right:12px;top:12px;z-index:7;width:min(320px,calc(100% - 24px));max-height:calc(100% - 24px);overflow:auto;background:var(--paper);border:1px solid var(--line);border-radius:12px;box-shadow:0 8px 28px rgba(0,0,0,.2);padding:12px;display:flex;flex-direction:column;gap:8px;font-size:13px}
+.o3lisa>b{font:600 14px var(--display)}.o3lisa .fl{display:flex;flex-direction:column;gap:3px;font-size:12px;color:var(--muted)}.o3lisa input[type=text],.o3lisa input[type=url],.o3lisa input[type=number],.o3lisa select{font:500 13px var(--display);padding:6px 8px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);width:100%;box-sizing:border-box}
+.o3dd{display:flex;align-items:flex-end;gap:6px}.o3dd label{display:flex;flex-direction:column;gap:3px;font-size:12px;color:var(--muted);flex:1;min-width:0}.o3lisa small{color:var(--muted);line-height:1.4}.o3lisa .row{display:flex;gap:8px;justify-content:flex-end}
+.o3menu .o3real{background:#E5482D;color:#fff;border:0;border-radius:8px;padding:5px 10px;font:600 12px var(--display);cursor:pointer}
+@media (max-width:760px){.o3lisa{top:auto;bottom:8px;left:8px;right:8px;width:auto;max-height:70%}}
 </style>
 <link rel="stylesheet" href="css/mobile.css">
 </head>
@@ -5791,13 +5796,13 @@ if(!P3PUB){
 /* ---------- 3D-objektivaade: sama tööriistariba nagu stuudios ---------- */
 const OB={tool:'select'};
 const OB_AREA=SI('<path d="M4 18 7 5l11 3 2 10z"/><circle cx="4" cy="18" r="1.6"/><circle cx="7" cy="5" r="1.6"/><circle cx="18" cy="8" r="1.6"/><circle cx="20" cy="18" r="1.6"/>');
-const OB_DRAW={brush:1,rect:1,lasso:1,point:1,arrow:1,text:1,prod:1};
+const OB_DRAW={brush:1,rect:1,lasso:1,point:1,arrow:1,text:1,prod:1,lisa:1};
 function obTools(){const T=id=>ST_TOOLS.find(t=>t&&t.id===id);
   const D={brush:'Värvi otse maja või maapinna peale: sein, katus, muru…',rect:'Lohista, et märkida ala. Kuju jääb pinna peale.',lasso:'Tõmba joon ümber ala, see jääb pinna peale.',
     point:'Kliki pinnale: punktid A, B, C… Viita neile tekstis: „punkt A“.',arrow:'Lohista või kliki kaks kohta: nool algusest lõpuni.',text:'Kliki pinnale ja kirjuta märkus, nt „uus aken siia“.',prod:'Kliki kohta, kuhu sinu toode tuleb.'};
   const nav=' Pööra: lohista tühjalt kohalt, Alt + lohista või parem nupp.';
   return [{...T('select'),n:'Pööra vaadet',d:'Lohista, et maja keerata. Rullik suurendab. Klõpsa märgil, et see valida ja lohistada.'},{...T('hand'),d:'Lohista, et vaadet nihutada.'},0,
-    ...['brush','rect','lasso','point','arrow','text','prod'].map(id=>({...T(id),d:D[id]+nav})),0,
+    ...['brush','rect','lasso','point','arrow','text','prod'].map(id=>({...T(id),d:D[id]+nav})),{id:'lisa',n:'Lisa objekt',d:'Kliki seinale, katusele või maapinnale: lisa tellingud, konteiner, tõstuk, tara või oma toode õige mõõduga.'+nav,i:SI('<path d="m12 3 8 4.5v9L12 21l-8-4.5v-9z"/><path d="M12 8.5v7M8.5 12h7"/>')},0,
     {...T('ruler'),id:'ruler',n:'Mõõda kaugust',d:'Kliki punkte maja või maapinna peal. Näed iga lõigu ja kogupikkuse.'},
     {id:'area',k:'G',n:'Mõõda pinda',d:'Kliki pinna nurgad, nt katusetahu 4 nurka. Sulge, klõpsates esimesele punktile.',i:OB_AREA},
     {...T('erase'),d:'Klõpsa märgil, et see eemaldada.'},{...T('clear'),n:'Kustuta kõik',d:'Eemaldab kõik märgid ja mõõtmise punktid.'},0,
@@ -5909,7 +5914,7 @@ function omProd(x,y,p){const P=prodList(),put=id=>omAdd({t:'prod',p:[omA(p)],pid
   $('view').appendChild(m);const out=e=>{if(!m.contains(e.target))close();},close=()=>{m.remove();document.removeEventListener('pointerdown',out,true);};
   setTimeout(()=>document.addEventListener('pointerdown',out,true),0);m.addEventListener('keydown',e=>{if(e.key==='Escape')close();});
   m.querySelectorAll('button').forEach(bt=>bt.onclick=()=>{close();put(bt.dataset.p);});m.querySelector('button').focus();}
-function omTool(){const T=OB.tool,draw=!!OB_DRAW[T];window.OBT=T;OM.arrowA=null;omPrev(null);
+function omTool(){const T=OB.tool,draw=!!OB_DRAW[T];if(T!=='lisa'&&typeof o3LisaClose==='function')o3LisaClose();window.OBT=T;OM.arrowA=null;omPrev(null);
   try{controls.mouseButtons.RIGHT=draw?THREE.MOUSE.ROTATE:THREE.MOUSE.PAN;controls.touches.TWO=draw?THREE.TOUCH.DOLLY_ROTATE:THREE.TOUCH.DOLLY_PAN;}catch(_){}
   if(T!=='select'&&OM.sel){OM.sel=null;omDraw();}
   if(draw&&!acct.omHint){acct.omHint=1;save();toast('Joonista hiirega · pööra: lohista tühjalt kohalt või Alt + lohista');}}
@@ -5941,6 +5946,7 @@ $('view').addEventListener('pointerup',e=>{const d=OM.d;if(!d||e.isPrimary===fal
     if(!OM.arrowA){OM.arrowA=d.pts[0];omPrev({t:'dot',p:d.pts[0]});toast('Kliki noole lõpp-punkti');return;}
     const a=OM.arrowA;OM.arrowA=null;omAdd({t:'arrow',p:[omA(a),omA(d.pts[0])]});return;}
   if(d.t==='text'){omText(x,y,d.pts[0]);return;}
+  if(d.t==='lisa'){o3Lisa(x,y);return;}
   if(d.t==='prod')omProd(x,y,d.pts[0]);},true);
 $('view').addEventListener('pointercancel',()=>{if(OM.d){OM.d=null;controls.enabled=true;omPrev(null);}},true);
 document.addEventListener('keydown',e=>{if($('body').hidden)return;const tg=e.target;if(tg&&(tg.tagName==='INPUT'||tg.tagName==='TEXTAREA'||tg.isContentEditable))return;
@@ -5967,6 +5973,7 @@ function omLegend(){const P=prodList(),L=[];let a=0;const at=v=>{const p=v.clone
     else if(m.t==='point')L.push(`punkt ${m.s} (point ${m.s}) at ${at(V[0])}`);
     else if(m.t==='arrow')L.push(`arrow from ${at(V[0])} to ${at(V[1])}`);
     else if(m.t==='text')L.push(`text label "${String(m.s).replace(/"/g,"'")}" at ${at(V[0])}`);
+    else if(m.t==='obj3d')L.push(o3Desc(m,at(V[0])));
     else if(m.t==='prod'){const k=P.findIndex(x=>x.id===m.pid);L.push(`toode ${k+1} (product ${k+1}${k>=0?', '+stClean(P[k].name):''}) placed at ${at(V[0])}`);}});
   return L.length?['Markings on picture 1 (positions are % from the top-left corner of picture 1):\n'+L.join('\n')]:[];}
 function omOffer(q){addMsg('user',q);const d=document.createElement('div');d.className='msg a';
@@ -6175,7 +6182,7 @@ function o3Inst(m){const g=new THREE.Group();g.userData.mid=m.id;g.position.set(
 function o3Draw(){O3.g.traverse(o=>{if(o.geometry&&!o.userData.keep)o.geometry.dispose();});O3.g.clear();O3.lab=[];const edit=!(typeof cvMode!=='undefined'&&cvMode);let sel=null;
   o3Items().forEach(m=>{if(!Array.isArray(m.p)||!Array.isArray(m.p[0]))return;const g=o3Inst(m);O3.g.add(g);
     if(edit&&OM.sel===m.id){sel=m;g.updateMatrixWorld(true);O3.g.add(new THREE.Box3Helper(new THREE.Box3().setFromObject(g),0xF2B705));}
-    const pend=m.job&&m.job.st!=='done'&&!m.url&&!m.err;O3.lab.push({p:new THREE.Vector3(m.p[0][0],m.p[0][1]+(+m.h||2)+.3,m.p[0][2]),t:`${m.name||'Objekt'} · ${o3Dec(m.h||2)} m`+(m.err?' · '+m.err:pend?' · 3D valmib…':'')});
+    const pend=m.job&&m.job.st!=='done'&&!m.url&&!m.err;O3.lab.push({p:new THREE.Vector3(m.p[0][0],m.p[0][1]+(+m.h||2)+.3,m.p[0][2]),t:`${m.name||'Objekt'} · ${o3Lbl(m)}`+(m.err?' · '+m.err:pend?' · 3D valmib…':'')});
     if(edit&&m.job&&m.job.st==='3d'&&m.job.id&&!m.url)o3Poll(m.id);});
   o3Lay.innerHTML=O3.lab.map(l=>`<div class="dim mres">${stEsc(l.t)}</div>`).join('');o3MenuDraw(sel);invalidate(2,true);}
 function o3Labels(w,hh){const els=o3Lay.children;O3.lab.forEach((l,i)=>{const el=els[i];if(!el)return;const p=l.p.clone().project(camera),vis=O3.g.visible&&p.z<1;el.hidden=!vis;if(vis){el.style.left=((p.x+1)/2*w)+'px';el.style.top=((1-p.y)/2*hh)+'px';}});}
@@ -6200,7 +6207,7 @@ function o3Add(c,url,jobSt,key){const h=HOUSES[cur];if(!h||!h.ehr)return null;om
   L.push(m);save();omDraw();return m;}
 // tasuta: sama tekst või toode, millel mudel juba on
 function o3Existing(c){const pr=c.pid&&prodList().find(x=>x.id===c.pid);if(pr&&o3Url(pr.model))return {url:pr.model,key:'p:'+pr.id,h:null};const k=pr?'p:'+pr.id:'t:'+o3Key(c.name),L=(acct.o3lib||{})[k];return L&&o3Url(L.url)?{url:L.url,key:k,h:L.h}:null;}
-const o3Price=c=>{const p3=price('3d'),pd=c.kind==='prod'?0:price('design');return {tot:+(p3+pd).toFixed(2),pd,p3};};
+const o3Price=c=>{const p3=price('3d'),pd=c.kind==='prod'||c.refImg?0:price('design');return {tot:+(p3+pd).toFixed(2),pd,p3};};
 const o3Cr=n=>String(+(+n).toFixed(2)).replace('.',',')+' krediiti';
 function o3OfferHtml(m,mi){return (m.o3||[]).map((c,k)=>{const ex=o3Existing(c);return `<button type="button" class="ghost o3go" data-o3="${mi}:${k}">Lisa „${stEsc(c.name)}“ ka 3D-sse · ${ex?'tasuta':stEsc(o3Cr(o3Price(c).tot))}</button>`;}).join('');}
 function o3Bind(root,getCands){root.querySelectorAll('[data-o3]').forEach(b=>b.onclick=()=>{const [mi,k]=b.dataset.o3.split(':').map(Number),c=getCands(mi)[k];if(c)o3Offer(c);});}
@@ -6221,6 +6228,7 @@ async function o3Run(mid,c,pr){const fail=(txt,keep)=>{const f=o3Find(mid);if(f)
   const step=(st,extra)=>{const f=o3Find(mid);if(!f)return false;f.m.job=Object.assign({},f.m.job,{st},extra||{});save();if(f.e===HOUSES[cur].ehr)omDraw();return true;};
   O3.run[mid]=1;try{let ph;
     if(c.kind==='prod'){const u=pr&&pr.imgs&&pr.imgs[0];if(!u)return fail('Tootel pole fotot');ph=await p3Data(u);}
+    else if(c.refImg){try{ph=await p3Data(c.refImg);}catch(e){return fail('Foto ei laadinud');}}
     else{let crop;try{crop=await o3Crop(c.img,c.px);}catch(e){return fail('AI-pildist ei õnnestunud lõiget teha');}
       let r;try{r=await clFn('ai-image',{kind:'design',prompt:`${c.name}, full object, 3/4 view, plain white background, no people, no house. Show exactly the object from the reference image: same design, colours and proportions.`,images:[crop],n:1,label:'3D-objekt etalon · '+c.name,tpl:'mudel3d'});}
       catch(e){return fail((clErr(e)||'Etalonpilti ei tulnud')+(e.refunded!=null?refTxt(e,' Krediidid tagastati.'):''));}
@@ -6249,10 +6257,148 @@ async function o3Poll(mid){if(O3.run[mid])return;O3.run[mid]=1;
 function o3Resume(){const A=acct.marks3d||{};Object.keys(A).forEach(e=>(A[e]||[]).forEach(m=>{if(m.t!=='obj3d'||!m.job||m.url)return;
   if(m.job.st==='3d'&&m.job.id)o3Poll(m.id);else if((m.job.st==='ref'||m.job.st==='check')&&!O3.run[m.id]){m.err='Katkes, proovi uuesti';m.job={st:'failed'};}}));}
 // jagamislink: ainult pilves (https .glb) mudelid; kliendivaates valideeritud
-function o3Share(){return omList().filter(m=>m.t==='obj3d'&&m.url&&o3Url(m.url)).slice(0,6).map(m=>({u:m.url,p:m.p[0],r:m.r||0,h:m.h,n:String(m.name||'').slice(0,40)}));}
-function o3San(a){if(!Array.isArray(a))return null;const ok=v=>Number.isFinite(+v)&&Math.abs(+v)<5e3;return a.slice(0,6).filter(x=>x&&o3Url(x.u)&&Array.isArray(x.p)&&x.p.length===3&&x.p.every(ok)&&ok(x.h)&&+x.h>0).map((x,i)=>({t:'obj3d',id:'cv'+i,name:String(x.n||'Objekt').slice(0,40),p:[x.p.map(Number)],r:+x.r||0,h:Math.min(60,Math.max(.2,+x.h)),url:x.u,job:{st:'done'}}));}
+function o3Share(){return omList().filter(m=>m.t==='obj3d'&&(m.url&&o3Url(m.url)||Array.isArray(m.d))).slice(0,12).map(m=>({u:m.url&&o3Url(m.url)?m.url:undefined,s:m.shape,d:Array.isArray(m.d)?m.d:undefined,p:m.p[0],r:m.r||0,h:m.h,n:String(m.name||'').slice(0,40)}));}
+function o3San(a){if(!Array.isArray(a))return null;const ok=v=>Number.isFinite(+v)&&Math.abs(+v)<5e3;const dm=x=>Array.isArray(x.d)&&x.d.length===3&&x.d.every(v=>Number.isFinite(+v)&&+v>0&&+v<=60);return a.slice(0,12).filter(x=>x&&(o3Url(x.u)||dm(x))&&Array.isArray(x.p)&&x.p.length===3&&x.p.every(ok)&&ok(x.h)&&+x.h>0).map((x,i)=>({t:'obj3d',id:'cv'+i,name:String(x.n||'Objekt').slice(0,40),p:[x.p.map(Number)],r:+x.r||0,h:Math.min(60,Math.max(.2,+x.h)),url:o3Url(x.u)?x.u:null,job:{st:'done'},...(dm(x)?{d:x.d.map(v=>+v),shape:O3SH.includes(x.s)?x.s:'box'}:{})}));}
 // mõõtmine töötab objekti vastu: vaba sihik tabab ka objekti, tee ei lähe läbi
 {const _mh=msHouse;msHouse=function(){const o=_mh();O3.g.traverse(m=>{if(m.isMesh&&m.visible&&!m.userData.ph&&!/^Box3/.test(m.parent&&m.parent.type||''))o.push(m);});return o;};}
+/* ---------- 4.11: „Lisa“ tööriist. Märk {t:'obj3d', d:[P,L,K] m, shape, on, nw, wl, pid?, refImg?}: kohe õige mõõduga parameetriline kuju (kast, tellingud, konteiner, käärtõstuk, tara);
+   toote (või oma foto) olemasolul võib selle teha päris 3D-ks (o3Run), mudel venitatakse antud mõõtudele. Sama marks3d-list, Tagasi/Uuesti, silm, jagamine, mõõtmine. ---------- */
+const O3S={box:'kast',scaf:'tellingud',cont:'konteiner',lift:'käärtõstuk',fence:'tara'},O3SH=Object.keys(O3S);
+const O3DG=['põhja','kirde','ida','kagu','lõuna','edela','lääne','loode'],O3EN={põhja:'north',kirde:'north-east',ida:'east',kagu:'south-east',lõuna:'south',edela:'south-west',lääne:'west',loode:'north-west'},O3ON={wall:'Seina vastu',ground:'Maapinnale',roof:'Katusele'};
+const O3M={};const o3Mat=(c,o)=>O3M[c+(o||'')]||(O3M[c+(o||'')]=new THREE.MeshStandardMaterial({color:c,roughness:.7,metalness:.15,transparent:!!o,opacity:o||1,side:o?THREE.DoubleSide:THREE.FrontSide,depthWrite:!o}));
+// kastide list [x,y,z,sx,sy,sz,rotZ,rotY] -> üks liidetud võrk (kerge)
+function o3Boxes(list,mat){const pos=[],nor=[],q=new THREE.Quaternion(),e=new THREE.Euler(),M=new THREE.Matrix4(),one=new THREE.Vector3(1,1,1);
+  list.forEach(b=>{const g=new THREE.BoxGeometry(b[3],b[4],b[5]).toNonIndexed();e.set(0,b[7]||0,b[6]||0);q.setFromEuler(e);M.compose(new THREE.Vector3(b[0],b[1],b[2]),q,one);g.applyMatrix4(M);
+    const p=g.attributes.position.array,n=g.attributes.normal.array;for(let i=0;i<p.length;i++){pos.push(p[i]);nor.push(n[i]);}g.dispose();});
+  const G=new THREE.BufferGeometry();G.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));G.setAttribute('normal',new THREE.Float32BufferAttribute(nor,3));G.computeBoundingSphere();G.computeBoundingBox();
+  const m=new THREE.Mesh(G,mat);m.castShadow=true;m.userData.pick=true;return m;}
+// kohalik raam: x = pikkus, z = sügavus (+z on seinast eemale), y üles, põhi y=0, keskel
+const O3P={
+  scaf(L,W,H){const n=Math.max(1,Math.round(L/2.5)),dx=L/n,lv=Math.max(1,Math.round(H/2)),dy=H/lv,t=.05,st=[],wd=[],big=(n+1)*lv>90,X=i=>-L/2+i*dx;
+    for(let i=0;i<=n;i++)for(const s of[-1,1])st.push([X(i),H/2,s*W/2,t,H,t]);
+    for(let k=0;k<=lv;k++){const y=k*dy;for(const s of[-1,1])st.push([0,y,s*W/2,L,t,t]);for(let i=0;i<=n;i++)st.push([X(i),y,0,t,t,W]);
+      if(k>0)wd.push([0,y+.02,0,L,.04,W*.98]);
+      if(k>0&&!big){for(const f of[.5,1])if(y+f<=H)st.push([0,y+f,W/2,L,.03,.03]);}
+      if(k<lv&&!big)for(let i=0;i<n;i++){const a=(i+k)%2?1:-1;st.push([X(i)+dx/2,y+dy/2,W/2,Math.hypot(dx,dy),.03,.03,a*Math.atan2(dy,dx)]);}}
+    const g=new THREE.Group();g.add(o3Boxes(st,o3Mat(0x9aa3ab)),o3Boxes(wd,o3Mat(0xb98a55)));return g;},
+  cont(L,W,H){const g=new THREE.Group(),c=0x2f6f9f,r=[],d=[],s=Math.max(.22,L/70);
+    g.add(o3Boxes([[0,H/2,0,L-.02,H-.04,W-.1]],o3Mat(c)));
+    for(let x=-L/2+.25;x<L/2-.2;x+=s)for(const z of[-1,1])r.push([x,H/2,z*(W/2-.04),.09,H-.3,.07]);
+    for(const z of[-1,1]){d.push([0,.07,z*(W/2-.07),L,.14,.14],[0,H-.07,z*(W/2-.07),L,.14,.14]);for(const x of[-1,1])d.push([x*(L/2-.07),H/2,z*(W/2-.07),.14,H,.14]);}
+    for(const x of[-1,1])d.push([x*(L/2-.07),.07,0,.14,.14,W],[x*(L/2-.07),H-.07,0,.14,.14,W]);
+    for(const z of[-.25,.25])d.push([L/2+.02,H/2,z,.05,H-.25,.05],[L/2+.03,H*.45,z,.07,.18,.1]);
+    g.add(o3Boxes(r,o3Mat(0x275d89)),o3Boxes(d,o3Mat(0x1e2a33)));return g;},
+  lift(L,W,H){const g=new THREE.Group(),yp=Math.max(.9,H-1),ns=Math.min(10,Math.max(2,Math.round((yp-.35)/1.1))),s=(yp-.4)/ns,hx=L*.36,len=Math.hypot(2*hx,s),an=Math.atan2(s,2*hx),ar=[],rl=[],bs=[],px=L*.47,pz=W*.47;
+    bs.push([0,.22,0,L,.26,W*.9]);for(const x of[-1,1])for(const z of[-1,1])bs.push([x*(L/2-.35),.1,z*(W/2-.1),.5,.2,.14]);
+    for(let i=0;i<ns;i++)for(const z of[-1,1]){const y=.35+i*s+s/2;ar.push([0,y,z*(W/2-.14),len,.08,.06,an],[0,y,z*(W/2-.14),len,.08,.06,-an]);}
+    bs.push([0,yp,0,L*.96,.09,W*.96]);
+    for(const x of[-1,1])for(const z of[-1,1])rl.push([x*px,yp+.5,z*pz,.04,1,.04]);
+    for(const y of[.5,1])for(const z of[-1,1])rl.push([0,yp+y,z*pz,L*.94,.04,.04]);for(const y of[.5,1])for(const x of[-1,1])rl.push([x*px,yp+y,0,.04,.04,W*.94]);
+    g.add(o3Boxes(bs,o3Mat(0xd98a1c)),o3Boxes(ar,o3Mat(0xe3bd1c)),o3Boxes(rl,o3Mat(0xe3bd1c)));return g;},
+  fence(L,W,H){const n=Math.max(1,Math.ceil(L/3.5)),dx=L/n,pt=Math.max(.05,Math.min(W,.1)),po=[],fr=[],ft=[],g=new THREE.Group(),X=i=>-L/2+i*dx;
+    for(let i=0;i<=n;i++){po.push([X(i),H/2,0,.06,H,pt]);ft.push([X(i),.1,0,.3,.2,Math.max(.5,pt*4)]);}
+    for(let i=0;i<n;i++){const x=X(i)+dx/2;fr.push([x,H-.03,0,dx-.04,.04,.03],[x,.28,0,dx-.04,.04,.03],[x,H/2,0,dx-.04,.03,.03]);}
+    const pn=[];for(let i=0;i<n;i++)pn.push([X(i)+dx/2,H/2+.12,0,dx-.1,H-.5,.015]);
+    g.add(o3Boxes(po,o3Mat(0x3b4148)),o3Boxes(fr,o3Mat(0x3b4148)),o3Boxes(ft,o3Mat(0x9a9a96)),o3Boxes(pn,o3Mat(0x9fb0bd,.4)));return g;}};
+const O3B=new Map();
+function o3Boxph(L,W,H,col){const g=new THREE.Group(),box=new THREE.Mesh(new THREE.BoxGeometry(L,H,W),new THREE.MeshBasicMaterial({color:col||0xE5482D,transparent:true,opacity:.22,depthWrite:false}));box.position.y=H/2;box.userData.ph=1;box.userData.pick=true;
+  const ed=new THREE.LineSegments(new THREE.EdgesGeometry(box.geometry),new THREE.LineBasicMaterial({color:col||0xE5482D}));ed.position.y=H/2;g.add(box,ed);return g;}
+{const _oi=o3Inst;o3Inst=function(m){if(!Array.isArray(m.d))return _oi(m);
+  const [L,W,H]=m.d,sh=O3P[m.shape]?m.shape:'box',has=m.url&&O3.ready[m.url];
+  if(has||(m.url&&!m.err)){const g=_oi({...m,h:1});if(has){const o=g.children[0],bb=O3B.get(m.url)||(O3B.set(m.url,new THREE.Box3().setFromObject(has).getSize(new THREE.Vector3())),O3B.get(m.url));o.scale.set(L/(bb.x||1),H/(bb.y||1),W/(bb.z||1));return g;}
+    // mudel alles laadib: kuju jääb nähtavale
+    g.clear();}
+  const g=new THREE.Group();g.userData.mid=m.id;g.position.set(m.p[0][0],m.p[0][1],m.p[0][2]);g.rotation.y=(m.r||0)*Math.PI/180;
+  if(sh==='box')g.add(o3Boxph(L,W,H));else{g.add(O3P[sh](L,W,H));const pk=new THREE.Mesh(new THREE.BoxGeometry(L,H,W),new THREE.MeshBasicMaterial({visible:false}));pk.position.y=H/2;pk.userData.pick=true;pk.userData.ph=1;g.add(pk);}
+  return g;};}
+// pealkiri: „Tellingud · 10,0 × 1,0 × 6,0 m“
+const o3Lbl=m=>Array.isArray(m.d)?m.d.map(o3Dec).join(' × ')+' m':o3Dec(m.h||2)+' m';
+// tekstist: kuju ja mõõdud („10x2x8“, „4 m“)
+function o3Kind(t){const T=String(t||'');return /telling|scaffold/i.test(T)?'scaf':/konteiner|container/i.test(T)?'cont':/tõstuk|tostuk|\blift\b/i.test(T)?'lift':/\btara\b|\baed\b|fence/i.test(T)?'fence':'box';}
+function o3Def(sh,w){return sh==='scaf'?[w?w.len:8,1,w?w.eave:6]:sh==='cont'?[6.06,2.44,2.59]:sh==='lift'?[2.4,1.2,8]:sh==='fence'?[10,.1,2]:[2,2,2];}
+function o3Dims(t,sh,w){const n=s=>+String(s).replace(',','.'),T=String(t||''),m3=T.match(/(\d+(?:[.,]\d+)?)\s*[x×*]\s*(\d+(?:[.,]\d+)?)(?:\s*[x×*]\s*(\d+(?:[.,]\d+)?))?/i);let d=o3Def(sh,w);
+  if(m3)d=[n(m3[1]),n(m3[2]),m3[3]?n(m3[3]):d[2]];else{const m=T.match(/(\d+(?:[.,]\d+)?)\s*(?:meetri\w*|m)\b/i);if(m){const v=n(m[1]);if(sh==='scaf'||sh==='lift')d[2]=v;else if(sh==='cont'||sh==='fence')d[0]=v;else d=[v,v,v];}}
+  return d.map(v=>+Math.min(60,Math.max(.05,v||1)).toFixed(2));}
+// seina ulatus: samatasandilised tipud (hitil mesh), piki seina ja kõrgus
+function o3Wall(h){const o=h.obj;if(!o||!o.geometry||!/^(walls|l2wall|gable)$/.test(o.name))return null;const n=new THREE.Vector3(h.n.x,0,h.n.z);if(n.length()<.3)return null;n.normalize();const t=new THREE.Vector3(n.z,0,-n.x),hs=group&&group.getObjectByName('house'),sy=hs?hs.scale.y:1;
+  if(hs&&sy!==1){hs.scale.y=1;scene.updateMatrixWorld(true);}
+  const T=[],v=[new THREE.Vector3(),new THREE.Vector3(),new THREE.Vector3()];
+  try{msHouse().forEach(m=>{if(!/^(walls|l2wall|gable)$/.test(m.name)||!m.geometry)return;m.updateMatrixWorld();const pa=m.geometry.attributes.position,ix=m.geometry.index,cnt=ix?ix.count:pa.count;
+    for(let i=0;i+2<cnt;i+=3){let ok=true,t0=1e9,t1=-1e9,y0=1e9,y1=-1e9;for(let k=0;k<3;k++){v[k].fromBufferAttribute(pa,ix?ix.getX(i+k):i+k).applyMatrix4(m.matrixWorld);const r=v[k].clone().sub(h.p);if(Math.abs(r.dot(n))>.2){ok=false;break;}const d=r.dot(t);t0=Math.min(t0,d);t1=Math.max(t1,d);y0=Math.min(y0,v[k].y);y1=Math.max(y1,v[k].y);}
+      if(ok&&t1-t0>.001)T.push([t0,t1,y0,y1]);}});}
+  finally{if(hs&&sy!==1){hs.scale.y=sy;scene.updateMatrixWorld(true);}}
+  if(!T.length)return null;T.sort((a,b)=>a[0]-b[0]);
+  // yhendatud lõik, kus klõps (t=0) asub
+  let g=null;for(const q of T){if(g&&q[0]<=g[1]+.3){g[1]=Math.max(g[1],q[1]);g[2]=Math.min(g[2],q[2]);g[3]=Math.max(g[3],q[3]);}else{if(g&&g[0]<=0&&g[1]>=0)break;g=q.slice();}}
+  if(!g||g[0]>0.3||g[1]<-0.3||g[1]-g[0]<.3)return null;
+  const hh=HOUSES[cur],gy=ground.position.y,y0=g[2]-gy<.5?gy:g[2],eave=Math.min(+hh.eave>0?+hh.eave:1e9,g[3]-y0);
+  return {len:+(g[1]-g[0]).toFixed(2),t0:g[0],t1:g[1],y0,eave:+eave.toFixed(2),t:[t.x,t.z],n:[n.x,n.z]};}
+// klõps -> {on, p, n, wall}
+function o3Surf(h){const nm=h.obj&&h.obj.name;if(nm==='roofpart'){const n=[h.n.x,h.n.z];return {on:'roof',p:h.p.toArray(),nw:Math.hypot(n[0],n[1])>.1?n:null};}
+  const w=Math.abs(h.n.y)<.5&&o3Wall(h);if(w)return {on:'wall',p:h.p.toArray(),wall:w,nw:w.n};return {on:'ground',p:[h.p.x,h.p.y,h.p.z]};}
+// koht + pööre ruumis (kohalik +z = seinast/katuselt väljapoole, x = pikkus)
+function o3Place(c,on,sh,d){const P=new THREE.Vector3(...c.p),gy=ground.position.y;let n=c.nw,p=P.clone(),y=P.y;
+  if(on==='wall'&&c.wall){const w=c.wall,t=new THREE.Vector3(w.t[0],0,w.t[1]),al=sh==='scaf'?(d[0]>=w.len-.05?(w.t0+w.t1)/2:Math.min(w.t1-d[0]/2,Math.max(w.t0+d[0]/2,0))):0;
+    p.add(t.clone().multiplyScalar(al));p.x+=w.n[0]*(.3+d[1]/2);p.z+=w.n[1]*(.3+d[1]/2);y=w.y0;n=w.n;}
+  else if(on==='ground'&&c.wall){const w=c.wall;p.x+=w.n[0]*(.3+d[1]/2);p.z+=w.n[1]*(.3+d[1]/2);y=w.y0;n=w.n;}
+  else if(on==='ground'&&c.on==='roof')y=gy;
+  if(!n){const v=camera.position.clone().sub(p);n=[v.x,v.z];const l=Math.hypot(n[0],n[1])||1;n=[n[0]/l,n[1]/l];}
+  return {p:[+p.x.toFixed(3),+y.toFixed(3),+p.z.toFixed(3)],r:+(Math.atan2(n[0],n[1])*180/Math.PI).toFixed(1),nw:n};}
+// kompass: stseeni suund -> põhja/lõuna…
+function o3Dir(dx,dz){const h=HOUSES[cur],th=((h&&h.north)||0)*Math.PI/180,ct=Math.cos(th),st=Math.sin(th),sx=dx,sy=-dz,mx=sx*ct+sy*st,my=-sx*st+sy*ct;return O3DG[Math.round(((Math.atan2(mx,my)*180/Math.PI+360)%360)/45)%8];}
+function o3Where(m){const hs=group&&group.getObjectByName('house'),bb=hs?new THREE.Box3().setFromObject(hs):null,P=m.p[0],nm=m.nw;let et='',en='';
+  if(m.on==='wall'&&nm){const g=o3Dir(nm[0],nm[1]);const full=m.wl&&Array.isArray(m.d)&&m.d[0]>=m.wl-.3;et=(full?'kogu '+g+'seina ulatuses':g+'seina ääres')+', 0,3 m seinast';en=`standing against the ${O3EN[g]}-facing wall${full?', along its full length':''}, 0.3 m from the wall`;}
+  else if(m.on==='roof'){const g=nm?o3Dir(nm[0],nm[1]):null;et=g?'katusel, '+g+'poole vaataval katusetahul':'katusel';en=`on the roof${g?', on the roof slope facing '+O3EN[g]:''}`;}
+  else if(bb){const c=bb.getCenter(new THREE.Vector3()),dx=Math.max(bb.min.x-P[0],0,P[0]-bb.max.x),dz=Math.max(bb.min.z-P[2],0,P[2]-bb.max.z),ds=Math.hypot(dx,dz),g=o3Dir(P[0]-c.x,P[2]-c.z);et=`maapinnal maja ${g}poolsel küljel, ${o3Dec(ds)} m maja seinast`;en=`on the ground on the ${O3EN[g]} side of the house, ${o3Dec(ds)} m from the house wall`;}
+  return {et,en};}
+function o3Desc(m,at){const d=Array.isArray(m.d)?m.d:[m.h,m.h,m.h],w=o3Where(m),kn=O3S[m.shape]||'objekt',nm=stClean(m.name)||kn,sz=d.map(o3Dec).join(' × ');
+  const hh=HOUSES[cur],eave=hh&&+hh.eave>0?`; the house eave height is ${o3Dec(hh.eave)} m, use it to judge scale`:'';
+  return `${nm} (${kn}): ${w.et?w.et+', ':''}${sz} m (length × depth × height). In English: a real ${kn==='kast'?'object':kn} "${nm}" ${w.en}, exactly ${sz} m (length × depth × height)${eave}. It is shown as a simplified model at ${at}; render it as the real, realistic thing with exactly this size and position.`;}
+// muutmismenüü (valitud objekt): P × L × K, pööra, päris 3D, kustuta
+{const _md=o3MenuDraw;o3MenuDraw=function(m){if(!m||!Array.isArray(m.d))return _md(m);const busy=m.job&&m.job.st!=='done'&&!m.url&&!m.err,can=!m.url&&!busy&&o3CanReal(m),pr=m.pid&&prodList().find(x=>x.id===m.pid),P=can?o3Price({kind:pr?'prod':'text',refImg:m.refImg}):null;
+  o3Menu.innerHTML=`<b>${stEsc(m.name||'Objekt')}</b>`+['Pikkus','Laius','Kõrgus'].map((n,i)=>`<label>${n} <input type="number" class="o3dm" data-i="${i}" min=".05" max="60" step=".1" value="${(+m.d[i]).toFixed(2).replace(/\.?0+$/,'')}" inputmode="decimal" aria-label="${n}, m"></label>`).join('')+` m<button type="button" data-o3r="-15" aria-label="Pööra vasakule">⟲</button><button type="button" data-o3r="15" aria-label="Pööra paremale">⟳</button>`
+    +(can?`<button type="button" class="o3real" data-o3x>Tee päris 3D · ${stEsc(P&&o3Ex(m)?'tasuta':o3Cr(P.tot))}</button>`:'')+`<button type="button" class="del" data-o3d>Kustuta</button>${busy?'<small>3D valmib, mõõtu ja asendit saad muuta ka praegu.</small>':m.err?'<small>'+stEsc(m.err)+'</small>':''}`;
+  o3Menu.hidden=false;const mid=m.id,ed=fn=>{const f=o3Find(mid);if(!f)return;omSnapUndo();fn(f.m);save();omDraw();};
+  o3Menu.querySelectorAll('.o3dm').forEach(inp=>inp.onchange=()=>ed(x=>{const i=+inp.dataset.i,v=Math.min(60,Math.max(.05,+String(inp.value).replace(',','.')||x.d[i]));x.d[i]=+v.toFixed(2);x.h=x.d[2];}));
+  o3Menu.querySelectorAll('[data-o3r]').forEach(b=>b.onclick=()=>ed(x=>{x.r=((+x.r||0)+(+b.dataset.o3r)+360)%360;}));o3Menu.querySelector('[data-o3d]').onclick=()=>omDel(mid);
+  const rb=o3Menu.querySelector('[data-o3x]');if(rb)rb.onclick=()=>o3Real(mid);};}
+// päris 3D on lubatud, kui on toode (mudel või fotod) või oma foto; ainult tekst + kuju = parameetriline
+const o3Pr=m=>m.pid&&prodList().find(x=>x.id===m.pid);
+const o3CanReal=m=>{const p=o3Pr(m);return !!(p&&(o3Url(p.model)||(p.imgs&&p.imgs[0])))||!!m.refImg;};
+const o3Ex=m=>{const p=o3Pr(m);return o3Existing({name:m.name,pid:p?p.id:undefined,kind:p?'prod':'text'});};
+async function o3Real(mid){const f=o3Find(mid);if(!f)return;const m=f.m,pr=o3Pr(m);if(!(CLOUD&&CL.cid)){toast('3D-objekti tegemine töötab kontoga.');return;}
+  const kind=pr?'prod':'text',ex=o3Ex(m);
+  if(ex){omSnapUndo();m.url=ex.url;m.key=ex.key;m.job={st:'done',t:Date.now()};delete m.err;save();omDraw();toast('Mudel oli olemas: lisatud tasuta');return;}
+  const P=o3Price({kind,refImg:m.refImg}),eta=pr?'5–7 min':'6–9 min',ok=await ask2('Tee päris 3D',`Teen ${pr?'toote „'+pr.name+'“ fotost':'sinu fotost'} 3D-mudeli ja panen selle samale kohale, mõõtudega ${m.d.map(o3Dec).join(' × ')} m. Hind ${o3Cr(P.tot)} · umbes ${eta}. Ebaõnnestumisel krediidid tagastatakse. Kuni valmib, jääb kohale kuju.`,'Alusta · '+o3Cr(P.tot));
+  if(!ok)return;if(!await canPay(P.tot,'3D-objekt'))return;const g=o3Find(mid);if(!g)return;omSnapUndo();g.m.key=pr?'p:'+pr.id:'t:'+o3Key(g.m.name);delete g.m.err;g.m.job={st:pr?'check':'ref',t:Date.now()};save();omDraw();
+  o3Run(mid,{kind,name:g.m.name,refImg:g.m.refImg},pr);}
+// Lisa-kast
+let o3L=null;
+function o3LisaClose(){if(o3L){o3L.el.remove();o3L=null;}}
+function o3Lisa(x,y){const h=msHit(x,y,'free');if(!h||!h.p){toast('Kliki majale või maapinnale');return;}o3LisaClose();
+  const c=o3Surf(h);c.n=h.n;const P=prodList().filter(p=>p&&p.id),el=document.createElement('div');el.className='o3lisa';el.setAttribute('role','dialog');el.setAttribute('aria-label','Lisa objekt');
+  const opts=c.on==='ground'?['ground']:c.on==='wall'?['wall','ground']:['roof','ground'];
+  el.innerHTML=`<b>Lisa objekt</b><label class="fl" for="o3lT">Mida lisad?<input id="o3lT" type="text" maxlength="60" placeholder="nt Firma X tellingud, 4 m käärtõstuk, konteiner" autocomplete="off"></label>
+  <div class="o3dd"><label for="o3l0">Pikkus<input id="o3l0" type="number" min=".05" max="60" step=".1" inputmode="decimal"></label><label for="o3l1">Laius<input id="o3l1" type="number" min=".05" max="60" step=".1" inputmode="decimal"></label><label for="o3l2">Kõrgus<input id="o3l2" type="number" min=".05" max="60" step=".1" inputmode="decimal"></label><span>m</span></div>
+  ${P.length?`<label class="fl" for="o3lP">Toode (Sinu tooted)<select id="o3lP"><option value="">Ei kasuta</option>${P.map(p=>`<option value="${stEsc(p.id)}">${stEsc(p.name)}</option>`).join('')}</select></label>`:''}
+  <label class="fl" for="o3lF">Oma foto (valikuline)<input id="o3lF" type="file" accept="image/*"></label>
+  <label class="fl" for="o3lK">Link (valikuline)<input id="o3lK" type="url" maxlength="300" placeholder="https://"></label>
+  <label class="fl" for="o3lO">Paigutus<select id="o3lO">${opts.map(o=>`<option value="${o}">${O3ON[o]}</option>`).join('')}</select></label>
+  <small id="o3lH"></small><div class="row"><button type="button" class="ghost" id="o3lX">Tühista</button><button type="button" class="send" id="o3lOk">Lisa</button></div>`;
+  $('view').appendChild(el);o3L={el,c,edited:false,refImg:null};const $$=i=>el.querySelector('#'+i),dd=()=>[0,1,2].map(i=>+String($$('o3l'+i).value).replace(',','.')||0);
+  const upd=()=>{const t=$$('o3lT').value,pid=$$('o3lP')&&$$('o3lP').value,pr=pid&&P.find(p=>p.id===pid),sh=o3Kind(t);if(!o3L.edited){let d;if(pr&&pr.L&&pr.W)d=[+pr.L,+pr.W,+pr.H||Math.max(+pr.L,+pr.W)];else d=o3Dims(t,sh,c.wall);[0,1,2].forEach(i=>$$('o3l'+i).value=String(d[i]));}
+    $$('o3lH').textContent=(pr?'Toode: '+pr.name+(o3Url(pr.model)?' · mudel olemas, tasuta':' · päris 3D saad teha pärast lisamist')+'. ':'')+'Kuju: '+O3S[sh]+(o3L.refImg?' · foto lisatud':'')+'. Kuju on tasuta.';};
+  $$('o3lT').oninput=upd;if($$('o3lP'))$$('o3lP').onchange=()=>{const pr=P.find(p=>p.id===$$('o3lP').value);if(pr&&!$$('o3lT').value.trim())$$('o3lT').value=pr.name;o3L.edited=false;upd();};
+  [0,1,2].forEach(i=>$$('o3l'+i).oninput=()=>{o3L.edited=true;});
+  $$('o3lF').onchange=async e=>{const f=e.target.files&&e.target.files[0];if(!f||!/^image\//.test(f.type)){o3L.refImg=null;upd();return;}try{o3L.refImg=await shrink(f,900,.8);}catch(_){o3L.refImg=null;toast('Fotot ei õnnestunud avada');}upd();};
+  $$('o3lX').onclick=o3LisaClose;
+  $$('o3lOk').onclick=()=>{const t=$$('o3lT').value.trim(),pid=$$('o3lP')&&$$('o3lP').value||'',pr=pid&&P.find(p=>p.id===pid),name=(t||(pr&&pr.name)||'Objekt').slice(0,60),sh=o3Kind(name),d=dd().map(v=>+Math.min(60,Math.max(.05,v||1)).toFixed(2)),on=$$('o3lO').value,pl=o3Place(c,on,sh,d),lk=String($$('o3lK').value||'').trim();
+    omSnapUndo();const m={t:'obj3d',id:'o'+Date.now().toString(36)+Math.random().toString(36).slice(2,5),name,shape:sh,d,h:d[2],on,nw:pl.nw,wl:c.wall?c.wall.len:undefined,p:[pl.p],r:pl.r,url:null};
+    if(pr){m.pid=pr.id;const ex=o3Existing({name,pid:pr.id,kind:'prod'});if(ex){m.url=ex.url;m.key=ex.key;m.job={st:'done',t:Date.now()};}}
+    if(o3L.refImg)m.refImg=o3L.refImg;if(/^https?:\/\/[^\s"'<>`]+$/.test(lk))m.link=lk;
+    omList().push(m);OM.sel=m.id;save();omDraw();o3LisaClose();obTool('select');};
+  upd();el.addEventListener('keydown',e=>{if(e.key==='Escape'){e.stopPropagation();o3LisaClose();}});$$('o3lT').focus();}
+
 o3Resume();o3Draw();
 // lisatud toode/ese kandidaadid kohe pärast pildi tegemist: Toode-märk -> toode; muidu „lisa/pane …“ tekst + märgitud koht
 function o3Cands(text){const L=omList(),out=[],pl=prodList(),pj=p=>{const q=msV(p).project(camera);return [(q.x+1)/2,(1-q.y)/2];},ctr=ps=>ps.reduce((a,q)=>[a[0]+q[0]/ps.length,a[1]+q[1]/ps.length,a[2]+q[2]/ps.length],[0,0,0]);
