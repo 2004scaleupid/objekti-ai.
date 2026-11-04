@@ -36,6 +36,11 @@
 
   /* vestlus kerib omaette */
   body.m-st .studio:not(.fresh) .stthread{flex:1;min-height:0;padding:14px 14px 8px;gap:14px;overscroll-behavior:contain}
+  /* 3D-mudel avatud: 3D peal, vestlus all, kogu stuudio kerib; kirjutamisriba jääb all */
+  body.m-st .studio.has3d .stmain{overflow-y:auto;-webkit-overflow-scrolling:touch}
+  body.m-st .studio.has3d .stm3{flex:none;min-height:0}
+  body.m-st .studio.has3d .p3v.m3v{flex:none;height:min(50vh,420px)}
+  body.m-st .studio.has3d:not(.fresh) .stthread{flex:none;min-height:240px;overflow:visible}
   body.m-st .ststage{flex:1;min-height:0}
   body.m-st .stview{min-height:0}
 

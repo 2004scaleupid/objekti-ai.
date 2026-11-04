@@ -1210,6 +1210,27 @@ img.ld{background:linear-gradient(90deg,var(--soft) 25%,var(--paper) 50%,var(--s
 .stv>img.ld{width:100%;min-height:min(var(--stimg,60vh),380px)}.stm .pics img.ld{min-width:120px;min-height:90px}
 @keyframes stshim{to{background-position:-200% 0}}@media (prefers-reduced-motion:reduce){img.ld{animation:none}}
 .stpant[aria-pressed=true]{background:var(--soft)}
+
+/* Vaba idee 3D-mudeliga: vestlus saab alati vähemalt 240 px, 3D võtab ülejäänu; liiga väikesel aknal kerib stuudio */
+.m3head{display:flex;align-items:center;gap:8px}.m3head .m3hint{flex:1;min-width:0}.m3tog{flex:none;padding:5px 11px;font-size:13px}
+.m3bar{max-height:calc(100% - 16px);overflow-y:auto}
+.m3slim{display:none;align-items:center;gap:10px;padding:6px 10px;border:1px solid var(--line);border-radius:12px;background:var(--paper);font-size:13px;color:var(--muted)}.m3slim img{width:56px;height:36px;object-fit:cover;border-radius:6px;background:var(--soft)}
+.stm3.off .m3slim{display:flex}.stm3.off .m3v,.stm3.off .m3hint{display:none}
+@media (min-width:821px){
+  .studio.has3d .stmain{overflow-y:auto}
+  .studio.has3d .stm3{flex:3 1 300px;min-height:300px}
+  .studio.has3d .stm3.off{flex:none;min-height:0}
+  .studio.has3d .p3v.m3v{flex:1;height:auto;min-height:230px}
+  .studio.has3d .stthread{flex:2 1 240px;min-height:240px}
+  .studio.has3d .stdock{flex:none;position:sticky;bottom:0;z-index:20;background:var(--paper)}
+}
+@media (min-width:1280px){
+  .studio.has3d:not(.m3off) .stmain{display:grid;grid-template-columns:minmax(0,3fr) minmax(0,2fr);grid-template-rows:auto minmax(240px,1fr) auto}
+  .studio.has3d:not(.m3off) .sttop{grid-column:1/-1}
+  .studio.has3d:not(.m3off) .stm3{grid-column:1;grid-row:2/4;min-height:300px}
+  .studio.has3d:not(.m3off) .stthread{grid-column:2;grid-row:2}
+  .studio.has3d:not(.m3off) .stdock{grid-column:2;grid-row:3;position:static}
+}
 </style>
 <link rel="stylesheet" href="css/mobile.css">
 </head>
@@ -1443,7 +1464,7 @@ img.ld{background:linear-gradient(90deg,var(--soft) 25%,var(--paper) 50%,var(--s
         <h1 id="stTitle">Mida täna loome?</h1>
         <p id="stSub">Lae üles foto ja kirjelda, mida muuta.</p>
       </div>
-      <div class="stm3" id="stM3" hidden><div class="m3hint" id="m3Hint" aria-live="polite"></div><div class="p3v m3v" id="m3View"><div class="p3load"><span>Laadin 3D-mudelit…</span><div class="p3bar"><i></i></div></div><div class="m3labs" id="m3Labs"></div><div class="m3bar" id="m3Bar" role="toolbar" aria-label="3D tööriistad"></div></div></div>
+      <div class="stm3" id="stM3" hidden><div class="m3head"><div class="m3hint" id="m3Hint" aria-live="polite"></div><button type="button" class="ghost sm m3tog" id="m3Tog" aria-expanded="true" onclick="m3Tog()">Peida 3D</button></div><div class="m3slim" id="m3Slim"><img id="m3Th" alt="" hidden><span>3D-vaade on peidus</span></div><div class="p3v m3v" id="m3View"><div class="p3load"><span>Laadin 3D-mudelit…</span><div class="p3bar"><i></i></div></div><div class="m3labs" id="m3Labs"></div><div class="m3bar" id="m3Bar" role="toolbar" aria-label="3D tööriistad"></div></div></div>
       <div class="stthread" id="stThread" hidden aria-live="polite"></div>
       <div class="ststage" id="stStage" hidden>
         <div class="stedbar" id="stEdBar"><button type="button" class="stback stedback" id="stEdBack" title="Tagasi töölauale (Esc)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>Töölaud</button><b id="stEdT">Pilt 1</b><span id="stEdS">Märgi vasakult tööriistaga, mida muuta. Siis kirjuta all, mida teha.</span><span class="stsp"></span><button type="button" class="stdone" id="stEdDone">✓ Valmis</button></div>
@@ -4292,7 +4313,7 @@ function stRender(){const th=stTheme(STU.tpl),s=stSess();if(STU.edit!=null&&!(s&
   ON.sort((a,b)=>((order.indexOf(a.id)+99)%99)-((order.indexOf(b.id)+99)%99));
   $('stChips').innerHTML=ON.filter(t=>t.id!=='mudel3d').map(t=>`<button type="button" class="stchip" data-t="${t.id}" aria-pressed="${t.id===STU.tpl||(STU.tpl==='mudel3d'&&t.id==='vaba')}">${ticon(t,16)}<span>${stEsc(t.id==='vaba'?'Vaba idee':t.name)}</span></button>`).join('');
   $('stChips').querySelectorAll('.stchip').forEach(b=>b.onclick=()=>{if(b.dataset.t!==STU.tpl)openStudio(b.dataset.t);});st3dRender();roomRender();roomActRender();stPanApply();stImgLoading($('stFiles'));if(s&&s.room&&s.room.status==='pending')roomPoll(s);
-  $('stM3').hidden=!mdl;$('stAdd3d').hidden=!(th.T&&th.T.id==='vaba');m3MyRow();if(mdl)m3Show();
+  $('stM3').hidden=!mdl;m3Fold();$('stAdd3d').hidden=!(th.T&&th.T.id==='vaba');m3MyRow();if(mdl)m3Show();
   $('stStage').hidden=!editing;$('stThread').hidden=editing||!hasMsgs||!!th.p3;$('stTo3d').hidden=!(s&&s.obj&&HOUSES.some(h=>h.ehr===s.obj));
   if(editing){const n=(s.tray||[]).indexOf(STU.edit);$('stEdT').textContent=n>=0?'Pilt '+(n+1):'Pilt';}
   stRenderStyle();stRenderProd();stRenderFiles();stRenderFilm();stShowImg();stRenderThread();stRenderPanel();stRenderRail();stRenderSugg();stRenderMk();stRenderRes();p3Render();stSync();}
@@ -4601,7 +4622,10 @@ async function stChat(text){if(!text)return;let s=stSess();if(!s)s=stNewSession(
   finally{delete am.pending;STU.chatting=false;stSave();if(!$('studio').hidden&&STU.sid===s.id){stRender();stScrollEnd();}}}
 // uusim kaart: kui see on vaatest kõrgem (telefon), näita selle algust (pilti), muidu keri lõppu
 function stScrollNew(box){const el=box.lastElementChild;if(el&&el.offsetHeight>box.clientHeight)box.scrollTop+=el.getBoundingClientRect().top-box.getBoundingClientRect().top-8;else box.scrollTop=box.scrollHeight;}
-function stScrollEnd(){const t=$('stThread');setTimeout(()=>stScrollNew(t),40);}
+function stScrollEnd(){const t=$('stThread');setTimeout(()=>{stScrollNew(t);if(!t.hidden)t.scrollIntoView({block:'nearest'});},40);}
+// 3D-vaate voltimine: peidus on ainult riba pisipildiga, vestlus saab kogu ruumi
+function m3Fold(){const off=!!STU.m3off&&!$('stM3').hidden,st=$('studio'),b=$('m3Tog');st.classList.toggle('has3d',!$('stM3').hidden);st.classList.toggle('m3off',off);$('stM3').classList.toggle('off',off);b.textContent=off?'Näita 3D':'Peida 3D';b.setAttribute('aria-expanded',off?'false':'true');if(!off&&P3V&&P3V.inv)P3V.inv(3);}
+function m3Tog(){if(!STU.m3off&&P3V&&P3V.ok){try{P3V.r.render(P3V.sc,P3V.cam);const im=$('m3Th');const src=P3V.r.domElement,c=document.createElement('canvas');c.width=112;c.height=Math.round(112*src.height/src.width)||72;const g=c.getContext('2d');g.fillStyle='#e9ecef';g.fillRect(0,0,c.width,c.height);g.drawImage(src,0,0,c.width,c.height);im.src=c.toDataURL('image/jpeg',.7);im.hidden=false;}catch(_){}}STU.m3off=!STU.m3off;m3Fold();}
 // topeltklõps: 100 % (tegelik suurus); kui pilt on juba vähemalt 100 % suurune, siis 2×
 const stFull=k=>k<.95?1/k:2;
 /* Pildivaatur (nagu Claude/ChatGPT): kogu lõime pildid, nooled, Esc, pühkimine; suum (ratas, näpud, topeltklõps = 100 %, lohistamine);
