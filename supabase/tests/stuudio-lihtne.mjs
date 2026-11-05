@@ -1,0 +1,26 @@
+import { chromium } from 'playwright';
+const b=await chromium.launch({executablePath:'/opt/pw-browsers/chromium_headless_shell-1194/chrome-linux/headless_shell'});
+let fails=0;const ok=(c,m,x)=>{console.log((c?'PASS ':'FAIL ')+m,c?'':JSON.stringify(x));if(!c)fails++;};
+const p=await b.newPage({viewport:{width:1440,height:900}});const errs=[];p.on('pageerror',e=>errs.push(e.message));
+await p.goto('http://localhost:8767/test.html');await p.waitForTimeout(2500);
+await p.evaluate(()=>{document.getElementById('kindDlg')?.remove();acct.kindSet=true;try{localStorage.removeItem('v3d_pan');localStorage.removeItem('v3d_tools');}catch(_){};openStudio('vaba');});await p.waitForTimeout(600);
+const vis=sel=>p.evaluate(s=>{const e=document.querySelector(s);if(!e)return false;const r=e.getBoundingClientRect();return r.width>0&&r.height>0&&getComputedStyle(e).visibility!=='hidden';},sel);
+ok(!(await vis('#stRail .sttool')),'algul tööriistariba peidus');
+ok(await p.evaluate(()=>document.getElementById('studio').classList.contains('pcol')),'infopaneel vaikimisi kinni');
+ok(!(await vis('#stStyleW'))&&!(await vis('#stVidT'))&&!(await vis('#stAdd3d')),'stiil, video ja 3D-mudelid peidus');
+ok(await vis('#stGenBtn')&&await vis('#stAdd')&&await vis('#stMore'),'nähtav: lisa pilt, ⋯ ja Tee pilt');
+await p.click('#stMore');ok(await vis('#stStyleW')&&await vis('#stVidT'),'⋯ näitab stiili ja video');
+await p.click('#stVidT');await p.click('#stMore');ok(await vis('#stVidT'),'sisse lülitatud video jääb nähtavaks');await p.click('#stVidT');
+await p.setInputFiles('#stFile',['maja.jpg']);await p.waitForTimeout(1200);
+await p.evaluate(()=>{const s=stSess();stEdit(s.tray[0],'brush');});await p.waitForTimeout(500);
+ok(await vis('#stRail [data-tool="brush"]')&&await vis('#stRail [data-tool="rect"]')&&await vis('#stRail [data-tool="prod"]'),'märkimisel põhitööriistad nähtavad');
+ok(!(await vis('#stRail [data-tool="lasso"]'))&&!(await vis('#stRail [data-tool="ruler"]')),'harvemad tööriistad peidus');
+await p.click('#stToolMore');ok(await vis('#stRail [data-tool="lasso"]')&&await vis('#stRail [data-tool="ruler"]'),'⋯ näitab kõiki tööriistu');
+ok(await p.evaluate(()=>localStorage.getItem('v3d_tools')==='1'),'valik jääb meelde');
+await p.click('#stToolMore');ok(!(await vis('#stRail [data-tool="lasso"]')),'− peidab uuesti');
+// märkimine töötab
+const box=await p.locator('#stImg').boundingBox();await p.mouse.move(box.x+box.width*.4,box.y+box.height*.4);await p.mouse.down();await p.mouse.move(box.x+box.width*.5,box.y+box.height*.5,{steps:6});await p.mouse.up();await p.waitForTimeout(300);
+ok(await p.evaluate(()=>stSess().marks.length>0),'pintsliga märkimine töötab');
+await p.click('#stPanT');ok(await p.evaluate(()=>!document.getElementById('studio').classList.contains('pcol')),'infopaneeli saab avada');
+ok(!errs.length,'JS vigu pole',errs);
+console.log('fails',fails);await b.close();process.exit(fails?1:0);

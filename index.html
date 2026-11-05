@@ -8045,6 +8045,44 @@ function enh(){if(!PS||PS.res||PS.review||!PS.photo)return;const wrap=document.q
   if(ids.length){const h=document.querySelector('#plStage .plhint');if(h&&!/lohista/i.test(h.textContent))h.textContent+=(h.textContent?' · ':'')+(plL()==='en'?'drag a marker to move it':plL()==='ru'?'метку можно перетащить':'märki saad lohistada');}}
 })();}catch(e){console.warn('[märkide muutmine]',e);}
 
+/* 05.11: lihtsam stuudio. Vaikimisi näeb ainult põhilist: foto, kirjeldus, „Tee pilt“.
+   - tööriistariba ainult siis, kui pilt on märkimiseks lahti; seal põhitööriistad, ülejäänu „Rohkem“ all
+   - kirjutuskasti all ainult + ja Tee pilt; 3D, Video, stiil ja Minu 3D-mudelid on „⋯“ all (sees olev valik jääb nähtavaks)
+   - infopaneel vaikimisi kinni (avad nupust paremal üleval); soovitusi 3 */
+(()=>{if(!$('studio'))return;
+const ADV=new Set(['hand','lasso','arrow','text','ruler','color','eye','clear']);
+const get=(k)=>{try{return localStorage.getItem(k)==='1';}catch(_){return false;}},put=(k,v)=>{try{localStorage.setItem(k,v?'1':'0');}catch(_){}};
+const css=document.createElement('style');css.textContent=`
+@media (min-width:821px){#studio.studio:not(.editing){grid-template-columns:0 minmax(0,1fr) min(300px,26vw)}#studio.studio.pcol:not(.editing){grid-template-columns:0 minmax(0,1fr)}#studio:not(.editing) .strail{visibility:hidden;padding:0;border:0;overflow:hidden}}
+@media (max-width:820px){#studio:not(.editing) .strail{display:none}}
+.strail:not(.more) .sttool.adv,.strail:not(.more) .sep.adv{display:none}
+.strail .stmoret{margin-top:4px;font:700 15px/1 var(--display);letter-spacing:.06em}
+.stbar:not(.more) #stAdd3d,.stbar:not(.more) #stStyleW,.stbar:not(.more) #st3dT:not([aria-pressed="true"]),.stbar:not(.more) #stVidT:not([aria-pressed="true"]){display:none!important}
+#stMore{font:700 16px/1 var(--display);letter-spacing:.08em}#stMore[aria-expanded="true"]{background:var(--soft,rgba(127,127,127,.14))}
+.stsugg>:nth-child(n+5){display:none}`;
+document.head.appendChild(css);
+// tööriistad
+const _rail=stRenderRail;stRenderRail=function(){const r=_rail.apply(this,arguments);const R=$('stRail'),ed=STU.edit!=null;$('studio').classList.toggle('editing',ed);if(!R)return r;
+  R.classList.toggle('more',get('v3d_tools'));
+  R.querySelectorAll('.sttool').forEach(b=>{if(ADV.has(b.dataset.tool)&&!(b.dataset.tool===STU.tool&&ed))b.classList.add('adv');});
+  // vahejoon, mille järel on ainult peidetud tööriistad, peitub ka
+  [...R.children].forEach((el,i,a)=>{if(!el.classList.contains('sep'))return;let j=i+1,any=false;while(j<a.length&&!a[j].classList.contains('sep')){if(!a[j].classList.contains('adv'))any=true;j++;}if(!any)el.classList.add('adv');});
+  const m=document.createElement('button');m.type='button';m.className='sttool stmoret';m.id='stToolMore';const on=R.classList.contains('more');
+  m.setAttribute('aria-expanded',String(on));m.setAttribute('aria-label',on?'Vähem tööriistu':'Rohkem tööriistu');m.dataset.n=on?'Vähem tööriistu':'Rohkem tööriistu';m.dataset.d=on?'':'Käsi, vabakuju, nool, silt, mõõtmine, värv, peida märgid';m.textContent=on?'−':'⋯';
+  m.onclick=()=>{put('v3d_tools',!R.classList.contains('more'));stTip(null);stRenderRail();};m.onpointerenter=e=>{if(e.pointerType==='mouse')stTip(m);};m.onpointerleave=()=>stTip(null);R.appendChild(m);
+  return r;};
+// kirjutuskasti nupud
+function moreBtn(){const a=$('stAdd');if(!a||$('stMore'))return;const b=document.createElement('button');b.type='button';b.className='sticon';b.id='stMore';b.textContent='⋯';
+  b.setAttribute('aria-expanded','false');b.setAttribute('aria-label','Rohkem valikuid');b.title='Rohkem: 3D, video, stiil, minu 3D-mudelid';
+  b.onclick=()=>{const bar=a.closest('.stbar'),on=!bar.classList.contains('more');bar.classList.toggle('more',on);b.setAttribute('aria-expanded',String(on));b.title=on?'Vähem valikuid':'Rohkem: 3D, video, stiil, minu 3D-mudelid';};
+  a.after(b);}
+const _sync=stSync;stSync=function(){const r=_sync.apply(this,arguments);moreBtn();
+  // kui ⋯ all pole midagi näidata (nt aadressi- või 3D-töö), siis nuppu pole vaja
+  const bar=$('stAdd')&&$('stAdd').closest('.stbar'),mb=$('stMore');if(bar&&mb){mb.hidden=!['stAdd3d','stStyleW','st3dT','stVidT'].some(id=>{const e=$(id);return e&&!e.hidden;});}
+  return r;};
+// infopaneel vaikimisi kinni
+const _pan=stPanApply;stPanApply=function(){let v=null;try{v=localStorage.getItem('v3d_pan');}catch(_){}if(v===null){try{localStorage.setItem('v3d_pan','0');}catch(_){}}return _pan.apply(this,arguments);};
+})();
 restoreRT();renderList();renderPanel();build();updFotos();chatReset();setTab(false);renderAcct();
   if(CLOUD)clBoot();else if(!startFromHash()){if(DEV_AUTOLOGIN||store.get('oai_session',null))enter();else $('login').hidden=false;}tick();}
 </script>
