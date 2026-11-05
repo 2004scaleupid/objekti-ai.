@@ -1,0 +1,13 @@
+import { chromium } from 'playwright';
+const S='/tmp/claude-0/-home-claude/cfb7a3a4-3672-5bf5-b816-02763484350f/scratchpad/';const N=S+'npm3/';
+const b=await chromium.launch({executablePath:'/opt/pw-browsers/chromium_headless_shell-1194/chrome-linux/headless_shell',args:['--use-gl=angle','--use-angle=swiftshader']});
+const ctx=await b.newContext({viewport:{width:1440,height:900},deviceScaleFactor:1.5,reducedMotion:'reduce'});await ctx.route(/fonts\.|supabase\.co/,r=>r.abort());
+await ctx.route(/cdn\.jsdelivr\.net\/npm\/three@0\.170\.0\/(.*)$/,r=>{const m=r.request().url().match(/three@0\.170\.0\/(.*)$/);r.fulfill({path:N+'package/'+m[1],contentType:'text/javascript'});});
+const p=await ctx.newPage();const errs=[];p.on('pageerror',e=>errs.push(e.message));p.on('console',m=>{if(m.type()=='warning')errs.push(m.text())});
+await p.goto('http://localhost:8771/');await p.waitForTimeout(1500);
+await p.evaluate(()=>document.getElementById('f3v').scrollIntoView({block:'center',behavior:'instant'}));
+await p.waitForFunction(()=>getComputedStyle(document.getElementById('f3poster')).opacity==='0',null,{timeout:60000});await p.waitForTimeout(4000);
+await p.evaluate(()=>{const v=document.getElementById('f3v');[...v.children].forEach(e=>{if(e.tagName!=='CANVAS')e.style.visibility='hidden'});});
+await p.waitForTimeout(500);const du=await p.evaluate(()=>new Promise(r=>requestAnimationFrame(()=>r(document.getElementById('f3c').toDataURL('image/png')))));
+const fs=await import('fs');fs.writeFileSync(S+'maja-poster.png',Buffer.from(du.split(',')[1],'base64'));
+console.log(JSON.stringify(errs));await b.close();

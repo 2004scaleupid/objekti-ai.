@@ -137,7 +137,7 @@ export const clientIp = (req: Request) => {
 /** Krediitide kulutamine serveris (hind tuleb andmebaasist). ref seob kulu tagastusega. */
 export async function spend(companyId: string, kind: string, label: string, ref: string) {
   const { data, error } = await admin().rpc("spend_credits", { p_company: companyId, p_kind: kind, p_label: label.slice(0, 120), p_ref: ref });
-  if (error) throw new Error(error.message.includes("insufficient") ? "insufficient_credits" : error.message);
+  if (error) throw new Error(error.message.includes("insufficient") ? "insufficient_credits" : error.message.includes("not_approved") ? "Konto ootab Vaade3D kinnitust. Saadame e-kirja, kui konto on avatud." : error.message);
   return data as number;
 }
 /** Tagastab täpselt selle viitega võetud summa, ainult üks kord. Vastus: tagastatud krediidid (ka varem tagastatud, nt ajapiirangul). */

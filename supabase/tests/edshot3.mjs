@@ -1,0 +1,16 @@
+import { chromium } from 'playwright';
+const S='/tmp/claude-0/-home-claude/cfb7a3a4-3672-5bf5-b816-02763484350f/scratchpad/';
+const b=await chromium.launch({executablePath:'/opt/pw-browsers/chromium_headless_shell-1194/chrome-linux/headless_shell'});
+const ctx=await b.newContext({viewport:{width:1440,height:860},colorScheme:'dark',deviceScaleFactor:2});const p=await ctx.newPage();
+await p.goto('http://localhost:8767/test.html');await p.waitForTimeout(2500);
+await p.evaluate(()=>{document.getElementById('kindDlg')?.remove();acct.kindSet=true;acct.company='Sinu ettevõte';try{renderAcct();}catch(_){}try{localStorage.setItem('v3d_pan','0');localStorage.setItem('v3d_tools','1');}catch(_){};openStudio('vaba');});await p.waitForTimeout(800);
+await p.click('#stSugg .stsug.demo');await p.waitForTimeout(2000);
+await p.evaluate(()=>{const s=stSess();stEdit(s.tray[0],'brush');});await p.waitForTimeout(1000);
+await p.waitForTimeout(400);
+await p.evaluate(()=>{document.querySelectorAll('.toast,#toast,#fbw').forEach(e=>e.hidden=true);
+  document.querySelectorAll('body *').forEach(e=>{if(/^\s*[\d,]+\s*krediiti?\s*$/i.test(e.textContent)&&e.offsetParent&&e.textContent.length<20)e.style.visibility='hidden';if(e.children.length===0&&/krediit/i.test(e.textContent)&&e.offsetParent)e.style.visibility='hidden';});
+  document.querySelectorAll('.badge,.nb,[class*="dot"]').forEach(e=>{if(/^\d$/.test(e.textContent.trim()))e.style.display='none';});document.querySelectorAll('.sttip').forEach(e=>e.remove());const st=document.getElementById('stStage');const dk=document.getElementById('stDock');const ta=dk&&dk.querySelector('textarea,[contenteditable]');if(ta){if('value' in ta)ta.value='';else ta.textContent='';ta.dispatchEvent(new Event('input',{bubbles:true}));}if(dk)dk.querySelectorAll('img').forEach(i=>{let t=i;while(t.parentElement&&t.parentElement!==dk&&t.parentElement.getBoundingClientRect().width<120)t=t.parentElement;t.style.display='none';});st.querySelectorAll('img,canvas,svg:not(button svg)').forEach(e=>{if(!e.closest('button'))e.style.visibility='hidden';});});
+await p.mouse.move(5,5);await p.waitForTimeout(300);
+await p.screenshot({path:S+'ed-dock.png'});
+console.log(JSON.stringify(await p.evaluate(()=>{const r=id=>{const e=document.getElementById(id);if(!e)return null;const b=e.getBoundingClientRect();return [Math.round(b.top),Math.round(b.bottom)];};return {ph:(document.querySelector('#stDock textarea')||{}).placeholder,stage:r('stStage'),dock:r('stDock'),marks:stSess().marks.length};})));
+await b.close();

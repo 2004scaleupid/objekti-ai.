@@ -3860,6 +3860,8 @@ async function clLoad(){const sb=CL.sb;const {data:{user}}=await sb.auth.getUser
     sb.from('widgets').select('*').eq('company_id',cid).maybeSingle(),
     sb.from('partners').select('*').eq('owner_user',user.id).maybeSingle(),
     sb.from('renders').select('ehr,output_url').eq('company_id',cid).eq('kind','pic').eq('status','done').order('created_at')]);
+  // uus konto ootab Vaade3D kinnitust (settings.require_approval): rakendust ei avata
+  CL.pending=!!(co&&st.require_approval!==false&&!co.approved_at&&!pr.is_admin);if(CL.pending){clPending(pr,user);return false;}
   // eelmise kasutaja andmed samast brauserist ei tohi jääda
   const prev=store.get('v3d_uid',null);if(prev!==user.id){['designs','jobs','htpl','roofTypes','deleted','gen','genUrl','tplUse','feedback'].forEach(k=>{acct[k]=Array.isArray(acct[k])?[]:{};});acct.designs=[];acct.deleted=[];acct.tplUse=[];acct.feedback=[];clRaw('v3d_uid',user.id);}
   acct.email=user.email;acct.name=pr.name||acct.name||'';acct.company=co.name;acct.niche=co.niche||acct.niche;acct.cphone=co.phone||'';acct.web=co.web||'';acct.reg=co.reg_code||'';acct.logo=co.logo_url||null;acct.logoOnImg=co.logo_on_images!==false;
@@ -3944,9 +3946,9 @@ function clLoginUi(){
       if(meta){if(meta.ref){const {data:ok}=await CL.sb.rpc('ref_code_ok',{p_code:meta.ref});if(!ok){$('lRef').value='';$('lRefW').hidden=true;meta.ref='';er.textContent='Partneri link on aegunud või vigane. Vajuta uuesti „Loo konto“, et jätkata ilma soodustuseta.';return;}}
         acct.niche=meta.niche;acct.activeTpl=null;acct.source=meta.source;
         const {data,error}=await CL.sb.auth.signUp({email:em,password:pw,options:{emailRedirectTo:appBase(),data:meta,captchaToken:await capToken('capL')}});if(error)throw error;
-        if(!data.session){er.style.color='var(--ok)';er.textContent='Peaaegu valmis! Saatsime aadressile '+em+' kinnituslingi. Vajuta sellel ja oled sees'+(acct.welcome>0?' – siis lisanduvad ka '+acct.welcome+' tervituskrediiti.':'.');return;}}
+        if(!data.session){er.style.color='var(--ok)';er.textContent='Peaaegu valmis! Saatsime aadressile '+em+' kinnituslingi. Vajuta sellel, siis vaatame konto üle ja avame selle. Saadame sulle e-kirja, kui konto on avatud.';return;}}
       else{const {error}=await CL.sb.auth.signInWithPassword({email:em,password:pw,options:{captchaToken:await capToken('capL')}});if(error)throw error;}
-      if(await clLoad()){$('lPass').value='';store.set('v3d_email',em);await clWelcome(true,!!meta||clIsNew());clIntoApp(true);}else er.textContent='Konto andmeid ei leitud. Kirjuta info@vaade3d.ee';
+      if(await clLoad()){$('lPass').value='';store.set('v3d_email',em);await clWelcome(true,!!meta||clIsNew());clIntoApp(true);}else if(!CL.pending)er.textContent='Konto andmeid ei leitud. Kirjuta info@vaade3d.ee';
     }catch(err){er.textContent=clErr(err);}finally{btn.disabled=false;btn.removeAttribute('aria-busy');btn.textContent=t0;}};
   if(CAP.key)capPrep('capL').catch(()=>{}); // turvakontroll valmis enne, kui vajutatakse „Logi sisse“
   try{if(sessionStorage.getItem('v3d_deleted')){sessionStorage.removeItem('v3d_deleted');$('lErr').style.color='var(--ok)';$('lErr').textContent='Konto ja andmed kustutati. Aitäh, et proovisid Vaade3D-d.';}}catch(_){}
@@ -4044,7 +4046,23 @@ async function wrView(tok){document.body.classList.add('cvm');$('login').hidden=
       (u?`<h2 style="margin:0;font:800 22px var(--display)">Sinu pilt: ${e((r.items||[]).join(', '))}</h2><img src="${e(u)}" alt="Sinu pilt"><div style="display:flex;gap:8px;flex-wrap:wrap"><a class="apply" href="${e(u)}" target="_blank" rel="noopener" download>Laadi alla</a>${f.phone?`<a class="ghost" href="tel:${e(f.phone)}">Helista ${e(f.phone)}</a>`:''}${safeLink(f.web)?`<a class="ghost" href="${e(safeLink(f.web))}" target="_blank" rel="noopener">Koduleht ↗</a>`:''}</div><span class="fhint">Illustreeriv AI-pilt. Täpsed mõõdud ja hinna ütleb ${e(f.name||'ettevõte')}.</span>`
        :`<h2 style="margin:0;font:800 22px var(--display)">Pilt on veel töös</h2><span class="fhint">${e(f.name||'Ettevõte')} vaatab pildi üle ja saadab selle sulle e-postile.</span>`)+'<a class="wpromo" href="https://vaade3d.ee" target="_blank" rel="noopener"><i></i><span>Töötab <b>Vaade<em>3D</em></b>-ga</span></a>';}
   catch(er){d.querySelector('.card').innerHTML='<span class="fhint">Seda pilti ei leitud.</span>';}}
+/* ---------- konto kinnitamine: uus konto ootab Vaade3D kinnitust ---------- */
+function clPending(pr,user){['login','boot','app'].forEach(i=>{const e=$(i);if(e)e.hidden=true;});
+  const e=t=>String(t==null?'':t).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+  let d=$('pend');if(!d){d=document.createElement('div');d.id='pend';d.className='wrv';d.setAttribute('role','status');document.body.appendChild(d);}
+  const fn=String((pr&&pr.name)||'').trim().split(/\s+/)[0];
+  d.innerHTML=`<div class="card" style="max-width:520px;gap:14px"><div class="logo"><i></i><span>Vaade<b>3D</b></span></div><h2 style="margin:0;font:800 24px var(--display)">Aitäh${fn?', '+e(fn):''}! Sinu konto ootab kinnitust.</h2><p style="margin:0;color:var(--muted);line-height:1.55">Vaatame konto üle ja avame selle. Kui konto on avatud, saadame e-kirja aadressile <b style="color:var(--ink)">${e(user&&user.email)}</b>. Tavaliselt juhtub see samal tööpäeval.</p><div style="display:flex;gap:8px;flex-wrap:wrap"><button type="button" class="apply" id="pendRe">Kontrolli uuesti</button><button type="button" class="ghost" id="pendOut">Logi välja</button></div><span class="fhint">Küsimused: <a href="mailto:info@vaade3d.ee">info@vaade3d.ee</a></span></div>`;
+  $('pendRe').onclick=async()=>{const b=$('pendRe');b.disabled=true;try{if(await clLoad()){d.remove();await clWelcome(false,clIsNew());clIntoApp(false);}else if(CL.pending)toast('Konto ootab veel kinnitust.');}catch(er){toast(clErr(er));}finally{if(b.isConnected)b.disabled=false;}};
+  $('pendOut').onclick=async()=>{try{await CL.sb.auth.signOut();}catch(_){}d.remove();CL.pending=false;clShowLogin();};
+  clFn('account',{action:'request_access'}).then(r=>{if(r&&r.approved&&$('pendRe'))$('pendRe').click();},()=>{});}
+async function clApprove(t){history.replaceState(null,'',location.pathname);$('login').hidden=true;$('app').hidden=true;
+  const d=document.createElement('div');d.className='wrv';d.innerHTML='<div class="card" style="max-width:520px"><span class="fhint">Kinnitan kontot…</span></div>';document.body.appendChild(d);const c=d.querySelector('.card');
+  const e=x=>String(x==null?'':x).replace(/[&<>"]/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[ch]));
+  try{await clInit();const r=await clFn('account',{action:'approve',t},{pub:true});
+    c.innerHTML=`<div class="logo"><i></i><span>Vaade<b>3D</b></span></div><h2 style="margin:0;font:800 24px var(--display)">${r.already?'Konto oli juba kinnitatud':'Konto on kinnitatud'}</h2><p style="margin:0;color:var(--muted)"><b style="color:var(--ink)">${e(r.company)}</b> ${r.already?'saab juba sisse logida.':'saab nüüd sisse logida. Saatsime kliendile e-kirja.'}</p><a class="apply" href="./" style="align-self:flex-start">Ava Vaade3D</a>`;}
+  catch(er){c.innerHTML=`<h2 style="margin:0;font:800 22px var(--display)">Kinnitamine ei õnnestunud</h2><span class="fhint">${e(clErr(er))}</span><a class="ghost" href="./" style="align-self:flex-start">Ava Vaade3D</a>`;}}
 async function clBoot(){const h=location.hash||'';
+  if(h.startsWith('#kinnita=')){clApprove(h.slice(9));return;}
   if(h.startsWith('#wr=')){wrView(h.slice(4));return;}
   if(h.startsWith('#w=')){const W=wHash(h),p=b64d(W.w);if(p&&p.id){clWidget(p,W.a||'',W.p);return;}if(startFromHash())return;}
   if(h.startsWith('#s=')&&startFromHash())return;
@@ -4054,7 +4072,7 @@ async function clBoot(){const h=location.hash||'';
   try{await clInit();const {data}=await CL.sb.auth.getSession();
     if(data.session&&await clLoad()){clearTimeout(slow);const ff=!$('login').hidden;await clWelcome(ff,clIsNew());
       clIntoApp(ff,()=>{if(h.startsWith('#paid='))clPaid();else if(h.startsWith('#cancel')){history.replaceState(null,'',location.pathname);show('settings','billing');toast('Makse katkestati. Krediite ei võetud.');}});}
-    else{clearTimeout(slow);clShowLogin();}}
+    else{clearTimeout(slow);if(!CL.pending)clShowLogin();}}
   catch(e){clearTimeout(slow);clShowLogin();$('lErr').textContent=clErr(e);}}
 
 /* ---------- STUUDIO: vali töö -> töölaud tööriistade ja chatiga ---------- */
