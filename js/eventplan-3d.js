@@ -147,6 +147,19 @@ function view3d(box, L, opt) {
     setRoof(on) { state.roof = on; if (tentG) tentG.getObjectByName('roof').visible = on; },
     setWalls(on) { state.walls = on; if (tentG) tentG.getObjectByName('walls').visible = on; },
     setLabels(on) { state.labels = on; },
+    // pilt + siltide asukohad pildil + kaadris nähtavate laudade/toolide arv (pildi kontrolliks)
+    shot(w, h) {
+      const ow = r.domElement.width / r.getPixelRatio(), oh = r.domElement.height / r.getPixelRatio(), oa = cam.aspect, pr = r.getPixelRatio();
+      r.setPixelRatio(1); r.setSize(w, h, false); cam.aspect = w / h; cam.updateProjectionMatrix(); cam.updateMatrixWorld();
+      const mv = tentG && tentG.getObjectByName('walls'), wasW = mv && mv.visible; if (mv) mv.visible = false; // seinad pildil ees ei ole
+      r.render(sc, cam); const url = r.domElement.toDataURL('image/jpeg', .9);
+      const v = new T.Vector3(), inView = (x, y, z) => { v.set(x, y, z).project(cam); return v.z < 1 && Math.abs(v.x) <= 1 && Math.abs(v.y) <= 1; };
+      const vis = { round: 0, rect: 0, cocktail: 0, chairs: 0 };
+      for (const it of state.L.items) for (const t of it.tables || []) { if (inView(t.x + (t.w || 0) / 2, .75, t.y + (t.d || 0) / 2)) { if (t.shape === 'round') vis.round++; else if (t.shape === 'cocktail') vis.cocktail++; else vis.rect += t.nTab || 1; } for (const c of t.chairs || []) if (inView(c.x, .5, c.y)) vis.chairs++; }
+      const tags = []; for (const l of lab) { v.copy(l.p).project(cam); if (v.z < 1 && Math.abs(v.x) < 1 && Math.abs(v.y) < 1) tags.push({ text: l.e.textContent, x: (v.x + 1) / 2 * w, y: (1 - v.y) / 2 * h, red: l.e.style.background.indexOf('229') > -1 }); }
+      if (mv) mv.visible = wasW; r.setPixelRatio(pr); r.setSize(ow, oh, false); cam.aspect = oa; cam.updateProjectionMatrix();
+      return { url, w, h, vis, tags };
+    },
     snapshot(w, h) { const ow = r.domElement.width, oh = r.domElement.height, oa = cam.aspect; r.setSize(w, h, false); cam.aspect = w / h; cam.updateProjectionMatrix(); r.render(sc, cam); const url = r.domElement.toDataURL('image/jpeg', .9); r.setSize(ow / r.getPixelRatio(), oh / r.getPixelRatio(), false); cam.aspect = oa; cam.updateProjectionMatrix(); return url; },
     camera: cam, renderer: r, scene: sc,
     dispose() { cancelAnimationFrame(raf); ro.disconnect(); r.dispose(); box.innerHTML = ''; }

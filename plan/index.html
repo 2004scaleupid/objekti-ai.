@@ -25,6 +25,7 @@ h1{font-size:22px;letter-spacing:-.02em;margin:0 0 4px}h2{font-size:14px;margin:
 .fix{display:block;width:100%;text-align:left;margin:6px 0 0;font-weight:500}.fix b{color:var(--ok)}
 .vt{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 10px}.vt button{padding:6px 11px;font-size:13px}.vt button[aria-pressed=true]{background:var(--acc);color:#fff;border-color:var(--acc)}.t3{display:flex;gap:6px;flex-wrap:wrap;margin-left:auto}.t3 button[aria-pressed=true]{background:var(--ink);border-color:var(--ink)}
 #v3{height:min(70vh,640px);border-radius:10px;overflow:hidden;background:#dfe6ea}
+.imgb{background:var(--acc)!important;color:#fff!important;border-color:var(--acc)!important}#imgbox{margin-top:12px}.imgw{position:relative}.imgw img,.imgw canvas{display:block;width:100%;height:auto;border-radius:10px}.imgw canvas{position:absolute;inset:0;pointer-events:none}
 .mhint{display:none}@media (max-width:900px){.mhint{display:block}}
 .card label{display:grid;gap:3px;font-size:12.5px;color:var(--mut);font-weight:600}
 .card input,.card textarea{font:inherit;font-size:14px;color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:7px 9px;background:#fff;width:100%;min-width:0}
@@ -37,6 +38,7 @@ details summary{cursor:pointer;font-size:13px;font-weight:600;margin:4px 0}
 @media (max-width:900px){main{grid-template-columns:minmax(0,1fr);padding:12px}section,.card{min-width:0}#plan svg{width:900px;max-width:none}header{padding:10px 12px}}
 @media print{@page{size:A4 landscape;margin:10mm}body{background:#fff}header,.tabs,.noprint,.fix{display:none!important}main{display:block;padding:0}.card{border:0;padding:0;break-inside:avoid}#plan{margin-bottom:6mm;overflow:visible;padding:0}#plan svg{width:100%!important;height:auto;max-height:150mm;max-width:none}.vt{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 10px}.vt button{padding:6px 11px;font-size:13px}.vt button[aria-pressed=true]{background:var(--acc);color:#fff;border-color:var(--acc)}.t3{display:flex;gap:6px;flex-wrap:wrap;margin-left:auto}.t3 button[aria-pressed=true]{background:var(--ink);border-color:var(--ink)}
 #v3{height:min(70vh,640px);border-radius:10px;overflow:hidden;background:#dfe6ea}
+.imgb{background:var(--acc)!important;color:#fff!important;border-color:var(--acc)!important}#imgbox{margin-top:12px}.imgw{position:relative}.imgw img,.imgw canvas{display:block;width:100%;height:auto;border-radius:10px}.imgw canvas{position:absolute;inset:0;pointer-events:none}
 .mhint{display:none}@media (max-width:900px){.mhint{display:block}}
 .card label{display:grid;gap:3px;font-size:12.5px;color:var(--mut);font-weight:600}
 .card input,.card textarea{font:inherit;font-size:14px;color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:7px 9px;background:#fff;width:100%;min-width:0}
@@ -49,7 +51,7 @@ details summary{cursor:pointer;font-size:13px;font-weight:600;margin:4px 0}
 <header><b>Vaade<em>3D</em> · Sündmuse plaan</b><span class="sp"></span>
 <label class="noprint">Näide <select id="case"></select></label><button id="print" class="pri">Prindi / PDF</button></header>
 <main>
-  <section><div class="card"><h1 id="title">…</h1><p class="meta" id="meta"></p><div class="tabs" id="tabs"></div><div class="vt noprint" id="vt"><button type="button" data-v="2d" aria-pressed="true">2D plaan</button><button type="button" data-v="3d" aria-pressed="false">3D</button><span class="t3" id="t3" hidden><button type="button" data-t="measure" aria-pressed="false">Mõõda</button><button type="button" data-t="walk" aria-pressed="false">Jaluta</button><button type="button" data-t="roof" aria-pressed="true">Katus</button><button type="button" data-t="walls" aria-pressed="true">Seinad</button><button type="button" data-t="labels" aria-pressed="true">Sildid</button></span></div><div id="v3" hidden></div><p class="meta noprint" id="v3h" hidden></p><p class="meta noprint mhint">Telefonis lohista plaani külgedele.</p><div id="plan"><p id="busy">Arvutan paigutust…</p></div></div></section>
+  <section><div class="card"><h1 id="title">…</h1><p class="meta" id="meta"></p><div class="tabs" id="tabs"></div><div class="vt noprint" id="vt"><button type="button" data-v="2d" aria-pressed="true">2D plaan</button><button type="button" data-v="3d" aria-pressed="false">3D</button><span class="t3" id="t3" hidden><button type="button" data-t="measure" aria-pressed="false">Mõõda</button><button type="button" data-t="walk" aria-pressed="false">Jaluta</button><button type="button" data-t="roof" aria-pressed="true">Katus</button><button type="button" data-t="walls" aria-pressed="true">Seinad</button><button type="button" data-t="labels" aria-pressed="true">Sildid</button><button type="button" id="mkimg" class="imgb">Tee realistlik pilt</button></span></div><div id="v3" hidden></div><p class="meta noprint" id="v3h" hidden></p><div id="imgbox" hidden><div class="imgw"><img id="imgout" alt="Realistlik pilt paigutusest"><canvas id="imgtag"></canvas></div><p class="meta" id="imgmsg"></p><div class="vt"><button type="button" id="imgtags" aria-pressed="true">Sildid pildil</button><button type="button" id="imgdl">Lae alla</button></div></div><p class="meta noprint mhint">Telefonis lohista plaani külgedele.</p><div id="plan"><p id="busy">Arvutan paigutust…</p></div></div></section>
   <aside class="side">
     <form class="card noprint" id="sf" autocomplete="off">
       <h2>Ürituse andmed</h2>
@@ -160,6 +162,34 @@ $('vt').onclick=e=>{const b=e.target.closest('button');if(!b)return;
   if(t==='measure'){V3.setMeasure(on);hint3();}if(t==='walk'){V3.setWalk(on);hint3();}if(t==='roof')V3.setRoof(on);if(t==='walls')V3.setWalls(on);if(t==='labels')V3.setLabels(on);};
 function hint3(){const m=$('t3').querySelector('[data-t=measure]').getAttribute('aria-pressed')==='true',w=$('t3').querySelector('[data-t=walk]').getAttribute('aria-pressed')==='true';
   $('v3h').textContent=w?'Jalutad: lohista = vaata ringi, W A S D või nooled = liigu (telefonis kaks sõrme = edasi).':m?'Mõõtmine: klõpsa kahte kohta (põrand või ese), näed kaugust meetrites.':'Lohista = pööra, rull või näpistus = suumi, parem nupp või kaks sõrme = nihuta.';}
+// realistlik pilt: 3D kaader -> pildimudel (paigutus ja arvud sama) -> kontroll (lauad, toolid, kirjad) -> sildid koodiga peale
+let IMG=null;
+async function authed(){const s=await sb();const {data:{session}}=await s.auth.getSession();if(!session)throw new Error('Logi Vaade3D-sse sisse, siis saab pildi teha.');return {s,h:{'Content-Type':'application/json',apikey:s.cfg.key,Authorization:'Bearer '+session.access_token}};}
+async function small(url,max){const im=new Image();im.crossOrigin='anonymous';im.src=url;await im.decode();const k=Math.min(1,max/Math.max(im.width,im.height)),c=document.createElement('canvas');c.width=im.width*k;c.height=im.height*k;c.getContext('2d').drawImage(im,0,0,c.width,c.height);return c.toDataURL('image/jpeg',.82);}
+function drawTags(){const c=$('imgtag');if(!IMG)return;c.width=IMG.w;c.height=IMG.h;const g=c.getContext('2d');g.clearRect(0,0,c.width,c.height);if($('imgtags').getAttribute('aria-pressed')!=='true')return;
+  g.font='600 28px Inter Tight, Arial';g.textBaseline='middle';for(const t of IMG.tags){const w=g.measureText(t.text).width+22;g.fillStyle=t.red?'#e5482d':'rgba(22,19,15,.85)';g.beginPath();(g.roundRect||g.rect).call(g,t.x-w/2,t.y-42,w,38,8);g.fill();g.fillStyle='#fff';g.fillText(t.text,t.x-w/2+11,t.y-23);}
+  g.font='600 18px Inter Tight, Arial';const foot=`${view.tent?view.tent.name:'Väliala'} · ${view.seats?view.seats+' istekohta · ':''}Vaade3D plaan (sildid koodiga)`;const fw=g.measureText(foot).width+20;g.fillStyle='rgba(22,19,15,.8)';g.fillRect(12,IMG.h-44,fw,32);g.fillStyle='#fff';g.fillText(foot,22,IMG.h-28);}
+$('imgtags').onclick=()=>{const b=$('imgtags');b.setAttribute('aria-pressed',b.getAttribute('aria-pressed')!=='true');drawTags();};
+$('imgdl').onclick=()=>{if(!IMG)return;const c=document.createElement('canvas');c.width=IMG.w;c.height=IMG.h;const g=c.getContext('2d');g.drawImage($('imgout'),0,0,c.width,c.height);g.drawImage($('imgtag'),0,0);const a=document.createElement('a');a.download='plaan-pilt.jpg';a.href=c.toDataURL('image/jpeg',.92);a.click();};
+$('mkimg').onclick=async()=>{
+  if(!V3||!view)return;const msg=t=>{$('imgbox').hidden=false;$('imgmsg').textContent=t;};
+  if(!confirm('Teen 3D-vaatest realistliku pildi. Paigutus ja laudade/toolide arv jäävad samaks; kui AI muudab arvu või lisab kirju, teen pildi korra uuesti. Iga pilt maksab pildi krediidid. Jätkan?'))return;
+  $('mkimg').disabled=true;
+  try{const A=await authed();const sh=V3.shot(1536,1024);const prompt=EventPlan.imagePrompt(view,sh.vis);const wantT=sh.vis.round+sh.vis.rect+sh.vis.cocktail;
+    for(let n=1;n<=2;n++){
+      msg(n===1?'Teen pilti (umbes 20 s)…':'Arv ei klappinud, teen uuesti…');
+      const r=await fetch(A.s.cfg.url+'/functions/v1/ai-image',{method:'POST',headers:A.h,body:JSON.stringify({kind:'design',n:1,size:'3:2',images:[sh.url],prompt,label:'Sündmuse plaani pilt',text:'sündmuse paigutus'})});
+      const j=await r.json().catch(()=>({}));if(!r.ok||!j.url)throw new Error(j.error||'Pilti ei tulnud');
+      msg('Kontrollin laudade ja toolide arvu…');
+      const c=await fetch(A.s.cfg.url+'/functions/v1/ai-chat',{method:'POST',headers:A.h,body:JSON.stringify({mode:'event-count',images:[await small(j.url,1024)],messages:[{role:'user',content:'Loe lauad ja toolid kokku.'}]})}).then(x=>x.json()).catch(()=>({}));
+      const k=c.count||{},chairOk=!sh.vis.chairs||(sh.vis.chairs<=24?k.chairs===sh.vis.chairs:Math.abs(k.chairs-sh.vis.chairs)<=sh.vis.chairs*.1),ok=c.count&&k.tables===wantT&&chairOk&&!k.text;
+      IMG=Object.assign({},sh,{src:j.url});$('imgout').src=j.url;await $('imgout').decode().catch(()=>{});drawTags();
+      const facts=c.count?`Pildil: ${k.tables} lauda, ${k.chairs} tooli${k.text?', pildil on kirju':''}. Plaanis kaadris: ${wantT} lauda, ${sh.vis.chairs} tooli.`:'Arvu ei saanud kontrollida.';
+      if(ok){msg('✓ '+facts+' Sildid ja mõõdud on lisatud koodiga, mitte AI-ga.');break;}
+      if(n===2)msg('⚠ '+facts+' AI ei hoidnud arvu täpselt. Kasuta 2D plaani ja 3D vaadet õigete arvude jaoks või proovi teise nurga alt.');
+    }
+  }catch(er){msg(er.message);}finally{$('mkimg').disabled=false;}
+};
 function draw3d(){if(!view)return;if(!V3)V3=EventPlan.view3d($('v3'),view);else V3.update(view);hint3();}
 function show(L,label){
   view=L;if(mode==='3d')draw3d();$('plan').innerHTML=EPS.svg(L,{width:1100});

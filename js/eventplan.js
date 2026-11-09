@@ -678,6 +678,33 @@ function cleanSpec(x, cat) {
   return out;
 }
 
-const API = { solve, cleanSpec, validate, finish, rulesFor, tentOptions, podiumModules, gap, DEF_RULES, fmt };
+// pildimudeli juhis paigutusest (kood, mitte AI). vis = kaadris nähtavad arvud {round, rect, cocktail, chairs}
+const COLOR_EN = { roheline: 'green', valge: 'white', must: 'black', kuld: 'gold', kuldne: 'gold', hõbe: 'silver', hõbedane: 'silver', roosa: 'pink', punane: 'red', sinine: 'blue', beež: 'beige', hall: 'grey', lilla: 'purple', kollane: 'yellow', oranž: 'orange', pruun: 'brown', kreem: 'cream', türkiis: 'turquoise', bordoo: 'burgundy', smaragd: 'emerald' };
+const MOOD_EN = { elegantne: 'elegant', moodne: 'modern', modernne: 'modern', rustikaalne: 'rustic', boho: 'boho', klassikaline: 'classic', romantiline: 'romantic', minimalistlik: 'minimalist', pidulik: 'festive', luksuslik: 'luxurious' };
+function imagePrompt(L, vis) {
+  const st = (L.spec && L.spec.style) || {}, en = w => { const k = String(w || '').toLowerCase().trim(); return COLOR_EN[k] || MOOD_EN[k] || k; };
+  const colors = (st.colors || []).map(en).filter(Boolean), mood = st.mood ? String(st.mood).split(/[,\s]+/).map(en).join(' ') : 'elegant';
+  const parts = [];
+  if (vis.round) parts.push(`${vis.round} round banquet tables with white floor-length tablecloths`);
+  if (vis.rect) parts.push(`${vis.rect} long rectangular tables with white tablecloths`);
+  if (vis.chairs) parts.push(`exactly ${vis.chairs} chairs`);
+  if (vis.cocktail) parts.push(`${vis.cocktail} tall cocktail tables with white stretch covers`);
+  for (const it of L.items) {
+    if (it.kind === 'stage') parts.push(`a ${it.product === 'truss-stage' ? 'covered truss stage' : 'low black podium stage'} ${fmt(Math.max(it.w, it.d))} × ${fmt(Math.min(it.w, it.d))} m`);
+    if (it.kind === 'dance') parts.push(`a glossy black-and-white checkered dance floor ${fmt(it.w)} × ${fmt(it.d)} m`);
+    if (it.kind === 'bar') parts.push('a bar counter'); if (it.kind === 'catering') parts.push('a buffet/catering table');
+    if (it.kind === 'wc') parts.push(`a row of ${it.n} portable toilet cabins`); if (it.kind === 'popup') parts.push(`${it.n} white pop-up tents in a row`);
+  }
+  const tent = L.tent ? `a white ${L.tent.type === 'pagoda' ? 'pagoda' : L.tent.type === 'stretch' ? 'stretch' : 'frame'} party tent ${fmt(L.tent.W)} × ${fmt(L.tent.L)} m${L.spec.venue === 'outdoor' ? ' on a green lawn' : ''}` : (L.spec.venue === 'indoor' ? 'an event hall' : 'an outdoor event field on grass');
+  return [
+    `Turn this 3D render into one photorealistic photograph of the same event setup: ${tent}.`,
+    'KEEP EXACTLY the same camera angle, framing, tent shape and size, and the position, size, orientation and number of every object. Do not add, remove, move, merge or duplicate any table, chair, stage, dance floor, counter or tent.',
+    `Objects in the frame: ${parts.join('; ')}.`,
+    `Style: ${mood}${colors.length ? ', colour palette ' + colors.join(' and ') : ''}. Decoration only on tables (low centrepieces, flowers, candles) and potted plants along the tent walls, never on walkways, the entrance or the dance floor. Warm soft evening lighting, string lights under the roof.`,
+    'No people. No text, letters, numbers, signs, logos or watermarks anywhere in the image.'
+  ].join(' ');
+}
+
+const API = { solve, cleanSpec, imagePrompt, validate, finish, rulesFor, tentOptions, podiumModules, gap, DEF_RULES, fmt };
 if (typeof module !== 'undefined' && module.exports) module.exports = API; else G.EventPlan = API;
 })(typeof globalThis !== 'undefined' ? globalThis : this);
