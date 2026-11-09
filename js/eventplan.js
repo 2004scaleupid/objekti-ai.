@@ -415,19 +415,20 @@ function solveTent(spec, cat, R, blocks, tent, area, fine) {
 
 // ---------- kontroll (sama funktsioon ka käsitsi liigutamisel) ----------
 function shapesOf(it) {
-  if (it.kind === 'seating' || it.kind === 'standing') return (it.tables || []).map(t => Object.assign({ owner: it.id, kind: it.kind, name: it.name }, t.body));
+  if (it.kind === 'seating' || it.kind === 'standing') return (it.tables || []).map((t, ti) => Object.assign({ owner: it.id, ti, kind: it.kind, name: it.name }, t.body));
   if (it.kind === 'audience') return [Object.assign({ owner: it.id, kind: it.kind, name: it.name, t: 'r' }, rectOf(it))];
   return [Object.assign({ owner: it.id, kind: it.kind, name: it.name, t: 'r' }, rectOf(it))];
 }
 const rectOf = it => ({ x: it.x, y: it.y, w: it.w, d: it.d });
 
 function validate(L) {
-  const R = L.rules, room = L.room, probs = [], bad = new Set();
-  const add = (code, text, ids, need, have) => { probs.push({ code, text, ids, need, have }); (ids || []).forEach(i => bad.add(i)); };
+  const R = L.rules, room = L.room, probs = [], bad = new Set(), badT = new Set();
+  let cur = [];
+  const add = (code, text, ids, need, have) => { probs.push({ code, text, ids, need, have }); (ids || []).forEach(i => bad.add(i)); cur.forEach(s => { if (s && s.ti != null && (ids || []).includes(s.owner)) badT.add(s.owner + '#' + s.ti); }); };
   const items = L.items, shapes = items.flatMap(shapesOf);
   // seinad
   for (const s of shapes) {
-    const it = items.find(i => i.id === s.owner);
+    cur = [s]; const it = items.find(i => i.id === s.owner);
     const min = it.kind === 'seating' ? Math.max(R.wall, R.push) : it.kind === 'stage' ? R.stageSide : it.kind === 'bar' ? R.barWork : R.wall;
     const wd = wallDist(s, room);
     if (wd < min - .005) add('wall', `${s.name}: seinast ${fmt(Math.max(0, wd))} m, vaja ≥ ${fmt(min)} m`, [s.owner], min, wd);
@@ -435,7 +436,7 @@ function validate(L) {
   for (const it of items) for (const z of it.zones || []) if (wallDist(z, room) < -.005) add('zonewall', `${it.name}: ${zoneName(z)} jääb telgist välja`, [it.id]);
   // vahekäigud
   for (let i = 0; i < shapes.length; i++) for (let j = i + 1; j < shapes.length; j++) {
-    const a = shapes[i], b = shapes[j];
+    const a = shapes[i], b = shapes[j]; cur = [a, b];
     const att = (a.kind === 'stage' && (b.kind === 'dance' || b.kind === 'audience')) || (b.kind === 'stage' && (a.kind === 'dance' || a.kind === 'audience'));
     if (att && (a.kind === 'audience' || b.kind === 'audience')) { const g = gap(a, b); if (g < R.stageFront - .005) add('zone', `Publikuala lavale liiga lähedal (${fmt(g)} m, vaja ≥ ${fmt(R.stageFront)} m)`, [a.owner, b.owner]); continue; }
     if (att) { if (b.kind === 'dance' || a.kind === 'dance') { const g = gap(a, b); if (g > .02) add('attach', `Tantsupõrand peab olema vastu lava (vahe ${fmt(g)} m)`, [a.owner, b.owner]); if (g < -.005) add('overlap', 'Tantsupõrand kattub lavaga', [a.owner, b.owner]); } continue; }
@@ -446,12 +447,13 @@ function validate(L) {
   }
   // tsoonid (lava ees/küljel, teenindusala, baari tööala)
   for (const it of items) for (const z of it.zones || []) for (const s of shapes) {
-    if (s.owner === it.id) continue;
+    if (s.owner === it.id) continue; cur = [s];
     if (it.kind === 'stage' && (s.kind === 'dance' || s.kind === 'audience')) continue;
     if (gap(z, s) < -.005) add('zone', `${s.name} on ${it.name.toLowerCase()} ${zoneName(z)} sees`, [s.owner, it.id]);
   }
   // sissepääs
-  if (L.door) for (const s of shapes) if (gap(s, L.door.zone) < -.005) add('door', `${s.name} on sissepääsu ees (vaba ala ${fmt(R.entryDepth)} m)`, [s.owner]);
+  if (L.door) for (const s of shapes) if ((cur = [s]) && gap(s, L.door.zone) < -.005) add('door', `${s.name} on sissepääsu ees (vaba ala ${fmt(R.entryDepth)} m)`, [s.owner]);
+  cur = [];
   // istekohad ja laua kohad
   const seatsNeed = (L.spec.items || []).filter(i => i.kind === 'seating').reduce((s, i) => s + i.guests, 0);
   let seats = 0, chairs = 0;
@@ -468,7 +470,7 @@ function validate(L) {
   // ligipääs
   const acc = access(L, shapes);
   for (const id of acc.unreachable) add('access', `${(items.find(i => i.id === id) || {}).name || id}: ei pääse ligi ≥ ${fmt(R.walk)} m vahekäiku mööda`, [id]);
-  return { ok: !probs.length, problems: probs, bad: [...bad], seats, chairs, seatsNeed, stand, standNeed };
+  return { ok: !probs.length, problems: probs, bad: [...bad], badT: [...badT], seats, chairs, seatsNeed, stand, standNeed };
 }
 function tableCap(L, t) { const p = (L.catalog && prod(L.catalog, t.product)) || null; return p ? p.spec.seats : t.seats; }
 function zoneName(z) { return { stage: 'vaba ala', bar: 'tööala', catering: 'teenindusala', popup: 'teenindusala', wc: 'järjekorraala' }[z.type] || 'vaba ala'; }
@@ -522,7 +524,7 @@ function assemble(spec, cat, R, tent, area, r) {
 }
 const r2 = v => Math.round(v * 1000) / 1000;
 function finish(L) {
-  const v = validate(L); L.ok = v.ok; L.problems = v.problems; L.bad = v.bad; L.seats = v.seats; L.chairs = v.chairs;
+  const v = validate(L); L.ok = v.ok; L.problems = v.problems; L.bad = v.bad; L.badT = v.badT; L.seats = v.seats; L.chairs = v.chairs;
   L.checks = checks(L, v); L.bom = bom(L);
   return L;
 }
@@ -705,6 +707,45 @@ function imagePrompt(L, vis) {
   ].join(' ');
 }
 
-const API = { solve, cleanSpec, imagePrompt, validate, finish, rulesFor, tentOptions, podiumModules, gap, DEF_RULES, fmt };
+// ---------- käsitsi muutmine (lohistamine 2D/3D): sama kontroll kui lahendajal ----------
+// ref: {id} tervele esemele või {id, t: lauaindeks} ühele lauale grupis
+function pick(L, x, y) {
+  for (let i = L.items.length - 1; i >= 0; i--) {
+    const it = L.items[i];
+    if (it.tables) { for (let k = 0; k < it.tables.length; k++) { const b = it.tables[k].body; if (b && gap({ t: 'c', x, y, r: 0 }, b) <= .05) return { id: it.id, t: k }; } if (it.kind === 'standing') continue; continue; }
+    if (x >= it.x && x <= it.x + it.w && y >= it.y && y <= it.y + it.d) return { id: it.id };
+  }
+  return null;
+}
+function shiftShape(o, dx, dy) { if (!o) return; o.x += dx; o.y += dy; }
+function moveItem(L, ref, dx, dy) {
+  const it = L.items.find(i => i.id === ref.id); if (!it) return L;
+  if (ref.t != null && it.tables) {
+    const t = it.tables[ref.t]; shiftShape(t, dx, dy); shiftShape(t.body, dx, dy); (t.chairs || []).forEach(c => shiftShape(c, dx, dy));
+    Object.assign(it, bbox(it.tables.map(u => u.body)));
+  } else {
+    shiftShape(it, dx, dy); (it.zones || []).forEach(z => shiftShape(z, dx, dy));
+    (it.tables || []).forEach(t => { shiftShape(t, dx, dy); shiftShape(t.body, dx, dy); (t.chairs || []).forEach(c => shiftShape(c, dx, dy)); });
+    (it.zonesArea || []).forEach(z => shiftShape(z, dx, dy));
+  }
+  L.edited = true; return finish(L);
+}
+// pööra 90° ümber keskpunkti (lava, baar, laud ...). Lava tsoonid pöörlevad kaasa.
+function rotateItem(L, ref) {
+  const it = L.items.find(i => i.id === ref.id); if (!it) return L;
+  const rot = (o, cx, cy) => { const nx = cx - (o.y + o.d / 2 - cy) - o.d / 2, ny = cy + (o.x + o.w / 2 - cx) - o.w / 2; const w = o.w; o.w = o.d; o.d = w; o.x = nx; o.y = ny; };
+  const rotP = (p, cx, cy) => { const x = p.x; p.x = cx - (p.y - cy); p.y = cy + (x - cx); if (p.a != null) p.a += Math.PI / 2; };
+  if (ref.t != null && it.tables) {
+    const t = it.tables[ref.t]; if (t.shape !== 'rect') return L;
+    const cx = t.x + t.w / 2, cy = t.y + t.d / 2; rot(t, cx, cy); t.along = !t.along; if (t.body) rot(t.body, cx, cy); (t.chairs || []).forEach(c => rotP(c, cx, cy));
+    Object.assign(it, bbox(it.tables.map(u => u.body)));
+  } else if (!it.tables) {
+    const cx = it.x + it.w / 2, cy = it.y + it.d / 2; rot(it, cx, cy); (it.zones || []).forEach(z => rot(z, cx, cy));
+    if (it.wallK != null) it.wallK = (it.wallK + 1) % 4;
+  }
+  L.edited = true; return finish(L);
+}
+
+const API = { solve, cleanSpec, imagePrompt, pick, moveItem, rotateItem, validate, finish, rulesFor, tentOptions, podiumModules, gap, DEF_RULES, fmt };
 if (typeof module !== 'undefined' && module.exports) module.exports = API; else G.EventPlan = API;
 })(typeof globalThis !== 'undefined' ? globalThis : this);

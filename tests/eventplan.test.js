@@ -58,3 +58,15 @@ test('cleanSpec: AI väljund -> ainult lubatud väljad', () => {
   assert.deepStrictEqual(s.items, [{ kind: 'seating', table: 'round180', guests: 12, single: true }]);
   assert.deepStrictEqual(s.rules, { wall: 0.25 });
 });
+
+test('Käsitsi muutmine: laua lohistamine lavale läheb punaseks, tagasi roheliseks', () => {
+  const L = clone(EP.solve(C.wedding, cat).best); L.catalog = cat;
+  const st = L.items.find(i => i.kind === 'stage'), sg = L.items.find(i => i.kind === 'seating'), t = sg.tables[0];
+  const dx = st.x + st.w / 2 - t.x, dy = st.y + st.d / 2 - t.y;
+  EP.moveItem(L, { id: sg.id, t: 0 }, dx, dy);
+  assert.strictEqual(L.ok, false); assert.ok(L.bad.includes(sg.id));
+  EP.moveItem(L, { id: sg.id, t: 0 }, -dx, -dy);
+  assert.strictEqual(L.ok, true, L.problems.map(p => p.text).join('; '));
+  const before = { w: st.w, d: st.d }; EP.rotateItem(L, { id: 'stage' }); assert.deepStrictEqual({ w: st.d, d: st.w }, before);
+  assert.ok(EP.pick(L, t.x, t.y).id === sg.id);
+});

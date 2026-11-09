@@ -14,7 +14,7 @@ button{cursor:pointer;font-weight:600}button.pri{background:var(--ink);color:#ff
 main{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:16px;padding:16px;max-width:1500px;margin:0 auto}
 .card{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:14px}
 #plan svg{width:100%;height:auto;display:block}
-#plan{padding:8px;overflow:auto;-webkit-overflow-scrolling:touch}
+#plan.edit{touch-action:none}#plan{cursor:grab;padding:8px;overflow:auto;-webkit-overflow-scrolling:touch}
 h1{font-size:22px;letter-spacing:-.02em;margin:0 0 4px}h2{font-size:14px;margin:0 0 8px;text-transform:uppercase;letter-spacing:.06em;color:var(--mut)}
 .meta{color:var(--mut);font-size:13.5px;margin:0 0 10px}
 .tabs{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0 10px}.tabs button{padding:6px 10px;font-size:13px}.tabs button[aria-pressed=true]{background:var(--ink);color:#fff;border-color:var(--ink)}
@@ -23,9 +23,10 @@ h1{font-size:22px;letter-spacing:-.02em;margin:0 0 4px}h2{font-size:14px;margin:
 .epbom{width:100%;border-collapse:collapse;font-size:13.5px}.epbom td,.epbom th{padding:5px 4px;border-bottom:1px solid var(--line);text-align:left}.epbom td:last-child,.epbom th:last-child{text-align:right;font-variant-numeric:tabular-nums}.epbom small{font-size:10px;color:var(--mut);border:1px solid var(--line);border-radius:4px;padding:0 3px}
 .fail{border-color:#f0b3a6;background:#fff5f2}.fail p{margin:0 0 8px}
 .fix{display:block;width:100%;text-align:left;margin:6px 0 0;font-weight:500}.fix b{color:var(--ok)}
-.vt{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 10px}.vt button{padding:6px 11px;font-size:13px}.vt button[aria-pressed=true]{background:var(--acc);color:#fff;border-color:var(--acc)}.t3{display:flex;gap:6px;flex-wrap:wrap;margin-left:auto}.t3 button[aria-pressed=true]{background:var(--ink);border-color:var(--ink)}
+.vt{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 10px}.vt button{padding:6px 11px;font-size:13px}.vt button[aria-pressed=true]{background:var(--acc);color:#fff;border-color:var(--acc)}.t3[hidden]{display:none!important}.t3{display:flex;gap:6px;flex-wrap:wrap;margin-left:auto}.t3 button[aria-pressed=true]{background:var(--ink);border-color:var(--ink)}
 #v3{height:min(70vh,640px);border-radius:10px;overflow:hidden;background:#dfe6ea}
 .imgb{background:var(--acc)!important;color:#fff!important;border-color:var(--acc)!important}#imgbox{margin-top:12px}.imgw{position:relative}.imgw img,.imgw canvas{display:block;width:100%;height:auto;border-radius:10px}.imgw canvas{position:absolute;inset:0;pointer-events:none}
+.tonly{display:none}@media (pointer:coarse){.tonly{display:inline-block}}#eedit[aria-pressed=true]{background:var(--ink);color:#fff}
 .mhint{display:none}@media (max-width:900px){.mhint{display:block}}
 .card label{display:grid;gap:3px;font-size:12.5px;color:var(--mut);font-weight:600}
 .card input,.card textarea{font:inherit;font-size:14px;color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:7px 9px;background:#fff;width:100%;min-width:0}
@@ -36,9 +37,10 @@ details summary{cursor:pointer;font-size:13px;font-weight:600;margin:4px 0}
 .side{display:grid;gap:12px;align-content:start}
 #busy{color:var(--mut);font-size:14px}
 @media (max-width:900px){main{grid-template-columns:minmax(0,1fr);padding:12px}section,.card{min-width:0}#plan svg{width:900px;max-width:none}header{padding:10px 12px}}
-@media print{@page{size:A4 landscape;margin:10mm}body{background:#fff}header,.tabs,.noprint,.fix{display:none!important}main{display:block;padding:0}.card{border:0;padding:0;break-inside:avoid}#plan{margin-bottom:6mm;overflow:visible;padding:0}#plan svg{width:100%!important;height:auto;max-height:150mm;max-width:none}.vt{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 10px}.vt button{padding:6px 11px;font-size:13px}.vt button[aria-pressed=true]{background:var(--acc);color:#fff;border-color:var(--acc)}.t3{display:flex;gap:6px;flex-wrap:wrap;margin-left:auto}.t3 button[aria-pressed=true]{background:var(--ink);border-color:var(--ink)}
+@media print{@page{size:A4 landscape;margin:10mm}body{background:#fff}header,.tabs,.noprint,.fix{display:none!important}main{display:block;padding:0}.card{border:0;padding:0;break-inside:avoid}#plan{margin-bottom:6mm;overflow:visible;padding:0}#plan svg{width:100%!important;height:auto;max-height:150mm;max-width:none}.vt{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 10px}.vt button{padding:6px 11px;font-size:13px}.vt button[aria-pressed=true]{background:var(--acc);color:#fff;border-color:var(--acc)}.t3[hidden]{display:none!important}.t3{display:flex;gap:6px;flex-wrap:wrap;margin-left:auto}.t3 button[aria-pressed=true]{background:var(--ink);border-color:var(--ink)}
 #v3{height:min(70vh,640px);border-radius:10px;overflow:hidden;background:#dfe6ea}
 .imgb{background:var(--acc)!important;color:#fff!important;border-color:var(--acc)!important}#imgbox{margin-top:12px}.imgw{position:relative}.imgw img,.imgw canvas{display:block;width:100%;height:auto;border-radius:10px}.imgw canvas{position:absolute;inset:0;pointer-events:none}
+.tonly{display:none}@media (pointer:coarse){.tonly{display:inline-block}}#eedit[aria-pressed=true]{background:var(--ink);color:#fff}
 .mhint{display:none}@media (max-width:900px){.mhint{display:block}}
 .card label{display:grid;gap:3px;font-size:12.5px;color:var(--mut);font-weight:600}
 .card input,.card textarea{font:inherit;font-size:14px;color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:7px 9px;background:#fff;width:100%;min-width:0}
@@ -51,7 +53,7 @@ details summary{cursor:pointer;font-size:13px;font-weight:600;margin:4px 0}
 <header><b>Vaade<em>3D</em> · Sündmuse plaan</b><span class="sp"></span>
 <label class="noprint">Näide <select id="case"></select></label><button id="print" class="pri">Prindi / PDF</button></header>
 <main>
-  <section><div class="card"><h1 id="title">…</h1><p class="meta" id="meta"></p><div class="tabs" id="tabs"></div><div class="vt noprint" id="vt"><button type="button" data-v="2d" aria-pressed="true">2D plaan</button><button type="button" data-v="3d" aria-pressed="false">3D</button><span class="t3" id="t3" hidden><button type="button" data-t="measure" aria-pressed="false">Mõõda</button><button type="button" data-t="walk" aria-pressed="false">Jaluta</button><button type="button" data-t="roof" aria-pressed="true">Katus</button><button type="button" data-t="walls" aria-pressed="true">Seinad</button><button type="button" data-t="labels" aria-pressed="true">Sildid</button><button type="button" id="mkimg" class="imgb">Tee realistlik pilt</button></span></div><div id="v3" hidden></div><p class="meta noprint" id="v3h" hidden></p><div id="imgbox" hidden><div class="imgw"><img id="imgout" alt="Realistlik pilt paigutusest"><canvas id="imgtag"></canvas></div><p class="meta" id="imgmsg"></p><div class="vt"><button type="button" id="imgtags" aria-pressed="true">Sildid pildil</button><button type="button" id="imgdl">Lae alla</button></div></div><p class="meta noprint mhint">Telefonis lohista plaani külgedele.</p><div id="plan"><p id="busy">Arvutan paigutust…</p></div></div></section>
+  <section><div class="card"><h1 id="title">…</h1><p class="meta" id="meta"></p><div class="tabs" id="tabs"></div><div class="vt noprint" id="vt"><button type="button" data-v="2d" aria-pressed="true">2D plaan</button><button type="button" data-v="3d" aria-pressed="false">3D</button><span class="t3" id="t3" hidden><button type="button" data-t="move" aria-pressed="false">Liiguta</button><button type="button" data-t="measure" aria-pressed="false">Mõõda</button><button type="button" data-t="walk" aria-pressed="false">Jaluta</button><button type="button" data-t="roof" aria-pressed="true">Katus</button><button type="button" data-t="walls" aria-pressed="true">Seinad</button><button type="button" data-t="labels" aria-pressed="true">Sildid</button><button type="button" id="mkimg" class="imgb">Tee realistlik pilt</button></span></div><div id="v3" hidden></div><p class="meta noprint" id="v3h" hidden></p><div id="imgbox" hidden><div class="imgw"><img id="imgout" alt="Realistlik pilt paigutusest"><canvas id="imgtag"></canvas></div><p class="meta" id="imgmsg"></p><div class="vt"><button type="button" id="imgtags" aria-pressed="true">Sildid pildil</button><button type="button" id="imgdl">Lae alla</button></div></div><p class="meta noprint mhint">Telefonis lohista plaani külgedele.</p><div class="vt noprint" id="ebar"><button type="button" id="eedit" class="tonly" aria-pressed="false">Muuda plaani</button><button type="button" id="erot" disabled>Pööra 90°</button><button type="button" id="ereset" disabled>Taasta arvutatud paigutus</button><span class="meta" id="emsg">Lohista plaanil eset või lauda: kontroll uueneb kohe, punane = reegel ei pea.</span></div><div id="plan"><p id="busy">Arvutan paigutust…</p></div></div></section>
   <aside class="side">
     <form class="card noprint" id="sf" autocomplete="off">
       <h2>Ürituse andmed</h2>
@@ -157,11 +159,11 @@ $('fai').onclick=async()=>{const t=$('ftxt').value.trim();if(t.length<10){$('fai
   catch(er){$('faimsg').textContent=er.message;}finally{$('fai').disabled=false;}};
 let V3=null,mode='2d';
 $('vt').onclick=e=>{const b=e.target.closest('button');if(!b)return;
-  if(b.dataset.v){mode=b.dataset.v;[...$('vt').querySelectorAll('[data-v]')].forEach(x=>x.setAttribute('aria-pressed',x===b));$('plan').hidden=mode!=='2d';$('v3').hidden=$('t3').hidden=$('v3h').hidden=mode!=='3d';if(mode==='3d')draw3d();return;}
+  if(b.dataset.v){mode=b.dataset.v;[...$('vt').querySelectorAll('[data-v]')].forEach(x=>x.setAttribute('aria-pressed',x===b));$('plan').hidden=mode!=='2d';$('v3').hidden=$('t3').hidden=$('v3h').hidden=mode!=='3d';if(mode==='3d')draw3d();else redraw2d();return;}
   const t=b.dataset.t,on=b.getAttribute('aria-pressed')!=='true';b.setAttribute('aria-pressed',on);
-  if(t==='measure'){V3.setMeasure(on);hint3();}if(t==='walk'){V3.setWalk(on);hint3();}if(t==='roof')V3.setRoof(on);if(t==='walls')V3.setWalls(on);if(t==='labels')V3.setLabels(on);};
+  if(t==='move'){V3.setMove(on);hint3();}if(t==='measure'){V3.setMeasure(on);hint3();}if(t==='walk'){V3.setWalk(on);hint3();}if(t==='roof')V3.setRoof(on);if(t==='walls')V3.setWalls(on);if(t==='labels')V3.setLabels(on);};
 function hint3(){const m=$('t3').querySelector('[data-t=measure]').getAttribute('aria-pressed')==='true',w=$('t3').querySelector('[data-t=walk]').getAttribute('aria-pressed')==='true';
-  $('v3h').textContent=w?'Jalutad: lohista = vaata ringi, W A S D või nooled = liigu (telefonis kaks sõrme = edasi).':m?'Mõõtmine: klõpsa kahte kohta (põrand või ese), näed kaugust meetrites.':'Lohista = pööra, rull või näpistus = suumi, parem nupp või kaks sõrme = nihuta.';}
+  const mv=$('t3').querySelector('[data-t=move]').getAttribute('aria-pressed')==='true';$('v3h').textContent=mv?'Liiguta: haara ese või laud ja lohista. Punane = reegel ei pea, kontroll uueneb kohe.':w?'Jalutad: lohista = vaata ringi, W A S D või nooled = liigu (telefonis kaks sõrme = edasi).':m?'Mõõtmine: klõpsa kahte kohta (põrand või ese), näed kaugust meetrites.':'Lohista = pööra, rull või näpistus = suumi, parem nupp või kaks sõrme = nihuta.';}
 // realistlik pilt: 3D kaader -> pildimudel (paigutus ja arvud sama) -> kontroll (lauad, toolid, kirjad) -> sildid koodiga peale
 let IMG=null;
 async function authed(){const s=await sb();const {data:{session}}=await s.auth.getSession();if(!session)throw new Error('Logi Vaade3D-sse sisse, siis saab pildi teha.');return {s,h:{'Content-Type':'application/json',apikey:s.cfg.key,Authorization:'Bearer '+session.access_token}};}
@@ -190,10 +192,23 @@ $('mkimg').onclick=async()=>{
     }
   }catch(er){msg(er.message);}finally{$('mkimg').disabled=false;}
 };
-function draw3d(){if(!view)return;if(!V3)V3=EventPlan.view3d($('v3'),view);else V3.update(view);hint3();}
+function draw3d(){if(!view)return;if(!V3)V3=EventPlan.view3d($('v3'),view,{pick:(x,y)=>EventPlan.pick(view,x,y),onDrag:(ref,dx,dy)=>{sel=ref;EventPlan.moveItem(view,ref,dx,dy);redraw3d();sidebar();},onDragEnd:()=>{V3.update(view,true);}});else V3.update(view);hint3();}
+let r3=0;function redraw3d(){if(r3)return;r3=setTimeout(()=>{r3=0;V3.update(view,true);},90);}
+let sel=null,orig=null;
+function sidebar(){$('checks').innerHTML=EPS.checksHtml(view);$('bom').innerHTML=EPS.bomHtml(view);$('legend').innerHTML=EPS.legendHtml(view);
+  $('emsg').textContent=view.edited?(view.ok?'✓ Muudetud paigutus vastab reeglitele.':'✗ '+view.problems.slice(0,2).map(p=>p.text).join(' · ')):'Lohista plaanil eset või lauda: kontroll uueneb kohe, punane = reegel ei pea.';$('emsg').style.color=view.edited?(view.ok?'var(--ok)':'var(--acc)'):'';$('ereset').disabled=!view.edited;$('erot').disabled=!sel;}
+let rf=0;function redraw2d(){if(rf)return;rf=requestAnimationFrame(()=>{rf=0;$('plan').innerHTML=EPS.svg(view,{width:1100,sel});});}
+function planXY(e){const sv=$('plan').querySelector('svg');if(!sv)return null;const pt=sv.createSVGPoint();pt.x=e.clientX;pt.y=e.clientY;const p=pt.matrixTransform(sv.getScreenCTM().inverse()),s=+sv.dataset.s;return {x:p.x/s+(+sv.dataset.x0),y:p.y/s+(+sv.dataset.y0)};}
+let dg=null;
+$('eedit').onclick=()=>{const on=$('eedit').getAttribute('aria-pressed')!=='true';$('eedit').setAttribute('aria-pressed',on);$('plan').classList.toggle('edit',on);};
+$('plan').addEventListener('pointerdown',e=>{if(!view)return;if(e.pointerType==='touch'&&!$('plan').classList.contains('edit'))return;const p=planXY(e);if(!p)return;const ref=EventPlan.pick(view,p.x,p.y);sel=ref;redraw2d();sidebar();if(!ref)return;dg={ref,last:p};$('plan').setPointerCapture(e.pointerId);e.preventDefault();});
+$('plan').addEventListener('pointermove',e=>{if(!dg)return;const p=planXY(e);const dx=Math.round((p.x-dg.last.x)*10)/10,dy=Math.round((p.y-dg.last.y)*10)/10;if(!dx&&!dy)return;dg.last.x+=dx;dg.last.y+=dy;EventPlan.moveItem(view,dg.ref,dx,dy);redraw2d();sidebar();});
+$('plan').addEventListener('pointerup',()=>{dg=null;});
+$('erot').onclick=()=>{if(!sel)return;EventPlan.rotateItem(view,sel);redraw2d();sidebar();if(V3&&mode==='3d')V3.update(view,true);};
+$('ereset').onclick=()=>{if(!orig)return;view.items=JSON.parse(orig);EventPlan.finish(view);view.edited=false;sel=null;redraw2d();sidebar();if(V3&&mode==='3d')V3.update(view,true);};
 function show(L,label){
-  view=L;if(mode==='3d')draw3d();$('plan').innerHTML=EPS.svg(L,{width:1100});
-  $('checks').innerHTML=EPS.checksHtml(L);$('legend').innerHTML=EPS.legendHtml(L);$('bom').innerHTML=EPS.bomHtml(L);
+  view=L;sel=null;orig=JSON.stringify(L.items);L.catalog=L.catalog||CAT;if(mode==='3d')draw3d();$('plan').innerHTML=EPS.svg(L,{width:1100});
+  sidebar();
   const t=L.tent?L.tent.name:'Väliala '+fmt(L.room.W)+' × '+fmt(L.room.L)+' m';
   $('meta').textContent=[t,L.spec.guests?L.spec.guests+' külalist':'',label||''].filter(Boolean).join(' · ');
 }

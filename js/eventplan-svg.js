@@ -15,7 +15,7 @@ function svg(L, opt) {
   const X = x => +((x - ext.x0) * s).toFixed(1), Y = y => +((y - ext.y0) * s).toFixed(1), S = v => +(v * s).toFixed(1);
   const fs = Math.max(9, Math.min(15, s * .32)), bad = new Set(L.bad || []);
   const out = [];
-  out.push(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${Wpx} ${Hpx}" width="${Wpx}" height="${Hpx}" font-family="Inter Tight, Helvetica, Arial, sans-serif" role="img" aria-label="Sündmuse plaan">`);
+  out.push(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${Wpx} ${Hpx}" width="${Wpx}" height="${Hpx}" font-family="Inter Tight, Helvetica, Arial, sans-serif" role="img" aria-label="Sündmuse plaan" data-x0="${ext.x0}" data-y0="${ext.y0}" data-s="${s}">`);
   out.push(`<defs><pattern id="hz" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="6" stroke="#b5ab9b" stroke-width="1.4"/></pattern><pattern id="hd" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(-45)"><line x1="0" y1="0" x2="0" y2="6" stroke="#5aa06a" stroke-width="1.2"/></pattern><pattern id="hr" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="6" stroke="#e5482d" stroke-width="1.4"/></pattern>
 <marker id="ar" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 1 L10 5 L0 9" fill="none" stroke="#16130F" stroke-width="1.4"/></marker></defs>`);
   out.push(`<rect width="100%" height="100%" fill="#fbfaf7"/>`);
@@ -42,7 +42,9 @@ function svg(L, opt) {
     const red = bad.has(it.id), stroke = red ? '#e5482d' : '#16130F', sw = red ? 2.4 : 1.2;
     if (it.kind === 'seating' || it.kind === 'standing') {
       if (it.kind === 'standing') for (const z of it.zonesArea || []) out.push(`<rect x="${X(z.x)}" y="${Y(z.y)}" width="${S(z.w)}" height="${S(z.d)}" fill="${COL.standing}" stroke="#c9bfae" stroke-dasharray="4 3"/>`);
-      for (const t of it.tables) {
+      const bt = new Set(L.badT || []), anyT = it.tables.some((t, ti) => bt.has(it.id + '#' + ti));
+      for (let ti = 0; ti < it.tables.length; ti++) {
+        const t = it.tables[ti], red = anyT ? bt.has(it.id + '#' + ti) : bad.has(it.id), stroke = red ? '#e5482d' : '#16130F', sw = red ? 2.4 : 1.2;
         for (const c of t.chairs || []) out.push(`<rect x="${-S(.225)}" y="${-S(.25)}" width="${S(.45)}" height="${S(.5)}" rx="${S(.08)}" transform="translate(${X(c.x)} ${Y(c.y)}) rotate(${(c.a * 180 / Math.PI + 90).toFixed(1)})" fill="#efe9df" stroke="${red ? '#e5482d' : '#7d756b'}" stroke-width=".8"/>`);
         if (t.shape === 'round' || t.shape === 'cocktail') out.push(`<circle cx="${X(t.x)}" cy="${Y(t.y)}" r="${S(t.d / 2)}" fill="#fff" stroke="${stroke}" stroke-width="${sw}"/>`);
         else { out.push(`<rect x="${X(t.x)}" y="${Y(t.y)}" width="${S(t.w)}" height="${S(t.d)}" fill="#fff" stroke="${stroke}" stroke-width="${sw}"/>`); for (let i = 1; i < t.nTab; i++) { const a = i * t.unitW; out.push(t.along ? `<line x1="${X(t.x + a)}" y1="${Y(t.y)}" x2="${X(t.x + a)}" y2="${Y(t.y + t.d)}" stroke="#bbb" stroke-width=".8"/>` : `<line x1="${X(t.x)}" y1="${Y(t.y + a)}" x2="${X(t.x + t.w)}" y2="${Y(t.y + a)}" stroke="#bbb" stroke-width=".8"/>`); } }
@@ -106,6 +108,8 @@ function svg(L, opt) {
     out.push(`<rect x="${(l.x - w / 2).toFixed(1)}" y="${(y - fs * 1.05).toFixed(1)}" width="${w.toFixed(1)}" height="${(fs * 1.4).toFixed(1)}" rx="4" fill="${l.red ? '#e5482d' : '#16130F'}" opacity=".9"/>`);
     out.push(txt(l.x, y - fs * .05, l.t, fs * .9, '#fff', 'middle', 600));
   }
+  // valitud ese
+  if (opt.sel) { const it = L.items.find(i => i.id === opt.sel.id); if (it) { const b = opt.sel.t != null && it.tables ? bboxT({ kind: 'seating', tables: [it.tables[opt.sel.t]] }) : (it.tables ? bboxT(it) : it); out.push(`<rect x="${X(b.x) - 4}" y="${Y(b.y) - 4}" width="${S(b.w) + 8}" height="${S(b.d) + 8}" fill="none" stroke="#2b6cb0" stroke-width="2.5" stroke-dasharray="6 4" rx="4"/>`); } }
   // mõõtkava
   const sb = niceBar(ext.x1 - ext.x0), sx = X(ext.x0 + .6), sy = Hpx - 14;
   out.push(`<g><line x1="${sx}" y1="${sy}" x2="${sx + S(sb)}" y2="${sy}" stroke="#16130F" stroke-width="2"/><line x1="${sx}" y1="${sy - 4}" x2="${sx}" y2="${sy + 4}" stroke="#16130F"/><line x1="${sx + S(sb)}" y1="${sy - 4}" x2="${sx + S(sb)}" y2="${sy + 4}" stroke="#16130F"/>${txt(sx + S(sb) / 2, sy - 5, sb + ' m', fs * .8, '#16130F', 'middle', 600)}</g>`);

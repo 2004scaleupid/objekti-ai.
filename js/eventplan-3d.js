@@ -16,7 +16,7 @@ function view3d(box, L, opt) {
   const ctl = new T.OrbitControls(cam, r.domElement); ctl.enableDamping = true; ctl.maxPolarAngle = Math.PI / 2 - .03;
   sc.add(new T.HemisphereLight('#ffffff', '#8f877b', .62));
   const sun = new T.DirectionalLight('#fff6ea', 1.0); sun.castShadow = true; sun.shadow.bias = -.0004; sun.shadow.normalBias = .03; sc.add(sun); sc.add(sun.target);
-  const root = new T.Group(); sc.add(root);
+  const root = new T.Group(); sc.add(root); const ray = new T.Raycaster();
   const labels = document.createElement('div'); labels.style.cssText = 'position:absolute;inset:0;pointer-events:none;overflow:hidden'; box.style.position = box.style.position || 'relative'; box.appendChild(labels);
   const M = (c, o) => { const m = new T.MeshStandardMaterial(Object.assign({ color: c, roughness: .85 }, o || {})); if (m.color.convertSRGBToLinear) m.color.convertSRGBToLinear(); return m; }; // r128: värvid sRGB -> lineaarne, muidu kõik on pleekinud
   const mat = { grass: M('#7f9a64'), floor: M('#d9d2c4'), white: M('#ffffff', { roughness: .6 }), cloth: M('#fbfbf8', { roughness: .9 }), chair: M('#cfc6b8'), stage: M('#2f2c29'), wood: M('#9a7350'), counter: M('#3b3733'), wc: M('#6f8796'), red: M('#e5482d', { transparent: true, opacity: .55 }),
@@ -94,14 +94,21 @@ function view3d(box, L, opt) {
     for (let k = 0; k < 4; k++) { const len = k % 2 === 0 ? R.L : R.W; if (dz && dz.wall === k) { wall(k, 0, dz.t); wall(k, dz.t + dz.w, len); } else wall(k, 0, len); }
     roof.visible = state.roof; walls.visible = state.walls;
   }
-  function frame(L) {
+  function frame(L) { if (state.keepCam) return;
     const R = L.room, c = new T.Vector3(R.L / 2, 0, R.W / 2), asp = box.clientWidth / Math.max(1, box.clientHeight), s = Math.max(R.L, R.W) * Math.max(1, Math.pow(1.5 / Math.max(.4, asp), .6));
     sc.fog.near = s * 2.5; sc.fog.far = s * 9; ctl.target.copy(c); cam.position.set(c.x - s * .6, s * .8, c.z + s * 1.0); cam.near = .1; cam.far = s * 20; cam.updateProjectionMatrix(); ctl.update();
     sun.position.set(c.x - s, s * 1.4, c.z - s * .6); sun.target.position.copy(c); const sc2 = sun.shadow.camera; sc2.left = sc2.bottom = -s * .8; sc2.right = sc2.top = s * .8; sc2.far = s * 5; sc2.updateProjectionMatrix(); sun.shadow.mapSize.set(2048, 2048);
   }
 
+  // liigutamine 3D-s: haara ese maapinnal ja lohista (sama kontroll kui 2D-s, leht teeb muudatuse)
+  const gplane = new T.Plane(new T.Vector3(0, 1, 0), 0), gp = new T.Vector3();
+  const groundAt = e => { const b = r.domElement.getBoundingClientRect(); ray.setFromCamera(new T.Vector2((e.clientX - b.left) / b.width * 2 - 1, -(e.clientY - b.top) / b.height * 2 + 1), cam); return ray.ray.intersectPlane(gplane, gp) ? gp.clone() : null; };
+  let drag = null;
+  r.domElement.addEventListener('pointerdown', e => { if (!state.move || !opt.pick) return; const p = groundAt(e); if (!p) return; const ref = opt.pick(p.x, p.z); if (!ref) return; drag = { ref, last: p }; ctl.enabled = false; r.domElement.setPointerCapture(e.pointerId); });
+  r.domElement.addEventListener('pointermove', e => { if (!drag) return; const p = groundAt(e); if (!p) return; const dx = Math.round((p.x - drag.last.x) * 10) / 10, dz = Math.round((p.z - drag.last.z) * 10) / 10; if (!dx && !dz) return; drag.last.x += dx; drag.last.z += dz; opt.onDrag && opt.onDrag(drag.ref, dx, dz); });
+  r.domElement.addEventListener('pointerup', () => { if (drag) { drag = null; ctl.enabled = !state.walk; opt.onDragEnd && opt.onDragEnd(); } });
   // mõõtmine: kaks klõpsu maapinnal või esemel
-  const mlist = [], ray = new T.Raycaster(), mpts = [], mg = new T.Group(); sc.add(mg);
+  const mlist = [],  mpts = [], mg = new T.Group(); sc.add(mg);
   let downAt = null;
   r.domElement.addEventListener('pointerdown', e => { downAt = [e.clientX, e.clientY]; });
   r.domElement.addEventListener('pointerup', e => {
@@ -142,7 +149,8 @@ function view3d(box, L, opt) {
   const ro = new ResizeObserver(() => { const w = box.clientWidth, h = box.clientHeight; r.setSize(w, h, false); cam.aspect = w / Math.max(1, h); cam.updateProjectionMatrix(); }); ro.observe(box);
   build(L); raf = requestAnimationFrame(loop);
   return {
-    update: build, setWalk,
+    update(L2, keep) { state.keepCam = !!keep; build(L2); state.keepCam = false; }, setWalk,
+    setMove(on) { state.move = on; },
     setMeasure(on) { state.measure = on; if (!on) { mpts.length = 0; mg.clear(); measureEl(null); } },
     setRoof(on) { state.roof = on; if (tentG) tentG.getObjectByName('roof').visible = on; },
     setWalls(on) { state.walls = on; if (tentG) tentG.getObjectByName('walls').visible = on; },
