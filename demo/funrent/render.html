@@ -1,0 +1,20 @@
+<!doctype html><html lang="et"><head><meta charset="utf-8"><title>Renderdus (sisetööriist)</title>
+<style>body{margin:0;background:#222}#v{width:1264px;height:848px;position:absolute;left:0;top:0;opacity:0}canvas#out{display:block}</style></head><body>
+<!-- Demo piltide tegemise tööriist: paigutuse 3D render hoovi foto kaamerast (kaamera sobitatud muru 4 nurgaga). Ei kuulu demo vaatesse. -->
+<div id="v"></div><canvas id="out" width="1264" height="848"></canvas>
+<script src="../../vendor/three.min.js"></script><script src="../../vendor/OrbitControls.js"></script>
+<script src="../../js/eventplan.js"></script><script src="../../js/eventplan-3d.js"></script>
+<script>
+const CAM={"pos":[24.3727,16.1045,96.4527],"fw":[-0.23198,-0.27065,-0.93431],"up":[-0.12146,0.96105,-0.24824],"fov":39.17};
+const LAWN_Z0=50.8; // ala algab muru kaugemast servast 50,8 m (muru 25 × 70,8 m, ala 25 × 18 m lähiserva lähedal)
+window.renderOpt=async(id)=>{
+  const opts=await fetch('data/options.json').then(r=>r.json()),O=opts.find(o=>o.id===id),L=O.layout;L.catalog=await fetch('../../js/catalog/funrent.json').then(r=>r.json());
+  const o=L.origin,off=[o.x,0,o.y+LAWN_Z0],cam={pos:CAM.pos.map((v,i)=>v-off[i]),fw:CAM.fw,up:CAM.up,fov:CAM.fov};
+  const box=document.getElementById('v');box.innerHTML='';const V=EventPlan.view3d(box,L,{photo:true,cam});V.setLabels(false);
+  await new Promise(r=>setTimeout(r,600));const sh=V.shot(1264,848);
+  const ph=new Image();ph.src='img/hoov.jpg';await ph.decode();const rn=new Image();rn.src=sh.url.replace('image/jpeg','image/png');
+  const pn=V.renderer.domElement.toDataURL('image/png');const im=new Image();im.src=pn;await im.decode();
+  const c=document.getElementById('out'),g=c.getContext('2d');g.drawImage(ph,0,0,1264,848);g.drawImage(im,0,0,1264,848);
+  return {tags:sh.tags,vis:sh.vis};
+};
+</script></body></html>

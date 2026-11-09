@@ -7,11 +7,11 @@ const fmt = v => (Math.round(v * 100) / 100).toString().replace('.', ',');
 function view3d(box, L, opt) {
   opt = opt || {};
   const T = G.THREE;
-  const r = new T.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
+  const r = new T.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true, alpha: !!opt.photo });
   r.setPixelRatio(Math.min(G.devicePixelRatio || 1, 2)); r.shadowMap.enabled = true; r.shadowMap.type = T.PCFSoftShadowMap;
   if ('outputEncoding' in r) r.outputEncoding = T.sRGBEncoding; r.toneMapping = T.ACESFilmicToneMapping; r.toneMappingExposure = 1.1;
   box.appendChild(r.domElement); r.domElement.style.cssText = 'display:block;width:100%;height:100%;touch-action:none';
-  const sc = new T.Scene(); sc.background = new T.Color('#cdd9e1'); sc.fog = new T.Fog('#cdd9e1', 120, 600); if (sc.background.convertSRGBToLinear) sc.background.convertSRGBToLinear();
+  const sc = new T.Scene(); sc.background = new T.Color('#cdd9e1'); sc.fog = new T.Fog('#cdd9e1', 120, 600); if (opt.photo) { sc.background = null; sc.fog = null; } // foto peale: ainult esemed ja varjud if (sc.background.convertSRGBToLinear) sc.background.convertSRGBToLinear();
   const cam = new T.PerspectiveCamera(42, 1, .1, 2000);
   const ctl = new T.OrbitControls(cam, r.domElement); ctl.enableDamping = true; ctl.maxPolarAngle = Math.PI / 2 - .03;
   sc.add(new T.HemisphereLight('#ffffff', '#8f877b', .62));
@@ -20,7 +20,7 @@ function view3d(box, L, opt) {
   const labels = document.createElement('div'); labels.style.cssText = 'position:absolute;inset:0;pointer-events:none;overflow:hidden'; box.style.position = box.style.position || 'relative'; box.appendChild(labels);
   const M = (c, o) => { const m = new T.MeshStandardMaterial(Object.assign({ color: c, roughness: .85 }, o || {})); if (m.color.convertSRGBToLinear) m.color.convertSRGBToLinear(); return m; }; // r128: värvid sRGB -> lineaarne, muidu kõik on pleekinud
   const mat = { grass: M('#7f9a64'), floor: M('#d9d2c4'), white: M('#ffffff', { roughness: .6 }), cloth: M('#fbfbf8', { roughness: .9 }), chair: M('#cfc6b8'), stage: M('#2f2c29'), wood: M('#9a7350'), counter: M('#3b3733'), wc: M('#6f8796'), red: M('#e5482d', { transparent: true, opacity: .55 }),
-    tentWall: M('#ffffff', { transparent: true, opacity: .14, side: T.DoubleSide, depthWrite: false }), roof: M('#ffffff', { transparent: true, opacity: .2, side: T.DoubleSide, depthWrite: false }), post: M('#c9cdd1', { metalness: .4, roughness: .4 }), audience: M('#cfe0c4', { transparent: true, opacity: .6 }), zone: M('#d8d0c2', { transparent: true, opacity: .35 }) };
+    tentWall: M('#ffffff', { transparent: true, opacity: .14, side: T.DoubleSide, depthWrite: false }), roof: M('#ffffff', { transparent: true, opacity: opt.photo ? .38 : .2, side: T.DoubleSide, depthWrite: false }), post: M('#c9cdd1', { metalness: .4, roughness: .4 }), audience: M('#cfe0c4', { transparent: true, opacity: .6 }), zone: M('#d8d0c2', { transparent: true, opacity: .35 }) };
   const danceTex = (() => { const c = document.createElement('canvas'); c.width = c.height = 64; const g = c.getContext('2d'); g.fillStyle = '#f6f3ee'; g.fillRect(0, 0, 64, 64); g.fillStyle = '#d9d2c6'; g.fillRect(0, 0, 32, 32); g.fillRect(32, 32, 32, 32); const t = new T.CanvasTexture(c); if ('encoding' in t) t.encoding = T.sRGBEncoding; t.wrapS = t.wrapT = T.RepeatWrapping; t.magFilter = T.NearestFilter; return t; })();
   let state = { L: null, roof: true, walls: true, measure: false, walk: false, items: [] };
   const lab = [];
@@ -34,15 +34,20 @@ function view3d(box, L, opt) {
     const R = L.room, bad = new Set(L.bad || []), o = L.origin || { x: 0, y: 0 };
     const A = L.area ? { L: Math.max(L.area.l, L.area.w), W: Math.min(L.area.l, L.area.w) } : { L: R.L + 20, W: R.W + 20 };
     const gx = L.area ? -o.x : -10, gz = L.area ? -o.y : -10;
-    const g = new T.Mesh(new T.PlaneGeometry(Math.max(A.L, R.L) * 6 + 300, Math.max(A.L, R.L) * 6 + 300), M('#b7c6a3')); g.rotation.x = -Math.PI / 2; g.position.set(R.L / 2, -.01, R.W / 2); g.receiveShadow = true; root.add(g);
-    const ga = new T.Mesh(new T.PlaneGeometry(A.L, A.W), mat.grass); ga.rotation.x = -Math.PI / 2; ga.position.set(gx + A.L / 2, 0, gz + A.W / 2); ga.receiveShadow = true; root.add(ga);
+    const shadowOnly = new T.ShadowMaterial({ opacity: .32 }); const g = new T.Mesh(new T.PlaneGeometry(Math.max(A.L, R.L) * 6 + 300, Math.max(A.L, R.L) * 6 + 300), opt.photo ? shadowOnly : M('#b7c6a3')); g.rotation.x = -Math.PI / 2; g.position.set(R.L / 2, -.01, R.W / 2); g.receiveShadow = true; root.add(g);
+    if (!opt.photo) { const ga = new T.Mesh(new T.PlaneGeometry(A.L, A.W), mat.grass); ga.rotation.x = -Math.PI / 2; ga.position.set(gx + A.L / 2, 0, gz + A.W / 2); ga.receiveShadow = true; root.add(ga); }
     if (L.tent) { const f = new T.Mesh(new T.PlaneGeometry(R.L, R.W), mat.floor); f.rotation.x = -Math.PI / 2; f.position.set(R.L / 2, .01, R.W / 2); f.receiveShadow = true; root.add(f); tent(L); }
-    if (L.door) { const z = L.door.zone; const d = new T.Mesh(new T.PlaneGeometry(z.w, z.d), M('#7fbf8a', { transparent: true, opacity: .45 })); d.rotation.x = -Math.PI / 2; d.position.set(z.x + z.w / 2, .02, z.y + z.d / 2); root.add(d); label('Sissepääs', z.x + z.w / 2, .3, z.y + z.d / 2); }
+    if (L.door && !opt.photo) { const z = L.door.zone; const d = new T.Mesh(new T.PlaneGeometry(z.w, z.d), M('#7fbf8a', { transparent: true, opacity: .45 })); d.rotation.x = -Math.PI / 2; d.position.set(z.x + z.w / 2, .02, z.y + z.d / 2); root.add(d); label('Sissepääs', z.x + z.w / 2, .3, z.y + z.d / 2); }
     // instantsitud toolid ja lauad (gala 250 toolil peab jooksma sujuvalt)
+    const PK = L.yard && L.yard.parking;
+    if (PK && !opt.photo) { const pm = new T.Mesh(new T.PlaneGeometry(PK.w, PK.d), M('#bdb7ad')); pm.rotation.x = -Math.PI / 2; pm.position.set(PK.x + PK.w / 2, .012, PK.y + PK.d / 2); pm.receiveShadow = true; root.add(pm);
+      for (let rr = 0; rr < 2; rr++) for (let i = 0; i <= PK.per; i++) { const a = i * 2.5, b = rr ? (PK.along ? PK.d : PK.w) - 5 : 0; if (PK.along) addBox(.08, .01, 5, PK.x + a, .02, PK.y + b + 2.5, mat.white); else addBox(5, .01, .08, PK.x + b + 2.5, .02, PK.y + a, mat.white); }
+      label(`Parkla ${PK.cars} autole`, PK.x + PK.w / 2, .5, PK.y + PK.d / 2); }
+    if (L.yard && L.yard.gate) { const z = L.yard.gate.zone; label('Värav', z.x + z.w / 2, .5, z.y + z.d / 2); }
     const chairs = [], rounds = [], cocktails = [];
-    for (const it of L.items) {
+    for (const it of L.items.concat(L.yard ? L.yard.items : [])) {
       const red = bad.has(it.id), cx = it.x + it.w / 2, cz = it.y + it.d / 2;
-      for (const zn of it.zones || []) { const zm = new T.Mesh(new T.PlaneGeometry(zn.w, zn.d), mat.zone); zm.rotation.x = -Math.PI / 2; zm.position.set(zn.x + zn.w / 2, .015, zn.y + zn.d / 2); root.add(zm); }
+      if (!opt.photo) for (const zn of it.zones || []) { const zm = new T.Mesh(new T.PlaneGeometry(zn.w, zn.d), mat.zone); zm.rotation.x = -Math.PI / 2; zm.position.set(zn.x + zn.w / 2, .015, zn.y + zn.d / 2); root.add(zm); }
       if (it.kind === 'seating' || it.kind === 'standing') {
         for (const t of it.tables) {
           if (t.shape === 'round') rounds.push(t); else if (t.shape === 'cocktail') cocktails.push(t);
@@ -95,6 +100,8 @@ function view3d(box, L, opt) {
     roof.visible = state.roof; walls.visible = state.walls;
   }
   function frame(L) { if (state.keepCam) return;
+    if (opt.cam) { const c0 = opt.cam; cam.fov = c0.fov; cam.position.set(...c0.pos); cam.up.set(...c0.up); const tg = new T.Vector3(...c0.pos).add(new T.Vector3(...c0.fw).multiplyScalar(30)); ctl.target.copy(tg); cam.lookAt(tg); cam.near = .5; cam.far = 1000; cam.updateProjectionMatrix();
+      const R0 = L.room, c = new T.Vector3(R0.L / 2, 0, R0.W / 2), s0 = 40; sun.position.set(c.x - s0, s0 * 1.4, c.z - s0 * .3); sun.target.position.copy(c); const sc3 = sun.shadow.camera; sc3.left = sc3.bottom = -s0; sc3.right = sc3.top = s0; sc3.far = s0 * 5; sc3.updateProjectionMatrix(); sun.shadow.mapSize.set(2048, 2048); return; }
     const R = L.room, c = new T.Vector3(R.L / 2, 0, R.W / 2), asp = box.clientWidth / Math.max(1, box.clientHeight), s = Math.max(R.L, R.W) * Math.max(1, Math.pow(1.5 / Math.max(.4, asp), .6));
     sc.fog.near = s * 2.5; sc.fog.far = s * 9; ctl.target.copy(c); cam.position.set(c.x - s * .6, s * .8, c.z + s * 1.0); cam.near = .1; cam.far = s * 20; cam.updateProjectionMatrix(); ctl.update();
     sun.position.set(c.x - s, s * 1.4, c.z - s * .6); sun.target.position.copy(c); const sc2 = sun.shadow.camera; sc2.left = sc2.bottom = -s * .8; sc2.right = sc2.top = s * .8; sc2.far = s * 5; sc2.updateProjectionMatrix(); sun.shadow.mapSize.set(2048, 2048);
@@ -140,7 +147,7 @@ function view3d(box, L, opt) {
   function loop(t) {
     raf = requestAnimationFrame(loop); const dt = Math.min(.05, (t - last) / 1000); last = t;
     if (state.walk) { const sp = 2.2 * dt, f = (keys.w || keys.arrowup || walkTouch ? 1 : 0) - (keys.s || keys.arrowdown ? 1 : 0), s2 = (keys.d || keys.arrowright ? 1 : 0) - (keys.a || keys.arrowleft ? 1 : 0); cam.position.x += (-Math.sin(yaw) * f + Math.cos(yaw) * s2) * sp; cam.position.z += (-Math.cos(yaw) * f - Math.sin(yaw) * s2) * sp; cam.rotation.set(pitch, yaw, 0, 'YXZ'); }
-    else ctl.update();
+    else if (!opt.cam) ctl.update();
     r.render(sc, cam);
     const b = r.domElement.getBoundingClientRect(), v = new T.Vector3();
     for (const l of lab) { v.copy(l.p).project(cam); const vis = v.z < 1 && Math.abs(v.x) < 1.1 && Math.abs(v.y) < 1.1 && state.labels !== false; l.e.style.display = vis ? '' : 'none'; if (vis) { l.e.style.left = ((v.x + 1) / 2 * b.width) + 'px'; l.e.style.top = ((1 - v.y) / 2 * b.height) + 'px'; } }

@@ -1,0 +1,219 @@
+<!doctype html><html lang="et"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>Sündmuse planeerija · demo</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600;700;800&display=swap">
+<style>
+:root{--bg:#EEEAE4;--paper:#FBFAF7;--ink:#16130F;--mut:#6f685f;--line:#DDD7CE;--acc:#2F6B4F;--acc2:#E5482D;--ok:#2f7a43;--soft:#F3EFE8}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 "Inter Tight",Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased}
+button{font:inherit;color:inherit;cursor:pointer}
+.top{position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:10px;padding:10px 16px;background:var(--paper);border-bottom:1px solid var(--line)}
+.top b{font-size:15px;letter-spacing:-.01em}.top b em{font-style:normal;color:var(--acc2)}
+.tabs{display:flex;gap:4px;margin-left:auto;background:var(--soft);border-radius:12px;padding:3px}
+.tabs button{border:0;background:none;border-radius:9px;padding:7px 12px;font-weight:600;font-size:13.5px;color:var(--mut)}
+.tabs button[aria-selected=true]{background:#fff;color:var(--ink);box-shadow:0 1px 3px #0002}
+.stage{display:grid;grid-template-columns:minmax(0,1fr) 420px minmax(0,1fr);gap:28px;max-width:1300px;margin:0 auto;padding:24px 16px}
+.side{align-self:center}.side h2{font-size:26px;letter-spacing:-.03em;line-height:1.1;margin:0 0 10px}.side p{color:var(--mut);margin:0 0 12px}
+.side ol{margin:0;padding:0;list-style:none;display:grid;gap:8px}.side li{display:flex;gap:10px;align-items:flex-start;color:var(--mut);font-size:14px}.side li i{font-style:normal;flex:none;width:22px;height:22px;border-radius:50%;background:var(--soft);display:grid;place-items:center;font-size:12px;font-weight:700;color:var(--ink)}.side li.on{color:var(--ink);font-weight:600}.side li.on i{background:var(--acc);color:#fff}
+.phone{position:relative;width:420px;height:min(860px,calc(100svh - 110px));min-height:640px;background:#fff;border-radius:38px;border:10px solid #1d1b18;box-shadow:0 30px 70px -30px #0007;overflow:hidden;display:flex;flex-direction:column}
+.wtop{display:flex;align-items:center;gap:8px;padding:14px 16px 10px;border-bottom:1px solid #eee}
+.wtop .dot{width:26px;height:26px;border-radius:8px;background:var(--acc);display:grid;place-items:center;color:#fff;font-weight:800;font-size:13px}
+.wtop b{font-size:14px}.wtop small{display:block;color:var(--mut);font-size:11.5px;font-weight:500}
+.wtop .x{margin-left:auto;color:var(--mut);font-size:20px;line-height:1}
+.prog{height:3px;background:#eee}.prog i{display:block;height:100%;background:var(--acc);transition:width .4s}
+.scr{flex:1;overflow:auto;padding:16px;-webkit-overflow-scrolling:touch}
+.scr h3{font-size:20px;letter-spacing:-.02em;margin:2px 0 6px;line-height:1.15}.scr .lead{color:var(--mut);margin:0 0 14px;font-size:14px}
+.foot{padding:12px 16px calc(12px + env(safe-area-inset-bottom));border-top:1px solid #eee;display:flex;gap:8px}
+.btn{flex:1;border:0;border-radius:12px;padding:13px 16px;font-weight:700;background:var(--acc);color:#fff;font-size:15px}.btn.sec{flex:none;background:var(--soft);color:var(--ink)}
+.btn:disabled{opacity:.45}
+.card{border:1px solid var(--line);border-radius:14px;background:#fff;overflow:hidden}
+.up{position:relative}.up img{display:block;width:100%;aspect-ratio:3/2;object-fit:cover}.up .ok{position:absolute;left:10px;bottom:10px;background:#fffffff0;border-radius:999px;padding:5px 10px;font-size:12.5px;font-weight:600}
+.lbl{font-size:12px;font-weight:700;color:var(--mut);text-transform:uppercase;letter-spacing:.06em;margin:16px 0 6px}
+.map svg{display:block;width:100%;height:auto}
+.q{margin:0 0 14px}.q b{display:block;font-size:14px;margin-bottom:6px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}.chips span{border:1px solid var(--line);border-radius:999px;padding:7px 12px;font-size:13.5px;background:#fff;transition:all .25s}.chips span.on{background:var(--acc);border-color:var(--acc);color:#fff;font-weight:600}
+.field{border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-size:15px;min-height:42px;background:#fff}.field .car{display:inline-block;width:1px;height:1em;background:var(--ink);vertical-align:-2px;animation:bl 1s steps(1) infinite}@keyframes bl{50%{opacity:0}}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.load{display:grid;place-items:center;text-align:center;height:100%;gap:14px}.spin{width:54px;height:54px;border-radius:50%;border:5px solid #e6eee9;border-top-color:var(--acc);animation:sp 1s linear infinite}@keyframes sp{to{transform:rotate(360deg)}}
+.load ul{list-style:none;padding:0;margin:0;font-size:14px;color:var(--mut);display:grid;gap:6px;text-align:left}.load li.d{color:var(--ok)}.load li.d:before{content:"✓ "}.load li:not(.d):before{content:"· "}
+.opt{margin:0 0 14px;cursor:pointer;transition:transform .15s}.opt:active{transform:scale(.99)}
+.pic{position:relative}.pic img{display:block;width:100%;height:auto}.pic .tg{position:absolute;transform:translate(-50%,-100%);background:#16130fd9;color:#fff;font-size:9.5px;font-weight:600;padding:2px 6px;border-radius:5px;white-space:nowrap;pointer-events:none}
+.opt .bd{padding:12px}.opt h4{margin:0 0 2px;font-size:16px}.opt p{margin:0 0 8px;color:var(--mut);font-size:13px}
+.facts{display:flex;flex-wrap:wrap;gap:5px}.facts span{background:var(--soft);border-radius:6px;padding:3px 8px;font-size:12px;font-weight:600}.facts .g{background:#e5f1e9;color:var(--ok)}
+.vt{display:flex;gap:4px;background:var(--soft);border-radius:11px;padding:3px;margin:0 0 10px}.vt button{flex:1;border:0;background:none;border-radius:8px;padding:7px 4px;font-weight:600;font-size:13px;color:var(--mut)}.vt button[aria-selected=true]{background:#fff;color:var(--ink);box-shadow:0 1px 3px #0002}
+#v3{height:330px;border-radius:12px;overflow:hidden;background:#dfe6ea}
+.plan svg{display:block;width:100%;height:auto}.plan{border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.ck{list-style:none;margin:10px 0 0;padding:0;font-size:13px;color:var(--ok);display:grid;gap:3px}
+table.bom{width:100%;border-collapse:collapse;font-size:13.5px}table.bom td,table.bom th{padding:7px 4px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}table.bom td.n,table.bom th.n{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}table.bom small{color:var(--mut)}table.bom tfoot td{font-weight:700;border-bottom:0}
+.ask{color:var(--mut);font-style:italic}
+.done{text-align:center;padding:30px 6px}.done .big{width:72px;height:72px;border-radius:50%;background:#e5f1e9;color:var(--ok);display:grid;place-items:center;font-size:36px;margin:10px auto 16px}
+/* ettevõtte vaade */
+.co{max-width:1200px;margin:0 auto;padding:20px 16px;display:grid;grid-template-columns:320px minmax(0,1fr);gap:18px}
+.panel{background:var(--paper);border:1px solid var(--line);border-radius:16px;padding:14px}
+.panel h2{font-size:13px;text-transform:uppercase;letter-spacing:.07em;color:var(--mut);margin:0 0 10px}
+.inbox .it{border:1px solid var(--line);border-radius:12px;background:#fff;padding:10px 12px;margin:0 0 8px;cursor:pointer}.inbox .it.on{border-color:var(--acc);box-shadow:0 0 0 2px #2f6b4f33}
+.inbox .it b{display:block}.inbox .it small{color:var(--mut)}.inbox .new{float:right;background:var(--acc2);color:#fff;border-radius:999px;font-size:11px;font-weight:700;padding:2px 8px}
+.pipe{display:flex;gap:4px;flex-wrap:wrap;margin:6px 0 14px}.pipe span{flex:1;min-width:90px;text-align:center;font-size:12px;font-weight:600;padding:7px 4px;border-radius:8px;background:var(--soft);color:var(--mut)}.pipe span.on{background:var(--acc);color:#fff}.pipe span.dn{background:#e5f1e9;color:var(--ok)}
+.cgrid{display:grid;grid-template-columns:1.2fr 1fr;gap:14px}
+.paper{background:#fff;border:1px solid var(--line);border-radius:6px;box-shadow:0 10px 30px -18px #0005;padding:22px;font-size:12.5px;aspect-ratio:1/1.414;overflow:hidden}
+.paper h5{margin:0 0 2px;font-size:16px}.paper .muted{color:var(--mut)}.paper table{width:100%;border-collapse:collapse;margin:10px 0}.paper td,.paper th{border-bottom:1px solid #eee;padding:4px 2px;text-align:left}.paper td.n{text-align:right}
+.chead{display:flex;flex-wrap:wrap;gap:8px 18px;align-items:baseline;margin:0 0 4px}.chead h1{font-size:22px;letter-spacing:-.02em;margin:0}.chead span{color:var(--mut);font-size:13.5px}
+.zoom{position:fixed;inset:0;z-index:50;background:#16130Fcc;display:flex;flex-direction:column}.zoom .zb{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;color:#fff;font-weight:700}.zoom .zb button{border:0;border-radius:10px;padding:8px 14px;font-weight:700}.zoom .zc{flex:1;overflow:auto;background:#fbfaf7;-webkit-overflow-scrolling:touch}.zoom .zc svg{display:block;width:max(100%,1100px);height:auto}.plan{cursor:zoom-in}
+.thumb{width:100%;border-radius:10px;display:block}
+@media (max-width:1100px){.stage{grid-template-columns:420px minmax(0,1fr)}.stage .side.l{display:none}}
+@media (max-width:760px){.stage{display:block;padding:0}.stage .side{display:none}.phone{width:100%;height:calc(100svh - 53px);min-height:0;border:0;border-radius:0;box-shadow:none}
+  .co{grid-template-columns:1fr;padding:12px}.cgrid{grid-template-columns:1fr}.top{padding:8px 10px}.top b span{display:none}}
+</style></head><body>
+<div class="top"><b>Vaade<em>3D</em> <span>· sündmuse planeerija · demo</span></b>
+  <div class="tabs" role="tablist"><button role="tab" aria-selected="true" data-tab="client">Kliendi teekond</button><button role="tab" aria-selected="false" data-tab="co">Mida näeb Funrent</button></div></div>
+
+<section id="client">
+<div class="stage">
+  <div class="side l"><h2>Klient planeerib ise.</h2><p>Vidin rendifirma kodulehel: klient laeb üles hoovi foto, märgib ala ja vastab mõnele küsimusele. Lahendused tulevad firma päris toodetest ja mõõtudest.</p><p style="font-size:13px">Demo: vastused on ette täidetud, pildid tehtud ühe korra. Paigutused arvutab sama lahendaja, mis päris tootes.</p></div>
+  <div class="phone" id="phone">
+    <div class="wtop"><div class="dot">R</div><div><b>Planeeri oma üritus</b><small>Rendifirma · töötab Vaade3D-ga</small></div><span class="x">×</span></div>
+    <div class="prog"><i id="prog" style="width:10%"></i></div>
+    <div class="scr" id="scr"></div>
+    <div class="foot" id="foot"></div>
+  </div>
+  <div class="side r"><ol id="steps">
+    <li data-s="0"><i>1</i>Foto ja ala kaardil</li><li data-s="1"><i>2</i>Üritus ja külalised</li><li data-s="2"><i>3</i>Mida vaja on</li><li data-s="3"><i>4</i>Koht ja stiil</li>
+    <li data-s="4"><i>5</i>Lahenduste arvutamine</li><li data-s="5"><i>6</i>3 lahendust pildiga</li><li data-s="6"><i>7</i>3D, plaan ja tooted</li><li data-s="7"><i>8</i>Päring Funrentile</li></ol></div>
+</div>
+</section>
+
+<section id="co" hidden>
+<div class="co">
+  <div class="panel inbox"><h2>Päringud</h2><div id="inbox"></div></div>
+  <div class="panel" id="cdet"></div>
+</div>
+</section>
+
+<script src="../../vendor/three.min.js"></script><script src="../../vendor/OrbitControls.js"></script>
+<script src="../../js/eventplan.js"></script><script src="../../js/eventplan-svg.js"></script><script src="../../js/eventplan-3d.js"></script>
+<script>
+'use strict';
+const $=id=>document.getElementById(id),EPS=EventPlan.svg,fmt=EventPlan.fmt,esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+let OPTS=[],TAGS={},CAT=null,pick=0,step=0,V3=null,run=0;
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+// avalikud hinnad funrent.ee-st (rent, € + km); muu: küsi hinda
+const PRICE={round180:15,podium:9,'tent-popup':59,'chair-fold':1.2,rect240w:16};
+const PRICE_SRC='funrent.ee, november 2026';
+const CLIENT={name:'Mari Tamm',phone:'+372 5xx xxxx',email:'mari@näide.ee',date:'Laupäev, 10. juuli 2027',place:'Eramu hoov, Harjumaa'};
+
+// ---------- kliendi ekraanid ----------
+const S=[scrUpload,scrEvent,scrNeeds,scrPlace,scrLoad,scrOptions,scrDetail,scrDone];
+function go(n){step=n;run++;$('prog').style.width=Math.round((n+1)/S.length*100)+'%';document.querySelectorAll('#steps li').forEach(li=>li.classList.toggle('on',+li.dataset.s===n));$('scr').scrollTop=0;if(V3&&n!==6){V3.dispose();V3=null;}S[n](run);}
+function foot(btns){$('foot').innerHTML=btns.map((b,i)=>`<button class="btn ${b.sec?'sec':''}" id="fb${i}" ${b.dis?'disabled':''}>${b.t}</button>`).join('');btns.forEach((b,i)=>$('fb'+i).onclick=b.f);}
+
+function mapSvg(){ // staatiline kaardi eelvaade: krunt, joonistatud ala 25 × 18 m, parkla
+  return `<svg viewBox="0 0 360 230" role="img" aria-label="Ala kaardil"><rect width="360" height="230" fill="#dfe8d6"/><path d="M0 180 L360 150" stroke="#c8bfae" stroke-width="16"/><path d="M300 0 L330 230" stroke="#cfc6b6" stroke-width="10"/>
+  <rect x="150" y="22" width="44" height="28" fill="#f4f1ec" stroke="#8a8378"/><polygon points="40,40 290,30 300,160 30,170" fill="#cfe0c0" stroke="#7d9a6f" stroke-dasharray="4 3"/>
+  <rect x="58" y="78" width="160" height="72" fill="#2f6b4f33" stroke="#2f6b4f" stroke-width="2.5"/><text x="138" y="118" text-anchor="middle" font-size="12" font-weight="700" fill="#1f4a36">Ala 25 × 18 m</text>
+  <rect x="226" y="70" width="58" height="84" fill="#e4e1db" stroke="#9b958b" stroke-dasharray="4 3"/><text x="255" y="114" text-anchor="middle" font-size="10" font-weight="700" fill="#4b463f">Parkla</text><text x="255" y="126" text-anchor="middle" font-size="10" fill="#4b463f">20 autot</text>
+  <circle cx="58" cy="78" r="4" fill="#2f6b4f"/><circle cx="218" cy="78" r="4" fill="#2f6b4f"/><circle cx="218" cy="150" r="4" fill="#2f6b4f"/><circle cx="58" cy="150" r="4" fill="#2f6b4f"/>
+  <text x="10" y="222" font-size="9" fill="#6f685f">Kaardi eelvaade (demo)</text></svg>`;}
+function scrUpload(){
+  $('scr').innerHTML=`<h3>Kus üritus toimub?</h3><p class="lead">Lae üles foto platsist ja märgi ala kaardil. Nii arvestame päris ruumiga.</p>
+  <div class="card up"><img src="img/hoov.jpg" alt="Hoovi foto: muru, kask ja maja"><span class="ok">✓ hoov.jpg üles laaditud</span></div>
+  <div class="lbl">Ala kaardil</div><div class="card map">${mapSvg()}</div><p class="lead" style="margin-top:8px">Märgitud: muruala 25 × 18 m, parkla kõrval.</p>`;
+  foot([{t:'Edasi',f:()=>go(1)}]);}
+async function typeIn(el,text,r){for(let i=1;i<=text.length;i++){if(r!==run)return;el.innerHTML=esc(text.slice(0,i))+'<span class="car"></span>';await sleep(28);}el.textContent=text;}
+async function chipsIn(id,on,r){for(const t of on){await sleep(260);if(r!==run)return;const c=[...$(id).children].find(x=>x.textContent===t);if(c)c.classList.add('on');}}
+const chips=(id,all)=>`<div class="chips" id="${id}">${all.map(t=>`<span>${t}</span>`).join('')}</div>`;
+async function scrEvent(r){
+  $('scr').innerHTML=`<h3>Milline üritus?</h3><p class="lead">Vastused on demos ette täidetud.</p>
+  <div class="q"><b>Ürituse tüüp</b>${chips('c1',['Pulm','Sünnipäev','Firmapidu','Suvefestival','Muu'])}</div>
+  <div class="q"><b>Kuupäev</b><div class="field" id="f1"></div></div>
+  <div class="q"><b>Külalisi</b><div class="field" id="f2"></div></div>
+  <div class="q"><b>Kuidas külalised on?</b>${chips('c2',['Kõik istuvad','Segamini: istuvad ja püsti','Kõik püsti'])}</div>`;
+  foot([{t:'Tagasi',sec:1,f:()=>go(0)},{t:'Edasi',f:()=>go(2)}]);
+  await chipsIn('c1',['Suvefestival'],r);await typeIn($('f1'),CLIENT.date,r);await typeIn($('f2'),'60 (40 istuvad, 20 püsti)',r);await chipsIn('c2',['Segamini: istuvad ja püsti'],r);}
+async function scrNeeds(r){
+  $('scr').innerHTML=`<h3>Mida vaja on?</h3><p class="lead">Vali kõik, mis sobib. Mõõdud võib jätta ka meile.</p>
+  <div class="q"><b>Lava</b>${chips('n1',['Ei','Väike 4 × 3 m','Suur 6 × 4 m'])}</div>
+  <div class="q"><b>Tantsupõrand</b>${chips('n2',['Ei','3 × 3 m','5 × 5 m'])}</div>
+  <div class="q"><b>Toit ja jook</b>${chips('n3',['Baarilett','Toidutelgid 2 tk','Toitlustuslaud'])}</div>
+  <div class="q"><b>WC</b>${chips('n4',['Ei','2 tk','4 tk','6 tk'])}</div>
+  <div class="q"><b>Vihmatelk</b>${chips('n5',['Jah, kõik istekohad katuse all','Ei'])}</div>`;
+  foot([{t:'Tagasi',sec:1,f:()=>go(1)},{t:'Edasi',f:()=>go(3)}]);
+  for(const [id,v] of [['n1',['Väike 4 × 3 m']],['n2',['5 × 5 m']],['n3',['Baarilett','Toidutelgid 2 tk']],['n4',['4 tk']],['n5',['Jah, kõik istekohad katuse all']]])await chipsIn(id,v,r);}
+async function scrPlace(r){
+  $('scr').innerHTML=`<h3>Koht ja stiil</h3>
+  <div class="q"><b>Parkimine</b>${chips('p1',['Pole vaja','20 autot ala kõrval','Tänaval'])}</div>
+  <div class="q"><b>Elekter</b>${chips('p2',['Olemas','Vaja generaatorit'])}</div>
+  <div class="q"><b>Stiil ja värvid</b><div class="field" id="p3"></div></div>
+  <div class="q"><b>Midagi veel?</b><div class="field" id="p4"></div></div>`;
+  foot([{t:'Tagasi',sec:1,f:()=>go(2)},{t:'Teen lahendused',f:()=>go(4)}]);
+  await chipsIn('p1',['20 autot ala kõrval'],r);await chipsIn('p2',['Olemas'],r);await typeIn($('p3'),'Roheline + valge, festival',r);await typeIn($('p4'),'Lastele ruumi, valguskett telgi all',r);}
+async function scrLoad(r){
+  const L=['Kontrollin ala mõõte (25 × 18 m)','Valin telgi Funrendi suurustest','Paigutan lauad, lava ja tantsupõranda','Kontrollin vahekäike ja vahemaid','Lisan WC, toidutelgid ja parkla','Teen pildid sinu hoovist'];
+  $('scr').innerHTML=`<div class="load"><div><div class="spin" style="margin:0 auto 14px"></div><h3>Teen lahendused…</h3></div><ul id="ll">${L.map(t=>`<li>${t}</li>`).join('')}</ul></div>`;$('foot').innerHTML='';
+  for(let i=0;i<L.length;i++){await sleep(500);if(r!==run)return;$('ll').children[i].classList.add('d');}await sleep(300);if(r===run)go(5);}
+const PRIO=[/^Lava/,/kohta$/,/^Tantsu/,/^WC/,/^Pop-up/,/^Baar/,/^Püsti/,/^Värav/];
+function tagsFit(t){ // kattuvad sildid jäetakse ära (väike pilt telefonis)
+  const pr=g=>{const i=PRIO.findIndex(r=>r.test(g.text));return i<0?99:i;},keep=[];
+  for(const g of t.slice().sort((a,b)=>pr(a)-pr(b))){const w=g.text.length*1.55+3,x=g.x/1264*100,y=g.y/848*100;if(keep.some(k=>Math.abs(k.x-x)<(k.w+w)/2&&Math.abs(k.y-y)<7))continue;keep.push({x,y,w,g});}
+  return keep.map(k=>k.g);}
+function pic(o,small){const t=tagsFit((TAGS[o.id]||{}).tags||[]);return `<div class="pic"><img src="img/opt-${o.id}.jpg" alt="${esc(o.title)}: paigutus hoovi fotol" loading="lazy">${t.map(g=>`<span class="tg" style="left:${(g.x/1264*100).toFixed(2)}%;top:${(g.y/848*100).toFixed(2)}%">${esc(g.text)}</span>`).join('')}</div>`;}
+function facts(L){const n=L.items.filter(i=>i.kind==='seating').reduce((s,i)=>s+i.tables.length,0);return `<div class="facts"><span>Telk ${fmt(L.tent.W)} × ${fmt(L.tent.L)} m</span><span>${L.seats} istekohta · ${n} lauda</span><span>20 püsti</span><span class="g">✓ kõik mahub</span></div>`;}
+function scrOptions(){
+  $('scr').innerHTML=`<h3>${OPTS.length} lahendust sinu hoovi</h3><p class="lead">Kõik mahuvad alale, vahekäigud ≥ 1,2 m. Vali üks, et näha 3D-s ja plaanil.</p>`+
+    OPTS.map((o,i)=>`<div class="card opt" data-i="${i}">${pic(o)}<div class="bd"><h4>${i+1}. ${esc(o.title)}</h4><p>${esc(o.sub)}</p>${facts(o.layout)}</div></div>`).join('')+`<p class="lead" style="font-size:12px">Sildid ja mõõdud pildil lisab kood, mitte AI.</p>`;
+  $('scr').querySelectorAll('.opt').forEach(c=>c.onclick=()=>{pick=+c.dataset.i;go(6);});
+  foot([{t:'Muuda vastuseid',sec:1,f:()=>go(1)}]);}
+function priceOf(b){const p=PRICE[b.id];return p!=null?p:null;}
+function bomTable(L,withPrice){let sum=0,ask=0;const rows=L.bom.map(b=>{const p=withPrice?priceOf(b):null;if(withPrice){if(p!=null)sum+=p*b.qty;else ask++;}
+  return `<tr><td>${esc(b.name)}${b.source==='STD'?' <small>(mõõt kinnitada)</small>':''}</td><td class="n">${b.qty}</td>${withPrice?`<td class="n">${p!=null?fmt(p)+' €':'<span class="ask">küsi hinda</span>'}</td><td class="n">${p!=null?fmt(+(p*b.qty).toFixed(2))+' €':'–'}</td>`:''}</tr>`;}).join('');
+  return `<table class="bom"><thead><tr><th>Toode</th><th class="n">Kogus</th>${withPrice?'<th class="n">Hind</th><th class="n">Kokku</th>':''}</tr></thead><tbody>${rows}</tbody>${withPrice?`<tfoot><tr><td colspan="3">Teadaolevad hinnad kokku (+ km)</td><td class="n">${fmt(+sum.toFixed(2))} €</td></tr><tr><td colspan="4" style="font-weight:500;color:var(--mut);font-size:12px">${ask} rida: küsi hinda. Hinnad: ${PRICE_SRC}, rent alates, transport ja paigaldus eraldi.</td></tr></tfoot>`:''}</table>`;}
+function scrDetail(){
+  const o=OPTS[pick],L=o.layout;
+  $('scr').innerHTML=`<h3>${esc(o.title)}</h3><p class="lead">${esc(o.sub)}</p>
+  <div class="vt" role="tablist"><button data-v="pic" aria-selected="true">Pilt</button><button data-v="3d" aria-selected="false">3D</button><button data-v="2d" aria-selected="false">Plaan</button><button data-v="bom" aria-selected="false">Tooted</button></div>
+  <div id="dv"></div>`;
+  const show=v=>{$('scr').querySelectorAll('.vt button').forEach(b=>b.setAttribute('aria-selected',b.dataset.v===v));if(V3){V3.dispose();V3=null;}
+    if(v==='pic')$('dv').innerHTML=`<div class="card">${pic(o)}</div>${facts(L)}<ul class="ck">${L.checks.map(c=>`<li>✓ ${esc(c.text)}</li>`).join('')}</ul>`;
+    if(v==='3d'){$('dv').innerHTML='<div id="v3"></div><p class="lead" style="margin-top:8px;font-size:12.5px">Lohista = pööra, näpistus = suumi. Kõik päris mõõdus.</p>';V3=EventPlan.view3d($('v3'),L);}
+    if(v==='2d')$('dv').innerHTML=`<div class="plan">${EPS.svg(L,{width:900})}</div><p class="lead" style="margin-top:8px;font-size:12.5px">Puuduta plaani, et suurendada. Kaugused meetrites, prinditav PDF-iks.</p>`;
+    if(v==='bom')$('dv').innerHTML=bomTable(L,false)+'<p class="lead" style="margin-top:8px;font-size:12.5px">Kogused tulevad otse paigutusest. Hinna saadab Funrent pakkumisega.</p>';};
+  $('scr').querySelector('.vt').onclick=e=>{const b=e.target.closest('button');if(b)show(b.dataset.v);};show('pic');
+  foot([{t:'Teised',sec:1,f:()=>go(5)},{t:'Saada Funrentile',f:()=>go(7)}]);}
+function scrDone(){
+  const o=OPTS[pick];
+  $('scr').innerHTML=`<div class="done"><div class="big">✓</div><h3>Päring on saadetud</h3><p class="lead">Funrent sai sinu valiku koos plaani, toodete ja piltidega. Pakkumine tuleb tavaliselt 1 tööpäeva jooksul aadressile ${esc(CLIENT.email)}.</p>
+  <div class="card" style="text-align:left">${pic(o)}<div style="padding:12px"><b>${esc(o.title)}</b><p class="lead" style="margin:4px 0 0">${esc(CLIENT.date)} · 60 külalist · ${esc(o.layout.tent.name)}</p></div></div></div>`;
+  foot([{t:'Vaata, mida näeb Funrent',f:()=>tab('co')}]);}
+
+// ---------- ettevõtte vaade ----------
+function crew(L){ // paigalduse hinnang (demo): telk + mööbel + lava; reeglid kinnitada Funrendiga
+  const m2=L.tent.W*L.tent.L,tables=L.bom.filter(b=>/laud/i.test(b.name)).reduce((s,b)=>s+b.qty,0),chairs=(L.bom.find(b=>b.id==='chair')||{}).qty||0;
+  const tentH=Math.max(3,Math.round(m2/45)),people=m2>150?6:4;
+  return {people,rows:[['Telk '+fmt(L.tent.W)+' × '+fmt(L.tent.L)+' m',`${people} in · ~${tentH} h`],['Lava 6 moodulit + tantsupõrand 25 plaati','2 in · ~1,5 h'],[`${tables} lauda, ${chairs} tooli, laudlinad`,'2 in · ~1 h'],['Pop-up telgid 2 tk, WC 4 tk','2 in · ~1 h'],['Valguskett, elekter (olemas kohapeal)','1 in · ~0,5 h']]};}
+function coRender(){
+  const o=OPTS[pick],L=o.layout,c=crew(L);
+  $('inbox').innerHTML=`<div class="it on"><span class="new">Uus</span><b>${esc(CLIENT.name)} · suvefestival</b><small>Täna 14:32 · 60 külalist · ${esc(o.title)}</small></div>
+    <div class="it"><b>Kaido K. · pulm 120</b><small>Eile · pakkumine saadetud</small></div><div class="it"><b>OÜ Näide · firmapidu</b><small>3 päeva tagasi · kinnitatud</small></div>`;
+  $('cdet').innerHTML=`<div class="chead"><h1>${esc(CLIENT.name)} · suvefestival</h1><span>${esc(CLIENT.date)} · ${esc(CLIENT.place)} · 60 külalist</span></div>
+  <div class="pipe"><span class="on">Uus päring</span><span>Pakkumine saadetud</span><span>Kinnitatud</span><span>Paigaldus</span><span>Tehtud</span></div>
+  <div class="cgrid"><div>
+    <div class="card" style="margin-bottom:12px">${pic(o)}</div>
+    <h2 style="margin:14px 0 6px">2D plaan</h2><div class="plan">${EPS.svg(L,{width:900})}</div>
+    <ul class="ck">${L.checks.map(x=>`<li>✓ ${esc(x.text)}</li>`).join('')}</ul>
+    <h2 style="margin:16px 0 6px">Tooted ja hinnad</h2>${bomTable(L,true)}
+  </div><div>
+    <h2 style="margin:0 0 6px">Pakkumise eelvaade (PDF)</h2>
+    <div class="paper"><h5>Pakkumine nr 2027-0142</h5><div class="muted">Rendifirma · ${esc(CLIENT.date)}</div><p><b>${esc(CLIENT.name)}</b><br>${esc(CLIENT.place)}</p>
+      <table><tr><th>Toode</th><th>Kogus</th><th class="n">Summa</th></tr>${L.bom.slice(0,9).map(b=>{const p=priceOf(b);return `<tr><td>${esc(b.name)}</td><td>${b.qty}</td><td class="n">${p!=null?fmt(+(p*b.qty).toFixed(2))+' €':'—'}</td></tr>`;}).join('')}</table>
+      <p class="muted">Lisatud: 2D plaan mõõtudega, pilt hoovist, 3D link. Transport ja paigaldus lisatakse.</p><p class="muted">Kehtib 14 päeva.</p></div>
+    <h2 style="margin:16px 0 6px">Paigaldusleht meeskonnale</h2>
+    <div class="paper" style="aspect-ratio:auto"><h5>Paigaldus · ${esc(CLIENT.date)}</h5><div class="muted">Aadress: ${esc(CLIENT.place)} · kontakt ${esc(CLIENT.phone)}</div>
+      <table>${c.rows.map(r=>`<tr><td>${esc(r[0])}</td><td class="n">${esc(r[1])}</td></tr>`).join('')}</table>
+      <p class="muted">Meeskond: ${c.people} inimest. Telgi asukoht ja kaugused plaanil. Parkla ${L.yard&&L.yard.parking?L.yard.parking.cars+' autole':''} värava kõrval, veoauto sisse väravast (${L.yard?fmt(L.yard.gate.w):4} m). Ajad on hinnangulised.</p></div>
+  </div></div>`;}
+document.addEventListener('click',e=>{const pl=e.target.closest('.plan');if(!pl)return;const z=document.createElement('div');z.className='zoom';z.innerHTML=`<div class="zb">2D plaan · mõõdud meetrites<button type="button">Sulge</button></div><div class="zc">${pl.innerHTML}</div>`;z.querySelector('button').onclick=()=>z.remove();document.body.appendChild(z);});
+function tab(t){document.querySelectorAll('.tabs button').forEach(b=>b.setAttribute('aria-selected',b.dataset.tab===t));$('client').hidden=t!=='client';$('co').hidden=t!=='co';if(t==='co')coRender();scrollTo(0,0);}
+document.querySelector('.tabs').onclick=e=>{const b=e.target.closest('button');if(b)tab(b.dataset.tab);};
+
+Promise.all([fetch('data/options.json').then(r=>r.json()),fetch('data/tags.json').then(r=>r.json()),fetch('../../js/catalog/funrent.json').then(r=>r.json())]).then(([o,t,c])=>{OPTS=o;TAGS=t;CAT=c;OPTS.forEach(x=>x.layout.catalog=CAT);
+  const q=new URLSearchParams(location.search);if(q.get('opt'))pick=+q.get('opt');if(q.get('tab')==='co')tab('co');go(+(q.get('s')||0));});
+</script></body></html>

@@ -10,6 +10,8 @@ function svg(L, opt) {
   opt = opt || {};
   const room = L.room, o = L.origin || { x: 0, y: 0 }, A = L.area ? { L: Math.max(L.area.l, L.area.w), W: Math.min(L.area.l, L.area.w) } : null;
   const padM = 2.2, ext = A ? { x0: -o.x, y0: -o.y, x1: A.L - o.x, y1: A.W - o.y } : { x0: 0, y0: 0, x1: room.L, y1: room.W };
+  const PK = L.yard && L.yard.parking; if (PK) { ext.x0 = Math.min(ext.x0, PK.x); ext.y0 = Math.min(ext.y0, PK.y); ext.x1 = Math.max(ext.x1, PK.x + PK.w); ext.y1 = Math.max(ext.y1, PK.y + PK.d); }
+  const ALL = L.items.concat(L.yard ? L.yard.items : []);
   ext.x0 -= padM; ext.y0 -= padM; ext.x1 += padM; ext.y1 += padM;
   const Wpx = opt.width || 1000, s = Wpx / (ext.x1 - ext.x0), Hpx = Math.round((ext.y1 - ext.y0) * s);
   const X = x => +((x - ext.x0) * s).toFixed(1), Y = y => +((y - ext.y0) * s).toFixed(1), S = v => +(v * s).toFixed(1);
@@ -20,6 +22,10 @@ function svg(L, opt) {
 <marker id="ar" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 1 L10 5 L0 9" fill="none" stroke="#16130F" stroke-width="1.4"/></marker></defs>`);
   out.push(`<rect width="100%" height="100%" fill="#fbfaf7"/>`);
   if (A) { out.push(`<rect x="${X(-o.x)}" y="${Y(-o.y)}" width="${S(A.L)}" height="${S(A.W)}" fill="#eef3ea" stroke="#7d9a6f" stroke-dasharray="6 4" stroke-width="1.2"/>`); out.push(txt(X(-o.x) + 6, Y(-o.y) + fs + 3, `Ala ${fmt(A.W)} × ${fmt(A.L)} m`, fs * .85, '#4f6b43', 'start', 600)); }
+  if (PK) { out.push(`<rect x="${X(PK.x)}" y="${Y(PK.y)}" width="${S(PK.w)}" height="${S(PK.d)}" fill="#e4e1db" stroke="#9b958b" stroke-dasharray="5 4"/>`);
+    for (let r = 0; r < 2; r++) for (let i = 0; i < PK.per; i++) { const a = i * 2.5, b = r ? (PK.along ? PK.d : PK.w) - 5 : 0; out.push(PK.along ? `<rect x="${X(PK.x + a)}" y="${Y(PK.y + b)}" width="${S(2.5)}" height="${S(5)}" fill="none" stroke="#fff" stroke-width="1.4"/>` : `<rect x="${X(PK.x + b)}" y="${Y(PK.y + a)}" width="${S(5)}" height="${S(2.5)}" fill="none" stroke="#fff" stroke-width="1.4"/>`); }
+    out.push(txt(X(PK.x + PK.w / 2), Y(PK.y + PK.d / 2) + fs * .35, `Parkla ${PK.cars} autole · ${fmt(Math.max(PK.w, PK.d))} × ${fmt(Math.min(PK.w, PK.d))} m`, fs, '#4b463f', 'middle', 700)); }
+  if (L.yard && L.yard.gate) { const z = L.yard.gate.zone; out.push(`<rect x="${X(z.x)}" y="${Y(z.y)}" width="${S(z.w)}" height="${S(z.d)}" fill="url(#hd)" stroke="#5aa06a"/>`); out.push(txt(X(z.x + z.w / 2), Y(z.y + z.d / 2) + fs * .35, `Värav ${fmt(L.yard.gate.w)} m`, fs * .85, '#2f7a43', 'middle', 700)); }
   // telk
   if (L.tent) {
     const m = L.tent.margin; out.push(`<rect x="${X(-m)}" y="${Y(-m)}" width="${S(room.L + 2 * m)}" height="${S(room.W + 2 * m)}" fill="none" stroke="#9aa58f" stroke-width="1" stroke-dasharray="2 3"/>`);
@@ -35,10 +41,10 @@ function svg(L, opt) {
     else { const xx = X(k === 3 ? 0 : room.L); out.push(`<line x1="${xx}" y1="${gy[0]}" x2="${xx}" y2="${gy[1]}" stroke="#fbfaf7" stroke-width="5"/>`); out.push(rtxt(k === 3 ? xx - 7 : xx + 7, (gy[0] + gy[1]) / 2, `Sissepääs ${fmt(L.door.w)} m`, fs * .9, '#2f7a43', k === 3 ? -90 : 90)); }
   }
   // tsoonid
-  for (const it of L.items) for (const z of it.zones || []) out.push(`<rect x="${X(z.x)}" y="${Y(z.y)}" width="${S(z.w)}" height="${S(z.d)}" fill="url(#hz)" stroke="#b5ab9b" stroke-width=".6" stroke-dasharray="3 3"/>`);
+  for (const it of ALL) for (const z of it.zones || []) out.push(`<rect x="${X(z.x)}" y="${Y(z.y)}" width="${S(z.w)}" height="${S(z.d)}" fill="url(#hz)" stroke="#b5ab9b" stroke-width=".6" stroke-dasharray="3 3"/>`);
   // esemed
   const labels = [];
-  for (const it of L.items) {
+  for (const it of ALL) {
     const red = bad.has(it.id), stroke = red ? '#e5482d' : '#16130F', sw = red ? 2.4 : 1.2;
     if (it.kind === 'seating' || it.kind === 'standing') {
       if (it.kind === 'standing') for (const z of it.zonesArea || []) out.push(`<rect x="${X(z.x)}" y="${Y(z.y)}" width="${S(z.w)}" height="${S(z.d)}" fill="${COL.standing}" stroke="#c9bfae" stroke-dasharray="4 3"/>`);
@@ -60,7 +66,7 @@ function svg(L, opt) {
   }
   const labelOut = [];
   // sildid (nimi + mõõt) — esemete sisse või kõrvale
-  for (const it of L.items) {
+  for (const it of ALL) {
     const dark = it.kind === 'stage' || it.kind === 'bar' || it.kind === 'wc';
     let title = it.kind === 'seating' ? `${it.name.replace(/^Ümmargune laud /, '').replace(/^Kokkupandav laud /, 'Laud ')} · ${it.tables.length > 1 ? it.tables.length + ' lauda · ' : ''}${it.seats} kohta` : it.name;
     if (it.kind === 'seating' && it.tables[0].shape === 'rect') title = `Pikk laud ${fmt(it.tables[0].nTab * it.tables[0].unitW)} m (${it.tables[0].nTab} × ${fmt(it.tables[0].unitW * 100, 0)} cm) · ${it.seats} kohta`;

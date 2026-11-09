@@ -100,7 +100,7 @@ function buildBlocks(spec, cat, R) {
     else if (it.kind === 'standing') flex.push(Object.assign({ kind: 'standing' }, it));
     else bomOnly.push(it);
   }
-  const ord = { stage: 0, dance: 1, audience: 2, bar: 3, catering: 4, popup: 5, wc: 6 };
+  const ord = { tentblock: -1, stage: 0, dance: 1, audience: 2, bar: 3, catering: 4, popup: 5, wc: 6 };
   fixed.sort((a, b) => ord[a.kind] - ord[b.kind]);
   return { fixed, flex, bomOnly };
 }
@@ -117,6 +117,8 @@ function realize(bl, room, k, t, R, extra) {
   } else if (bl.kind === 'catering' || bl.kind === 'popup' || bl.kind === 'wc') {
     off = R.wall; body = place(room, k, t, off, bl.w, bl.d);
     zones = [strip(body, k, 'front', R.serviceZone)];
+  } else if (bl.kind === 'tentblock') {
+    off = 0; body = place(room, k, t, off, bl.w, bl.d);
   } else { body = extra; }
   zones.forEach(z => z.type = bl.kind);
   return Object.assign({ t: 'r' }, body, { wallK: k, zones });
@@ -254,8 +256,8 @@ function fillFlex(room, R, placed, door, flex, cat, cell) {
         zones.push(z); area -= z.w * z.d; placedAll.push(Object.assign({ zones: [] }, z));
       }
       const capA = zones.reduce((s, z) => s + z.w * z.d, 0); standCap += Math.floor(capA / R.standM2 + E);
-      const nT = Math.ceil(f.guests / (ct.guests || 8)), tables = []; const pitch = Math.max(2.4, ct.d + R.walk + 1);
-      for (const z of zones) for (let y = z.y + pitch / 2; y <= z.y + z.d - ct.d / 2 && tables.length < nT; y += pitch) for (let x = z.x + pitch / 2; x <= z.x + z.w - ct.d / 2 && tables.length < nT; x += pitch) tables.push({ shape: 'cocktail', product: ct.id, d: ct.d, x, y, body: { t: 'c', x, y, r: ct.d / 2 } });
+      const nT = Math.ceil(f.guests / (ct.guests || 8)), tables = []; const pitch = ct.d + R.walk, m0 = ct.d / 2 + .3;
+      for (const z of zones) for (let y = z.y + m0; y <= z.y + z.d - m0 + E && tables.length < nT; y += pitch) for (let x = z.x + m0; x <= z.x + z.w - m0 + E && tables.length < nT; x += pitch) tables.push({ shape: 'cocktail', product: ct.id, d: ct.d, x, y, body: { t: 'c', x, y, r: ct.d / 2 } });
       groups.push(Object.assign({ id: 'stand', kind: 'standing', name: 'Püstivastuvõtt', zonesArea: zones, tables, guests: f.guests, cap: Math.floor(capA / R.standM2 + E) }, { t: 'r' }, bbox(zones.length ? zones : [{ t: 'r', x: 0, y: 0, w: 0, d: 0 }]), { zones: [] }));
     }
   }
@@ -277,7 +279,7 @@ function doorCands(room, R, doorW, spec, coarse) {
 }
 
 function okAgainst(s, placed, door, R, room) {
-  if (wallDist(s, room) < (s.wallMin != null ? s.wallMin : R.wall) - E) return false;
+  if (wallDist(s, room) < (s.kind === 'tentblock' ? 0 : s.wallMin != null ? s.wallMin : R.wall) - E) return false;
   for (const z of s.zones || []) if (wallDist(z, room) < -E) return false;
   if (door && gap(s, door.zone) < -E) return false;
   for (const z of s.zones || []) if (door && gap(z, door.zone) < -E && s.kind !== 'stage') return false;
@@ -317,6 +319,10 @@ function candidates(bl, room, R, placed, door, step) {
       else { w2 = a; d2 = b; y = dir[1] > 0 ? st.y + st.d + dist : st.y - dist - b; const span = [st.x, st.x + st.w]; x = al === 's' ? span[0] : al === 'e' ? span[1] - a : (span[0] + span[1]) / 2 - a / 2; if (al == null) x = (span[0] + span[1]) / 2 - a / 2; }
       return { t: 'r', x, y, w: w2, d: d2, zones: [], side, attach: bl.attach, kind: bl.kind };
     }
+  }
+  if (bl.kind === 'tentblock') { // telk hoovis: pikk külg piki ala pikka külge, nihe seinast 0..mitu meetrit
+    for (const k of [0, 2]) for (let off = 0; off <= room.W - bl.d + E; off += Math.max(step, 1)) for (let t = 0; t <= room.L - bl.w + E; t += Math.max(step, 1)) out.push(Object.assign(realize(bl, room, k, t, R), place(room, k, t, off, bl.w, bl.d), { wallK: k, zones: [] }));
+    return out;
   }
   for (let k = 0; k < 4; k++) {
     const L = wallLen(room, k), lo = R.wall + (bl.kind === 'stage' ? R.stageSide - R.wall : 0), hi = L - bl.w - lo;
@@ -429,7 +435,7 @@ function validate(L) {
   // seinad
   for (const s of shapes) {
     cur = [s]; const it = items.find(i => i.id === s.owner);
-    const min = it.kind === 'seating' ? Math.max(R.wall, R.push) : it.kind === 'stage' ? R.stageSide : it.kind === 'bar' ? R.barWork : R.wall;
+    const min = it.kind === 'tentblock' ? 0 : it.kind === 'seating' ? Math.max(R.wall, R.push) : it.kind === 'stage' ? R.stageSide : it.kind === 'bar' ? R.barWork : R.wall;
     const wd = wallDist(s, room);
     if (wd < min - .005) add('wall', `${s.name}: seinast ${fmt(Math.max(0, wd))} m, vaja ≥ ${fmt(min)} m`, [s.owner], min, wd);
   }
@@ -554,6 +560,7 @@ function bom(L) {
     else if (it.kind === 'catering' || it.kind === 'bar' || it.kind === 'wc') add(it.product, null, it.n || 1);
     else if (it.kind === 'popup') add('tent-popup', `Pop-up telk ${it.name.split('× ')[1] || ''}`.trim(), it.n || 1);
   }
+  for (const it of (L.yard ? L.yard.items : [])) { if (it.kind === 'popup') add('tent-popup', `Pop-up telk ${fmt((it.size || [3, 3])[0])} × ${fmt((it.size || [3, 3])[1])} m`, it.n || 1); else add(it.product, null, it.n || 1); }
   for (const it of (L.spec.items || [])) if (['heater', 'light', 'fence', 'decor'].includes(it.kind)) add(it.product || it.kind, it.name, it.n || 1);
   return [...m.values()];
 }
@@ -563,6 +570,37 @@ function podiumModules(w, d) { // 2×1 ja 1×1 (ja ×0,5) moodulid
   const perRow = (len, depth) => { const n2 = Math.floor(len / 2 + E), rest = len - n2 * 2; add(depth === 1 ? '2 × 1 m' : '2 × 0,5 m', n2); if (rest > .25) add(depth === 1 ? '1 × 1 m' : '1 × 0,5 m', Math.ceil(rest - E)); };
   for (let i = 0; i < rows; i++) perRow(w, 1); if (half) perRow(w, .5);
   return out;
+}
+
+// ---------- hoov: telk + esemed telgist väljas (WC, toidutelgid, baar) + parkla ala kõrval ----------
+function solveYard(spec, cat, R, L) {
+  const area = spec.area; if (!area || !L.tent) return null;
+  const room = { L: Math.max(area.l, area.w), W: Math.min(area.l, area.w) }, m = L.tent.margin;
+  const yb = buildBlocks({ items: spec.yard.items || [] }, cat, R);
+  yb.fixed.forEach(b => { b.id = 'y' + b.id; });
+  const tb = { id: 'tent', kind: 'tentblock', name: L.tent.name, w: L.tent.L + 2 * m, d: L.tent.W + 2 * m };
+  const blocks = { fixed: [tb].concat(yb.fixed), flex: [] };
+  let best = null;
+  for (const door of doorCands(room, R, (spec.yard.gateW || 4), spec.yard, true)) {
+    const r = solveRoom(room, R, blocks, door, cat, { step: 1, cell: .25, maxLeaves: 10, maxNodes: 6000 });
+    if (!r) continue; r.door = door; if (!best || r.sc > best.sc) best = r;
+  }
+  if (!best) return null;
+  const tp = best.fixed.find(p => p.kind === 'tentblock'), ox = tp.x + m, oy = tp.y + m; // telgi nurk alas
+  const toT = o => Object.assign({}, o, { x: r2(o.x - ox), y: r2(o.y - oy), zones: (o.zones || []).map(z => Object.assign({}, z, { x: r2(z.x - ox), y: r2(z.y - oy) })) });
+  const items = best.fixed.filter(p => p.kind !== 'tentblock').map(p => { const src = p.src || {}; return toT({ id: p.id, kind: p.kind, name: src.name, x: p.x, y: p.y, w: p.w, d: p.d, n: src.n, unitW: src.unitW, size: src.size, product: src.product, wallK: p.wallK, zones: p.zones || [] }); });
+  // kontroll hoovi tasandil (alas): telk takistusena
+  const Y = { spec: { items: [] }, rules: R, catalog: cat, room, door: best.door, items: best.fixed.map(p => ({ id: p.id, kind: p.kind, name: p.kind === 'tentblock' ? 'Telk' : (p.src || {}).name, x: p.x, y: p.y, w: p.w, d: p.d, zones: p.zones || [] })) };
+  const v = validate(Y);
+  const gate = Object.assign({}, best.door, { zone: toT(best.door.zone) });
+  let parking = null;
+  if (spec.yard.parking) { // parkla: 2 rida autosid (2,5 × 5 m) + 6 m sõidutee, ala selle seina taga, kus on värav
+    const n = spec.yard.parking.cars, per = Math.ceil(n / 2), len = per * 2.5, dep = 16, k = best.door.wall;
+    const along = k % 2 === 0, cx = along ? Math.min(Math.max(0, best.door.t + best.door.w / 2 - len / 2), room.L - len) : 0, cy = along ? 0 : Math.min(Math.max(0, best.door.t + best.door.w / 2 - len / 2), room.W - len);
+    const pr = k === 0 ? { x: cx, y: -dep - 1, w: len, d: dep } : k === 2 ? { x: cx, y: room.W + 1, w: len, d: dep } : k === 3 ? { x: -dep - 1, y: cy, w: dep, d: len } : { x: room.L + 1, y: cy, w: dep, d: len };
+    parking = Object.assign(toT(pr), { cars: n, per, along });
+  }
+  return { items, gate, parking, origin: { x: r2(ox), y: r2(oy) }, ok: v.ok, problems: v.problems.map(p => Object.assign({}, p, { text: 'Hoov: ' + p.text })) };
 }
 
 // ---------- avalik: solve ----------
@@ -578,6 +616,7 @@ function solve(spec, cat, opt) {
     let L = r && r.short === 0 ? assemble(spec, cat, R, t, area, r) : null;
     const need = (spec.guests || 0), close = r ? r.short <= Math.max(2, need * .1) : (t ? t.W * t.L <= 120 : true);
     if ((!L || !L.ok) && close) { const r2 = solveTent(spec, cat, R, blocks, t, area, true); if (r2 && r2.short === 0) { const L2 = assemble(spec, cat, R, t, area, r2); if (L2.ok || !L) L = L2; } }
+    if (L && L.ok && spec.yard) { const Y = solveYard(spec, cat, R, L); if (Y && Y.ok) { L.yard = Y; L.origin = Y.origin; L.bom = bom(L); L.checks.push({ ok: true, text: `Hoovis mahub telgi kõrvale: ${Y.items.map(i => i.name).join(', ')}` }); if (Y.parking) L.checks.push({ ok: true, text: `Parkla ${Y.parking.cars} autole värava kõrval (${fmt(Math.max(Y.parking.w, Y.parking.d))} × ${fmt(Math.min(Y.parking.w, Y.parking.d))} m)` }); } else L = null; }
     if (L && L.ok) { found.push(L); if (found.length >= (opt.max || 3) || noTent) break; }
     else if (found.length) break;
     if (found.length && t && found[0].tent && t.W * t.L > found[0].tent.W * found[0].tent.L * 1.6) break;
@@ -746,6 +785,6 @@ function rotateItem(L, ref) {
   L.edited = true; return finish(L);
 }
 
-const API = { solve, cleanSpec, imagePrompt, pick, moveItem, rotateItem, validate, finish, rulesFor, tentOptions, podiumModules, gap, DEF_RULES, fmt };
+const API = { solveYard, solve, cleanSpec, imagePrompt, pick, moveItem, rotateItem, validate, finish, rulesFor, tentOptions, podiumModules, gap, DEF_RULES, fmt };
 if (typeof module !== 'undefined' && module.exports) module.exports = API; else G.EventPlan = API;
 })(typeof globalThis !== 'undefined' ? globalThis : this);
