@@ -50,3 +50,11 @@ test('Poodiumimoodulid: 4 × 3 m = 6 × (2 × 1)', () => {
   assert.deepStrictEqual(EP.podiumModules(4, 3), { '2 × 1 m': 6 });
   assert.deepStrictEqual(EP.podiumModules(3, 2), { '2 × 1 m': 2, '1 × 1 m': 2 });
 });
+
+test('cleanSpec: AI väljund -> ainult lubatud väljad', () => {
+  const s = EP.cleanSpec({ guests: '12', area: { l: '10', w: '7,0' }, tent: { type: 'bogus' }, items: [{ kind: 'seating', table: 'xxx', guests: 12, single: 1 }, { kind: 'rocket' }, { kind: 'stage', w: 4, d: 300 }], rules: { wall: '0,25', walk: 9 } }, cat);
+  assert.deepStrictEqual(s.area, { l: 10, w: 7 });
+  assert.strictEqual(s.tent.type, 'any');
+  assert.deepStrictEqual(s.items, [{ kind: 'seating', table: 'round180', guests: 12, single: true }]);
+  assert.deepStrictEqual(s.rules, { wall: 0.25 });
+});

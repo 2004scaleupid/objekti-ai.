@@ -647,6 +647,37 @@ function fixes(spec, cat) {
   return out;
 }
 
-const API = { solve, validate, finish, rulesFor, tentOptions, podiumModules, gap, DEF_RULES, fmt };
+// AI või vormi spec -> ainult lubatud väljad ja mõistlikud vahemikud (AI väljund ei ole usaldusväärne)
+function cleanSpec(x, cat) {
+  x = x && typeof x === 'object' ? x : {};
+  const num = (v, a, b, d) => { if (v == null || v === '') return d; const n = +String(v).replace(',', '.'); return isFinite(n) && n >= a && n <= b ? n : d; };
+  const int = (v, a, b, d) => { const n = num(v, a, b, null); return n == null ? d : Math.round(n); };
+  const str = (v, n) => typeof v === 'string' ? v.replace(/[<>]/g, '').slice(0, n || 120) : null;
+  const tables = new Set(((cat && cat.products) || []).filter(p => p.spec && p.spec.kind === 'table').map(p => p.id));
+  const out = { name: str(x.name) || 'Üritus', venue: x.venue === 'indoor' ? 'indoor' : 'outdoor', guests: int(x.guests, 1, 10000, 0) };
+  const al = x.area && num(x.area.l, 2, 500, null), aw = x.area && num(x.area.w, 2, 500, null);
+  out.area = al && aw ? { l: al, w: aw } : null;
+  const tt = x.tent && ['any', 'modular', 'pagoda', 'stretch', 'popup', 'none'].includes(x.tent.type) ? x.tent.type : (out.venue === 'indoor' ? 'none' : 'any');
+  out.tent = { type: tt };
+  if (x.tent && Array.isArray(x.tent.size) && x.tent.size.length === 2) { const a = num(x.tent.size[0], 2, 100, null), b = num(x.tent.size[1], 2, 100, null); if (a && b) out.tent.size = [a, b]; }
+  if (tt === 'none' && !out.area) out.area = null;
+  out.items = [];
+  for (const it of (Array.isArray(x.items) ? x.items : []).slice(0, 30)) {
+    if (!it || typeof it !== 'object') continue;
+    const k = it.kind;
+    if (k === 'seating') { const g = int(it.guests, 1, 5000, 0); if (!g) continue; out.items.push(Object.assign({ kind: k, table: tables.has(it.table) ? it.table : 'round180', guests: g }, it.single ? { single: true } : {})); }
+    else if (k === 'standing' || k === 'audience') { const g = int(it.guests, 1, 50000, 0); if (g) out.items.push({ kind: k, guests: g }); }
+    else if (k === 'stage' || k === 'dance') { const w = num(it.w, .5, 40, null), d = num(it.d, .5, 40, null); if (w && d) out.items.push(Object.assign({ kind: k, w, d }, it.name ? { name: str(it.name, 40) } : {}, it.product && prod(cat, it.product) ? { product: it.product } : {})); }
+    else if (k === 'catering') { const o = { kind: k, n: int(it.n, 1, 50, 1) }; const w = num(it.w, .5, 10, null), d = num(it.d, .3, 5, null); if (w && d) Object.assign(o, { w, d }); out.items.push(o); }
+    else if (k === 'bar' || k === 'wc' || k === 'heater' || k === 'light') out.items.push({ kind: k, n: int(it.n, 1, 200, 1) });
+    else if (k === 'popup') { const o = { kind: k, n: int(it.n, 1, 100, 1), size: [3, 3] }; if (Array.isArray(it.size)) { const a = num(it.size[0], 2, 8, 3), b = num(it.size[1], 2, 8, 3); o.size = [a, b]; } out.items.push(o); }
+  }
+  const st = x.style || {}; out.style = { colors: (Array.isArray(st.colors) ? st.colors : []).map(c => str(c, 30)).filter(Boolean).slice(0, 6), mood: str(st.mood, 80), notes: str(st.notes, 300) };
+  if (x.rules && typeof x.rules === 'object') { const r = {}; for (const [k2, a, b] of [['wall', 0, 2], ['walk', .8, 3], ['entryDepth', .5, 5], ['stageFront', .5, 5], ['stageSide', 0, 3], ['push', .5, 1.5], ['perGuest', .45, 1]]) { const v = num(x.rules[k2], a, b, null); if (v != null) r[k2] = v; } if (Object.keys(r).length) out.rules = r; }
+  if (!out.guests) out.guests = out.items.reduce((s2, i) => s2 + (i.guests || 0), 0);
+  return out;
+}
+
+const API = { solve, cleanSpec, validate, finish, rulesFor, tentOptions, podiumModules, gap, DEF_RULES, fmt };
 if (typeof module !== 'undefined' && module.exports) module.exports = API; else G.EventPlan = API;
 })(typeof globalThis !== 'undefined' ? globalThis : this);

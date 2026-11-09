@@ -1,5 +1,5 @@
 <!doctype html><html lang="et"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self' https://*.supabase.co data: blob:; worker-src 'self' blob:; object-src 'none'; base-uri 'none'; frame-ancestors 'self'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self' https://*.supabase.co data: blob:; worker-src 'self' blob:; object-src 'none'; base-uri 'none'">
 <title>Sündmuse plaan · Vaade3D</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600;700;800&display=swap">
 <style>
@@ -24,10 +24,22 @@ h1{font-size:22px;letter-spacing:-.02em;margin:0 0 4px}h2{font-size:14px;margin:
 .fail{border-color:#f0b3a6;background:#fff5f2}.fail p{margin:0 0 8px}
 .fix{display:block;width:100%;text-align:left;margin:6px 0 0;font-weight:500}.fix b{color:var(--ok)}
 .mhint{display:none}@media (max-width:900px){.mhint{display:block}}
+.card label{display:grid;gap:3px;font-size:12.5px;color:var(--mut);font-weight:600}
+.card input,.card textarea{font:inherit;font-size:14px;color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:7px 9px;background:#fff;width:100%;min-width:0}
+.card textarea{resize:vertical}.g2{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px 0}.xy{display:flex;align-items:center;gap:4px;color:var(--mut)}
+.ta{margin-bottom:6px}.ghost{background:#fff}.sm{padding:5px 10px;font-size:13px}.wide{width:100%;margin-top:6px;padding:11px}
+.hint{font-size:12.5px;color:var(--mut);margin:4px 0 0;min-height:1em}.srow{display:grid;grid-template-columns:1fr 80px auto;gap:6px;align-items:end;margin:6px 0}.srow .x{padding:6px 9px}
+details summary{cursor:pointer;font-size:13px;font-weight:600;margin:4px 0}
 .side{display:grid;gap:12px;align-content:start}
 #busy{color:var(--mut);font-size:14px}
 @media (max-width:900px){main{grid-template-columns:minmax(0,1fr);padding:12px}section,.card{min-width:0}#plan svg{width:900px;max-width:none}header{padding:10px 12px}}
 @media print{@page{size:A4 landscape;margin:10mm}body{background:#fff}header,.tabs,.noprint,.fix{display:none!important}main{display:block;padding:0}.card{border:0;padding:0;break-inside:avoid}#plan{margin-bottom:6mm;overflow:visible;padding:0}#plan svg{width:100%!important;height:auto;max-height:150mm;max-width:none}.mhint{display:none}@media (max-width:900px){.mhint{display:block}}
+.card label{display:grid;gap:3px;font-size:12.5px;color:var(--mut);font-weight:600}
+.card input,.card textarea{font:inherit;font-size:14px;color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:7px 9px;background:#fff;width:100%;min-width:0}
+.card textarea{resize:vertical}.g2{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px 0}.xy{display:flex;align-items:center;gap:4px;color:var(--mut)}
+.ta{margin-bottom:6px}.ghost{background:#fff}.sm{padding:5px 10px;font-size:13px}.wide{width:100%;margin-top:6px;padding:11px}
+.hint{font-size:12.5px;color:var(--mut);margin:4px 0 0;min-height:1em}.srow{display:grid;grid-template-columns:1fr 80px auto;gap:6px;align-items:end;margin:6px 0}.srow .x{padding:6px 9px}
+details summary{cursor:pointer;font-size:13px;font-weight:600;margin:4px 0}
 .side{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6mm}}
 </style></head><body>
 <header><b>Vaade<em>3D</em> · Sündmuse plaan</b><span class="sp"></span>
@@ -35,6 +47,38 @@ h1{font-size:22px;letter-spacing:-.02em;margin:0 0 4px}h2{font-size:14px;margin:
 <main>
   <section><div class="card"><h1 id="title">…</h1><p class="meta" id="meta"></p><div class="tabs" id="tabs"></div><p class="meta noprint mhint">Telefonis lohista plaani külgedele.</p><div id="plan"><p id="busy">Arvutan paigutust…</p></div></div></section>
   <aside class="side">
+    <form class="card noprint" id="sf" autocomplete="off">
+      <h2>Ürituse andmed</h2>
+      <label class="ta">Kirjelda soove oma sõnadega<textarea id="ftxt" rows="3" placeholder="Nt: aiapidu 10 × 7 m alal, 12 külalist ühe pika laua taga, valge telk, lava 4 × 3 m, tantsupõrand 2 × 2 m, toitlustuslaud. Roheline ja valge, elegantne."></textarea></label>
+      <button type="button" id="fai" class="ghost">Täida vorm AI-ga</button><p class="hint" id="faimsg"></p>
+      <div class="g2">
+        <label>Nimi<input id="fname"></label>
+        <label>Külalisi<input id="fguests" inputmode="numeric"></label>
+        <label>Koht<select id="fvenue"><option value="outdoor">Väljas</option><option value="indoor">Siseruumis</option></select></label>
+        <label>Telk<select id="ftent"><option value="any">Vali sobiv</option><option value="modular">Moodultelk</option><option value="pagoda">Pagoda</option><option value="stretch">Stretch</option><option value="popup">Pop-up</option><option value="none">Ilma telgita</option></select></label>
+        <label>Ala / ruum (m)<span class="xy"><input id="fal" inputmode="decimal" placeholder="pikkus"> × <input id="faw" inputmode="decimal" placeholder="laius"></span></label>
+        <label>Telgi mõõt (m)<span class="xy"><input id="ftl" inputmode="decimal" placeholder="vali ise"> × <input id="ftw" inputmode="decimal"></span></label>
+      </div>
+      <div id="fseat"></div><button type="button" id="fseatadd" class="ghost sm">+ Lisa istumine</button>
+      <div class="g2">
+        <label>Püstivastuvõtt (külalisi)<input id="fstand" inputmode="numeric"></label>
+        <label>Publikuala (inimesi)<input id="faud" inputmode="numeric"></label>
+        <label>Lava (m)<span class="xy"><input id="fsw" inputmode="decimal"> × <input id="fsd" inputmode="decimal"></span></label>
+        <label>Tantsupõrand (m)<span class="xy"><input id="fdw" inputmode="decimal"> × <input id="fdd" inputmode="decimal"></span></label>
+        <label>Toitlustuslaudu<input id="fcat" inputmode="numeric"></label>
+        <label>Baarilette<input id="fbar" inputmode="numeric"></label>
+        <label>WC kabiine<input id="fwc" inputmode="numeric"></label>
+        <label>Pop-up telke 3 × 3<input id="fpop" inputmode="numeric"></label>
+        <label>Soojendeid<input id="fheat" inputmode="numeric"></label>
+        <label>Stiil ja värvid<input id="fstyle" placeholder="nt elegantne, roheline + valge"></label>
+      </div>
+      <details><summary>Reeglid</summary><div class="g2">
+        <label>Seintest (m)<input id="rwall" inputmode="decimal"></label><label>Vahekäik (m)<input id="rwalk" inputmode="decimal" placeholder="1,0 / 1,2"></label>
+        <label>Tooli taga (m)<input id="rpush" inputmode="decimal"></label><label>Sissepääs sügavus (m)<input id="rentry" inputmode="decimal"></label>
+        <label>Lava ees (m)<input id="rsf" inputmode="decimal"></label><label>Lava külgedel (m)<input id="rss" inputmode="decimal"></label>
+      </div></details>
+      <button type="submit" class="pri wide">Arvuta paigutus</button>
+    </form>
     <div class="card" id="failbox" hidden></div>
     <div class="card"><h2>Kontroll</h2><div id="checks"></div></div>
     <div class="card"><h2>Tingmärgid</h2><div id="legend"></div></div>
@@ -47,21 +91,71 @@ h1{font-size:22px;letter-spacing:-.02em;margin:0 0 4px}h2{font-size:14px;margin:
 <script>
 const $=id=>document.getElementById(id),EPS=EventPlan.svg,fmt=EventPlan.fmt;
 let CAT=null,res=null,cur=0,view=null;
-const W=new Worker('worker.js');let seq=0;const wait={};
-W.onmessage=e=>{const f=wait[e.data.id];delete wait[e.data.id];if(f)f(e.data);};
-const solve=(spec)=>new Promise(r=>{const id=++seq;wait[id]=r;W.postMessage({id,spec,cat:CAT});});
+// uus arvutus katkestab eelmise (vana tulemus ei tohi hiljem üle kirjutada)
+let W=null;
+const solve=(spec)=>new Promise(r=>{if(W)W.terminate();W=new Worker('worker.js');W.onmessage=e=>r(e.data);W.onerror=e=>r({err:e.message||'Arvutus ebaõnnestus'});W.postMessage({id:1,spec,cat:CAT});});
 $('case').innerHTML=Object.entries(CASES).map(([k,c])=>`<option value="${k}">${c.name}</option>`).join('');
 const q=new URLSearchParams(location.search);if(q.get('case'))$('case').value=q.get('case');
-$('case').onchange=()=>{history.replaceState(null,'','?case='+$('case').value);run();};
+$('case').onchange=()=>{history.replaceState(null,'','?case='+$('case').value);toForm(CASES[$('case').value]);run();};
 $('print').onclick=()=>print();
+const TABLES=()=>CAT.products.filter(p=>p.spec&&p.spec.kind==='table');
+const nv=id=>{const v=$(id).value.trim().replace(',','.');return v===''?null:+v;};
+function seatRow(it){const d=document.createElement('div');d.className='srow';d.innerHTML=`<label>Istumine<select class="st">${TABLES().map(p=>`<option value="${p.id}">${p.name}</option>`).join('')}<option value="single">Üks pikk laud kõigile</option></select></label><label>Kohti<input class="sg" inputmode="numeric"></label><button type="button" class="x ghost" aria-label="Eemalda">×</button>`;
+  d.querySelector('.st').value=it&&it.single?'single':(it&&it.table)||'round180';d.querySelector('.sg').value=it?it.guests:'';d.querySelector('.x').onclick=()=>d.remove();$('fseat').appendChild(d);}
+$('fseatadd').onclick=()=>seatRow(null);
+function toForm(sp){
+  const f=(id,v)=>{$(id).value=v==null?'':String(v).replace('.',',');};const I=k=>(sp.items||[]).find(i=>i.kind===k);
+  f('fname',sp.name);f('fguests',sp.guests);$('fvenue').value=sp.venue||'outdoor';$('ftent').value=(sp.tent&&sp.tent.type)||'any';
+  f('fal',sp.area&&Math.max(sp.area.l,sp.area.w));f('faw',sp.area&&Math.min(sp.area.l,sp.area.w));
+  const ts=sp.tent&&sp.tent.size;f('ftl',ts&&Math.max(...ts));f('ftw',ts&&Math.min(...ts));
+  $('fseat').innerHTML='';(sp.items||[]).filter(i=>i.kind==='seating').forEach(seatRow);if(!$('fseat').children.length&&!I('standing')&&!I('audience'))seatRow(null);
+  f('fstand',I('standing')&&I('standing').guests);f('faud',I('audience')&&I('audience').guests);
+  f('fsw',I('stage')&&I('stage').w);f('fsd',I('stage')&&I('stage').d);f('fdw',I('dance')&&I('dance').w);f('fdd',I('dance')&&I('dance').d);
+  f('fcat',I('catering')&&I('catering').n);f('fbar',I('bar')&&I('bar').n);f('fwc',I('wc')&&I('wc').n);f('fpop',I('popup')&&I('popup').n);f('fheat',I('heater')&&I('heater').n);
+  const stl=sp.style||{};f('fstyle',[stl.mood,(stl.colors||[]).join(' + ')].filter(Boolean).join(', '));
+  const r=sp.rules||{};f('rwall',r.wall);f('rwalk',r.walk);f('rpush',r.push);f('rentry',r.entryDepth);f('rsf',r.stageFront);f('rss',r.stageSide);
+  $('sf').dataset.extra=JSON.stringify({stage:I('stage')?{name:I('stage').name,product:I('stage').product}:null,cat:I('catering')?{w:I('catering').w,d:I('catering').d}:null});
+}
+function fromForm(){
+  const ex=JSON.parse($('sf').dataset.extra||'{}'),items=[];
+  [...$('fseat').children].forEach(d=>{const t=d.querySelector('.st').value,g=+d.querySelector('.sg').value;if(g>0)items.push(t==='single'?{kind:'seating',table:'rect183',guests:g,single:true}:{kind:'seating',table:t,guests:g});});
+  if(nv('fstand'))items.push({kind:'standing',guests:nv('fstand')});
+  if(nv('fsw')&&nv('fsd'))items.push(Object.assign({kind:'stage',w:nv('fsw'),d:nv('fsd')},ex.stage||{}));
+  if(nv('faud'))items.push({kind:'audience',guests:nv('faud')});
+  if(nv('fdw')&&nv('fdd'))items.push({kind:'dance',w:nv('fdw'),d:nv('fdd')});
+  if(nv('fcat'))items.push(Object.assign({kind:'catering',n:nv('fcat')},ex.cat||{}));
+  for(const [id,k] of [['fbar','bar'],['fwc','wc'],['fheat','heater']])if(nv(id))items.push({kind:k,n:nv(id)});
+  if(nv('fpop'))items.push({kind:'popup',n:nv('fpop'),size:[3,3]});
+  const st=$('fstyle').value.split(/[,+]/).map(x=>x.trim()).filter(Boolean);
+  const rules={};for(const [id,k] of [['rwall','wall'],['rwalk','walk'],['rpush','push'],['rentry','entryDepth'],['rsf','stageFront'],['rss','stageSide']])if(nv(id)!=null)rules[k]=nv(id);
+  const raw={name:$('fname').value,guests:nv('fguests'),venue:$('fvenue').value,tent:{type:$('ftent').value,size:nv('ftl')&&nv('ftw')?[nv('ftw'),nv('ftl')]:null},area:nv('fal')&&nv('faw')?{l:nv('fal'),w:nv('faw')}:null,items,style:{mood:st[0]||null,colors:st.slice(1)},rules};
+  return EventPlan.cleanSpec(raw,CAT);
+}
+$('sf').onsubmit=e=>{e.preventDefault();run(fromForm());};
+// pilv: sisse loginud kasutaja tooted (products.spec) + AI vormi täitmine
+const CLOUD=window.V3D_CLOUD||null;let SB=null;
+async function sb(){if(SB)return SB;const c=await fetch('../config.json').then(r=>r.json());await new Promise((res,rej)=>{if(window.supabase)return res();const s=document.createElement('script');s.src='../vendor/supabase.js';s.onload=res;s.onerror=rej;document.head.appendChild(s);});
+  const ST={getItem:k=>{try{return localStorage.getItem(k)??sessionStorage.getItem(k);}catch(_){return null;}},setItem:(k,v)=>{try{localStorage.setItem(k,v);}catch(_){}},removeItem:k=>{try{localStorage.removeItem(k);sessionStorage.removeItem(k);}catch(_){}}};
+  SB=window.supabase.createClient(c.url,c.key,{auth:{persistSession:true,autoRefreshToken:true,storage:ST}});SB.cfg=c;return SB;}
+async function myCatalog(base){try{const s=await sb();const {data:{session}}=await s.auth.getSession();if(!session)return base;
+  const {data,error}=await s.from('products').select('id,name,category,spec').eq('active',true).not('spec','is',null);if(error||!data||!data.length)return base;
+  return {company:'mine',products:data,rules:base.rules};}catch(_){return base;}}
+$('fai').onclick=async()=>{const t=$('ftxt').value.trim();if(t.length<10){$('faimsg').textContent='Kirjuta soovid enne lahti (vähemalt üks lause).';return;}
+  $('fai').disabled=true;$('faimsg').textContent='AI täidab vormi…';
+  try{const s=await sb();const {data:{session}}=await s.auth.getSession();if(!session)throw new Error('Logi Vaade3D-sse sisse, siis saab AI vormi täita. Vormi saad täita ka käsitsi.');
+    const ctx={lauad:TABLES().map(p=>({id:p.id,nimi:p.name,kohti:p.spec.seats||null})),telgid:[...new Set(CAT.products.filter(p=>p.spec&&p.spec.kind==='tent').map(p=>p.spec.type))]};
+    const r=await fetch(s.cfg.url+'/functions/v1/ai-chat',{method:'POST',headers:{'Content-Type':'application/json',apikey:s.cfg.key,Authorization:'Bearer '+session.access_token},body:JSON.stringify({mode:'event-spec',role:'sündmuste rendifirmadele',context:ctx,messages:[{role:'user',content:t}]})});
+    const j=await r.json().catch(()=>({}));if(!r.ok||!j.spec)throw new Error(j.error||'AI ei vastanud');
+    toForm(EventPlan.cleanSpec(j.spec,CAT));$('faimsg').textContent='Vorm täidetud. Kontrolli ja paranda, siis vajuta „Arvuta paigutus“.';}
+  catch(er){$('faimsg').textContent=er.message;}finally{$('fai').disabled=false;}};
 function show(L,label){
   view=L;$('plan').innerHTML=EPS.svg(L,{width:1100});
   $('checks').innerHTML=EPS.checksHtml(L);$('legend').innerHTML=EPS.legendHtml(L);$('bom').innerHTML=EPS.bomHtml(L);
   const t=L.tent?L.tent.name:'Väliala '+fmt(L.room.W)+' × '+fmt(L.room.L)+' m';
   $('meta').textContent=[t,L.spec.guests?L.spec.guests+' külalist':'',label||''].filter(Boolean).join(' · ');
 }
-async function run(){
-  const spec=CASES[$('case').value];$('title').textContent=spec.name;$('plan').innerHTML='<p id="busy">Arvutan paigutust…</p>';$('tabs').innerHTML='';$('failbox').hidden=true;
+async function run(spec){
+  spec=spec||fromForm();$('title').textContent=spec.name;$('plan').innerHTML='<p id="busy">Arvutan paigutust…</p>';$('tabs').innerHTML='';$('failbox').hidden=true;
   const t0=performance.now();const d=await solve(spec);if(d.err){$('plan').textContent=d.err;return;}res=d.r;
   console.log('solve ms',Math.round(performance.now()-t0));
   if(res.ok){
@@ -75,5 +169,5 @@ async function run(){
     if(res.closest)show(res.closest,'Lähim paigutus: punased ei mahu');
   }
 }
-fetch('../js/catalog/funrent.json').then(r=>r.json()).then(c=>{CAT=c;run();});
+fetch('../js/catalog/funrent.json').then(r=>r.json()).then(myCatalog).then(c=>{CAT=c;toForm(CASES[$('case').value]);run();});
 </script></body></html>
