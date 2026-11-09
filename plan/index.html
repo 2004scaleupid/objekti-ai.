@@ -23,6 +23,8 @@ h1{font-size:22px;letter-spacing:-.02em;margin:0 0 4px}h2{font-size:14px;margin:
 .epbom{width:100%;border-collapse:collapse;font-size:13.5px}.epbom td,.epbom th{padding:5px 4px;border-bottom:1px solid var(--line);text-align:left}.epbom td:last-child,.epbom th:last-child{text-align:right;font-variant-numeric:tabular-nums}.epbom small{font-size:10px;color:var(--mut);border:1px solid var(--line);border-radius:4px;padding:0 3px}
 .fail{border-color:#f0b3a6;background:#fff5f2}.fail p{margin:0 0 8px}
 .fix{display:block;width:100%;text-align:left;margin:6px 0 0;font-weight:500}.fix b{color:var(--ok)}
+.vt{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 10px}.vt button{padding:6px 11px;font-size:13px}.vt button[aria-pressed=true]{background:var(--acc);color:#fff;border-color:var(--acc)}.t3{display:flex;gap:6px;flex-wrap:wrap;margin-left:auto}.t3 button[aria-pressed=true]{background:var(--ink);border-color:var(--ink)}
+#v3{height:min(70vh,640px);border-radius:10px;overflow:hidden;background:#dfe6ea}
 .mhint{display:none}@media (max-width:900px){.mhint{display:block}}
 .card label{display:grid;gap:3px;font-size:12.5px;color:var(--mut);font-weight:600}
 .card input,.card textarea{font:inherit;font-size:14px;color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:7px 9px;background:#fff;width:100%;min-width:0}
@@ -33,7 +35,9 @@ details summary{cursor:pointer;font-size:13px;font-weight:600;margin:4px 0}
 .side{display:grid;gap:12px;align-content:start}
 #busy{color:var(--mut);font-size:14px}
 @media (max-width:900px){main{grid-template-columns:minmax(0,1fr);padding:12px}section,.card{min-width:0}#plan svg{width:900px;max-width:none}header{padding:10px 12px}}
-@media print{@page{size:A4 landscape;margin:10mm}body{background:#fff}header,.tabs,.noprint,.fix{display:none!important}main{display:block;padding:0}.card{border:0;padding:0;break-inside:avoid}#plan{margin-bottom:6mm;overflow:visible;padding:0}#plan svg{width:100%!important;height:auto;max-height:150mm;max-width:none}.mhint{display:none}@media (max-width:900px){.mhint{display:block}}
+@media print{@page{size:A4 landscape;margin:10mm}body{background:#fff}header,.tabs,.noprint,.fix{display:none!important}main{display:block;padding:0}.card{border:0;padding:0;break-inside:avoid}#plan{margin-bottom:6mm;overflow:visible;padding:0}#plan svg{width:100%!important;height:auto;max-height:150mm;max-width:none}.vt{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 10px}.vt button{padding:6px 11px;font-size:13px}.vt button[aria-pressed=true]{background:var(--acc);color:#fff;border-color:var(--acc)}.t3{display:flex;gap:6px;flex-wrap:wrap;margin-left:auto}.t3 button[aria-pressed=true]{background:var(--ink);border-color:var(--ink)}
+#v3{height:min(70vh,640px);border-radius:10px;overflow:hidden;background:#dfe6ea}
+.mhint{display:none}@media (max-width:900px){.mhint{display:block}}
 .card label{display:grid;gap:3px;font-size:12.5px;color:var(--mut);font-weight:600}
 .card input,.card textarea{font:inherit;font-size:14px;color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:7px 9px;background:#fff;width:100%;min-width:0}
 .card textarea{resize:vertical}.g2{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px 0}.xy{display:flex;align-items:center;gap:4px;color:var(--mut)}
@@ -45,7 +49,7 @@ details summary{cursor:pointer;font-size:13px;font-weight:600;margin:4px 0}
 <header><b>Vaade<em>3D</em> · Sündmuse plaan</b><span class="sp"></span>
 <label class="noprint">Näide <select id="case"></select></label><button id="print" class="pri">Prindi / PDF</button></header>
 <main>
-  <section><div class="card"><h1 id="title">…</h1><p class="meta" id="meta"></p><div class="tabs" id="tabs"></div><p class="meta noprint mhint">Telefonis lohista plaani külgedele.</p><div id="plan"><p id="busy">Arvutan paigutust…</p></div></div></section>
+  <section><div class="card"><h1 id="title">…</h1><p class="meta" id="meta"></p><div class="tabs" id="tabs"></div><div class="vt noprint" id="vt"><button type="button" data-v="2d" aria-pressed="true">2D plaan</button><button type="button" data-v="3d" aria-pressed="false">3D</button><span class="t3" id="t3" hidden><button type="button" data-t="measure" aria-pressed="false">Mõõda</button><button type="button" data-t="walk" aria-pressed="false">Jaluta</button><button type="button" data-t="roof" aria-pressed="true">Katus</button><button type="button" data-t="walls" aria-pressed="true">Seinad</button><button type="button" data-t="labels" aria-pressed="true">Sildid</button></span></div><div id="v3" hidden></div><p class="meta noprint" id="v3h" hidden></p><p class="meta noprint mhint">Telefonis lohista plaani külgedele.</p><div id="plan"><p id="busy">Arvutan paigutust…</p></div></div></section>
   <aside class="side">
     <form class="card noprint" id="sf" autocomplete="off">
       <h2>Ürituse andmed</h2>
@@ -85,7 +89,8 @@ details summary{cursor:pointer;font-size:13px;font-weight:600;margin:4px 0}
     <div class="card"><h2>Tooted pakkumiseks</h2><div id="bom"></div></div>
   </aside>
 </main>
-<script src="../js/eventplan.js"></script>
+<script src="../vendor/three.min.js"></script><script src="../vendor/OrbitControls.js"></script>
+<script src="../js/eventplan.js"></script><script src="../js/eventplan-3d.js"></script>
 <script src="../js/eventplan-svg.js"></script>
 <script>var module={exports:{}};</script><script src="../tests/eventplan.cases.js"></script><script>window.CASES=module.exports;delete window.module;</script>
 <script>
@@ -148,8 +153,16 @@ $('fai').onclick=async()=>{const t=$('ftxt').value.trim();if(t.length<10){$('fai
     const j=await r.json().catch(()=>({}));if(!r.ok||!j.spec)throw new Error(j.error||'AI ei vastanud');
     toForm(EventPlan.cleanSpec(j.spec,CAT));$('faimsg').textContent='Vorm täidetud. Kontrolli ja paranda, siis vajuta „Arvuta paigutus“.';}
   catch(er){$('faimsg').textContent=er.message;}finally{$('fai').disabled=false;}};
+let V3=null,mode='2d';
+$('vt').onclick=e=>{const b=e.target.closest('button');if(!b)return;
+  if(b.dataset.v){mode=b.dataset.v;[...$('vt').querySelectorAll('[data-v]')].forEach(x=>x.setAttribute('aria-pressed',x===b));$('plan').hidden=mode!=='2d';$('v3').hidden=$('t3').hidden=$('v3h').hidden=mode!=='3d';if(mode==='3d')draw3d();return;}
+  const t=b.dataset.t,on=b.getAttribute('aria-pressed')!=='true';b.setAttribute('aria-pressed',on);
+  if(t==='measure'){V3.setMeasure(on);hint3();}if(t==='walk'){V3.setWalk(on);hint3();}if(t==='roof')V3.setRoof(on);if(t==='walls')V3.setWalls(on);if(t==='labels')V3.setLabels(on);};
+function hint3(){const m=$('t3').querySelector('[data-t=measure]').getAttribute('aria-pressed')==='true',w=$('t3').querySelector('[data-t=walk]').getAttribute('aria-pressed')==='true';
+  $('v3h').textContent=w?'Jalutad: lohista = vaata ringi, W A S D või nooled = liigu (telefonis kaks sõrme = edasi).':m?'Mõõtmine: klõpsa kahte kohta (põrand või ese), näed kaugust meetrites.':'Lohista = pööra, rull või näpistus = suumi, parem nupp või kaks sõrme = nihuta.';}
+function draw3d(){if(!view)return;if(!V3)V3=EventPlan.view3d($('v3'),view);else V3.update(view);hint3();}
 function show(L,label){
-  view=L;$('plan').innerHTML=EPS.svg(L,{width:1100});
+  view=L;if(mode==='3d')draw3d();$('plan').innerHTML=EPS.svg(L,{width:1100});
   $('checks').innerHTML=EPS.checksHtml(L);$('legend').innerHTML=EPS.legendHtml(L);$('bom').innerHTML=EPS.bomHtml(L);
   const t=L.tent?L.tent.name:'Väliala '+fmt(L.room.W)+' × '+fmt(L.room.L)+' m';
   $('meta').textContent=[t,L.spec.guests?L.spec.guests+' külalist':'',label||''].filter(Boolean).join(' · ');
