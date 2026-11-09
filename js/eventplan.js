@@ -606,7 +606,8 @@ function fail(spec, cat, R, info) {
     best = pick[0] || null; if (best) best.alt = pick[1] || null;
     if (best) {
       const L = best.L; L.virtual = { L: big.L, W: big.W }; L.tent = Object.assign({}, big, { name: big.name });
-      L.room = { L: big.L, W: big.W };
+      L.room = { L: big.L, W: big.W }; L.area = area;
+      if (area) L.origin = { x: r2((Math.max(area.l, area.w) - big.L) / 2), y: r2((Math.min(area.l, area.w) - big.W) / 2) };
       const v = validate(L); L.ok = false; L.problems = v.problems; L.bad = v.bad; L.checks = checks(L, v); L.bom = bom(L);
       out.closest = L;
       const txt = b => b.dl ? `${fmt(b.dl, 1)} m pikkust` : `${fmt(b.dw, 1)} m laiust`;
