@@ -1,0 +1,40 @@
+<!doctype html><html lang="et"><head><meta charset="utf-8"><title>Sildid pildile (sisetööriist)</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@500;600;700&display=swap"></head><body style="margin:0">
+<canvas id="c" width="2000" height="1412"></canvas>
+<script>
+// Sildid ja mõõtjooned joonistab kood (mitte AI). Telgi nurgad on märgitud iga AI-pildi järgi, sest mudel nihutab kaadrit veidi.
+const CFG={
+ v1:{edgeL:[[500,975],[1130,1110]],edgeS:[[1130,1110],[1740,1020]],labels:[['Telk','5,00 × 9,00 m',1110,560],['Lava','2,00 × 2,00 m',1180,890],['Püstilauad','2 tk · 15 külalist',790,820]],
+     info:[['Ala','10,00 × 6,00 m'],['Telk','5,00 × 9,00 m (moodultelk)'],['Lava','2,00 × 2,00 m'],['Külalisi','15 püsti, 2 pukklauda'],['Vahekäigud','≥ 1,00 m']]},
+ v2:{edgeL:[[800,1222],[1860,1052]],edgeS:[[510,1015],[800,1222]],labels:[['Telk','5,00 × 9,00 m',1250,610],['Bändi poodium','2,00 × 2,00 m',1560,900],['Laud 12 inimesele','3,66 × 0,76 m',1100,860]],
+     info:[['Ala','10,00 × 6,00 m'],['Telk','5,00 × 9,00 m (moodultelk)'],['Istekohti','12'],['Bändi poodium','2,00 × 2,00 m'],['Laud','2 × 183 × 76 cm'],['Vahekäigud','≥ 1,00 m']]},
+ v3:{edgeL:[[840,1190],[1860,1035]],edgeS:[[500,1030],[840,1190]],labels:[['Telk','5,00 × 9,00 m',1200,600],['Laud 20 inimesele','7,20 × 0,76 m',1250,860],['Puhvetlaud','1,83 × 0,76 m',690,840]],
+     info:[['Ala','10,00 × 6,00 m'],['Telk','5,00 × 9,00 m (moodultelk)'],['Istekohti','20'],['Laud','3 × 240 × 76 cm'],['Puhvetlaud','1,83 × 0,76 m'],['Vahekäigud','≥ 1,00 m']]}};
+window.draw=async(v)=>{
+  await document.fonts.load('600 26px "Inter Tight"');
+  const C=CFG[v],c=document.getElementById('c'),g=c.getContext('2d'),W=2000,H=1342;
+  const im=new Image();im.src=`out/${v}-image-ai.jpg`;await im.decode();g.drawImage(im,0,0,W,H);
+  const F=(w,s)=>`${w} ${s}px "Inter Tight", Arial`;
+  // mõõtjoon: valge nool telgi serva kõrval + silt
+  const dim=([a,b],txt,side)=>{const dx=b[0]-a[0],dy=b[1]-a[1],L=Math.hypot(dx,dy),nx=-dy/L*side,ny=dx/L*side,o=46;
+    const A=[a[0]+nx*o,a[1]+ny*o],B=[b[0]+nx*o,b[1]+ny*o];g.strokeStyle='#fff';g.lineWidth=4;g.shadowColor='rgba(0,0,0,.45)';g.shadowBlur=6;
+    g.beginPath();g.moveTo(...A);g.lineTo(...B);g.stroke();
+    const head=(P,Q)=>{const ux=(Q[0]-P[0])/L,uy=(Q[1]-P[1])/L;g.beginPath();g.moveTo(P[0],P[1]);g.lineTo(P[0]+ux*22-uy*11,P[1]+uy*22+ux*11);g.moveTo(P[0],P[1]);g.lineTo(P[0]+ux*22+uy*11,P[1]+uy*22-ux*11);g.stroke();};head(A,B);head(B,A);
+    for(const P of [a,b]){g.lineWidth=2;g.beginPath();g.moveTo(P[0]+nx*12,P[1]+ny*12);g.lineTo(P[0]+nx*(o+14),P[1]+ny*(o+14));g.stroke();}
+    g.shadowBlur=0;const m=[(A[0]+B[0])/2+nx*34,(A[1]+B[1])/2+ny*34];g.font=F(700,30);const tw=g.measureText(txt).width+32;
+    g.fillStyle='#fff';g.beginPath();g.roundRect(m[0]-tw/2,m[1]-24,tw,48,12);g.fill();g.fillStyle='#16130F';g.textAlign='center';g.textBaseline='middle';g.fillText(txt,m[0],m[1]+1);g.textAlign='left';};
+  dim(C.edgeL,'9,00 m',1);dim(C.edgeS,'5,00 m',1);
+  // sildid: väikesed tumerohelised kastid, kaks rida
+  for(const [t,s,x,y] of C.labels){g.font=F(700,26);const w1=g.measureText(t).width;g.font=F(500,23);const w2=g.measureText(s).width,w=Math.max(w1,w2)+36,h=76;
+    g.fillStyle='rgba(20,52,40,.92)';g.strokeStyle='rgba(255,255,255,.85)';g.lineWidth=2;g.beginPath();g.roundRect(x-w/2,y-h,w,h,12);g.fill();g.stroke();
+    g.beginPath();g.moveTo(x,y);g.lineTo(x,y+26);g.stroke();g.fillStyle='#fff';g.beginPath();g.arc(x,y+30,6,0,7);g.fill();
+    g.textAlign='center';g.textBaseline='alphabetic';g.font=F(700,26);g.fillStyle='#fff';g.fillText(t,x,y-44);g.font=F(500,23);g.fillStyle='#e3efe8';g.fillText(s,x,y-14);g.textAlign='left';}
+  // infokast üleval vasakul
+  const pad=28,lh=46,bw=640,bh=pad*2+C.info.length*lh;g.fillStyle='rgba(16,44,34,.86)';g.beginPath();g.roundRect(40,40,bw,bh,22);g.fill();
+  C.info.forEach(([k,val],i)=>{g.font=F(500,26);g.fillStyle='#bfd7c9';g.fillText(k,40+pad,40+pad+30+i*lh);g.font=F(700,26);g.fillStyle='#fff';g.fillText(val,40+pad+200,40+pad+30+i*lh);});
+  // allribas hoiatus
+  g.fillStyle='#16130F';g.fillRect(0,H,W,70);g.font=F(600,28);g.fillStyle='#fff';g.fillText('Pilt on illustratiivne, täpsed mõõdud plaanil.',40,H+45);
+  g.font=F(500,22);g.fillStyle='#bdb5ab';g.textAlign='right';g.fillText('Sildid ja mõõdud: Vaade3D (kood) · Funrendi tooted',W-40,H+44);g.textAlign='left';
+  return c.toDataURL('image/jpeg',.86);
+};
+</script></body></html>

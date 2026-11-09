@@ -1,0 +1,39 @@
+<!doctype html><html lang="et"><head><meta charset="utf-8"><title>Plaan</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600;700;800&display=swap">
+<style>
+@page{size:A4 landscape;margin:0}
+*{box-sizing:border-box}html,body{margin:0;background:#fff;color:#16130F;font:11px/1.35 "Inter Tight",Arial,sans-serif}
+.pg{width:297mm;height:210mm;padding:9mm 10mm;display:grid;grid-template-columns:1fr 78mm;gap:7mm;overflow:hidden}
+h1{font-size:20px;letter-spacing:-.02em;margin:0}.sub{color:#6f685f;margin:2px 0 6px;font-size:11.5px}
+.plan svg{width:100%;height:auto;display:block;max-height:168mm}
+.wish{border-radius:8px;padding:7px 9px;margin:0 0 8px;font-size:11px}.wish.no{background:#fff1ee;border:1px solid #f0b3a6}.wish.yes{background:#eef6f0;border:1px solid #b9dcc3}
+.wish b{display:block;font-size:11.5px;margin-bottom:2px}
+h2{font-size:9.5px;text-transform:uppercase;letter-spacing:.08em;color:#6f685f;margin:8px 0 4px}
+.ck{list-style:none;margin:0;padding:0;display:grid;gap:2px}.ck .ok{color:#2f7a43}.ck .no{color:#c8361b;font-weight:600}
+table{width:100%;border-collapse:collapse}td,th{padding:2.5px 2px;border-bottom:1px solid #e7e2da;text-align:left;vertical-align:top}td.n,th.n{text-align:right;white-space:nowrap}small{color:#6f685f}
+.big{font-size:22px;font-weight:800;letter-spacing:-.02em}.kpi{display:flex;gap:10px;margin:0 0 4px}.kpi div{background:#f3efe8;border-radius:8px;padding:5px 8px}.kpi small{display:block}
+.foot{font-size:9px;color:#8a8378;margin-top:6px}
+</style></head><body><div class="pg" id="pg">Laen…</div>
+<script src="../../js/eventplan.js"></script><script src="../../js/eventplan-svg.js"></script>
+<script>
+const fmt=EventPlan.fmt,esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+// avalikud hinnad funrent.ee (rent alates, € + km), muu: küsi hinda
+const PRICE={round180:15,podium:9,'Pop-up telk 3 × 3 m':59,'Pop-up telk 3 × 6 m':84,'Pop-up telk 4 × 8 m':119,chair:1.2};
+const price=b=>PRICE[b.name]!=null?PRICE[b.name]:b.id==='tent-popup'?null:PRICE[b.id]!=null?PRICE[b.id]:null;
+(async()=>{
+  const v=new URLSearchParams(location.search).get('v')||'v1';
+  const D=await fetch(`out/${v}-layout.json`).then(r=>r.json()),L=D.layout;L.catalog=await fetch('out/catalog.json').then(r=>r.json());
+  const site=await fetch('out/site.json').then(r=>r.ok?r.json():null).catch(()=>null);if(site){const o=L.origin||{x:0,y:0},sh=q=>[q[0]-o.x,q[1]-o.y];L.site=site.objects.map(s=>Object.assign({},s,{x:s.x-o.x,y:s.y-o.y},s.poly?{poly:s.poly.map(sh)}:{},s.pts?{pts:s.pts.map(sh)}:{},s.dim?{dim:[s.dim[0]-o.x,s.dim[1]-o.y,s.dim[2]-o.x,s.dim[3]-o.y,s.dim[4]]}:{}));}
+  let sum=0,ask=0;const rows=L.bom.map(b=>{const p=price(b);if(p!=null)sum+=p*b.qty;else ask++;return `<tr><td>${esc(b.name)}${b.source==='STD'?' <small>(STD)</small>':''}</td><td class="n">${b.qty}</td><td class="n">${p!=null?fmt(p)+' €':'<small>küsi hinda</small>'}</td></tr>`;}).join('');
+  const W=L.wish||{};
+  document.getElementById('pg').innerHTML=`<div><h1>${esc(D.title)} · ala ${fmt(Math.max(L.area.l,L.area.w))} × ${fmt(Math.min(L.area.l,L.area.w))} m · Jõe tn 4, Kostivere</h1><div class="sub">${esc(L.spec.name||'')} · plaan päris mõõtudes · kaugused meetrites · sildid joonistab kood</div><div class="plan">${EventPlan.svg.svg(L,{width:1300})}</div></div>
+  <div><div class="wish ${W.fits?'yes':'no'}"><b>${W.fits?'✓ Soov mahub':'✗ Soov ei mahu alale'}</b>Soov: ${esc(W.text||'')}${W.fits?'':`<br>Plaanil lähim mahtuv versioon: <b style="display:inline">${esc(W.used)}</b>`}</div>
+  <div class="kpi"><div><small>Istekohti</small><span class="big">${L.seats||0}</span></div><div><small>Külalisi kokku</small><span class="big">${L.spec.guests}</span></div><div><small>Vahekäik</small><span class="big">≥ ${fmt(L.rules.walk)} m</span></div></div>
+  ${D.parcel?`<div class="wish no" style="margin-top:6px"><b>⚠ Kinnistu</b>${esc(D.parcel)}</div>`:''}<h2>Kontroll</h2><ul class="ck">${L.checks.map(c=>`<li class="${c.ok?'ok':'no'}">${c.ok?'✓':'✗'} ${esc(c.text)}</li>`).join('')}</ul>
+  ${D.decor&&D.decor.length?`<h2>Kaunistus (pildil, ei võta põrandapinda)</h2><div>${D.decor.map(esc).join(' · ')}</div>`:''}
+  <h2>Tooted</h2><table><thead><tr><th>Toode</th><th class="n">Kogus</th><th class="n">Hind</th></tr></thead><tbody>${rows}</tbody></table>
+  <div style="margin-top:4px"><b>Avalikud hinnad kokku: ${fmt(+sum.toFixed(2))} € + km</b> <small>(${ask} rida küsi hinda)</small></div>
+  <div class="foot">${site?esc(site.note)+' ':''}Hinnad: funrent.ee, rent alates, nov 2026. Mõõdud funrent.ee; STD = tööstuse standard, kinnitada Funrendiga. Vaade3D sündmuse planeerija.</div></div>`;
+  document.body.dataset.ready='1';
+})();
+</script></body></html>

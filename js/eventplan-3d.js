@@ -20,7 +20,7 @@ function view3d(box, L, opt) {
   const labels = document.createElement('div'); labels.style.cssText = 'position:absolute;inset:0;pointer-events:none;overflow:hidden'; box.style.position = box.style.position || 'relative'; box.appendChild(labels);
   const M = (c, o) => { const m = new T.MeshStandardMaterial(Object.assign({ color: c, roughness: .85 }, o || {})); if (m.color.convertSRGBToLinear) m.color.convertSRGBToLinear(); return m; }; // r128: värvid sRGB -> lineaarne, muidu kõik on pleekinud
   const mat = { grass: M('#7f9a64'), floor: M('#d9d2c4'), white: M('#ffffff', { roughness: .6 }), cloth: M('#fbfbf8', { roughness: .9 }), chair: M('#cfc6b8'), stage: M('#2f2c29'), wood: M('#9a7350'), counter: M('#3b3733'), wc: M('#6f8796'), red: M('#e5482d', { transparent: true, opacity: .55 }),
-    tentWall: M('#ffffff', { transparent: true, opacity: .14, side: T.DoubleSide, depthWrite: false }), roof: M('#ffffff', { transparent: true, opacity: opt.photo ? .38 : .2, side: T.DoubleSide, depthWrite: false }), post: M('#c9cdd1', { metalness: .4, roughness: .4 }), audience: M('#cfe0c4', { transparent: true, opacity: .6 }), zone: M('#d8d0c2', { transparent: true, opacity: .35 }) };
+    tentWall: M('#ffffff', { transparent: true, opacity: opt.photo ? .9 : .14, side: T.DoubleSide, depthWrite: false }), roof: M('#ffffff', { transparent: true, opacity: opt.photo ? .95 : .2, side: T.DoubleSide, depthWrite: false }), post: M('#c9cdd1', { metalness: .4, roughness: .4 }), audience: M('#cfe0c4', { transparent: true, opacity: .6 }), zone: M('#d8d0c2', { transparent: true, opacity: .35 }) };
   const danceTex = (() => { const c = document.createElement('canvas'); c.width = c.height = 64; const g = c.getContext('2d'); g.fillStyle = '#f6f3ee'; g.fillRect(0, 0, 64, 64); g.fillStyle = '#d9d2c6'; g.fillRect(0, 0, 32, 32); g.fillRect(32, 32, 32, 32); const t = new T.CanvasTexture(c); if ('encoding' in t) t.encoding = T.sRGBEncoding; t.wrapS = t.wrapT = T.RepeatWrapping; t.magFilter = T.NearestFilter; return t; })();
   let state = { L: null, roof: true, walls: true, measure: false, walk: false, items: [] };
   const lab = [];
@@ -64,12 +64,14 @@ function view3d(box, L, opt) {
         label(`${it.name}`, cx, h + .6, cz, red); mlist.push({ it, h }); continue;
       }
       if (it.kind === 'dance') { const m = new T.MeshStandardMaterial({ map: danceTex.clone(), roughness: .35 }); m.map.needsUpdate = true; m.map.repeat.set(it.w, it.d); addBox(it.w, .04, it.d, cx, .02, cz, red ? mat.red : m); label(it.name, cx, .6, cz, red); continue; }
+      if (it.kind === 'spot') { const m = new T.Mesh(new T.PlaneGeometry(it.w, it.d), M('#e9d3a3', { transparent: true, opacity: .85 })); m.rotation.x = -Math.PI / 2; m.position.set(cx, .025, cz); root.add(m); label(it.name, cx, .6, cz, red); continue; }
       if (it.kind === 'audience') { const m = new T.Mesh(new T.PlaneGeometry(it.w, it.d), mat.audience); m.rotation.x = -Math.PI / 2; m.position.set(cx, .02, cz); root.add(m); label(it.name, cx, .5, cz, red); continue; }
       if (it.kind === 'bar') { addBox(it.w, 1.1, it.d, cx, .55, cz, red ? mat.red : mat.counter); label(it.name, cx, 1.7, cz, red); continue; }
       if (it.kind === 'catering') { addBox(it.w, .05, it.d, cx, .74, cz, mat.cloth); addBox(it.w - .04, .72, it.d - .04, cx, .36, cz, red ? mat.red : M('#f4f2ee')); label(it.name, cx, 1.4, cz, red); continue; }
       if (it.kind === 'wc') { const n = it.n || 1, hor = it.w >= it.d, u = (hor ? it.w : it.d) / n; for (let i = 0; i < n; i++) addBox(hor ? u - .05 : it.w, 2.3, hor ? it.d : u - .05, hor ? it.x + u * (i + .5) : cx, 1.15, hor ? cz : it.y + u * (i + .5), red ? mat.red : mat.wc); label(it.name, cx, 2.9, cz, red); continue; }
       if (it.kind === 'popup') { const n = it.n || 1, hor = it.w >= it.d, s = it.unitW, gp = L.rules.popupGap; for (let i = 0; i < n; i++) { const px = hor ? it.x + i * (s + gp) + s / 2 : cx, pz = hor ? cz : it.y + i * (s + gp) + s / 2; popup(px, pz, s, hor ? it.d : it.w); } label(it.name, cx, 3.4, cz, red); continue; }
     }
+    for (const c of (L.canopies || [])) popup(c.x + c.w / 2, c.y + c.d / 2, c.w, c.d);
     inst(chairs, chairGeo(), mat.chair, (c, m4) => { m4.makeRotationY(-c.a + Math.PI / 2); m4.setPosition(c.x, 0, c.y); });
     inst(rounds, roundGeo(), mat.cloth, (t, m4) => { m4.makeScale(t.d / 1.8, 1, t.d / 1.8); m4.setPosition(t.x, 0, t.y); });
     inst(cocktails, cocktailGeo(), mat.cloth, (t, m4) => { m4.makeTranslation(t.x, 0, t.y); });
@@ -81,7 +83,10 @@ function view3d(box, L, opt) {
   function chairGeo() { const s = new T.BoxGeometry(.45, .05, .45).translate(0, .46, 0), b = new T.BoxGeometry(.45, .5, .05).translate(0, .72, -.2), legs = [[-.2, -.2], [.2, -.2], [-.2, .2], [.2, .2]].map(([x, z]) => new T.BoxGeometry(.04, .45, .04).translate(x, .225, z)); return merge([s, b, ...legs]); }
   function roundGeo() { return merge([new T.CylinderGeometry(.9, .9, .04, 40).translate(0, .74, 0), new T.CylinderGeometry(.93, .96, .7, 40, 1, true).translate(0, .37, 0)]); }
   function cocktailGeo() { return merge([new T.CylinderGeometry(.405, .405, .04, 28).translate(0, 1.1, 0), new T.CylinderGeometry(.42, .5, 1.08, 28, 1, true).translate(0, .54, 0)]); }
-  function popup(x, z, w, d) { const h = 2.1; for (const [px, pz] of [[-w / 2, -d / 2], [w / 2, -d / 2], [-w / 2, d / 2], [w / 2, d / 2]]) addBox(.05, h, .05, x + px, h / 2, z + pz, mat.post); const roof = new T.Mesh(new T.ConeGeometry(Math.hypot(w, d) / 2, 1, 4, 1), mat.white); roof.rotation.y = Math.PI / 4; roof.scale.set(w / Math.hypot(w, d) * Math.SQRT2, 1, d / Math.hypot(w, d) * Math.SQRT2); roof.position.set(x, h + .5, z); roof.castShadow = true; root.add(roof); }
+  function popup(x, z, w, d) { const h = 2.1, rh = .7; for (const [px, pz] of [[-w / 2, -d / 2], [w / 2, -d / 2], [-w / 2, d / 2], [w / 2, d / 2]]) addBox(.05, h, .05, x + px, h / 2, z + pz, mat.post);
+    // katus: püramiid täpselt jalgade kohal (ka ristkülikukujulisel telgil)
+    const g = new T.BufferGeometry(), a = w / 2, b = d / 2, v = [-a, 0, -b, a, 0, -b, a, 0, b, -a, 0, b, 0, rh, 0]; g.setAttribute('position', new T.Float32BufferAttribute(v, 3)); g.setIndex([0, 4, 1, 1, 4, 2, 2, 4, 3, 3, 4, 0]); g.computeVertexNormals();
+    const m = new T.Mesh(g, new T.MeshStandardMaterial({ color: 0xffffff, roughness: .7, side: T.DoubleSide })); m.position.set(x, h, z); m.castShadow = true; root.add(m); }
   let tentG = null;
   function tent(L) {
     const R = L.room, sh = L.tent.sideH || 2.3, rid = sh + Math.min(R.W * .2, 4), g = new T.Group(); tentG = g; root.add(g);
@@ -97,6 +102,7 @@ function view3d(box, L, opt) {
     const dz = L.door;
     const wall = (k, a0, a1) => { const len = a1 - a0; if (len <= .01) return; const m = new T.Mesh(new T.PlaneGeometry(len, sh), mat.tentWall); const mid = (a0 + a1) / 2; if (k === 0) m.position.set(mid, sh / 2, 0); else if (k === 2) m.position.set(mid, sh / 2, R.W); else { m.rotation.y = Math.PI / 2; m.position.set(k === 3 ? 0 : R.L, sh / 2, mid); } walls.add(m); };
     for (let k = 0; k < 4; k++) { const len = k % 2 === 0 ? R.L : R.W; if (dz && dz.wall === k) { wall(k, 0, dz.t); wall(k, dz.t + dz.w, len); } else wall(k, 0, len); }
+    if (opt.cam) { const cp = new T.Vector3(...opt.cam.pos), cc = new T.Vector3(R.L / 2, 0, R.W / 2); walls.children.forEach(w => { const d = w.position.clone().setY(0); if (d.distanceTo(cp.clone().setY(0)) < cc.distanceTo(cp.clone().setY(0))) w.visible = false; }); }
     roof.visible = state.roof; walls.visible = state.walls;
   }
   function frame(L) { if (state.keepCam) return;
@@ -166,7 +172,7 @@ function view3d(box, L, opt) {
     shot(w, h) {
       const ow = r.domElement.width / r.getPixelRatio(), oh = r.domElement.height / r.getPixelRatio(), oa = cam.aspect, pr = r.getPixelRatio();
       r.setPixelRatio(1); r.setSize(w, h, false); cam.aspect = w / h; cam.updateProjectionMatrix(); cam.updateMatrixWorld();
-      const mv = tentG && tentG.getObjectByName('walls'), wasW = mv && mv.visible; if (mv) mv.visible = false; // seinad pildil ees ei ole
+      const mv = tentG && tentG.getObjectByName('walls'), wasW = mv && mv.visible; if (mv && !opt.photo) mv.visible = false; // seinad pildil ees ei ole
       r.render(sc, cam); const url = r.domElement.toDataURL('image/jpeg', .9);
       const v = new T.Vector3(), inView = (x, y, z) => { v.set(x, y, z).project(cam); return v.z < 1 && Math.abs(v.x) <= 1 && Math.abs(v.y) <= 1; };
       const vis = { round: 0, rect: 0, cocktail: 0, chairs: 0 };

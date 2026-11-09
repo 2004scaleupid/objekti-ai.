@@ -42,7 +42,7 @@ function tentOptions(cat, want, area, R) {
   const seen = new Set();
   return out.filter(t => { const k = t.type + t.W + 'x' + t.L; if (seen.has(k)) return false; seen.add(k); return true; }).sort((a, b) => a.W * a.L - b.W * b.L || a.L - b.L);
 }
-const fmt = (v, d) => { const s = (+v).toFixed(d == null ? 2 : d).replace(/\.?0+$/, ''); return s.replace('.', ','); };
+const fmt = (v, d) => { let s = (+v).toFixed(d == null ? 2 : d); if (s.includes('.')) s = s.replace(/\.?0+$/, ''); return s.replace('.', ','); };
 
 // ---------- geomeetria ----------
 // kuju: {t:'r',x,y,w,d} või {t:'c',x,y,r} (keskpunkt)
@@ -96,11 +96,12 @@ function buildBlocks(spec, cat, R) {
     else if (it.kind === 'bar') { const p = prod(cat, 'bar'), w = it.w || (p && p.spec.w) || 2, d = it.d || (p && p.spec.d) || 1; fixed.push({ id: 'bar' + (++bi), kind: 'bar', name: n > 1 ? `Baarilett ${n} × ${fmt(w)} m` : 'Baarilett', unitW: w, n, w: w * n, d, product: p && p.id }); }
     else if (it.kind === 'popup') { const s = it.size || [3, 3]; fixed.push({ id: 'popup', kind: 'popup', name: `Pop-up telgid ${n} × ${fmt(s[0])}×${fmt(s[1])} m`, unitW: s[0], n, w: n * s[0] + (n - 1) * R.popupGap, d: s[1], size: s, product: 'tent-popup' }); }
     else if (it.kind === 'wc') { const p = prod(cat, it.product || 'wc'), w = (p && p.spec.w) || 1.2, d = (p && p.spec.d) || 1.2; fixed.push({ id: 'wc', kind: 'wc', name: `WC ${n} tk`, unitW: w, n, w: n * w, d, product: p && p.id }); }
+    else if (it.kind === 'spot') { const w = Math.max(it.w || 4, it.d || 4), d = Math.min(it.w || 4, it.d || 4); fixed.push({ id: 'spot' + (fixed.filter(f => f.kind === 'spot').length + 1), kind: 'spot', name: it.name || `Ala ${fmt(w)} × ${fmt(d)} m`, w, d, n: 1 }); }
     else if (it.kind === 'seating') flex.push(Object.assign({ kind: 'seating' }, it));
     else if (it.kind === 'standing') flex.push(Object.assign({ kind: 'standing' }, it));
     else bomOnly.push(it);
   }
-  const ord = { tentblock: -1, stage: 0, dance: 1, audience: 2, bar: 3, catering: 4, popup: 5, wc: 6 };
+  const ord = { tentblock: -1, stage: 0, dance: 1, audience: 2, bar: 3, catering: 4, popup: 5, wc: 6, spot: 7 };
   fixed.sort((a, b) => ord[a.kind] - ord[b.kind]);
   return { fixed, flex, bomOnly };
 }
@@ -114,6 +115,8 @@ function realize(bl, room, k, t, R, extra) {
   } else if (bl.kind === 'bar') {
     off = R.barWork; body = place(room, k, t, off, bl.w, bl.d);
     zones = [strip(body, k, 'back', R.barWork), strip(body, k, 'front', R.serviceZone)];
+  } else if (bl.kind === 'spot') {
+    off = R.wall; body = place(room, k, t, off, bl.w, bl.d);
   } else if (bl.kind === 'catering' || bl.kind === 'popup' || bl.kind === 'wc') {
     off = R.wall; body = place(room, k, t, off, bl.w, bl.d);
     zones = [strip(body, k, 'front', R.serviceZone)];
@@ -219,7 +222,7 @@ function freeGrid(room, R, placed, door, cell, wallIn) {
     if (x0 < wallIn - E || y0 < wallIn - E || x0 + g.cx > room.L - wallIn + E || y0 + g.cy > room.W - wallIn + E) g.a[j * g.nx + i] = 1;
   }
   for (const p of placed) { blockShape(g, p, R.walk, 1); for (const z of p.zones || []) blockShape(g, z, 0, 1); }
-  if (door) blockShape(g, door.zone, R.walk, 1);
+  if (door) blockShape(g, door.zone, R.push, 1); // sissepääsu ala + tooli taga vaba (vahekäik kontrollitakse ligipääsuga)
   return g;
 }
 
@@ -232,8 +235,10 @@ function fillFlex(room, R, placed, door, flex, cat, cell) {
       let left = f.guests; need += f.guests;
       const minD = ts.shape === 'round' ? ts.d + 2 * R.chairD : ts.d + 2 * R.chairD, minW = ts.shape === 'round' ? minD : (f.single ? Math.ceil(Math.ceil(f.guests / 2) * R.perGuest / ts.w - E) * ts.w : ts.w);
       for (let guard = 0; guard < 40 && left > 0; guard++) {
-        const g = freeGrid(room, R, placedAll, door, cell, Math.max(R.wall, R.push));
-        const rs = rectsBySize(g, minW, minD, 6); if (!rs.length) break;
+        // pikad lauad: laua otstes tooli pole, seal piisab seinavahest; toolide pool vajab tooli taha vaba ala
+        const rectT = ts.shape !== 'round', g = freeGrid(room, R, placedAll, door, cell, rectT ? R.wall : Math.max(R.wall, R.push));
+        const rs = rectsBySize(g, minW, minD, 6).map(r => { if (!rectT) return r; const q = Object.assign({}, r), P = R.push; if (q.w >= q.d) { const y0 = Math.max(q.y, P), y1 = Math.min(q.y + q.d, room.W - P); q.y = y0; q.d = y1 - y0; } else { const x0 = Math.max(q.x, P), x1 = Math.min(q.x + q.w, room.L - P); q.x = x0; q.w = x1 - x0; } return q; }).filter(q => q.w > 0 && q.d > 0);
+        if (!rs.length) break;
         let got = null;
         for (const r of rs) { got = fillSeating(r, left, ts, R, f.single); if (got && got.seats > 0) break; got = null; }
         if (!got) break;
@@ -436,7 +441,12 @@ function validate(L) {
   for (const s of shapes) {
     cur = [s]; const it = items.find(i => i.id === s.owner);
     const min = it.kind === 'tentblock' ? 0 : it.kind === 'seating' ? Math.max(R.wall, R.push) : it.kind === 'stage' ? R.stageSide : it.kind === 'bar' ? R.barWork : R.wall;
-    const wd = wallDist(s, room);
+    let wd = wallDist(s, room);
+    if (it.kind === 'seating' && s.t === 'r' && it.tables && it.tables[s.ti] && it.tables[s.ti].shape === 'rect') { // pika laua otstes pole toole: seal piisab seinavahest
+      const t = it.tables[s.ti], ends = t.along ? Math.min(s.x, room.L - s.x - s.w) : Math.min(s.y, room.W - s.y - s.d), sides = t.along ? Math.min(s.y, room.W - s.y - s.d) : Math.min(s.x, room.L - s.x - s.w);
+      if (ends < R.wall - .005) add('wall', `${s.name}: laua ots seinast ${fmt(Math.max(0, ends))} m, vaja ≥ ${fmt(R.wall)} m`, [s.owner], R.wall, ends);
+      if (sides < Math.max(R.wall, R.push) - .005) add('wall', `${s.name}: tooli taga ${fmt(Math.max(0, sides))} m, vaja ≥ ${fmt(Math.max(R.wall, R.push))} m`, [s.owner], R.push, sides);
+      continue; }
     if (wd < min - .005) add('wall', `${s.name}: seinast ${fmt(Math.max(0, wd))} m, vaja ≥ ${fmt(min)} m`, [s.owner], min, wd);
   }
   for (const it of items) for (const z of it.zones || []) if (wallDist(z, room) < -.005) add('zonewall', `${it.name}: ${zoneName(z)} jääb telgist välja`, [it.id]);
@@ -536,7 +546,7 @@ function finish(L) {
 }
 function checks(L, v) {
   const R = L.rules, has = c => v.problems.some(p => p.code === c), out = [];
-  const where = L.tent ? `telki ${fmt(L.tent.W)} × ${fmt(L.tent.L)} m` : `alale ${fmt(L.room.W)} × ${fmt(L.room.L)} m`;
+  const where = L.tent ? `telki ${fmt(L.tent.W)} × ${fmt(L.tent.L)} m` : `alale ${fmt(L.room.L)} × ${fmt(L.room.W)} m`;
   out.push({ ok: !has('overlap') && !has('zonewall'), text: `Kõik mahub ${where}, midagi ei kattu` });
   out.push({ ok: !has('walk'), text: `Vahekäigud ≥ ${fmt(R.walk)} m` });
   out.push({ ok: !has('wall'), text: `Seintest ≥ ${fmt(R.wall)} m, tooli taga ≥ ${fmt(R.push)} m` });

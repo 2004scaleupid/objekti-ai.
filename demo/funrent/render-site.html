@@ -1,0 +1,30 @@
+<!doctype html><html lang="et"><head><meta charset="utf-8"><title>Renderdus fotole (sisetööriist)</title>
+<style>body{margin:0;background:#222}#v{width:1296px;height:864px;position:absolute;left:0;top:0;opacity:0}canvas#out{display:block}</style></head><body>
+<!-- Sisetööriist: paigutuse 3D render site.jpg kaamerast (kaamera sobitatud Funrendi 10 × 7 m märgistusega samas kaadris). -->
+<div id="v"></div><canvas id="out" width="1296" height="864"></canvas>
+<script src="../../vendor/three.min.js"></script><script src="../../vendor/OrbitControls.js"></script>
+<script src="../../js/eventplan.js"></script><script src="../../js/eventplan-3d.js"></script>
+<script>
+window.renderV=async(v,cam)=>{
+  const D=await fetch(`out/${v}-layout.json`).then(r=>r.json()),L=D.layout;
+  const o=L.origin||{x:0,y:0};cam=Object.assign({},cam,{pos:[cam.pos[0]-o.x,cam.pos[1],cam.pos[2]-o.y]});const box=document.getElementById('v');box.innerHTML='';const V=EventPlan.view3d(box,L,{photo:true,cam});V.setLabels(false);
+  await new Promise(r=>setTimeout(r,700));const sh=V.shot(1296,864);
+  const ph=new Image();ph.src='site.jpg';await ph.decode();
+  const im=new Image();im.src=V.renderer.domElement.toDataURL('image/png');await im.decode();
+  const c=document.getElementById('out'),g=c.getContext('2d');g.imageSmoothingQuality='high';g.drawImage(ph,0,0,1296,864);g.drawImage(im,0,0,1296,864);
+  const P=(x,z)=>{const q=new THREE.Vector3(x,0,z).project(V.camera);return [(q.x+1)/2*1296,(1-q.y)/2*864];};
+  const corners=[[0,0],[10,0],[10,6],[0,6]].map(([x,z])=>P(x-o.x,z-o.y));const tent=L.tent?[[0,0],[L.room.L,0],[L.room.L,L.room.W],[0,L.room.W]].map(([x,z])=>P(x,z)):null;
+  V.dispose();return {tags:sh.tags,vis:sh.vis,corners,tent};
+};
+// sildid ja mõõdud pildile koodiga (AI pildi peale)
+window.overlay=async(url,meta)=>{
+  const im=new Image();im.src=url;await im.decode();const W=1296,H=864,c=document.getElementById('out'),g=c.getContext('2d');g.drawImage(im,0,0,W,H);
+  const C=meta.corners;g.save();g.setLineDash([12,8]);g.lineWidth=3;g.strokeStyle='rgba(255,255,255,.95)';g.beginPath();C.forEach((p,i)=>i?g.lineTo(...p):g.moveTo(...p));g.closePath();g.stroke();g.restore();
+  const chip=(t,x,y,bg)=>{g.font='600 22px Inter Tight, Arial';const w=g.measureText(t).width+20;g.fillStyle=bg||'rgba(22,19,15,.86)';g.beginPath();(g.roundRect||g.rect).call(g,x-w/2,y-17,w,34,8);g.fill();g.fillStyle='#fff';g.textBaseline='middle';g.fillText(t,x-w/2+10,y+1);};
+  const mid=(a,b)=>[(a[0]+b[0])/2,(a[1]+b[1])/2];
+  chip('10 m',...mid(C[2],C[3]).map((v,i)=>i?v+26:v),'rgba(43,108,176,.92)');chip('6 m',...mid(C[1],C[2]).map((v,i)=>i?v:v+10),'rgba(43,108,176,.92)');
+  const keep=[];for(const t of meta.tags){if(keep.some(k=>Math.abs(k.x-t.x)<150&&Math.abs(k.y-t.y)<36))continue;keep.push(t);chip(t.text,t.x,t.y-14);}
+  g.font='600 18px Inter Tight, Arial';const foot=meta.foot;const fw=g.measureText(foot).width+24;g.fillStyle='rgba(22,19,15,.82)';g.fillRect(14,H-50,fw,36);g.fillStyle='#fff';g.fillText(foot,26,H-31);
+  return c.toDataURL('image/jpeg',.88);
+};
+</script></body></html>

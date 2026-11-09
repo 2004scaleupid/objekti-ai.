@@ -3,8 +3,8 @@
 'use strict';
 const EP = (typeof module !== 'undefined' && module.exports) ? require('./eventplan.js') : G.EventPlan;
 const fmt = EP.fmt, esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
-const COL = { stage: '#3d3a36', dance: '#d9d4cb', bar: '#8a6a4a', catering: '#b8946a', popup: '#ffffff', wc: '#7a8a96', audience: '#e8efe4', seating: '#ffffff', standing: '#f3efe8' };
-const KIND = { stage: 'Lava', dance: 'Tantsupõrand', bar: 'Baarilett', catering: 'Toitlustus', popup: 'Pop-up telgid', wc: 'WC', audience: 'Publikuala', seating: 'Lauad ja toolid', standing: 'Püstivastuvõtt' };
+const COL = { stage: '#3d3a36', dance: '#d9d4cb', bar: '#8a6a4a', catering: '#b8946a', popup: '#ffffff', wc: '#7a8a96', audience: '#e8efe4', spot: '#f6e7c8', seating: '#ffffff', standing: '#f3efe8' };
+const KIND = { stage: 'Lava', dance: 'Tantsupõrand', bar: 'Baarilett', catering: 'Toitlustus', popup: 'Pop-up telgid', wc: 'WC', audience: 'Publikuala', spot: 'Lisaala (lastenurk, mängud)', seating: 'Lauad ja toolid', standing: 'Püstivastuvõtt' };
 
 function svg(L, opt) {
   opt = opt || {};
@@ -12,6 +12,7 @@ function svg(L, opt) {
   const padM = 2.2, ext = A ? { x0: -o.x, y0: -o.y, x1: A.L - o.x, y1: A.W - o.y } : { x0: 0, y0: 0, x1: room.L, y1: room.W };
   const PK = L.yard && L.yard.parking; if (PK) { ext.x0 = Math.min(ext.x0, PK.x); ext.y0 = Math.min(ext.y0, PK.y); ext.x1 = Math.max(ext.x1, PK.x + PK.w); ext.y1 = Math.max(ext.y1, PK.y + PK.d); }
   const ALL = L.items.concat(L.yard ? L.yard.items : []);
+  for (const o of (L.site || [])) { ext.x0 = Math.min(ext.x0, o.x); ext.y0 = Math.min(ext.y0, o.y); ext.x1 = Math.max(ext.x1, o.x + o.w); ext.y1 = Math.max(ext.y1, o.y + o.d); }
   ext.x0 -= padM; ext.y0 -= padM; ext.x1 += padM; ext.y1 += padM;
   const Wpx = opt.width || 1000, s = Wpx / (ext.x1 - ext.x0), Hpx = Math.round((ext.y1 - ext.y0) * s);
   const X = x => +((x - ext.x0) * s).toFixed(1), Y = y => +((y - ext.y0) * s).toFixed(1), S = v => +(v * s).toFixed(1);
@@ -22,6 +23,14 @@ function svg(L, opt) {
 <marker id="ar" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 1 L10 5 L0 9" fill="none" stroke="#16130F" stroke-width="1.4"/></marker></defs>`);
   out.push(`<rect width="100%" height="100%" fill="#fbfaf7"/>`);
   if (A) { out.push(`<rect x="${X(-o.x)}" y="${Y(-o.y)}" width="${S(A.L)}" height="${S(A.W)}" fill="#eef3ea" stroke="#7d9a6f" stroke-dasharray="6 4" stroke-width="1.2"/>`); out.push(txt(X(-o.x) + 6, Y(-o.y) + fs + 3, `Ala ${fmt(A.W)} × ${fmt(A.L)} m`, fs * .85, '#4f6b43', 'start', 600)); }
+  for (const o of (L.site || [])) { const c = { building: ['#d9d4cc', '#8a8378'], road: ['#dedad3', '#a29d94'], cars: ['#e9e6e0', '#9b958b'] }[o.kind] || ['#eee', '#999'];
+    if (o.kind === 'note') { out.push(txt(X(o.x), Y(o.y), o.label, fs * 1.1, '#16130F', 'start', 800)); continue; }
+    if (o.kind === 'line') { out.push(`<polyline points="${o.pts.map(p => X(p[0]) + ',' + Y(p[1])).join(' ')}" fill="none" stroke="#c8361b" stroke-width="2.5" stroke-dasharray="10 5"/>`); const q = o.pts[o.pts.length - 1]; out.push(txt(X(q[0]) + 6, Y(q[1]) - 6, o.label, fs * .85, '#c8361b', 'start', 700)); continue; }
+    if (o.kind === 'tree') { out.push(`<polygon points="${o.poly.map(p => X(p[0]) + ',' + Y(p[1])).join(' ')}" fill="#7fa86a" fill-opacity=".45" stroke="#4f7a3c" stroke-width="1.5"/>`); }
+    else if (o.poly) out.push(`<polygon points="${o.poly.map(p => X(p[0]) + ',' + Y(p[1])).join(' ')}" fill="${c[0]}" stroke="${c[1]}" stroke-width="1.5"/>`);
+    else out.push(`<rect x="${X(o.x)}" y="${Y(o.y)}" width="${S(o.w)}" height="${S(o.d)}" fill="${c[0]}" stroke="${c[1]}" stroke-dasharray="5 4"/>`);
+    const lx = o.poly ? o.poly.reduce((a, p) => a + p[0], 0) / o.poly.length : o.x + o.w / 2, ly = o.poly ? o.poly.reduce((a, p) => a + p[1], 0) / o.poly.length : o.y + o.d / 2;
+    out.push(txt(X(lx), Y(ly) + fs * .35, o.label, fs * .95, '#4b463f', 'middle', 700)); }
   if (PK) { out.push(`<rect x="${X(PK.x)}" y="${Y(PK.y)}" width="${S(PK.w)}" height="${S(PK.d)}" fill="#e4e1db" stroke="#9b958b" stroke-dasharray="5 4"/>`);
     for (let r = 0; r < 2; r++) for (let i = 0; i < PK.per; i++) { const a = i * 2.5, b = r ? (PK.along ? PK.d : PK.w) - 5 : 0; out.push(PK.along ? `<rect x="${X(PK.x + a)}" y="${Y(PK.y + b)}" width="${S(2.5)}" height="${S(5)}" fill="none" stroke="#fff" stroke-width="1.4"/>` : `<rect x="${X(PK.x + b)}" y="${Y(PK.y + a)}" width="${S(5)}" height="${S(2.5)}" fill="none" stroke="#fff" stroke-width="1.4"/>`); }
     out.push(txt(X(PK.x + PK.w / 2), Y(PK.y + PK.d / 2) + fs * .35, `Parkla ${PK.cars} autole · ${fmt(Math.max(PK.w, PK.d))} × ${fmt(Math.min(PK.w, PK.d))} m`, fs, '#4b463f', 'middle', 700)); }
@@ -77,6 +86,7 @@ function svg(L, opt) {
     if (inside) { labelOut.push(txt(cx, cy - (sub ? fs * .2 : -fs * .35), title, fs, dark ? '#fff' : '#16130F', 'middle', 700)); if (sub) labelOut.push(txt(cx, cy + fs * .95, sub, fs * .85, dark ? '#e7e2da' : '#5b544c', 'middle', 500)); }
     else labels.push({ x: cx, y: Y(it.y) - 6, t: title + (sub ? ' · ' + sub : ''), red: bad.has(it.id), it });
   }
+  for (const c of (L.canopies || [])) { out.push(`<rect x="${X(c.x)}" y="${Y(c.y)}" width="${S(c.w)}" height="${S(c.d)}" fill="#ffffff22" stroke="${c.ok === false ? '#e5482d' : '#2b6cb0'}" stroke-width="2.4" stroke-dasharray="10 5"/>`); for (const [px, py] of [[c.x, c.y], [c.x + c.w, c.y], [c.x, c.y + c.d], [c.x + c.w, c.y + c.d]]) out.push(`<rect x="${X(px) - 4}" y="${Y(py) - 4}" width="8" height="8" fill="#2b6cb0"/>`); labels.push({ x: X(c.x + c.w / 2), y: Y(c.y) - 6, t: `${c.name} (katus, külgedel lahti)`, red: c.ok === false }); }
   // mõõdud: telgi küljed
   const dims = [];
   dims.push(dimLine(X(0), Y(0) - S(1.1), X(room.L), Y(0) - S(1.1), fmt(room.L) + ' m', true));
@@ -98,6 +108,10 @@ function svg(L, opt) {
     if (ox1 - ox0 > .3) { const x = (ox0 + ox1) / 2, g1 = a.y + a.d <= b.y ? [a.y + a.d, b.y] : b.y + b.d <= a.y ? [b.y + b.d, a.y] : null; if (g1 && g1[1] - g1[0] < 4) dims.push(dimM(x, g1[0], x, g1[1], g1[1] - g1[0])); }
     else if (oy1 - oy0 > .3) { const y = (oy0 + oy1) / 2, g1 = a.x + a.w <= b.x ? [a.x + a.w, b.x] : b.x + b.w <= a.x ? [b.x + b.w, a.x] : null; if (g1 && g1[1] - g1[0] < 4) dims.push(dimM(g1[0], y, g1[1], y, g1[1] - g1[0])); }
   }
+  for (const o of (L.site || [])) if (o.dim) { const [a, b, c2, d2, t] = o.dim; dims.push(dimLine(X(a), Y(b), X(c2), Y(d2), t, false, a === c2, true)); }
+  if (false) for (const o of (L.site || [])) { const ax0 = 0, ay0 = 0, ax1 = room.L, ay1 = room.W;
+    if (o.y >= ay1) dims.push(dimM(Math.max(ax0, o.x) + .6, ay1, Math.max(ax0, o.x) + .6, o.y, o.y - ay1)); else if (o.y + o.d <= ay0) dims.push(dimM(Math.max(ax0, o.x) + .6, o.y + o.d, Math.max(ax0, o.x) + .6, ay0, ay0 - o.y - o.d));
+    else if (o.x >= ax1) dims.push(dimM(ax1, Math.max(ay0, o.y) + .6, o.x, Math.max(ay0, o.y) + .6, o.x - ax1)); else if (o.x + o.w <= ax0) dims.push(dimM(o.x + o.w, Math.max(ay0, o.y) + .6, ax0, Math.max(ay0, o.y) + .6, ax0 - o.x - o.w)); }
   // laudade vahe grupis (üks näidis) + tooli taga
   for (const it of L.items) if (it.kind === 'seating' && it.tables.length > 1) {
     const t = it.tables, a = t[0], b = t.find(u => u !== a && Math.abs(u.y - a.y) < .01) || t[1];
