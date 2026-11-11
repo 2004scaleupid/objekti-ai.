@@ -66,6 +66,7 @@ const potM = M('#f2f0eb'), leafM = M('#3f7a3a', { flatShading: true }), flowerM 
 function plant(x, z, p, s = 1) { boxM(.35 * s, .4 * s, .35 * s, potM, x, .2 * s, z, p); for (let k = 0; k < 4; k++) { const l = new THREE.Mesh(new THREE.IcosahedronGeometry(.28 * s, 0), leafM); l.position.set(x + (k % 2 - .5) * .15 * s, (.6 + k * .12) * s, z + ((k >> 1) - .5) * .15 * s); l.scale.y = 1.4; l.castShadow = true; p.add(l); } }
 function put(m, w, d, h, x, z, ry, p) { const s = m.g.clone(true), sx = m.s.x, sz = m.s.z, inner = new THREE.Group(), out = new THREE.Group(); s.position.set(-(m.bb.min.x + m.bb.max.x) / 2, -m.bb.min.y, -(m.bb.min.z + m.bb.max.z) / 2); inner.add(s); inner.scale.set(w / sx, h / m.s.y, d / sz); out.add(inner); out.position.set(x, 0, z); out.rotation.y = ry; p.add(out); return out; }
 function build(v) {
+  [...$('ver').children].forEach(x => x.setAttribute('aria-pressed', x.dataset.v === v));
   sc.remove(party); party = new THREE.Group(); sc.add(party);
   const L = LAY[v], o = L.origin, R = L.room, t = L.tent;
   // plaan -> maailm: plaani x (pikkus) -> z, plaani y (sügavus, 0 = esikülg) -> x
