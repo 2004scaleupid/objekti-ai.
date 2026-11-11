@@ -37,7 +37,7 @@ const cam = new THREE.PerspectiveCamera(38, 1, .1, 400), ctl = new OrbitControls
 ctl.enableDamping = true; ctl.maxPolarAngle = Math.PI / 2 - .05; ctl.minDistance = 4; ctl.maxDistance = 70;
 const M = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: .85 }, o || {}));
 function boxM(w, h, d, m, x, y, z, p) { const o = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), m); o.position.set(x, y, z); o.castShadow = o.receiveShadow = true; (p || sc).add(o); return o; }
-const tex = await new THREE.TextureLoader().loadAsync('../ground.jpg'); tex.colorSpace = THREE.SRGBColorSpace; tex.anisotropy = 8;
+const tex = await new THREE.TextureLoader().loadAsync('ground-yard.jpg'); tex.colorSpace = THREE.SRGBColorSpace; tex.anisotropy = 8;
 // hoov (sama mis ../index.html)
 { const g = new THREE.Mesh(new THREE.PlaneGeometry(200, 200).rotateX(-Math.PI / 2), M('#6f8a4c', { roughness: 1 })); g.position.set(C.x, -.02, C.z); g.receiveShadow = true; sc.add(g);
   const l = new THREE.Mesh(new THREE.PlaneGeometry(LX, LZ).rotateX(-Math.PI / 2), M('#fff', { map: tex, roughness: .95 })); l.position.copy(C); l.receiveShadow = true; sc.add(l);
