@@ -1,0 +1,97 @@
+<!doctype html><html lang="et"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex"><title>Aiapidu 3D · Vaade3D</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@500;600;700&display=swap">
+<style>
+*{box-sizing:border-box}html,body{margin:0;height:100%;overflow:hidden;background:#e7ece6;font:14px "Inter Tight",Arial,sans-serif;color:#16130F}
+#st{position:fixed;inset:0;touch-action:none}#st canvas{display:block;width:100%!important;height:100%!important}
+.bar{position:fixed;left:12px;right:12px;top:calc(10px + env(safe-area-inset-top));display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.pill{background:#fffffff0;border-radius:12px;padding:8px 12px;box-shadow:0 2px 8px #0002;font-weight:700}
+.seg{display:flex;background:#fffffff0;border-radius:12px;padding:3px;box-shadow:0 2px 8px #0002}.seg button{border:0;background:none;border-radius:9px;padding:7px 12px;font:700 13px "Inter Tight";color:#6f685f;cursor:pointer}.seg button[aria-pressed=true]{background:#2F6B4F;color:#fff}
+#load{position:fixed;inset:0;display:grid;place-items:center;font-weight:700;color:#6f685f;background:#e7ece6}
+#hint{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(14px + env(safe-area-inset-bottom));background:#16130fd9;color:#fff;border-radius:999px;padding:6px 14px;font-size:12.5px;white-space:nowrap}
+@media (max-width:600px){.pill{font-size:12.5px;padding:7px 10px}#hint{font-size:11.5px}}
+</style>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"}}</script>
+</head><body><div id="st"></div><div id="load">Laen 3D-d…</div>
+<div class="bar"><div class="seg" id="mode"><button data-m="0">Tühi hoov</button><button data-m="1" aria-pressed="true">Pidu</button></div>
+<div class="seg"><button id="top" aria-pressed="false">Pealtvaade</button></div><div class="pill" id="lab"></div></div>
+<div id="hint">Lohista = pööra · rull/näpistus = suumi</div>
+<script type="module">
+// Aiapidu (AI-hoov, päris foto pole): maapind = AI pealtvaade 20 × 14 m, telk koodiga, gala laud+toolid ja puhvet (GLB), baar ja pukklauad varasematest mudelitest.
+// Teljed: x 0..20 m (pealtvaate horisontaal), z 0..14 m; maja x<0, kruusatee z>14. Renderdab ainult muutuse korral.
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js';
+const $ = id => document.getElementById(id), small = Math.min(innerWidth, innerHeight) < 700, box = $('st');
+const LX = 20, LZ = 14, C = new THREE.Vector3(LX / 2, 0, LZ / 2);
+// valgus ja toonivastendus nagu landingu gala (hero/scene.js)
+const r = new THREE.WebGLRenderer({ antialias: !small, preserveDrawingBuffer: true }); r.setPixelRatio(Math.min(devicePixelRatio || 1, small ? 1.5 : 2));
+r.shadowMap.enabled = true; r.shadowMap.type = THREE.PCFSoftShadowMap; r.toneMapping = THREE.ACESFilmicToneMapping; r.toneMappingExposure = 1.15; r.outputColorSpace = THREE.SRGBColorSpace; box.appendChild(r.domElement);
+const sc = new THREE.Scene(); sc.background = new THREE.Color('#cfdde8'); sc.fog = new THREE.Fog('#cfdde8', 60, 140);
+sc.add(new THREE.HemisphereLight('#eef0f4', '#5f6a50', 1.1));
+const sun = new THREE.DirectionalLight('#fff4e6', 1.7); sun.position.set(-10, 26, 18); sun.castShadow = true; sun.shadow.mapSize.set(small ? 1024 : 2048, small ? 1024 : 2048);
+Object.assign(sun.shadow.camera, { left: -18, right: 18, top: 18, bottom: -18, near: 1, far: 80 }); sun.shadow.bias = -.0004; sun.shadow.normalBias = .03; sun.target.position.copy(C); sc.add(sun, sun.target);
+const cam = new THREE.PerspectiveCamera(38, 1, .1, 400), ctl = new OrbitControls(cam, r.domElement);
+ctl.enableDamping = true; ctl.maxPolarAngle = Math.PI / 2 - .05; ctl.minDistance = 5; ctl.maxDistance = 70; ctl.target.copy(C);
+const M = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: .85 }, o || {}));
+const add = (o, p) => ((p || sc).add(o), o);
+function boxM(w, h, d, m, x, y, z, p) { const o = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), m); o.position.set(x, y, z); o.castShadow = o.receiveShadow = true; return add(o, p); }
+const tex = await new THREE.TextureLoader().loadAsync('ground.jpg'); tex.colorSpace = THREE.SRGBColorSpace; tex.anisotropy = 8;
+// ümbrus + hoov
+{ const g = new THREE.Mesh(new THREE.PlaneGeometry(200, 200).rotateX(-Math.PI / 2), M('#6f8a4c', { roughness: 1 })); g.position.set(C.x, -.02, C.z); g.receiveShadow = true; add(g);
+  const l = new THREE.Mesh(new THREE.PlaneGeometry(LX, LZ).rotateX(-Math.PI / 2), M('#fff', { map: tex, roughness: .95 })); l.position.copy(C); l.receiveShadow = true; add(l);
+  const gr = new THREE.Mesh(new THREE.PlaneGeometry(LX + 6, 2.2).rotateX(-Math.PI / 2), M('#cfc4ad', { roughness: 1 })); gr.position.set(C.x, .005, LZ + 1.4); add(gr); }
+// lauaaed (puust, vahedega postid) ümber hoovi, maja kohal vahe
+{ const wood = M('#8b7d6c', { roughness: .9 }), post = M('#9a9a96', { metalness: .3, roughness: .5 });
+  const run = (x0, z0, x1, z1) => { const L = Math.hypot(x1 - x0, z1 - z0), n = Math.round(L / .14), ry = Math.atan2(x1 - x0, z1 - z0);
+    const im = new THREE.InstancedMesh(new THREE.BoxGeometry(.11, 1.4, .025), wood, n), o = new THREE.Object3D();
+    for (let i = 0; i < n; i++) { const f = (i + .5) / n; o.position.set(x0 + (x1 - x0) * f, .7, z0 + (z1 - z0) * f); o.rotation.set(0, ry + Math.PI / 2, 0); o.updateMatrix(); im.setMatrixAt(i, o.matrix); }
+    im.castShadow = im.receiveShadow = true; add(im); for (let s = 0; s <= L; s += 2.5) { const f = s / L; boxM(.05, 1.5, .05, post, x0 + (x1 - x0) * f, .75, z0 + (z1 - z0) * f); } };
+  run(0, 0, LX, 0); run(LX, 0, LX, LZ); run(0, LZ, LX, LZ); run(0, 0, 0, 3.6); run(0, 10, 0, LZ); }
+// puud: kased ja männid aia ääres (madala polügooniga)
+{ const birch = M('#ecebe4'), leaf = M('#6e9a46', { flatShading: true }), pine = M('#36572f', { flatShading: true }), bark = M('#6d4f38');
+  const B = (x, z, h) => { boxM(.22, h, .22, birch, x, h / 2, z); for (const [dy, s] of [[.75, 1.6], [.92, 1.2]]) { const c = new THREE.Mesh(new THREE.IcosahedronGeometry(1, 1), leaf); c.scale.set(s * 1.1, s * 1.5, s * 1.1); c.position.set(x, h * dy, z); c.castShadow = true; add(c); } };
+  const P = (x, z, h) => { boxM(.3, h * .5, .3, bark, x, h * .25, z); for (let k = 0; k < 3; k++) { const c = new THREE.Mesh(new THREE.ConeGeometry(2 - k * .5, h * .35, 8), pine); c.position.set(x, h * (.42 + k * .18), z); c.castShadow = true; add(c); } };
+  [[2, -1.2, 11], [6, -1.4, 12], [14, -1.2, 10], [21.3, 2, 12], [21.4, 9, 11], [-1.3, 1.5, 10], [19, 15.8, 9]].forEach(a => B(...a)); [[10, -1.6, 13], [21.6, 5.5, 14], [21.5, 12.6, 12]].forEach(a => P(...a)); }
+// maja nurk + terrass (vasakul)
+{ boxM(5.5, 3, 5, M('#7a5a3e', { roughness: .8 }), -1.5, 1.5, 7.2); boxM(6.2, .25, 5.8, M('#5a4f4a'), -1.5, 3.15, 7.2); } // terrass on maapinna tekstuuris
+
+// ---------- pidu ----------
+const party = new THREE.Group(); sc.add(party);
+const GL = new GLTFLoader(); GL.setMeshoptDecoder(MeshoptDecoder);
+const load = async k => { const g = (await GL.loadAsync(`models/${k}.glb`)).scene; g.updateMatrixWorld(true); const bb = new THREE.Box3().setFromObject(g); g.traverse(o => { if (o.isMesh) o.castShadow = o.receiveShadow = true; }); return { g, bb, s: bb.getSize(new THREE.Vector3()) }; };
+const [mT, mB, mBar, mC] = await Promise.all(['table', 'buffet', 'bar', 'cocktail'].map(load));
+// ese mõõtu: suurim külg -> w, kõrgus h (null = proportsionaalne)
+function put(m, w, x, z, ry = 0, h = null) { const s = m.g.clone(true), k = w / Math.max(m.s.x, m.s.z), inner = new THREE.Group(), out = new THREE.Group();
+  s.position.set(-(m.bb.min.x + m.bb.max.x) / 2, -m.bb.min.y, -(m.bb.min.z + m.bb.max.z) / 2); inner.add(s); inner.scale.set(k, h ? h / m.s.y : k, k); out.add(inner); out.position.set(x, 0, z); out.rotation.y = ry; party.add(out); return out; }
+// telk 6 × 12 m: raam, viilkatus, valguskett (avatud küljed)
+const TX0 = 9, TZ0 = 1, TW = 6, TL = 12, side = 2.6, ridge = 4.2;
+{ const met = M('#d4d7da', { metalness: .6, roughness: .35 }), cloth = M('#fbfbf8', { roughness: .55, side: THREE.DoubleSide });
+  for (let z = 0; z <= TL; z += 3) for (const x of [0, TW]) boxM(.1, side, .1, met, TX0 + x, side / 2, TZ0 + z, party);
+  const v = [], q = (x0, x1, y0, y1) => v.push(x0, y0, 0, x1, y1, 0, x1, y1, TL, x0, y0, 0, x1, y1, TL, x0, y0, TL);
+  q(-.05, TW / 2, side, ridge); q(TW + .05, TW / 2, side, ridge); for (const z of [0, TL]) v.push(0, side, z, TW, side, z, TW / 2, ridge, z);
+  const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(v, 3)); g.computeVertexNormals(); const roof = new THREE.Mesh(g, cloth); roof.position.set(TX0, 0, TZ0); roof.castShadow = true; party.add(roof);
+  const pts = []; for (const x of [TW * .3, TW * .7]) for (let z = .3; z < TL; z += .45) pts.push([TX0 + x, side + .55 - Math.sin((z % 3) / 3 * Math.PI) * .25, TZ0 + z]);
+  const bm = new THREE.InstancedMesh(new THREE.SphereGeometry(.05, 6, 4), new THREE.MeshBasicMaterial({ color: '#ffd38a' }), pts.length), o = new THREE.Object3D(); pts.forEach((p, i) => { o.position.set(...p); o.updateMatrix(); bm.setMatrixAt(i, o.matrix); }); party.add(bm);
+  const pl = new THREE.PointLight('#ffc27a', small ? 0 : 6, 16, 2); pl.position.set(TX0 + TW / 2, 3, TZ0 + TL / 2); party.add(pl); }
+// 6 ümarlauda (gala laud + 8 tooli), 2 × 3 nagu pidupildil
+const TABLES = [[10.5, 4.2], [13.5, 4.2], [10.5, 7], [13.5, 7], [10.5, 9.8], [13.5, 9.8]];
+TABLES.forEach(([x, z], i) => put(mT, 2.7, x, z, i * .7));
+put(mB, 4, 12, 1.9, 0, .95);          // puhvet telgi vasakus otsas
+put(mBar, 2, 12, 12.2, Math.PI, 1.1); // baar paremas otsas
+[[4.5, 3.5], [6.2, 5.6], [5, 8], [7, 10.2]].forEach(([x, z]) => put(mC, .85, x, z, 0, 1.1).traverse(o => { if (o.isMesh) { o.material = o.material.clone(); o.material.map = null; o.material.color.set('#f4f2ee'); } })); // 4 pukklauda murul
+const seats = TABLES.length * 8;
+$('lab').textContent = `Hoov 20 × 14 m · telk 6 × 12 m · ${TABLES.length} lauda · ${seats} kohta`;
+
+// ---------- kaamera, nupud, render vajadusel ----------
+const home = () => { const asp = innerWidth / innerHeight, d = 30 * Math.max(1, Math.pow(1.5 / Math.max(.45, asp), .7)); ctl.target.copy(C); cam.position.set(C.x - d * .55, d * .45, C.z + d * .7); cam.up.set(0, 1, 0); ctl.enableRotate = true; ctl.update(); };
+let dirty = true; const need = () => { dirty = true; }; ctl.addEventListener('change', need);
+const fit = () => { r.setSize(innerWidth, innerHeight, false); cam.aspect = innerWidth / innerHeight; cam.updateProjectionMatrix(); need(); }; addEventListener('resize', fit); fit();
+$('mode').onclick = e => { const b = e.target.closest('button'); if (!b) return; [...$('mode').children].forEach(x => x.setAttribute('aria-pressed', x === b)); party.visible = b.dataset.m === '1'; $('lab').textContent = party.visible ? `Hoov 20 × 14 m · telk 6 × 12 m · ${TABLES.length} lauda · ${seats} kohta` : 'Hoov 20 × 14 m · tühi'; need(); };
+$('top').onclick = () => { const on = $('top').getAttribute('aria-pressed') !== 'true'; $('top').setAttribute('aria-pressed', on);
+  if (on) { const asp = innerWidth / innerHeight, h = Math.max(LZ, LX / asp) / 2 / Math.tan(19 * Math.PI / 180) * 1.1; cam.position.set(C.x, h, C.z + .001); ctl.target.copy(C); ctl.enableRotate = false; ctl.update(); } else home(); need(); };
+(function loop() { requestAnimationFrame(loop); ctl.update(); if (!dirty) return; dirty = false; r.render(sc, cam); })();
+window.__a = { cam, ctl, need, C };
+home(); $('load').remove();
+</script></body></html>

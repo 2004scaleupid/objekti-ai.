@@ -1,0 +1,111 @@
+<!doctype html><html lang="et"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex"><title>Eraüritus 12 · A/B/C · Vaade3D</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@500;600;700&display=swap">
+<style>
+*{box-sizing:border-box}html,body{margin:0;height:100%;overflow:hidden;background:#e7ece6;font:14px "Inter Tight",Arial,sans-serif;color:#16130F}
+#st{position:fixed;inset:0;touch-action:none}#st canvas{display:block;width:100%!important;height:100%!important}
+#plan{position:fixed;inset:0;display:none;background:#fff;overflow:auto;padding:110px 12px 60px}#plan img{display:block;max-width:100%;margin:0 auto}
+.bar{position:fixed;left:12px;right:12px;top:calc(10px + env(safe-area-inset-top));display:flex;gap:8px;flex-wrap:wrap;align-items:center;z-index:2}
+.pill{background:#fffffff0;border-radius:12px;padding:8px 12px;box-shadow:0 2px 8px #0002;font-weight:700}
+.seg{display:flex;background:#fffffff0;border-radius:12px;padding:3px;box-shadow:0 2px 8px #0002}.seg button{border:0;background:none;border-radius:9px;padding:7px 12px;font:700 13px "Inter Tight";color:#6f685f;cursor:pointer}.seg button[aria-pressed=true]{background:#2F6B4F;color:#fff}
+#load{position:fixed;inset:0;display:grid;place-items:center;font-weight:700;color:#6f685f;background:#e7ece6;z-index:3}
+#hint{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(14px + env(safe-area-inset-bottom));background:#16130fd9;color:#fff;border-radius:999px;padding:6px 14px;font-size:12.5px;white-space:nowrap}
+@media (max-width:600px){.pill{font-size:12px;padding:7px 10px}.seg button{padding:7px 9px}#hint{font-size:11.5px}}
+</style>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"}}</script>
+</head><body><div id="st"></div><div id="plan"><img id="planImg" alt="2D plaan"></div><div id="load">Laen 3D-d…</div>
+<div class="bar"><div class="seg" id="ver"><button data-v="A" aria-pressed="true">A</button><button data-v="B">B</button><button data-v="C">C</button></div>
+<div class="seg" id="vw"><button data-w="2d">2D</button><button data-w="3d" aria-pressed="true">3D</button></div><div class="pill" id="lab"></div></div>
+<div id="hint">Lohista = pööra · rull/näpistus = suumi</div>
+<script type="module">
+// Eraüritus 12 (kliendi brief): ala 10 × 7 m samal AI-hoovil, paigutused A/B/C lahendajast (js/eventplan.js), osade meetod:
+// telk, pikk laud, lava, tantsupõrand, taimed koodiga; Chiavari tool ja puhvet olemasolevad GLB-d. Renderdab ainult muutuse korral.
+// Maailm: hoov x 0..20, z 0..14 (nagu ../index.html). Ala: x 6..13 (sügavus 7, esikülg kaamera pool), z 2..12 (pikkus 10, vasakult paremale).
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js';
+const $ = id => document.getElementById(id), small = Math.min(innerWidth, innerHeight) < 700, box = $('st'), fmt = v => String(+(+v).toFixed(2)).replace('.', ',');
+const LX = 20, LZ = 14, C = new THREE.Vector3(10, 0, 7), AX0 = 6, AZ0 = 2, AD = 7, AL = 10;
+const r = new THREE.WebGLRenderer({ antialias: !small, preserveDrawingBuffer: true }); r.setPixelRatio(Math.min(devicePixelRatio || 1, small ? 1.5 : 2));
+r.shadowMap.enabled = true; r.shadowMap.type = THREE.PCFSoftShadowMap; r.toneMapping = THREE.ACESFilmicToneMapping; r.toneMappingExposure = 1.15; r.outputColorSpace = THREE.SRGBColorSpace; box.appendChild(r.domElement);
+const sc = new THREE.Scene(); sc.background = new THREE.Color('#cfdde8'); sc.fog = new THREE.Fog('#cfdde8', 60, 140);
+sc.add(new THREE.HemisphereLight('#eef0f4', '#5f6a50', 1.1));
+const sun = new THREE.DirectionalLight('#fff4e6', 1.7); sun.position.set(-10, 26, 18); sun.castShadow = true; sun.shadow.mapSize.set(small ? 1024 : 2048, small ? 1024 : 2048);
+Object.assign(sun.shadow.camera, { left: -18, right: 18, top: 18, bottom: -18, near: 1, far: 80 }); sun.shadow.bias = -.0004; sun.shadow.normalBias = .03; sun.target.position.copy(C); sc.add(sun, sun.target);
+const cam = new THREE.PerspectiveCamera(38, 1, .1, 400), ctl = new OrbitControls(cam, r.domElement);
+ctl.enableDamping = true; ctl.maxPolarAngle = Math.PI / 2 - .05; ctl.minDistance = 4; ctl.maxDistance = 70;
+const M = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: .85 }, o || {}));
+function boxM(w, h, d, m, x, y, z, p) { const o = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), m); o.position.set(x, y, z); o.castShadow = o.receiveShadow = true; (p || sc).add(o); return o; }
+const tex = await new THREE.TextureLoader().loadAsync('../ground.jpg'); tex.colorSpace = THREE.SRGBColorSpace; tex.anisotropy = 8;
+// hoov (sama mis ../index.html)
+{ const g = new THREE.Mesh(new THREE.PlaneGeometry(200, 200).rotateX(-Math.PI / 2), M('#6f8a4c', { roughness: 1 })); g.position.set(C.x, -.02, C.z); g.receiveShadow = true; sc.add(g);
+  const l = new THREE.Mesh(new THREE.PlaneGeometry(LX, LZ).rotateX(-Math.PI / 2), M('#fff', { map: tex, roughness: .95 })); l.position.copy(C); l.receiveShadow = true; sc.add(l);
+  const gr = new THREE.Mesh(new THREE.PlaneGeometry(LX + 6, 2.2).rotateX(-Math.PI / 2), M('#cfc4ad', { roughness: 1 })); gr.position.set(C.x, .005, LZ + 1.4); sc.add(gr);
+  const wood = M('#8b7d6c', { roughness: .9 }), post = M('#9a9a96', { metalness: .3, roughness: .5 });
+  const run = (x0, z0, x1, z1) => { const L = Math.hypot(x1 - x0, z1 - z0), n = Math.round(L / .14), ry = Math.atan2(x1 - x0, z1 - z0), im = new THREE.InstancedMesh(new THREE.BoxGeometry(.11, 1.4, .025), wood, n), o = new THREE.Object3D();
+    for (let i = 0; i < n; i++) { const f = (i + .5) / n; o.position.set(x0 + (x1 - x0) * f, .7, z0 + (z1 - z0) * f); o.rotation.set(0, ry + Math.PI / 2, 0); o.updateMatrix(); im.setMatrixAt(i, o.matrix); } im.castShadow = im.receiveShadow = true; sc.add(im);
+    for (let s = 0; s <= L; s += 2.5) { const f = s / L; boxM(.05, 1.5, .05, post, x0 + (x1 - x0) * f, .75, z0 + (z1 - z0) * f); } };
+  run(0, 0, LX, 0); run(LX, 0, LX, LZ); run(0, LZ, LX, LZ); run(0, 0, 0, 3.6); run(0, 10, 0, LZ);
+  const birch = M('#ecebe4'), leaf = M('#6e9a46', { flatShading: true }), pine = M('#36572f', { flatShading: true }), bark = M('#6d4f38');
+  const B = (x, z, h) => { boxM(.22, h, .22, birch, x, h / 2, z); for (const [dy, s] of [[.75, 1.6], [.92, 1.2]]) { const c = new THREE.Mesh(new THREE.IcosahedronGeometry(1, 1), leaf); c.scale.set(s * 1.1, s * 1.5, s * 1.1); c.position.set(x, h * dy, z); c.castShadow = true; sc.add(c); } };
+  const P = (x, z, h) => { boxM(.3, h * .5, .3, bark, x, h * .25, z); for (let k = 0; k < 3; k++) { const c = new THREE.Mesh(new THREE.ConeGeometry(2 - k * .5, h * .35, 8), pine); c.position.set(x, h * (.42 + k * .18), z); c.castShadow = true; sc.add(c); } };
+  [[2, -1.2, 11], [6, -1.4, 12], [14, -1.2, 10], [21.3, 2, 12], [21.4, 9, 11], [-1.3, 1.5, 10], [19, 15.8, 9]].forEach(a => B(...a)); [[10, -1.6, 13], [21.6, 5.5, 14], [21.5, 12.6, 12]].forEach(a => P(...a));
+  boxM(5.5, 3, 5, M('#7a5a3e', { roughness: .8 }), -1.5, 1.5, 7.2); boxM(6.2, .25, 5.8, M('#5a4f4a'), -1.5, 3.15, 7.2);
+  // ala 10 × 7 m piir
+  const a = new THREE.LineLoop(new THREE.BufferGeometry().setFromPoints([[AX0, AZ0], [AX0 + AD, AZ0], [AX0 + AD, AZ0 + AL], [AX0, AZ0 + AL]].map(([x, z]) => new THREE.Vector3(x, .03, z))), new THREE.LineDashedMaterial({ color: '#fff', dashSize: .4, gapSize: .25 })); a.computeLineDistances(); sc.add(a); }
+
+const GL = new GLTFLoader(); GL.setMeshoptDecoder(MeshoptDecoder);
+const load = async k => { const g = (await GL.loadAsync(`../models/${k}.glb`)).scene; g.updateMatrixWorld(true); const bb = new THREE.Box3().setFromObject(g); g.traverse(o => { if (o.isMesh) o.castShadow = o.receiveShadow = true; }); return { g, bb, s: bb.getSize(new THREE.Vector3()) }; };
+const [mChair, mBuf] = await Promise.all(['chiavari', 'buffet'].map(load));
+const LAY = Object.fromEntries(await Promise.all(['A', 'B', 'C'].map(async v => [v, (await fetch(v + '-layout.json').then(r => r.json())).layout])));
+let party = new THREE.Group(); sc.add(party);
+const white = M('#fbfbf8', { roughness: .6 }), linen = M('#f7f5f0', { roughness: .9 }), runner = M('#6f9a6a'), skirt = M('#151515', { roughness: .95 }), deck = M('#26231f', { roughness: .5 }), met = M('#d4d7da', { metalness: .6, roughness: .35 });
+const floorTex = (() => { const c = document.createElement('canvas'); c.width = c.height = 128; const g = c.getContext('2d'); for (let i = 0; i < 4; i++) for (let j = 0; j < 4; j++) { g.fillStyle = (i + j) % 2 ? '#e9e9e6' : '#ffffff'; g.fillRect(i * 32, j * 32, 32, 32); } const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t; })();
+const potM = M('#f2f0eb'), leafM = M('#3f7a3a', { flatShading: true }), flowerM = M('#ffffff');
+function plant(x, z, p, s = 1) { boxM(.35 * s, .4 * s, .35 * s, potM, x, .2 * s, z, p); for (let k = 0; k < 4; k++) { const l = new THREE.Mesh(new THREE.IcosahedronGeometry(.28 * s, 0), leafM); l.position.set(x + (k % 2 - .5) * .15 * s, (.6 + k * .12) * s, z + ((k >> 1) - .5) * .15 * s); l.scale.y = 1.4; l.castShadow = true; p.add(l); } }
+function put(m, w, d, h, x, z, ry, p) { const s = m.g.clone(true), sx = m.s.x, sz = m.s.z, inner = new THREE.Group(), out = new THREE.Group(); s.position.set(-(m.bb.min.x + m.bb.max.x) / 2, -m.bb.min.y, -(m.bb.min.z + m.bb.max.z) / 2); inner.add(s); inner.scale.set(w / sx, h / m.s.y, d / sz); out.add(inner); out.position.set(x, 0, z); out.rotation.y = ry; p.add(out); return out; }
+function build(v) {
+  sc.remove(party); party = new THREE.Group(); sc.add(party);
+  const L = LAY[v], o = L.origin, R = L.room, t = L.tent;
+  // plaan -> maailm: plaani x (pikkus) -> z, plaani y (sügavus, 0 = esikülg) -> x
+  const g = new THREE.Group(); g.position.set(AX0 + o.y, 0, AZ0 + o.x); g.rotation.y = -Math.PI / 2; g.scale.z = -1; party.add(g); // g-s: x = plaani x, z = plaani y
+  const stretch = t.type === 'stretch', side = stretch ? 2.4 : 2.5, ridge = stretch ? 4.2 : side + R.W * .22;
+  // telk koodiga
+  if (stretch) { const geo = new THREE.PlaneGeometry(R.L + 1.4, R.W + 1.4, 24, 16).rotateX(-Math.PI / 2), p = geo.attributes.position;
+    const poles = [[R.L * .3, R.W / 2], [R.L * .7, R.W / 2]]; for (let i = 0; i < p.count; i++) { const x = p.getX(i) + R.L / 2, z = p.getZ(i) + R.W / 2; let y = 2.1; for (const [px, pz] of poles) y = Math.max(y, 2.1 + 2.3 * Math.exp(-((x - px) ** 2 + (z - pz) ** 2) / 4)); const e = Math.min(x + .7, R.L + .7 - x, z + .7, R.W + .7 - z); p.setXYZ(i, x, y - Math.max(0, .5 - e) * 1.2, z); }
+    geo.computeVertexNormals(); const s = new THREE.Mesh(geo, M('#fbfbf8', { roughness: .5, side: THREE.DoubleSide, transparent: true, opacity: .6, depthWrite: false })); s.castShadow = true; g.add(s);
+    for (const [px, pz] of poles) boxM(.08, 4.4, .08, met, px, 2.2, pz, g); for (const [px, pz] of [[0, 0], [R.L, 0], [0, R.W], [R.L, R.W], [R.L / 2, 0], [R.L / 2, R.W]]) boxM(.06, 2.1, .06, met, px, 1.05, pz, g); }
+  else { const cloth = M('#fbfbf8', { roughness: .55, side: THREE.DoubleSide, transparent: true, opacity: .6, depthWrite: false }); // katus poolläbipaistev, et paigutus oleks näha for (let x = 0; x <= R.L + .01; x += R.L / Math.round(R.L / 3)) for (const z of [0, R.W]) boxM(.1, side, .1, met, x, side / 2, z, g);
+    const v2 = [], q = (z0, z1, y0, y1) => v2.push(0, y0, z0, R.L, y0, z0, R.L, y1, z1, 0, y0, z0, R.L, y1, z1, 0, y1, z1); q(-.05, R.W / 2, side, ridge); q(R.W + .05, R.W / 2, side, ridge); for (const x of [0, R.L]) v2.push(x, side, 0, x, side, R.W, x, ridge, R.W / 2);
+    const rg = new THREE.BufferGeometry(); rg.setAttribute('position', new THREE.Float32BufferAttribute(v2, 3)); rg.computeVertexNormals(); const roof = new THREE.Mesh(rg, cloth); roof.castShadow = true; g.add(roof);
+    // tagasein (y = W) ja otsaseinad poolläbipaistvad, esikülg lahti kinniseotud kardinatega
+    const wm = M('#f6f4ef', { roughness: .7, side: THREE.DoubleSide, transparent: true, opacity: .55 }); const w1 = new THREE.Mesh(new THREE.PlaneGeometry(R.L, side), wm); w1.position.set(R.L / 2, side / 2, R.W); g.add(w1);
+    for (const x of [0, R.L]) { const w = new THREE.Mesh(new THREE.PlaneGeometry(R.W, side), wm); w.rotation.y = Math.PI / 2; w.position.set(x, side / 2, R.W / 2); g.add(w); }
+    for (let x = 0; x <= R.L + .01; x += R.L / Math.round(R.L / 3)) { const c = new THREE.Mesh(new THREE.CylinderGeometry(.08, .2, side - .1, 8, 1, true), M('#fffefb', { side: THREE.DoubleSide })); c.position.set(x, side / 2, -.05); g.add(c); } }
+  const pl = new THREE.PointLight('#ffd9a8', small ? 0 : 4, 14, 2); pl.position.set(R.L / 2, side, R.W / 2); g.add(pl);
+  let tables = 0, chairs = 0;
+  for (const it of L.items) {
+    const cx = it.x + it.w / 2, cz = it.y + it.d / 2;
+    if (it.kind === 'stage') { boxM(it.w, .38, it.d, skirt, cx, .19, cz, g); boxM(it.w, .04, it.d, deck, cx, .4, cz, g); }
+    else if (it.kind === 'dance') { const f = new THREE.Mesh(new THREE.BoxGeometry(it.w, .03, it.d), M('#fff', { map: floorTex, roughness: .2 })); f.position.set(cx, .015, cz); f.receiveShadow = true; g.add(f); }
+    else if (it.kind === 'catering') { put(mBuf, Math.max(it.w, it.d), Math.min(it.w, it.d), .9, cx, cz, it.w >= it.d ? 0 : Math.PI / 2, g); }
+    else if (it.kind === 'seating') for (const tb of it.tables) { const along = tb.along, len = along ? tb.w : tb.d; tables += tb.nTab; boxM(tb.w, .74, tb.d, linen, tb.x + tb.w / 2, .37, tb.y + tb.d / 2, g); boxM(along ? len * .95 : .3, .01, along ? .3 : len * .95, runner, tb.x + tb.w / 2, .745, tb.y + tb.d / 2, g);
+      for (let k = 0; k < 3; k++) { const f = new THREE.Mesh(new THREE.IcosahedronGeometry(.1, 0), flowerM); f.position.set(along ? tb.x + len * (k + .5) / 3 : tb.x + tb.w / 2, .83, along ? tb.y + tb.d / 2 : tb.y + len * (k + .5) / 3); g.add(f); }
+      for (const c of tb.chairs) { chairs++; const ch = put(mChair, .44, .45, .92, c.x, c.y, 0, g); ch.rotation.y = -c.a + Math.PI / 2; } }
+  }
+  // taimed ja lilled telgiseinte ääres (ei ole vahekäikudes)
+  for (const [x, z] of [[.4, R.W - .35], [R.L - .4, R.W - .35], [R.L / 2, R.W - .35], [.4, .35], [R.L - .4, .35]]) plant(x, z, g, .9);
+  $('lab').textContent = `${v}: ala 10 × 7 m · ${t.type === 'stretch' ? 'stretch-telk' : 'telk'} ${fmt(t.W)} × ${fmt(t.L)} m · ${tables} lauda (1 pikk laud) · ${chairs} kohta`;
+  $('planImg').src = v + '-plan.png'; need();
+}
+const home = () => { const asp = innerWidth / innerHeight, d = 22 * Math.max(1, Math.pow(1.5 / Math.max(.45, asp), .7)), T = new THREE.Vector3(AX0 + AD / 2, .5, AZ0 + AL / 2); ctl.target.copy(T); cam.position.set(T.x - d * .5, d * .78, T.z + d * .42); ctl.update(); };
+let dirty = true; const need = () => { dirty = true; }; ctl.addEventListener('change', need);
+const fit = () => { r.setSize(innerWidth, innerHeight, false); cam.aspect = innerWidth / innerHeight; cam.updateProjectionMatrix(); need(); }; addEventListener('resize', fit); fit();
+$('ver').onclick = e => { const b = e.target.closest('button'); if (!b) return; [...$('ver').children].forEach(x => x.setAttribute('aria-pressed', x === b)); build(b.dataset.v); };
+$('vw').onclick = e => { const b = e.target.closest('button'); if (!b) return; [...$('vw').children].forEach(x => x.setAttribute('aria-pressed', x === b)); $('plan').style.display = b.dataset.w === '2d' ? 'block' : 'none'; };
+(function loop() { requestAnimationFrame(loop); ctl.update(); if (!dirty) return; dirty = false; r.render(sc, cam); })();
+window.__b = { cam, ctl, need, build, home };
+const v0 = new URLSearchParams(location.search).get('v') || 'A'; [...$('ver').children].forEach(x => x.setAttribute('aria-pressed', x.dataset.v === v0));
+home(); build(v0); $('load').remove();
+</script></body></html>
