@@ -23,6 +23,9 @@ function dims(L) {
     if (ox1 - ox0 > .3) { const x = (ox0 + ox1) / 2, g = a.y + a.d <= b.y ? [a.y + a.d, b.y] : b.y + b.d <= a.y ? [b.y + b.d, a.y] : null; if (g && g[1] - g[0] < 5) seg(P(x, g[0]), P(x, g[1]), 'vahe ' + fmt(g[1] - g[0]), 'gap'); }
     else if (oy1 - oy0 > .3) { const y = (oy0 + oy1) / 2, g = a.x + a.w <= b.x ? [a.x + a.w, b.x] : b.x + b.w <= a.x ? [b.x + b.w, a.x] : null; if (g && g[1] - g[0] < 5) seg(P(g[0], y), P(g[1], y), 'vahe ' + fmt(g[1] - g[0]), 'gap'); }
   }
+  // kõrgused (püstjooned): telgi sein ja hari, lava kõrgus; a = maapunkt, h = kõrgus
+  const t = L.tent; out.push({ a: P(0, 0), h: t.sideH, t: `sein ${EP.fmt(t.sideH)} m`, kind: 'vert' }, { a: P(R.L, R.W / 2), h: t.ridgeH, t: `hari ${EP.fmt(t.ridgeH)} m`, kind: 'vert' });
+  const st = L.items.find(i => i.kind === 'stage'); if (st) out.push({ a: P(st.x, st.y), h: st.h || .4, t: `lava ${EP.fmt(st.h || .4)} m`, kind: 'vert' });
   return out;
 }
 if (require.main === module) for (const v of ['A', 'B', 'C']) { const L = JSON.parse(fs.readFileSync(`${__dirname}/${v}-layout.json`)).layout; fs.writeFileSync(`${__dirname}/dims-${v}.json`, JSON.stringify(dims(L))); console.log(v, dims(L).map(s => s.t).join(' | ')); }

@@ -64,7 +64,9 @@ const hideBk = () => BK.forEach(([m, nx, , nz]) => { m.visible = (cam.position.x
   const fw = W * 1.04, fh = fw * tH.image.height / tH.image.width, f = new THREE.Mesh(new THREE.PlaneGeometry(fw, fh), new THREE.MeshBasicMaterial({ map: tH, transparent: true, alphaTest: .5 })); f.position.set((hx0 + hx1) / 2, fh / 2, hz0 - .03); f.rotation.y = Math.PI; sc.add(f); }
 // paigutuse rühm: kohalik x = plaani x, z = plaani y; maailmas x -> lõunasse (-z), y -> läände (-x)  (nagu piltidel)
 let party = new THREE.Group(); sc.add(party);
-const place = g => { g.position.set(AREA.X0, 0, AREA.Z0 + 10); g.rotation.y = Math.PI / 2; g.scale.z = -1; return g; };
+const CAL = new URLSearchParams(location.search).has('cal') ? await fetch('cam-cal.json').then(r => r.json()) : null;
+// kalibreeritud kaamera teljestik: kaamera (0, h, 0) vaatab -z; ala esiserv 8,5 m ees, keskel 0,3 m paremal
+const place = CAL ? g => { g.position.set(.3 - 5, 0, -8.5); g.scale.z = -1; return g; } : g => { g.position.set(AREA.X0, 0, AREA.Z0 + 10); g.rotation.y = Math.PI / 2; g.scale.z = -1; return g; };
 { const a = place(new THREE.Group()), red = new THREE.MeshBasicMaterial({ color: '#e53935' }); for (const [w, d, x, z] of [[10, .08, 5, 0], [10, .08, 5, 7], [.08, 7, 0, 3.5], [.08, 7, 10, 3.5]]) { const m = new THREE.Mesh(new THREE.PlaneGeometry(w, d).rotateX(-Math.PI / 2), red); m.position.set(x, .035, z); a.add(m); } sc.add(a); }
 // mudelid
 const GL = new GLTFLoader(); GL.setMeshoptDecoder(MeshoptDecoder);
@@ -94,11 +96,11 @@ function build(v) {
   const L = LAY[v], o = L.origin, R = L.room, t = L.tent, g = new THREE.Group(); g.position.set(o.x, 0, o.y); party.add(g);
   // telk: moodultelgid = Tripo mudel (seinad, kardinad, kaarakend); stretch-telk koodiga
   if (t.type === 'stretch') { const geo = new THREE.PlaneGeometry(R.L + 1.4, R.W + 1.4, 30, 20).rotateX(-Math.PI / 2), p = geo.attributes.position, poles = [[R.L * .3, R.W / 2], [R.L * .7, R.W / 2]];
-    for (let i = 0; i < p.count; i++) { const x = p.getX(i) + R.L / 2, z = p.getZ(i) + R.W / 2; let y = 2.1; for (const [px, pz] of poles) y = Math.max(y, 2.1 + 2.2 * Math.exp(-Math.sqrt((x - px) ** 2 + (z - pz) ** 2) / 1.1)); const e = Math.min(x + .7, R.L + .7 - x, z + .7, R.W + .7 - z); p.setXYZ(i, x, y - Math.max(0, .55 - e) * 1.3, z); }
+    for (let i = 0; i < p.count; i++) { const x = p.getX(i) + R.L / 2, z = p.getZ(i) + R.W / 2; let y = t.sideH || 2.1; for (const [px, pz] of poles) y = Math.max(y, (t.sideH || 2.1) + ((t.ridgeH || 4.3) - (t.sideH || 2.1)) * Math.exp(-Math.sqrt((x - px) ** 2 + (z - pz) ** 2) / 1.1)); const e = Math.min(x + .7, R.L + .7 - x, z + .7, R.W + .7 - z); p.setXYZ(i, x, y - Math.max(0, .55 - e) * 1.3, z); }
     geo.computeVertexNormals(); const sm = new THREE.Mesh(geo, M('#fbfbf8', { roughness: .45, side: THREE.DoubleSide, transparent: true, emissive: '#ffffff', emissiveIntensity: .18 })); sm.castShadow = true; sm.userData.roof = 1; tentG = new THREE.Group(); tentG.add(sm); g.add(tentG);
     const met = M('#cfd3d6', { metalness: .6, roughness: .35 }); for (const [px, pz] of poles) boxM(.09, 4.5, .09, met, px, 2.25, pz, g); for (const [px, pz] of [[0, 0], [R.L, 0], [0, R.W], [R.L, R.W], [R.L / 2, 0], [R.L / 2, R.W]]) boxM(.06, 2.1, .06, met, px, 1.05, pz, g); }
   else { // moodultelk nagu pildil: valge viilkatus, valged seinad taga ja otstes, esikülg lahti, kardinad postide juures kinni seotud
-    tentG = new THREE.Group(); g.add(tentG); const side = 2.5, ridge = side + R.W * .22, white = M('#fbfbf9', { roughness: .5, side: THREE.DoubleSide, transparent: true, emissive: '#ffffff', emissiveIntensity: .18 }), wallM = M('#f7f6f2', { roughness: .6, side: THREE.DoubleSide, emissive: '#fff8ee', emissiveIntensity: .12 }), met = M('#e2e4e6', { metalness: .5, roughness: .3 }), cur = M('#ffffff', { roughness: .8 });
+    tentG = new THREE.Group(); g.add(tentG); const side = t.sideH || 2.5, ridge = t.ridgeH || 3.8, white = M('#fbfbf9', { roughness: .5, side: THREE.DoubleSide, transparent: true, emissive: '#ffffff', emissiveIntensity: .18 }), wallM = M('#f7f6f2', { roughness: .6, side: THREE.DoubleSide, emissive: '#fff8ee', emissiveIntensity: .12 }), met = M('#e2e4e6', { metalness: .5, roughness: .3 }), cur = M('#ffffff', { roughness: .8 });
     const n = Math.max(1, Math.round(R.L / 3)), xs = [...Array(n + 1)].map((_, i) => i * R.L / n);
     for (const x of xs) for (const z of [0, R.W]) boxM(.09, side, .09, met, x, side / 2, z, tentG);
     const v = [], q = (z0, z1, y0, y1) => v.push(-.1, y0, z0, R.L + .1, y0, z0, R.L + .1, y1, z1, -.1, y0, z0, R.L + .1, y1, z1, -.1, y1, z1);
@@ -112,7 +114,7 @@ function build(v) {
   const pl = new THREE.PointLight('#ffc98a', small ? 0 : 5, 15, 2); pl.position.set(R.L / 2, 2.6, R.W / 2); g.add(pl);
   let tables = 0, ch = [];
   for (const it of L.items) { const cx = it.x + it.w / 2, cz = it.y + it.d / 2;
-    if (it.kind === 'stage') { boxM(it.w, .36, it.d, M('#111', { roughness: .95 }), cx, .18, cz, g); boxM(it.w + .02, .05, it.d + .02, M('#1d1b19', { roughness: .4 }), cx, .385, cz, g); blob(cx, cz, it.w + 1, it.d + 1, g); } // must poodiumlava seelikuga (nagu pildil)
+    if (it.kind === 'stage') { const sh = it.h || .4; boxM(it.w, sh - .04, it.d, M('#111', { roughness: .95 }), cx, (sh - .04) / 2, cz, g); boxM(it.w + .02, .05, it.d + .02, M('#1d1b19', { roughness: .4 }), cx, sh - .015, cz, g); blob(cx, cz, it.w + 1, it.d + 1, g); } // must poodiumlava seelikuga (nagu pildil)
     else if (it.kind === 'dance') { const f = new THREE.Mesh(new THREE.BoxGeometry(it.w, .03, it.d), M('#fff', { map: floorTex, roughness: .15, metalness: .05 })); f.position.set(cx, .015, cz); f.receiveShadow = true; g.add(f); }
     else if (it.kind === 'catering') { skirtTable(it.w, it.d, cx, cz, g, false); blob(cx, cz, it.w + 1, it.d + 1, g); }
     else if (it.kind === 'seating') for (const tb of it.tables) { tables += tb.nTab; const len = tb.along ? tb.w : tb.d; skirtTable(tb.w, tb.d, tb.x + tb.w / 2, tb.y + tb.d / 2, g, true); blob(tb.x + tb.w / 2, tb.y + tb.d / 2, tb.w + 1.6, tb.d + 1.6, g); ch.push(...tb.chairs); } }
@@ -124,7 +126,9 @@ function build(v) {
 // mõõdud dims-X.json-ist (sama allikas mis 2D plaanil ja pildil), joonistatakse paigutuse rühma
 let dimG = null, tags = [], dimOn = true; const dmat = new THREE.LineBasicMaterial({ color: '#e53935' }), amat = new THREE.LineBasicMaterial({ color: '#16130F' });
 function dims(v) { if (dimG) sc.remove(dimG); dimG = place(new THREE.Group()); sc.add(dimG); tags.forEach(t => t.e.remove()); tags = [];
-  for (const d of DIMS[v]) { const a = new THREE.Vector3(d.a[0], .06, d.a[1]), b = new THREE.Vector3(d.b[0], .06, d.b[1]), m = d.kind === 'area' ? amat : dmat, dir = b.clone().sub(a).normalize(), n = new THREE.Vector3(-dir.z, 0, dir.x).multiplyScalar(.15);
+  for (const d of DIMS[v].filter(d => d.kind === 'vert')) { const a = new THREE.Vector3(d.a[0], 0, d.a[1]), b = a.clone().setY(d.h); dimG.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints([a, b]), dmat)); for (const P of [a, b]) dimG.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints([P.clone().add(new THREE.Vector3(-.15, 0, 0)), P.clone().add(new THREE.Vector3(.15, 0, 0))]), dmat));
+    const e = document.createElement('div'); e.className = 'tg'; e.textContent = d.t; $('tags').appendChild(e); tags.push({ e, p: a.clone().setY(d.h / 2), pr: 3.5 }); }
+  for (const d of DIMS[v].filter(d => d.kind !== 'vert')) { const a = new THREE.Vector3(d.a[0], .06, d.a[1]), b = new THREE.Vector3(d.b[0], .06, d.b[1]), m = d.kind === 'area' ? amat : dmat, dir = b.clone().sub(a).normalize(), n = new THREE.Vector3(-dir.z, 0, dir.x).multiplyScalar(.15);
     dimG.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints([a, b]), m)); for (const P of [a, b]) dimG.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints([P.clone().add(n), P.clone().sub(n)]), m));
     const e = document.createElement('div'); e.className = 'tg' + (d.kind === 'area' ? ' a' : ''); e.textContent = d.t; $('tags').appendChild(e); tags.push({ e, p: a.clone().add(b).multiplyScalar(.5), pr: { area: 5, tent: 4, size: 3, gap: 2, wall: 1 }[d.kind] }); }
   dimG.updateMatrixWorld(true); tags.forEach(t => t.p.applyMatrix4(dimG.matrixWorld)); dimG.visible = dimOn; need(); }
@@ -140,8 +144,11 @@ const fitSize = () => { r.setSize(innerWidth, innerHeight, false); cam.aspect = 
 $('ver').onclick = e => { const b = e.target.closest('button'); if (b) build(b.dataset.v); };
 $('dimB').onclick = () => { dimOn = !dimOn; $('dimB').setAttribute('aria-pressed', dimOn); dimG.visible = dimOn; picSrc(); need(); };
 $('vw').onclick = e => { const b = e.target.closest('button'); if (!b) return; const w = b.dataset.w; [...$('vw').children].forEach(x => x.setAttribute('aria-pressed', x === b)); $('plan').style.display = w === '2d' ? 'block' : 'none'; $('pic').style.display = w === 'pic' ? 'block' : 'none'; $('tags').style.display = $('hint').style.display = w === '3d' ? '' : 'none'; };
-(function loop() { requestAnimationFrame(loop); ctl.update(); if (!dirty) return; dirty = false; hideBk(); tentFade(); r.render(sc, cam); placeTags(); })();
+(function loop() { requestAnimationFrame(loop); if (CAL) return; ctl.update(); if (!dirty) return; dirty = false; hideBk(); tentFade(); r.render(sc, cam); placeTags(); })();
 window.__b = { cam, ctl, need, build, home };
+if (CAL) { sc.children.filter(o => o !== party && o.type !== 'HemisphereLight' && o !== sun && o !== sun.target).forEach(o => o.visible = false); sc.background = null; sc.fog = null; r.setClearColor(0, 0);
+  const gnd = new THREE.Mesh(new THREE.PlaneGeometry(80, 80).rotateX(-Math.PI / 2), new THREE.ShadowMaterial({ opacity: .35 })); gnd.receiveShadow = true; sc.add(gnd); sun.target.position.set(0, 0, -12); sun.position.set(-14, 20, -20);
+  window.__cal = () => { ctl.enabled = false; cam.fov = 2 * Math.atan(CAL.H / 2 / CAL.f) * 180 / Math.PI; cam.aspect = CAL.W / CAL.H; cam.position.set(0, CAL.h, 0); cam.rotation.set(-CAL.pitch, 0, 0); cam.updateProjectionMatrix(); r.setPixelRatio(1); r.setSize(CAL.W * 2, CAL.H * 2, false); dimG.visible = false; tags.forEach(t => t.e.style.display = 'none'); r.render(sc, cam); return r.domElement.toDataURL('image/png'); }; }
 const v0 = new URLSearchParams(location.search).get('v') || 'A';
 home(); build(v0); $('load').remove();
 </script></body></html>
