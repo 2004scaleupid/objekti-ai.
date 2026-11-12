@@ -29,7 +29,7 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js';
 const $ = id => document.getElementById(id), small = Math.min(innerWidth, innerHeight) < 700;
 const PXM = 43.75, G = 1254 / PXM, LAWN = { x0: 175 / PXM, z0: 175 / PXM, x1: 1040 / PXM, z1: 850 / PXM }; // muru ≈ 19,8 × 15,4 m
-const AREA = { X0: 17.6, Z0: 6.6 };  // plaani nurk (x=0,y=0) maailmas; ala 10 × 7 m muru keskel
+const AREA = { X0: 17.6, Z0: 8.0 };  // ala vasak ots maja (terrassi) pool, nagu piltidel  // plaani nurk (x=0,y=0) maailmas; ala 10 × 7 m muru keskel
 const r = new THREE.WebGLRenderer({ antialias: !small, preserveDrawingBuffer: true }); r.setPixelRatio(Math.min(devicePixelRatio || 1, small ? 1.5 : 2));
 r.shadowMap.enabled = true; r.shadowMap.type = THREE.PCFSoftShadowMap; r.toneMapping = THREE.ACESFilmicToneMapping; r.toneMappingExposure = 1.22; r.outputColorSpace = THREE.SRGBColorSpace; $('st').appendChild(r.domElement);
 const sc = new THREE.Scene();
@@ -80,24 +80,39 @@ function plant(x, z, p) { boxM(.34, .4, .34, potM, x, .2, z, p); for (let k = 0;
 const LAY = Object.fromEntries(await Promise.all(['A', 'B', 'C'].map(async v => [v, (await fetch(v + '-layout.json').then(r => r.json())).layout])));
 const DIMS = Object.fromEntries(await Promise.all(['A', 'B', 'C'].map(async v => [v, await fetch(`dims-${v}.json`).then(r => r.json())])));
 let tentG = null;
+// valge põrandani linaga laud (+ roheline laualint ja valged lilled pikal laual), nagu pildil
+const linenM = M('#fbfbf8', { roughness: .9 }), runM = M('#5f8f58', { roughness: .8 });
+function skirtTable(w, d, x, z, p, deco) { boxM(w, .74, d, linenM, x, .37, z, p); boxM(w + .04, .03, d + .04, linenM, x, .755, z, p);
+  if (!deco) return; const along = w >= d, len = Math.max(w, d); boxM(along ? len * .96 : .32, .008, along ? .32 : len * .96, runM, x, .772, z, p);
+  for (let k = 0; k < 3; k++) { const a = -len / 2 + len * (k + .5) / 3, fx = along ? x + a : x, fz = along ? z : z + a; const f = new THREE.Mesh(new THREE.IcosahedronGeometry(.13, 1), flowerM); f.position.set(fx, .9, fz); f.castShadow = true; p.add(f); for (let j = 0; j < 4; j++) { const l = new THREE.Mesh(new THREE.IcosahedronGeometry(.07, 0), leafM); l.position.set(fx + Math.cos(j * 1.6) * .12, .82, fz + Math.sin(j * 1.6) * .12); p.add(l); } } }
 function build(v) {
   [...$('ver').children].forEach(x => x.setAttribute('aria-pressed', x.dataset.v === v));
   sc.remove(party); party = place(new THREE.Group()); sc.add(party);
   const L = LAY[v], o = L.origin, R = L.room, t = L.tent, g = new THREE.Group(); g.position.set(o.x, 0, o.y); party.add(g);
   // telk: moodultelgid = Tripo mudel (seinad, kardinad, kaarakend); stretch-telk koodiga
   if (t.type === 'stretch') { const geo = new THREE.PlaneGeometry(R.L + 1.4, R.W + 1.4, 30, 20).rotateX(-Math.PI / 2), p = geo.attributes.position, poles = [[R.L * .3, R.W / 2], [R.L * .7, R.W / 2]];
-    for (let i = 0; i < p.count; i++) { const x = p.getX(i) + R.L / 2, z = p.getZ(i) + R.W / 2; let y = 2.1; for (const [px, pz] of poles) y = Math.max(y, 2.1 + 2.4 * Math.exp(-((x - px) ** 2 + (z - pz) ** 2) / 4)); const e = Math.min(x + .7, R.L + .7 - x, z + .7, R.W + .7 - z); p.setXYZ(i, x, y - Math.max(0, .55 - e) * 1.3, z); }
-    geo.computeVertexNormals(); tentG = new THREE.Mesh(geo, M('#fbfbf8', { roughness: .45, side: THREE.DoubleSide, transparent: true, opacity: 1 })); tentG.castShadow = true; g.add(tentG);
+    for (let i = 0; i < p.count; i++) { const x = p.getX(i) + R.L / 2, z = p.getZ(i) + R.W / 2; let y = 2.1; for (const [px, pz] of poles) y = Math.max(y, 2.1 + 2.2 * Math.exp(-Math.sqrt((x - px) ** 2 + (z - pz) ** 2) / 1.1)); const e = Math.min(x + .7, R.L + .7 - x, z + .7, R.W + .7 - z); p.setXYZ(i, x, y - Math.max(0, .55 - e) * 1.3, z); }
+    geo.computeVertexNormals(); const sm = new THREE.Mesh(geo, M('#fbfbf8', { roughness: .45, side: THREE.DoubleSide, transparent: true, emissive: '#ffffff', emissiveIntensity: .18 })); sm.castShadow = true; sm.userData.roof = 1; tentG = new THREE.Group(); tentG.add(sm); g.add(tentG);
     const met = M('#cfd3d6', { metalness: .6, roughness: .35 }); for (const [px, pz] of poles) boxM(.09, 4.5, .09, met, px, 2.25, pz, g); for (const [px, pz] of [[0, 0], [R.L, 0], [0, R.W], [R.L, R.W], [R.L / 2, 0], [R.L / 2, R.W]]) boxM(.06, 2.1, .06, met, px, 1.05, pz, g); }
-  else { tentG = fit(MD.tent, R.L, R.W, 2.5 + R.W * .22, R.L / 2, R.W / 2, Math.PI, g); tentG.traverse(q => { if (q.isMesh) { q.material = q.material.clone(); q.material.transparent = true; q.material.side = THREE.DoubleSide; } }); }
+  else { // moodultelk nagu pildil: valge viilkatus, valged seinad taga ja otstes, esikülg lahti, kardinad postide juures kinni seotud
+    tentG = new THREE.Group(); g.add(tentG); const side = 2.5, ridge = side + R.W * .22, white = M('#fbfbf9', { roughness: .5, side: THREE.DoubleSide, transparent: true, emissive: '#ffffff', emissiveIntensity: .18 }), wallM = M('#f7f6f2', { roughness: .6, side: THREE.DoubleSide, emissive: '#fff8ee', emissiveIntensity: .12 }), met = M('#e2e4e6', { metalness: .5, roughness: .3 }), cur = M('#ffffff', { roughness: .8 });
+    const n = Math.max(1, Math.round(R.L / 3)), xs = [...Array(n + 1)].map((_, i) => i * R.L / n);
+    for (const x of xs) for (const z of [0, R.W]) boxM(.09, side, .09, met, x, side / 2, z, tentG);
+    const v = [], q = (z0, z1, y0, y1) => v.push(-.1, y0, z0, R.L + .1, y0, z0, R.L + .1, y1, z1, -.1, y0, z0, R.L + .1, y1, z1, -.1, y1, z1);
+    q(-.12, R.W / 2, side - .05, ridge); q(R.W + .12, R.W / 2, side - .05, ridge); for (const x of [-.1, R.L + .1]) v.push(x, side - .05, -.12, x, side - .05, R.W + .12, x, ridge, R.W / 2);
+    const rg = new THREE.BufferGeometry(); rg.setAttribute('position', new THREE.Float32BufferAttribute(v, 3)); rg.computeVertexNormals(); const roof = new THREE.Mesh(rg, white); roof.castShadow = true; roof.userData.roof = 1; tentG.add(roof);
+    boxM(R.L + .2, .3, .03, white, R.L / 2, side - .15, -.1, tentG).userData.roof = 1; // ääris esiküljel
+    const back = new THREE.Mesh(new THREE.PlaneGeometry(R.L, side), wallM); back.position.set(R.L / 2, side / 2, R.W); back.receiveShadow = true; tentG.add(back);
+    for (const x of [0, R.L]) { const w = new THREE.Mesh(new THREE.PlaneGeometry(R.W, side), wallM); w.rotation.y = Math.PI / 2; w.position.set(x, side / 2, R.W / 2); w.receiveShadow = true; tentG.add(w); }
+    for (const x of xs) for (const s2 of (x === 0 ? [1] : x === R.L ? [-1] : [-1, 1])) { const c = new THREE.Mesh(new THREE.CylinderGeometry(.1, .22, side - .25, 10, 1), cur); c.position.set(x + s2 * .14, (side - .25) / 2 + .02, -.02); c.castShadow = true; tentG.add(c); boxM(.3, .05, .3, cur, x + s2 * .14, 1.05, -.02, tentG); } }
   blob(R.L / 2, R.W / 2, R.L + 1.8, R.W + 1.8, g);
   const pl = new THREE.PointLight('#ffc98a', small ? 0 : 5, 15, 2); pl.position.set(R.L / 2, 2.6, R.W / 2); g.add(pl);
   let tables = 0, ch = [];
   for (const it of L.items) { const cx = it.x + it.w / 2, cz = it.y + it.d / 2;
-    if (it.kind === 'stage') { fit(MD.podium, it.w, it.d, null, cx, cz, 0, g); blob(cx, cz, it.w + 1, it.d + 1, g); }
+    if (it.kind === 'stage') { boxM(it.w, .36, it.d, M('#111', { roughness: .95 }), cx, .18, cz, g); boxM(it.w + .02, .05, it.d + .02, M('#1d1b19', { roughness: .4 }), cx, .385, cz, g); blob(cx, cz, it.w + 1, it.d + 1, g); } // must poodiumlava seelikuga (nagu pildil)
     else if (it.kind === 'dance') { const f = new THREE.Mesh(new THREE.BoxGeometry(it.w, .03, it.d), M('#fff', { map: floorTex, roughness: .15, metalness: .05 })); f.position.set(cx, .015, cz); f.receiveShadow = true; g.add(f); }
-    else if (it.kind === 'catering') { fit(MD.buffet, Math.max(it.w, it.d), Math.min(it.w, it.d), .95, cx, cz, it.w >= it.d ? 0 : Math.PI / 2, g); blob(cx, cz, it.w + 1, it.d + 1, g); }
-    else if (it.kind === 'seating') for (const tb of it.tables) { tables += tb.nTab; const len = tb.along ? tb.w : tb.d; fit(MD.longtable, len, .82, .95, tb.x + tb.w / 2, tb.y + tb.d / 2, tb.along ? 0 : Math.PI / 2, g); blob(tb.x + tb.w / 2, tb.y + tb.d / 2, tb.w + 1.6, tb.d + 1.6, g); ch.push(...tb.chairs); } }
+    else if (it.kind === 'catering') { skirtTable(it.w, it.d, cx, cz, g, false); blob(cx, cz, it.w + 1, it.d + 1, g); }
+    else if (it.kind === 'seating') for (const tb of it.tables) { tables += tb.nTab; const len = tb.along ? tb.w : tb.d; skirtTable(tb.w, tb.d, tb.x + tb.w / 2, tb.y + tb.d / 2, g, true); blob(tb.x + tb.w / 2, tb.y + tb.d / 2, tb.w + 1.6, tb.d + 1.6, g); ch.push(...tb.chairs); } }
   chairs(ch, g);
   for (const [x, z] of [[.45, R.W - .4], [R.L - .45, R.W - .4], [R.L / 2, R.W - .4], [.45, .4], [R.L - .45, .4]]) plant(x, z, g);
   $('lab').textContent = `${v}: ala 10 × 7 m · ${t.type === 'stretch' ? 'stretch-telk' : 'telk'} ${String(t.W).replace('.', ',')} × ${t.L} m · 1 pikk laud (${tables} × 183 cm) · ${ch.length} kohta`;
@@ -113,10 +128,10 @@ function dims(v) { if (dimG) sc.remove(dimG); dimG = place(new THREE.Group()); s
 function placeTags() { const v = new THREE.Vector3(), taken = []; for (const t of tags.slice().sort((a, b) => b.pr - a.pr)) { if (!dimOn) { t.e.style.display = 'none'; continue; } v.copy(t.p).project(cam); const x = (v.x + 1) / 2 * innerWidth, y = (1 - v.y) / 2 * innerHeight, w = t.e.offsetWidth || 60;
   if (v.z > 1 || taken.some(q => Math.abs(q.x - x) < (q.w + w) / 2 + 3 && Math.abs(q.y - y) < 20)) { t.e.style.display = 'none'; continue; } t.e.style.display = ''; t.e.style.left = x + 'px'; t.e.style.top = y + 'px'; taken.push({ x, y, w }); } }
 // kaamera: nagu kasutaja foto sõiduteelt (idast, maja vasakul), kõrgemalt
-const T0 = new THREE.Vector3(AREA.X0 - 3.5, .6, AREA.Z0 + 5);
-const home = () => { const asp = innerWidth / innerHeight, d = 21 * Math.max(1, Math.pow(1.5 / Math.max(.45, asp), .65)); ctl.target.copy(T0); cam.position.set(T0.x + d * .82, d * .4, T0.z - d * .2); ctl.update(); };
+const T0 = new THREE.Vector3(AREA.X0 - 3.5, .8, AREA.Z0 + 5); // pilt on samuti majast vasakul-taga
+const home = () => { const asp = innerWidth / innerHeight, d = 21 * Math.max(1, Math.pow(1.5 / Math.max(.45, asp), .65)); ctl.target.copy(T0); cam.position.set(T0.x + d * .88, d * .22, T0.z + d * .2); ctl.update(); };
 // telgi seinad kaamera ees läbipaistvaks, et sisu oleks näha
-function tentFade() { if (!tentG) return; const k = Math.min(1, Math.max(.25, (cam.position.y - 6) / -4 + .6)); tentG.traverse(q => { if (q.isMesh) { q.material.opacity = k; q.material.depthWrite = k > .9; } }); }
+function tentFade() { if (!tentG) return; const k = cam.position.y > 6.5 ? .3 : 1; tentG.traverse(q => { if (q.isMesh && q.userData.roof) { q.material.opacity = k; q.material.depthWrite = k === 1; } }); } // ülevalt vaadates katus läbipaistev, muidu nagu pildil
 let dirty = true; const need = () => { dirty = true; }; ctl.addEventListener('change', need);
 const fitSize = () => { r.setSize(innerWidth, innerHeight, false); cam.aspect = innerWidth / innerHeight; cam.updateProjectionMatrix(); need(); }; addEventListener('resize', fitSize); fitSize();
 $('ver').onclick = e => { const b = e.target.closest('button'); if (b) build(b.dataset.v); };
