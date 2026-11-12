@@ -2,7 +2,7 @@
 import json,numpy as np,sys
 from PIL import Image
 D='/Users/taavimalm/objekti-ai/demo/aiapidu/brief';C=json.load(open(f'{D}/cam-cal.json'));f,th,h,W,H=C['f'],C['pitch'],C['h'],C['W'],C['H'];cx,cy=W/2,H/2
-AX,AN=.3-5,8.5
+AX,AN=C['area']['X0'],C['area']['F0']
 def pj(px,py,z):
   X=AX+px;Fw=AN+py;Y=h-z;zc=Fw*np.cos(th)+Y*np.sin(th);yc=-Fw*np.sin(th)+Y*np.cos(th);return cx+f*X/zc,cy+f*yc/zc
 def z_at(px,py,v):  # millisele kõrgusele vastab pildirida v (sama maapunkti kohal)

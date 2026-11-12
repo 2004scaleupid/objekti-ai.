@@ -2,7 +2,7 @@
 import json,numpy as np,sys
 from PIL import Image,ImageDraw,ImageFont
 D='/Users/taavimalm/objekti-ai/demo/aiapidu/brief';C=json.load(open(f'{D}/cam-cal.json'));f,th,h,W,H=C['f'],C['pitch'],C['h'],C['W'],C['H'];cx,cy=W/2,H/2
-AX,AN=.3-5,8.5   # ala nurk: plaan (x, y) -> paremale AX+x, ette AN+y
+AX,AN=C['area']['X0'],C['area']['F0']   # ala nurk: plaan (x, y) -> paremale AX+x, ette AN+y
 def pj(px,py,z=0.0):
   X=AX+px;Fw=AN+py;Y=h-z   # Y = kaamerast allapoole
   zc=Fw*np.cos(th)+Y*np.sin(th);yc=-Fw*np.sin(th)+Y*np.cos(th)

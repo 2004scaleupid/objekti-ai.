@@ -66,7 +66,7 @@ const hideBk = () => BK.forEach(([m, nx, , nz]) => { m.visible = (cam.position.x
 let party = new THREE.Group(); sc.add(party);
 const CAL = new URLSearchParams(location.search).has('cal') ? await fetch('cam-cal.json').then(r => r.json()) : null;
 // kalibreeritud kaamera teljestik: kaamera (0, h, 0) vaatab -z; ala esiserv 8,5 m ees, keskel 0,3 m paremal
-const place = CAL ? g => { g.position.set(.3 - 5, 0, -8.5); g.scale.z = -1; return g; } : g => { g.position.set(AREA.X0, 0, AREA.Z0 + 10); g.rotation.y = Math.PI / 2; g.scale.z = -1; return g; };
+const place = CAL ? g => { g.position.set(CAL.area.X0, 0, -CAL.area.F0); g.scale.z = -1; return g; } : g => { g.position.set(AREA.X0, 0, AREA.Z0 + 10); g.rotation.y = Math.PI / 2; g.scale.z = -1; return g; };
 { const a = place(new THREE.Group()), red = new THREE.MeshBasicMaterial({ color: '#e53935' }); for (const [w, d, x, z] of [[10, .08, 5, 0], [10, .08, 5, 7], [.08, 7, 0, 3.5], [.08, 7, 10, 3.5]]) { const m = new THREE.Mesh(new THREE.PlaneGeometry(w, d).rotateX(-Math.PI / 2), red); m.position.set(x, .035, z); a.add(m); } sc.add(a); }
 // mudelid
 const GL = new GLTFLoader(); GL.setMeshoptDecoder(MeshoptDecoder);
@@ -147,7 +147,7 @@ $('vw').onclick = e => { const b = e.target.closest('button'); if (!b) return; c
 (function loop() { requestAnimationFrame(loop); if (CAL) return; ctl.update(); if (!dirty) return; dirty = false; hideBk(); tentFade(); r.render(sc, cam); placeTags(); })();
 window.__b = { cam, ctl, need, build, home };
 if (CAL) { sc.children.filter(o => o !== party && o.type !== 'HemisphereLight' && o !== sun && o !== sun.target).forEach(o => o.visible = false); sc.background = null; sc.fog = null; r.setClearColor(0, 0);
-  const gnd = new THREE.Mesh(new THREE.PlaneGeometry(80, 80).rotateX(-Math.PI / 2), new THREE.ShadowMaterial({ opacity: .35 })); gnd.receiveShadow = true; sc.add(gnd); sun.target.position.set(0, 0, -12); sun.position.set(-14, 20, -20);
+  const gnd = new THREE.Mesh(new THREE.PlaneGeometry(80, 80).rotateX(-Math.PI / 2), new THREE.ShadowMaterial({ opacity: .35 })); gnd.receiveShadow = true; sc.add(gnd); sun.target.position.set(CAL.area.X0 + 5, 0, -CAL.area.F0 - 3.5); sun.position.set(CAL.area.X0 - 9, 20, -CAL.area.F0 - 12);
   window.__cal = () => { ctl.enabled = false; cam.fov = 2 * Math.atan(CAL.H / 2 / CAL.f) * 180 / Math.PI; cam.aspect = CAL.W / CAL.H; cam.position.set(0, CAL.h, 0); cam.rotation.set(-CAL.pitch, 0, 0); cam.updateProjectionMatrix(); r.setPixelRatio(1); r.setSize(CAL.W * 2, CAL.H * 2, false); dimG.visible = false; tags.forEach(t => t.e.style.display = 'none'); r.render(sc, cam); return r.domElement.toDataURL('image/png'); }; }
 const v0 = new URLSearchParams(location.search).get('v') || 'A';
 home(); build(v0); $('load').remove();
