@@ -4,19 +4,20 @@
 <style>
 *{box-sizing:border-box}html,body{margin:0;height:100%;overflow:hidden;background:#e7ece6;font:14px "Inter Tight",Arial,sans-serif;color:#16130F}
 #st{position:fixed;inset:0;touch-action:none}#st canvas{display:block;width:100%!important;height:100%!important}
-#plan{position:fixed;inset:0;display:none;background:#fff;overflow:auto;padding:110px 12px 60px}#plan img{display:block;max-width:100%;margin:0 auto}
+#plan{position:fixed;inset:0;display:none;background:#fff;overflow:auto;padding:110px 12px 60px}#plan img{display:block;max-width:100%;margin:0 auto}@media (max-width:600px){#plan img{max-width:none;width:1000px}#pic img{max-width:none;width:820px}}
 .bar{position:fixed;left:12px;right:12px;top:calc(10px + env(safe-area-inset-top));display:flex;gap:8px;flex-wrap:wrap;align-items:center;z-index:2}
 .pill{background:#fffffff0;border-radius:12px;padding:8px 12px;box-shadow:0 2px 8px #0002;font-weight:700}
 .seg{display:flex;background:#fffffff0;border-radius:12px;padding:3px;box-shadow:0 2px 8px #0002}.seg button{border:0;background:none;border-radius:9px;padding:7px 12px;font:700 13px "Inter Tight";color:#6f685f;cursor:pointer}.seg button[aria-pressed=true]{background:#2F6B4F;color:#fff}
 #tags{position:fixed;inset:0;pointer-events:none;overflow:hidden}.tg{position:absolute;transform:translate(-50%,-50%);white-space:nowrap;font:700 12px "Inter Tight",Arial;color:#e53935;background:#fffffff2;border:1.5px solid #e53935;border-radius:6px;padding:2px 6px}.tg.a{color:#16130F;border-color:#16130F}
+#pic{position:fixed;inset:0;display:none;background:#16130F;overflow:auto;padding:110px 12px 60px}#pic img{display:block;max-width:100%;margin:0 auto;border-radius:10px}
 #load{position:fixed;inset:0;display:grid;place-items:center;font-weight:700;color:#6f685f;background:#e7ece6;z-index:3}
 #hint{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(14px + env(safe-area-inset-bottom));background:#16130fd9;color:#fff;border-radius:999px;padding:6px 14px;font-size:12.5px;white-space:nowrap}
 @media (max-width:600px){.pill{font-size:12px;padding:7px 10px}.seg button{padding:7px 9px}#hint{font-size:11.5px}}
 </style>
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"}}</script>
-</head><body><div id="st"></div><div id="plan"><img id="planImg" alt="2D plaan"></div><div id="tags"></div><div id="load">Laen 3D-d…</div>
+</head><body><div id="st"></div><div id="plan"><img id="planImg" alt="2D plaan"></div><div id="pic"><img id="picImg" alt="Pilt paigutusest hoovis"></div><div id="tags"></div><div id="load">Laen 3D-d…</div>
 <div class="bar"><div class="seg" id="ver"><button data-v="A" aria-pressed="true">A</button><button data-v="B">B</button><button data-v="C">C</button></div>
-<div class="seg"><button id="dimB" aria-pressed="true">Mõõdud</button></div><div class="seg" id="vw"><button data-w="2d">2D</button><button data-w="3d" aria-pressed="true">3D</button></div><div class="pill" id="lab"></div></div>
+<div class="seg"><button id="dimB" aria-pressed="true">Mõõdud</button></div><div class="seg" id="vw"><button data-w="pic">Pilt</button><button data-w="2d">2D</button><button data-w="3d" aria-pressed="true">3D</button></div><div class="pill" id="lab"></div></div>
 <div id="hint">Lohista = pööra · rull/näpistus = suumi</div>
 <script type="module">
 // Eraüritus 12 (kliendi brief) kasutaja hoovis, landingu gala meetodil (hero/scene.js): maapind = kasutaja pealtvaate foto,
@@ -79,13 +80,15 @@ const potM = M('#f2f0eb'), leafM = M('#3f7a3a', { flatShading: true }), flowerM 
 function plant(x, z, p) { boxM(.34, .4, .34, potM, x, .2, z, p); for (let k = 0; k < 5; k++) { const l = new THREE.Mesh(new THREE.IcosahedronGeometry(.24, 0), k === 4 ? flowerM : leafM); l.position.set(x + Math.cos(k * 1.3) * .1, .62 + k * .1, z + Math.sin(k * 1.3) * .1); l.scale.y = 1.3; l.castShadow = true; p.add(l); } }
 const LAY = Object.fromEntries(await Promise.all(['A', 'B', 'C'].map(async v => [v, (await fetch(v + '-layout.json').then(r => r.json())).layout])));
 const DIMS = Object.fromEntries(await Promise.all(['A', 'B', 'C'].map(async v => [v, await fetch(`dims-${v}.json`).then(r => r.json())])));
-let tentG = null;
+let tentG = null, curV = 'A';
+const picSrc = () => { $('picImg').src = curV + (dimOn ? '-image-mootudega.jpg' : '-image.jpg'); }; // pilt mõõtudega või ilma (Mõõdud)
 // valge põrandani linaga laud (+ roheline laualint ja valged lilled pikal laual), nagu pildil
 const linenM = M('#fbfbf8', { roughness: .9 }), runM = M('#5f8f58', { roughness: .8 });
 function skirtTable(w, d, x, z, p, deco) { boxM(w, .74, d, linenM, x, .37, z, p); boxM(w + .04, .03, d + .04, linenM, x, .755, z, p);
   if (!deco) return; const along = w >= d, len = Math.max(w, d); boxM(along ? len * .96 : .32, .008, along ? .32 : len * .96, runM, x, .772, z, p);
   for (let k = 0; k < 3; k++) { const a = -len / 2 + len * (k + .5) / 3, fx = along ? x + a : x, fz = along ? z : z + a; const f = new THREE.Mesh(new THREE.IcosahedronGeometry(.13, 1), flowerM); f.position.set(fx, .9, fz); f.castShadow = true; p.add(f); for (let j = 0; j < 4; j++) { const l = new THREE.Mesh(new THREE.IcosahedronGeometry(.07, 0), leafM); l.position.set(fx + Math.cos(j * 1.6) * .12, .82, fz + Math.sin(j * 1.6) * .12); p.add(l); } } }
 function build(v) {
+  curV = v;
   [...$('ver').children].forEach(x => x.setAttribute('aria-pressed', x.dataset.v === v));
   sc.remove(party); party = place(new THREE.Group()); sc.add(party);
   const L = LAY[v], o = L.origin, R = L.room, t = L.tent, g = new THREE.Group(); g.position.set(o.x, 0, o.y); party.add(g);
@@ -116,7 +119,7 @@ function build(v) {
   chairs(ch, g);
   for (const [x, z] of [[.45, R.W - .4], [R.L - .45, R.W - .4], [R.L / 2, R.W - .4], [.45, .4], [R.L - .45, .4]]) plant(x, z, g);
   $('lab').textContent = `${v}: ala 10 × 7 m · ${t.type === 'stretch' ? 'stretch-telk' : 'telk'} ${String(t.W).replace('.', ',')} × ${t.L} m · 1 pikk laud (${tables} × 183 cm) · ${ch.length} kohta`;
-  $('planImg').src = v + '-plan.png'; dims(v); need();
+  $('planImg').src = v + '-plan.png'; picSrc(); dims(v); need();
 }
 // mõõdud dims-X.json-ist (sama allikas mis 2D plaanil ja pildil), joonistatakse paigutuse rühma
 let dimG = null, tags = [], dimOn = true; const dmat = new THREE.LineBasicMaterial({ color: '#e53935' }), amat = new THREE.LineBasicMaterial({ color: '#16130F' });
@@ -135,8 +138,8 @@ function tentFade() { if (!tentG) return; const k = cam.position.y > 6.5 ? .3 : 
 let dirty = true; const need = () => { dirty = true; }; ctl.addEventListener('change', need);
 const fitSize = () => { r.setSize(innerWidth, innerHeight, false); cam.aspect = innerWidth / innerHeight; cam.updateProjectionMatrix(); need(); }; addEventListener('resize', fitSize); fitSize();
 $('ver').onclick = e => { const b = e.target.closest('button'); if (b) build(b.dataset.v); };
-$('dimB').onclick = () => { dimOn = !dimOn; $('dimB').setAttribute('aria-pressed', dimOn); dimG.visible = dimOn; need(); };
-$('vw').onclick = e => { const b = e.target.closest('button'); if (!b) return; [...$('vw').children].forEach(x => x.setAttribute('aria-pressed', x === b)); $('plan').style.display = b.dataset.w === '2d' ? 'block' : 'none'; $('tags').style.display = b.dataset.w === '2d' ? 'none' : ''; };
+$('dimB').onclick = () => { dimOn = !dimOn; $('dimB').setAttribute('aria-pressed', dimOn); dimG.visible = dimOn; picSrc(); need(); };
+$('vw').onclick = e => { const b = e.target.closest('button'); if (!b) return; const w = b.dataset.w; [...$('vw').children].forEach(x => x.setAttribute('aria-pressed', x === b)); $('plan').style.display = w === '2d' ? 'block' : 'none'; $('pic').style.display = w === 'pic' ? 'block' : 'none'; $('tags').style.display = $('hint').style.display = w === '3d' ? '' : 'none'; };
 (function loop() { requestAnimationFrame(loop); ctl.update(); if (!dirty) return; dirty = false; hideBk(); tentFade(); r.render(sc, cam); placeTags(); })();
 window.__b = { cam, ctl, need, build, home };
 const v0 = new URLSearchParams(location.search).get('v') || 'A';
