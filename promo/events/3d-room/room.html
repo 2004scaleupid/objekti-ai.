@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="et">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>Gala · 3D saal</title>
+<style>
+html,body{margin:0;height:100%;background:#e6e3de;font-family:Inter Tight,Helvetica,Arial,sans-serif;color:#16130F}
+#stage{position:fixed;inset:0;touch-action:none}
+canvas{display:block;width:100%;height:100%}
+.cap{position:fixed;left:10px;top:10px;font:500 11px/1.3 ui-monospace,Menlo,monospace;letter-spacing:.05em;text-transform:uppercase;background:rgba(255,255,255,.9);padding:5px 11px;border-radius:999px;pointer-events:none}
+.chips{position:fixed;left:50%;bottom:14px;transform:translateX(-50%);display:flex;gap:6px}.chips button{border:1px solid #cfcac2;background:#f8f6f2;border-radius:999px;padding:8px 18px;font:600 14px Inter Tight,Helvetica,Arial,sans-serif;cursor:pointer}.chips button.on{background:#E5482D;border-color:#E5482D;color:#fff}.hint{position:fixed;left:10px;bottom:16px;font:500 11px/1.3 ui-monospace,Menlo,monospace;letter-spacing:.05em;text-transform:uppercase;background:rgba(255,255,255,.88);padding:4px 10px;border-radius:999px;pointer-events:none;transition:opacity .6s}
+</style>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"}}</script>
+</head>
+<body>
+<div id="stage"></div><span class="cap" id="cap">Gala · 19 lauda · ~150 kohta</span><div class="chips" id="chips"><button data-k="0">Tühi</button><button data-k="1" class="on">Gala</button></div><span class="hint" id="hint">Lohista · kerimine suumib</span>
+<script type="module">
+import * as THREE from 'three';
+import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
+import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
+import {MeshoptDecoder} from 'three/addons/libs/meshopt_decoder.module.js';
+import {mergeGeometries} from 'three/addons/utils/BufferGeometryUtils.js';
+const Q=new URLSearchParams(location.search),TEST=Q.has('test'),D2R=Math.PI/180,small=Math.min(innerWidth,innerHeight)<700;
+const LX=29,LZ=18.5,LH=10;
+const stage=document.getElementById('stage');
+const r=new THREE.WebGLRenderer({antialias:!small,preserveDrawingBuffer:TEST});r.setPixelRatio(Math.min(devicePixelRatio||1,small?1.5:2));
+r.shadowMap.enabled=true;r.shadowMap.type=THREE.PCFSoftShadowMap;r.toneMapping=THREE.ACESFilmicToneMapping;r.toneMappingExposure=1.22;r.outputColorSpace=THREE.SRGBColorSpace;stage.appendChild(r.domElement);
+const sc=new THREE.Scene();
+const bgc=document.createElement('canvas');bgc.width=4;bgc.height=256;{const x=bgc.getContext('2d'),g=x.createLinearGradient(0,0,0,256);g.addColorStop(0,'#dad9d8');g.addColorStop(1,'#efebe6');x.fillStyle=g;x.fillRect(0,0,4,256);}
+const bg=new THREE.CanvasTexture(bgc);bg.colorSpace=THREE.SRGBColorSpace;sc.background=bg;
+sc.add(new THREE.HemisphereLight('#eef0f4','#6a6a70',1.05));
+const sun=new THREE.DirectionalLight('#fff4e6',1.25);sun.position.set(-8,26,30);sun.target.position.set(14.5,0,9);sc.add(sun.target);sun.castShadow=true;sun.shadow.mapSize.set(small?1024:2048,small?1024:2048);
+Object.assign(sun.shadow.camera,{left:-22,right:22,top:16,bottom:-16,near:1,far:80});sun.shadow.bias=-.0004;sun.shadow.normalBias=.03;sc.add(sun);
+// kollane kaldvalgus seinte äärest (odav, ilma varjuta)
+for(const [x,z] of [[3,3],[26,3],[3,15],[26,15]]){const l=new THREE.PointLight('#ffb25c',small?0:7,13,2);l.position.set(x,2.2,z);sc.add(l);}
+const cam=new THREE.PerspectiveCamera(30,1,.5,400);
+const ctrl=new OrbitControls(cam,r.domElement);ctrl.enableDamping=true;ctrl.dampingFactor=.08;ctrl.enablePan=true;ctrl.screenSpacePanning=false;ctrl.panSpeed=.8;ctrl.target.set(LX/2,1.6,LZ/2);
+ctrl.minDistance=24;ctrl.maxDistance=90;ctrl.minPolarAngle=.03;ctrl.maxPolarAngle=Math.PI/2-.05;ctrl.autoRotate=true;ctrl.autoRotateSpeed=.5;
+let touched=false;ctrl.addEventListener('start',()=>{touched=true;ctrl.autoRotate=false;document.getElementById('hint').style.opacity=0;});
+setTimeout(()=>document.getElementById('hint').style.opacity=0,7000);
+function place(az,pol,d){const T=ctrl.target;cam.position.set(T.x+Math.sin(az)*Math.sin(pol)*d,T.y+Math.cos(pol)*d,T.z+Math.sin(0)*0+Math.cos(az)*Math.sin(pol)*d);ctrl.update();}
+/* ---------- tekstuurid ---------- */
+const TL=new THREE.TextureLoader();const tex=(u,s=true)=>new Promise(res=>TL.load(u,t=>{t.colorSpace=s?THREE.SRGBColorSpace:THREE.NoColorSpace;t.anisotropy=8;t.generateMipmaps=true;res(t);}));
+const [tN,tW,tS,tE,tF]=await Promise.all(['wallN','wallW','wallS','wallE','floor'].map(n=>tex(`tex/${n}.webp`)));
+/* ---------- ruumi kest ---------- */
+const room=new THREE.Group();sc.add(room);const fg=new THREE.Group();sc.add(fg);let fk=1,fgoal=1;
+const floor=new THREE.Mesh(new THREE.PlaneGeometry(LX,LZ),new THREE.MeshStandardMaterial({map:tF,color:'#ffffff',emissive:'#ffffff',emissiveMap:tF,emissiveIntensity:.38,roughness:.85,metalness:.04}));floor.rotation.x=-Math.PI/2;floor.position.set(LX/2,0,LZ/2);floor.receiveShadow=true;room.add(floor);
+const slab=new THREE.Mesh(new THREE.BoxGeometry(LX+.5,.4,LZ+.5),new THREE.MeshStandardMaterial({color:'#4a4a4e',roughness:1}));slab.position.set(LX/2,-.21,LZ/2);room.add(slab);
+const walls={};
+function wall(name,map,w,pos,rotY,inN){const m=new THREE.Mesh(new THREE.PlaneGeometry(w,LH),new THREE.MeshBasicMaterial({map,side:THREE.FrontSide,color:'#ffffff'}));m.position.copy(pos);m.rotation.y=rotY;m.userData.n=inN;walls[name]=m;room.add(m);
+  // seina paksus: tume serv ülal
+  const cap=new THREE.Mesh(new THREE.BoxGeometry(w+.4,.14,.35),new THREE.MeshStandardMaterial({color:'#3c3c40',roughness:.9}));cap.position.copy(pos).add(new THREE.Vector3(0,LH/2+.07,0).add(inN.clone().multiplyScalar(-.17)));cap.rotation.y=rotY;m.userData.cap=cap;room.add(cap);return m;}
+wall('N',tN,LX,new THREE.Vector3(LX/2,LH/2,0),0,new THREE.Vector3(0,0,1));
+wall('W',tW,LZ,new THREE.Vector3(0,LH/2,LZ/2),Math.PI/2,new THREE.Vector3(1,0,0));
+wall('S',tS,LX,new THREE.Vector3(LX/2,LH/2,LZ),Math.PI,new THREE.Vector3(0,0,-1));
+wall('E',tE,LZ,new THREE.Vector3(LX,LH/2,LZ/2),-Math.PI/2,new THREE.Vector3(-1,0,0));
+/* ---------- galerii, piirded, trepid (päris 3D) ---------- */
+const steel=new THREE.MeshStandardMaterial({color:'#1c1d20',roughness:.5,metalness:.5});
+const galleryParts={N:new THREE.Group()};room.add(galleryParts.N);
+function box(g,w,h,d,x,y,z,ry=0,rz=0){const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),steel);m.position.set(x,y,z);m.rotation.set(0,ry,rz);m.castShadow=true;m.receiveShadow=true;g.add(m);return m;}
+function walkway(g,y,x0,x1,dep){const w=x1-x0;box(g,w,.14,dep,(x0+x1)/2,y,dep/2);box(g,w,.3,.1,(x0+x1)/2,y-.2,dep);box(g,w,.05,.05,(x0+x1)/2,y+1.05,dep);box(g,w,.04,.04,(x0+x1)/2,y+.55,dep);
+  for(let x=x0;x<=x1+.01;x+=1.8)box(g,.05,1.05,.05,x,y+.52,dep);for(let x=x0+1.5;x<x1;x+=3)box(g,.08,y-.1,.08,x,(y-.1)/2,dep*.9);}
+walkway(galleryParts.N,3.8,.4,26.2,1.2);walkway(galleryParts.N,6.4,.4,26.2,1.2);
+function stairs(g,x0,y0,z0,dx,dz,rise,run,n,wd){ // lend alates (x0,y0,z0) suunas (dx,dz), n astet
+  const len=Math.hypot(dx,dz),ang=Math.atan2(dz,dx);
+  for(let i=0;i<n;i++){const t=(i+.5)*run,px=x0+dx*t,pz=z0+dz*t,py=y0-rise*(i+1);const m=new THREE.Mesh(new THREE.BoxGeometry(run*1.02,.05,wd),steel);m.position.set(px,py,pz);m.rotation.y=-ang;m.castShadow=true;g.add(m);}
+  const L=n*run,H=n*rise,sl=Math.hypot(L,H),pitch=Math.atan2(H,L);
+  for(const s of [-1,1]){const sx=-dz*(wd/2)*s,sz=dx*(wd/2)*s;const m=new THREE.Mesh(new THREE.BoxGeometry(sl,.22,.05),steel);m.position.set(x0+dx*L/2+sx,y0-H/2-.1,z0+dz*L/2+sz);m.rotation.set(0,-ang,0);m.rotateZ(-pitch);g.add(m);
+    for(let i=0;i<=n;i+=3){const t=i*run,py=y0-rise*i+.5,p=new THREE.Mesh(new THREE.BoxGeometry(.04,1,.04),steel);p.position.set(x0+dx*t+sx,py,z0+dz*t+sz);g.add(p);}
+    const rl=new THREE.Mesh(new THREE.BoxGeometry(sl,.04,.04),steel);rl.position.set(x0+dx*L/2+sx,y0-H/2+1,z0+dz*L/2+sz);rl.rotation.set(0,-ang,0);rl.rotateZ(-pitch);g.add(rl);}
+}
+// A: ülemiselt alumisele (z-suunas), maandumisplatvorm, B: alumiselt põrandale (-x suunas)
+stairs(galleryParts.N,27.6,6.4,.5,0,1,.185,.31,14,1.0);
+box(galleryParts.N,1.8,.14,1.6,27.9,3.8,5.6);
+stairs(galleryParts.N,27.2,3.8,5.9,-1,0,.185,.29,20,1.0);
+walkway(galleryParts.N,6.4,26.2,26.4,.4);
+/* ---------- objektid ---------- */
+const GL=new GLTFLoader();GL.setMeshoptDecoder(MeshoptDecoder);
+
+// GLB sisseehitatud pildid -> data:-URI (mõned eelvaated blokeerivad blob:-URL-id); ja <img>-laadija ImageBitmapi asemel
+function fixGlb(buf){const dv=new DataView(buf),jl=dv.getUint32(12,true),js=new TextDecoder().decode(new Uint8Array(buf,20,jl)),J=JSON.parse(js);
+  const bo=20+jl+8,bl=dv.getUint32(20+jl,true),bin=new Uint8Array(buf,bo,bl);
+  (J.images||[]).forEach(im=>{if(im.bufferView==null)return;const v=J.bufferViews[im.bufferView],by=bin.subarray(v.byteOffset||0,(v.byteOffset||0)+v.byteLength);let s='';for(let i=0;i<by.length;i+=32768)s+=String.fromCharCode.apply(null,by.subarray(i,i+32768));im.uri='data:'+(im.mimeType||'image/png')+';base64,'+btoa(s);delete im.bufferView;});
+  let jb=new TextEncoder().encode(JSON.stringify(J));const pad=(4-jb.length%4)%4;const jp=new Uint8Array(jb.length+pad).fill(32);jp.set(jb);
+  const out=new Uint8Array(12+8+jp.length+8+bl);const o=new DataView(out.buffer);o.setUint32(0,0x46546C67,true);o.setUint32(4,2,true);o.setUint32(8,out.length,true);o.setUint32(12,jp.length,true);o.setUint32(16,0x4E4F534A,true);out.set(jp,20);
+  o.setUint32(20+jp.length,bl,true);o.setUint32(24+jp.length,0x004E4942,true);out.set(bin,28+jp.length);return out.buffer;}
+function parseGlb(buf){const cb=window.createImageBitmap;window.createImageBitmap=undefined;const p=GL.parseAsync(fixGlb(buf),'');window.createImageBitmap=cb;return p;}
+const load=u=>fetch(u).then(r=>r.arrayBuffer()).then(parseGlb).then(g=>g.scene);
+const [mT,mS,mB]=await Promise.all([load('models/table.glb'),load('models/stage.glb'),load('models/buffet.glb')]);
+function meshesOf(root){const a=[];root.updateMatrixWorld(true);root.traverse(o=>{if(o.isMesh)a.push(o);});return a;}
+function bboxOf(root){return new THREE.Box3().setFromObject(root);}
+// laud: skaleeri nii, et ring (toolidega) oleks 3,0 m läbimõõduga, jalad põrandal
+{const b=bboxOf(mT),s=b.getSize(new THREE.Vector3()),sc2=3.05/Math.max(s.x,s.z);
+ const meshes=meshesOf(mT);const T=await (await fetch('tables.json')).json();
+ const base=new THREE.Matrix4().makeScale(sc2,sc2,sc2).multiply(new THREE.Matrix4().makeTranslation(-(b.min.x+b.max.x)/2,-b.min.y,-(b.min.z+b.max.z)/2));
+ let seed=7;const rnd=()=>((seed=(seed*16807)%2147483647)-1)/2147483646;
+ const o=new THREE.Object3D();
+ for(const m of meshes){const im=new THREE.InstancedMesh(m.geometry,m.material,T.length);const wm=m.matrixWorld.clone();
+  T.forEach(([x,z],i)=>{o.position.set(x,0,z);o.rotation.set(0,rnd()*Math.PI*2,0);o.scale.set(1,1,1);o.updateMatrix();const M=o.matrix.clone().multiply(base).multiply(wm);im.setMatrixAt(i,M);});
+  im.castShadow=true;im.receiveShadow=true;im.frustumCulled=false;fg.add(im);}
+ // pehmed kontaktvarjud
+ const cvs=document.createElement('canvas');cvs.width=cvs.height=128;{const x=cvs.getContext('2d'),g=x.createRadialGradient(64,64,6,64,64,62);g.addColorStop(0,'rgba(0,0,0,.62)');g.addColorStop(.55,'rgba(0,0,0,.30)');g.addColorStop(1,'rgba(0,0,0,0)');x.fillStyle=g;x.fillRect(0,0,128,128);}
+ const bt=new THREE.CanvasTexture(cvs);const bm=new THREE.MeshBasicMaterial({map:bt,transparent:true,depthWrite:false,polygonOffset:true,polygonOffsetFactor:-2});
+ const blobs=new THREE.InstancedMesh(new THREE.PlaneGeometry(1,1).rotateX(-Math.PI/2),bm,T.length);
+ T.forEach(([x,z],i)=>{o.position.set(x,.02,z);o.rotation.set(0,0,0);o.scale.set(4.4,1,4.4);o.updateMatrix();blobs.setMatrixAt(i,o.matrix);});blobs.frustumCulled=false;fg.add(blobs);}
+// lava: 8 m lai, vastu põhjaseina, ekraanide taga on kardin (sein)
+function put(root,wd,x,z,ry,shadowW,shadowD){const b=bboxOf(root),s=b.getSize(new THREE.Vector3()),k=wd/s.x;const g=new THREE.Group();root.position.set(-(b.min.x+b.max.x)/2,-b.min.y,-(b.min.z+b.max.z)/2);const w=new THREE.Group();w.add(root);w.scale.setScalar(k);g.add(w);g.position.set(x,0,z);g.rotation.y=ry;
+  root.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true;}});fg.add(g);
+  const cvs=document.createElement('canvas');cvs.width=cvs.height=128;{const x2=cvs.getContext('2d'),gr=x2.createRadialGradient(64,64,10,64,64,62);gr.addColorStop(0,'rgba(0,0,0,.55)');gr.addColorStop(1,'rgba(0,0,0,0)');x2.fillStyle=gr;x2.fillRect(0,0,128,128);}
+  const sh=new THREE.Mesh(new THREE.PlaneGeometry(shadowW,shadowD).rotateX(-Math.PI/2),new THREE.MeshBasicMaterial({map:new THREE.CanvasTexture(cvs),transparent:true,depthWrite:false,polygonOffset:true,polygonOffsetFactor:-2}));sh.position.set(x,.02,z);sh.rotation.y=ry;fg.add(sh);return {g,size:s.clone().multiplyScalar(k)};}
+const st=put(mS,8,18.2,0,0,0,0);st.g.position.z=st.size.z/2+.35;
+const bf=put(mB,5.0,1.25,8.9,Math.PI/2,2,2);
+/* ---------- seinte peitmine kaamera poole ---------- */
+const wl=Object.values(walls);
+function updateWalls(){for(const w of wl){const n=w.userData.n,p=w.position;const s=new THREE.Vector3().subVectors(cam.position,p).dot(n);const hide=s<-.5;w.visible=!hide;w.userData.cap.visible=!hide;}
+  galleryParts.N.visible=walls.N.visible;}
+/* ---------- silmus ---------- */
+function size(){const w=innerWidth,h=innerHeight;r.setSize(w,h,false);cam.aspect=w/h;cam.updateProjectionMatrix();}
+addEventListener('resize',size);size();
+// algvaade: nagu diorama (lõuna-ida diagonaal, ~35° kõrgus)
+const home={az:.86,pol:(90-36)*D2R,d:small?96:84};
+place(home.az,home.pol,home.d);
+function clampTarget(){const t=ctrl.target;t.x=Math.min(24,Math.max(5,t.x));t.z=Math.min(15,Math.max(3.5,t.z));t.y=Math.min(3,Math.max(.4,t.y));}
+function draw(){clampTarget();fk+=(fgoal-fk)*.14;if(Math.abs(fgoal-fk)<.004)fk=fgoal;fg.visible=fk>.01;fg.scale.set(1,Math.max(.001,fk),1);updateWalls();r.render(sc,cam);}
+document.getElementById('chips').onclick=e=>{const b=e.target.closest('button');if(!b)return;const k=+b.dataset.k;fgoal=k;document.querySelectorAll('#chips button').forEach(x=>x.classList.toggle('on',x===b));document.getElementById('cap').textContent=k?'Gala · 19 lauda · ~150 kohta':'Tühi saal · 29 × 18,5 m';};
+if(TEST){ctrl.autoRotate=false;window.__r={setK:k=>{fgoal=k;fk=k;},sc,vis:()=>Object.fromEntries(Object.entries(walls).map(([k,w])=>[k,[w.visible,w.userData.cap.visible]])),view:(az,pol,d)=>{place(az,pol*1,d);draw();},draw,ready:true,info:()=>({tris:r.info.render.triangles,calls:r.info.render.calls})};}
+else{(function loop(){requestAnimationFrame(loop);ctrl.update();draw();})();}
+</script>
+</body>
+</html>

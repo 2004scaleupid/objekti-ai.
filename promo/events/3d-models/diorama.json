@@ -1,0 +1,54 @@
+{
+ "spaces": [
+  {
+   "k": "hall",
+   "t": "Saal",
+   "align": true,
+   "clip": true,
+   "items": [
+    {
+     "k": "tyhi",
+     "label": "Tühi",
+     "caption": "Tühi saal",
+     "glb": "models/tyhi.glb"
+    },
+    {
+     "k": "gala",
+     "label": "Gala",
+     "caption": "Gala · ~200 külalist",
+     "glb": "models/gala.glb"
+    },
+    {
+     "k": "konverents",
+     "label": "Konverents",
+     "caption": "Konverents · ~300 kohta",
+     "glb": "models/konverents.glb"
+    },
+    {
+     "k": "pidu",
+     "label": "Pidu",
+     "caption": "Pidu · püstijalavastuvõtt",
+     "glb": "models/pidu.glb"
+    }
+   ],
+   "azRange": [
+    -20,
+    200
+   ]
+  },
+  {
+   "k": "field",
+   "t": "Väli",
+   "align": false,
+   "clip": false,
+   "items": [
+    {
+     "k": "kontsert",
+     "label": "Kontsert",
+     "caption": "Kontsert väljal",
+     "glb": "models/field.glb"
+    }
+   ]
+  }
+ ]
+}

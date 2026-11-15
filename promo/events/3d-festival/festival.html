@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="et">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>Festival · 3D väli</title>
+<style>
+html,body{margin:0;height:100%;background:#cfdbe8;font-family:Inter Tight,Helvetica,Arial,sans-serif;color:#16130F}
+#stage{position:fixed;inset:0;touch-action:none}canvas{display:block;width:100%;height:100%}
+.cap{position:fixed;left:10px;top:10px;font:500 11px/1.3 ui-monospace,Menlo,monospace;letter-spacing:.05em;text-transform:uppercase;background:rgba(255,255,255,.9);padding:5px 11px;border-radius:999px;pointer-events:none}
+.hint{position:fixed;left:10px;bottom:16px;font:500 11px/1.3 ui-monospace,Menlo,monospace;letter-spacing:.05em;text-transform:uppercase;background:rgba(255,255,255,.88);padding:4px 10px;border-radius:999px;pointer-events:none;transition:opacity .6s}
+.chips{position:fixed;left:50%;bottom:14px;transform:translateX(-50%);display:flex;gap:6px}.chips button{border:1px solid #cfcac2;background:#f8f6f2;border-radius:999px;padding:8px 18px;font:600 14px Inter Tight,Helvetica,Arial,sans-serif;cursor:pointer}.chips button.on{background:#E5482D;border-color:#E5482D;color:#fff}
+</style>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"}}</script>
+</head>
+<body>
+<div id="stage"></div><span class="cap" id="cap">Kontsert · 70 × 50 m · ~1 500 inimest</span>
+<div class="chips" id="chips"><button data-k="0">Tühi väli</button><button data-k="1" class="on">Kontsert</button></div><span class="hint" id="hint">Lohista · kerimine suumib</span>
+<script type="module">
+import * as THREE from 'three';
+import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
+import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
+import {MeshoptDecoder} from 'three/addons/libs/meshopt_decoder.module.js';
+import {mergeGeometries} from 'three/addons/utils/BufferGeometryUtils.js';
+const Q=new URLSearchParams(location.search),TEST=Q.has('test'),D2R=Math.PI/180,small=Math.min(innerWidth,innerHeight)<700;
+const FX=70,FZ=50;                       // aedik: x 0..70 (laius), z 0..50 (lavast publikuni)
+const stageEl=document.getElementById('stage');
+const r=new THREE.WebGLRenderer({antialias:!small,preserveDrawingBuffer:TEST});r.setPixelRatio(Math.min(devicePixelRatio||1,small?1.5:2));
+r.shadowMap.enabled=true;r.shadowMap.type=THREE.PCFSoftShadowMap;r.toneMapping=THREE.ACESFilmicToneMapping;r.toneMappingExposure=1.0;r.outputColorSpace=THREE.SRGBColorSpace;stageEl.appendChild(r.domElement);
+const sc=new THREE.Scene();sc.background=new THREE.Color('#5f93cf');
+sc.add(new THREE.HemisphereLight('#cfe3ff','#5c7a3c',1.0));
+const sun=new THREE.DirectionalLight('#fff1da',2.4);sun.position.set(-45,60,70);sun.target.position.set(FX/2,0,FZ/2);sc.add(sun.target);sun.castShadow=true;sun.shadow.mapSize.set(small?1024:2048,small?1024:2048);
+Object.assign(sun.shadow.camera,{left:-55,right:55,top:42,bottom:-42,near:1,far:220});sun.shadow.bias=-.0004;sun.shadow.normalBias=.04;sc.add(sun);
+const cam=new THREE.PerspectiveCamera(30,1,.5,900);
+const ctrl=new OrbitControls(cam,r.domElement);ctrl.enableDamping=true;ctrl.dampingFactor=.08;ctrl.enablePan=true;ctrl.screenSpacePanning=false;ctrl.panSpeed=.8;ctrl.target.set(FX/2,2,FZ/2);
+ctrl.minDistance=45;ctrl.maxDistance=170;ctrl.minPolarAngle=.03;ctrl.maxPolarAngle=Math.PI/2-.06;ctrl.autoRotate=true;ctrl.autoRotateSpeed=.5;
+ctrl.addEventListener('start',()=>{ctrl.autoRotate=false;document.getElementById('hint').style.opacity=0;});setTimeout(()=>document.getElementById('hint').style.opacity=0,7000);
+function place(az,pol,d){const T=ctrl.target;cam.position.set(T.x+Math.sin(az)*Math.sin(pol)*d,T.y+Math.cos(pol)*d,T.z+Math.cos(az)*Math.sin(pol)*d);ctrl.update();}
+/* ---------- maastik: foto järgi (muru, puuderiba, taevas) ---------- */
+const TL=new THREE.TextureLoader();const tex=(u,s=true)=>new Promise(res=>TL.load(u,t=>{t.colorSpace=s?THREE.SRGBColorSpace:THREE.NoColorSpace;t.anisotropy=8;res(t);}));
+const [tRing,tGrass]=await Promise.all([tex('tex/ring.webp'),tex('tex/grass.webp')]);
+tGrass.wrapS=tGrass.wrapT=THREE.MirroredRepeatWrapping;tGrass.repeat.set(55,55);
+const ground=new THREE.Mesh(new THREE.PlaneGeometry(500,500),new THREE.MeshStandardMaterial({map:tGrass,roughness:1}));ground.rotation.x=-Math.PI/2;ground.position.set(FX/2,0,FZ/2);ground.receiveShadow=true;sc.add(ground);
+tRing.wrapS=THREE.RepeatWrapping;tRing.repeat.set(1,1);
+const ring=new THREE.Mesh(new THREE.CylinderGeometry(190,190,70,64,1,true),new THREE.MeshBasicMaterial({map:tRing,side:THREE.BackSide,fog:false}));ring.position.set(FX/2,34,FZ/2);ring.rotation.y=.6;sc.add(ring);
+/* ---------- abivahendid ---------- */
+const mat=(c,o={})=>new THREE.MeshStandardMaterial({color:c,roughness:.7,...o});
+const fg=new THREE.Group();sc.add(fg);let fk=1,fgoal=1;
+const sh=m=>{m.castShadow=true;m.receiveShadow=true;return m;};
+const box=(w,h,d,x,y,z,m)=>{const o=sh(new THREE.Mesh(new THREE.BoxGeometry(w,h,d),m));o.position.set(x,y,z);return o;};
+const col=(g,hex)=>{const c=new THREE.Color(hex),n=g.attributes.position.count,a=new Float32Array(n*3);for(let i=0;i<n;i++){a[3*i]=c.r;a[3*i+1]=c.g;a[3*i+2]=c.b;}g.setAttribute('color',new THREE.BufferAttribute(a,3));return g;};
+const B=(w,h,d,x,y,z,hex)=>{const g=new THREE.BoxGeometry(w,h,d);g.translate(x,y,z);return col(g,hex);};
+/* moodultara: 2,5 m paneel, 1,1 m kõrge (raam + 11 varrast), instantsid */
+const panel=mergeGeometries([B(2.5,.05,.05,0,1.08,0,'#c7ccd1'),B(2.5,.05,.05,0,.12,0,'#c7ccd1'),B(.06,1.1,.06,-1.22,.55,0,'#c7ccd1'),B(.06,1.1,.06,1.22,.55,0,'#c7ccd1'),...Array.from({length:11},(_,i)=>B(.025,.95,.025,-1.1+i*.22,.58,0,'#aab0b6')),B(.3,.04,.5,-1.15,.02,0,'#9aa0a6'),B(.3,.04,.5,1.15,.02,0,'#9aa0a6')]);
+const panelMat=new THREE.MeshStandardMaterial({vertexColors:true,roughness:.4,metalness:.7});
+function fenceRun(list){const im=new THREE.InstancedMesh(panel,panelMat,list.length),o=new THREE.Object3D();list.forEach(([x,z,ry],i)=>{o.position.set(x,0,z);o.rotation.set(0,ry,0);o.updateMatrix();im.setMatrixAt(i,o.matrix);});im.castShadow=true;im.frustumCulled=false;return im;}
+const fp=[];const L=2.5;
+// ümbrus: põhi- ja külgservad täis, esiserv (z=FZ) väravaavadega x 29..41
+for(let x=L/2;x<FX;x+=L)fp.push([x,0,0]);                                   // tagumine (laval)
+for(let z=L/2;z<FZ;z+=L){fp.push([0,z,Math.PI/2]);fp.push([FX,z,Math.PI/2]);}    // küljed
+for(let x=L/2;x<FX;x+=L){if(x>28&&x<42)continue;fp.push([x,FZ,0]);}               // esi: värava vahe
+// lavaesine barjäär (fotograafide ala) z=9, x 14..56 (keskel kõnnikuvahe)
+fg.add(fenceRun(fp));
+/* sissepääsuväravad: 3 kaart (4 m lai), kõrge pealmine tala + postid + kontrollpult */
+const steel=mat('#2b2e33',{metalness:.5,roughness:.5}),white=mat('#f2f0ec',{roughness:.85}),dark=mat('#3a3b3f',{roughness:.8});
+for(const gx of [31.5,35,38.5]){fg.add(box(.18,3.2,.18,gx-1.3,1.6,FZ,steel),box(.18,3.2,.18,gx+1.3,1.6,FZ,steel),box(2.8,.35,.3,gx,3.3,FZ,mat('#e5482d',{roughness:.6})));}
+fg.add(box(11,.08,.08,35,.04,FZ,mat('#1b1b1d')));
+/* pagoodatelk 4×4: neli posti, püramiidkatus, avatud küljed, letileht (baar) */
+const tentWhite=mat('#f6f4f0',{roughness:.9,side:THREE.DoubleSide});
+function pagoda(x,z,ry,opts={}){const g=new THREE.Group(),s=opts.s||4,h=opts.h||2.4;
+  for(const [a,b] of [[-1,-1],[1,-1],[-1,1],[1,1]])g.add(box(.1,h,.1,a*s/2,h/2,b*s/2,mat('#d9d9dc',{metalness:.6,roughness:.4})));
+  const roof=sh(new THREE.Mesh(new THREE.ConeGeometry(s*.72,s*.55,4,1,true),tentWhite));roof.rotation.y=Math.PI/4;roof.position.y=h+s*.275;g.add(roof);
+  const val=sh(new THREE.Mesh(new THREE.CylinderGeometry(s*.72,s*.72,.32,4,1,true),opts.val?mat(opts.val,{side:THREE.DoubleSide}):tentWhite));val.rotation.y=Math.PI/4;val.position.y=h-.1;g.add(val);
+  if(opts.counter){g.add(box(s*.8,1.0,.7,0,.5,s/2-.7,mat('#2f3033')),box(s*.8,.05,.8,0,1.02,s/2-.7,mat('#d8d4cc',{roughness:.5})),box(s*.7,1.6,.4,0,.8,-s/2+.5,mat('#2f3033')));}
+  if(opts.back)g.add(box(s,h,.05,0,h/2,-s/2,tentWhite));
+  g.position.set(x,0,z);g.rotation.y=ry;return g;}
+// baaritelgid (3): lava paremal ja lavast küljel
+fg.add(pagoda(55,13,0,{counter:true,back:true}),pagoda(60,13,0,{counter:true,back:true}),pagoda(12,34,Math.PI/2,{counter:true,back:true}));
+/* pop-up telgid 3×3 ja 3×6 (toit / merch), kaks rida vasakul */
+function popup(x,z,ry,w,d,c){const g=new THREE.Group();const h=2.5;
+  for(const [a,b] of [[-1,-1],[1,-1],[-1,1],[1,1]])g.add(box(.06,h,.06,a*w/2,h/2,b*d/2,mat('#cfd2d6',{metalness:.6,roughness:.4})));
+  const top=sh(new THREE.Mesh(new THREE.BoxGeometry(w+.2,.18,d+.2),mat(c,{roughness:.85})));top.position.y=h+.12;g.add(top);
+  const sl=sh(new THREE.Mesh(new THREE.CylinderGeometry(.0,.0,0,3),tentWhite));
+  const roof=sh(new THREE.Mesh(new THREE.ConeGeometry(Math.max(w,d)*.62,.55,4,1,true),mat(c,{roughness:.85,side:THREE.DoubleSide})));roof.rotation.y=Math.PI/4;roof.scale.set(w/Math.max(w,d),1,d/Math.max(w,d));roof.position.y=h+.45;g.add(roof);
+  g.add(box(w*.9,.9,.6,0,.45,d/2-.6,mat('#c9a77b',{roughness:.8})));g.position.set(x,0,z);g.rotation.y=ry;return g;}
+const cols=['#e5482d','#2f6fb5','#e8b92f','#f4f1ea'];
+for(let i=0;i<4;i++)fg.add(popup(4+i*0,0,0,3,3,cols[0]));fg.children.pop();fg.children.pop();fg.children.pop();fg.children.pop();
+for(let i=0;i<5;i++)fg.add(popup(5.5,22+i*4.2,Math.PI/2,3,3,cols[i%4]));
+for(let i=0;i<3;i++)fg.add(popup(11.5,26+i*6.5,Math.PI/2,3,6,cols[(i+1)%4]));
+/* FOH miksitelk: 6×4 must, avatud ees, miksipult + 2 tuledetorni */
+{const g=new THREE.Group(),w=6,d=4,h=2.6;for(const [a,b] of [[-1,-1],[1,-1],[-1,1],[1,1]])g.add(box(.1,h,.1,a*w/2,h/2,b*d/2,mat('#d9d9dc',{metalness:.6,roughness:.4})));
+  const roof=sh(new THREE.Mesh(new THREE.BoxGeometry(w+.5,.12,d+.5),mat('#1f2023',{roughness:.8})));roof.position.y=h+.05;g.add(roof);
+  g.add(box(w,h,.05,0,h/2,-d/2,mat('#1f2023')),box(.05,h,d,-w/2,h/2,0,mat('#1f2023')),box(.05,h,d,w/2,h/2,0,mat('#1f2023')));
+  g.add(box(3.2,.9,.9,0,.45,0,mat('#2b2d31')),box(3.0,.05,.8,0,.92,0,mat('#4d5057',{metalness:.4})));
+  for(const a of [-1,1])g.add(box(.35,2.2,.35,a*4.6,1.1,.5,mat('#17181a')));
+  g.position.set(35,0,31);fg.add(g);}
+/* ---------- mudelid ---------- */
+const GL=new GLTFLoader();GL.setMeshoptDecoder(MeshoptDecoder);
+
+// GLB sisseehitatud pildid -> data:-URI (mõned eelvaated blokeerivad blob:-URL-id); ja <img>-laadija ImageBitmapi asemel
+function fixGlb(buf){const dv=new DataView(buf),jl=dv.getUint32(12,true),js=new TextDecoder().decode(new Uint8Array(buf,20,jl)),J=JSON.parse(js);
+  const bo=20+jl+8,bl=dv.getUint32(20+jl,true),bin=new Uint8Array(buf,bo,bl);
+  (J.images||[]).forEach(im=>{if(im.bufferView==null)return;const v=J.bufferViews[im.bufferView],by=bin.subarray(v.byteOffset||0,(v.byteOffset||0)+v.byteLength);let s='';for(let i=0;i<by.length;i+=32768)s+=String.fromCharCode.apply(null,by.subarray(i,i+32768));im.uri='data:'+(im.mimeType||'image/png')+';base64,'+btoa(s);delete im.bufferView;});
+  let jb=new TextEncoder().encode(JSON.stringify(J));const pad=(4-jb.length%4)%4;const jp=new Uint8Array(jb.length+pad).fill(32);jp.set(jb);
+  const out=new Uint8Array(12+8+jp.length+8+bl);const o=new DataView(out.buffer);o.setUint32(0,0x46546C67,true);o.setUint32(4,2,true);o.setUint32(8,out.length,true);o.setUint32(12,jp.length,true);o.setUint32(16,0x4E4F534A,true);out.set(jp,20);
+  o.setUint32(20+jp.length,bl,true);o.setUint32(24+jp.length,0x004E4942,true);out.set(bin,28+jp.length);return out.buffer;}
+function parseGlb(buf){const cb=window.createImageBitmap;window.createImageBitmap=undefined;const p=GL.parseAsync(fixGlb(buf),'');window.createImageBitmap=cb;return p;}
+const load=u=>fetch(u).then(r=>r.arrayBuffer()).then(parseGlb).then(g=>g.scene);
+const [mS,mT,mW]=await Promise.all([load('models/stage.glb'),load('models/tower.glb'),load('models/toilets.glb')]);
+function put(root,{w,wz,h,len},x,z,ry){const b=new THREE.Box3().setFromObject(root),s=b.getSize(new THREE.Vector3());
+  const k=wz?wz/s.z:w?w/s.x:h?h/s.y:len/Math.max(s.x,s.z);const g=new THREE.Group(),inner=new THREE.Group();root.position.set(-(b.min.x+b.max.x)/2,-b.min.y,-(b.min.z+b.max.z)/2);inner.add(root);inner.scale.setScalar(k);g.add(inner);g.position.set(x,0,z);g.rotation.y=ry;
+  root.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true;}});fg.add(g);return {g,size:s.clone().multiplyScalar(k)};}
+const stage=put(mS,{wz:26},FX/2+2,0,-Math.PI/2);stage.g.position.z=stage.size.x/2+.4;window.__stage=stage.size;
+{const bz=stage.size.x+3.5,fp2=[];for(let x=FX/2-17+L/2;x<FX/2+19;x+=L){if(Math.abs(x-(FX/2+2))<1.6)continue;fp2.push([x,bz,0]);}fg.add(fenceRun(fp2));}
+for(const [x,z] of [[9,24],[61,24]])put(mT.clone(true),{h:13},x,z,0);
+put(mW,{len:11},FX-3.2,38,Math.PI/2);
+/* ---------- näha ---------- */
+function clampTarget(){const t=ctrl.target;t.x=Math.min(FX-8,Math.max(8,t.x));t.z=Math.min(FZ-6,Math.max(6,t.z));t.y=Math.min(4,Math.max(.4,t.y));}
+function draw(){clampTarget();fk+=(fgoal-fk)*.14;if(Math.abs(fgoal-fk)<.004)fk=fgoal;fg.visible=fk>.01;fg.scale.set(1,Math.max(.001,fk),1);r.render(sc,cam);}
+function size(){const w=innerWidth,h=innerHeight;r.setSize(w,h,false);cam.aspect=w/h;cam.updateProjectionMatrix();}addEventListener('resize',size);size();
+place(.62,(90-34)*D2R,small?150:120);
+document.getElementById('chips').onclick=e=>{const b=e.target.closest('button');if(!b)return;const k=+b.dataset.k;fgoal=k;document.querySelectorAll('#chips button').forEach(x=>x.classList.toggle('on',x===b));document.getElementById('cap').textContent=k?'Kontsert · 70 × 50 m · ~1 500 inimest':'Tühi väli · 70 × 50 m';};
+if(TEST){ctrl.autoRotate=false;window.__r={setK:k=>{fgoal=k;fk=k;},view:(az,pol,d)=>{place(az,pol,d);draw();},draw,ready:true,info:()=>({tris:r.info.render.triangles,calls:r.info.render.calls})};}
+else{(function loop(){requestAnimationFrame(loop);ctrl.update();draw();})();}
+</script>
+</body>
+</html>

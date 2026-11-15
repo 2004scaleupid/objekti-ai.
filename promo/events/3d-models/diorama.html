@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="et">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>3D-maketid · Vaade3D</title>
+<link rel="icon" href="/logo.svg" type="image/svg+xml">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+:root{--bg:#EEEAE4;--paper:#F8F6F2;--ink:#16130F;--muted:#77706A;--line:#DDD7CE;--accent:#E5482D;--sans:"Inter Tight","Helvetica Neue",Arial,sans-serif;--mono:"JetBrains Mono",ui-monospace,Menlo,monospace;color-scheme:light}
+@media (prefers-color-scheme:dark){:root{--bg:#191715;--paper:#22201D;--ink:#F1ECE5;--muted:#A39B92;--line:#37322D;--accent:#F0603F;color-scheme:dark}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased}
+button{font:inherit;color:inherit;cursor:pointer}
+.wrap{max-width:1100px;margin:0 auto;padding:0 max(16px,env(safe-area-inset-left)) 0 max(16px,env(safe-area-inset-right))}
+.top{display:flex;align-items:center;justify-content:space-between;height:56px;border-bottom:1px solid var(--line)}
+.brand{display:flex;align-items:center;gap:8px;font-weight:800;font-size:17px;letter-spacing:-.02em;text-decoration:none;color:inherit}.brand img{width:22px;height:22px}.brand b{color:var(--accent)}
+.top a.back{font-size:13px;color:var(--muted);text-decoration:none}
+h1{font-size:clamp(26px,4.2vw,42px);line-height:1.05;letter-spacing:-.03em;margin:22px 0 8px;font-weight:800}h1 span{color:var(--accent)}
+.lead{margin:0 0 14px;color:var(--muted);max-width:62ch}
+.spaces{display:flex;gap:6px;margin-bottom:10px}
+.spaces button{border:1px solid var(--line);background:var(--paper);border-radius:10px;padding:9px 22px;font-weight:700}
+.spaces button[aria-selected=true]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.stage{position:relative;height:min(68vh,620px);border-radius:12px;overflow:hidden;background:#e4e8ee;border:1px solid var(--line);touch-action:none;user-select:none;-webkit-user-select:none;cursor:grab}
+.stage:active{cursor:grabbing}.stage canvas{display:block;width:100%;height:100%}
+.cap{position:absolute;left:10px;top:10px;font-family:var(--mono);font-size:11px;letter-spacing:.05em;text-transform:uppercase;background:rgba(255,255,255,.9);color:#16130F;padding:5px 11px;border-radius:999px;pointer-events:none}
+.hint{position:absolute;left:10px;bottom:10px;font-family:var(--mono);font-size:11px;letter-spacing:.05em;text-transform:uppercase;background:rgba(255,255,255,.88);color:#16130F;padding:4px 10px;border-radius:999px;pointer-events:none;transition:opacity .6s}
+.loading{position:absolute;inset:0;display:grid;place-items:center;color:#16130F;font-family:var(--mono);font-size:12px;letter-spacing:.06em;text-transform:uppercase;background:rgba(238,234,228,.72);pointer-events:none;transition:opacity .4s}
+.chips{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;margin:12px 0 4px}.chips::-webkit-scrollbar{display:none}
+.chips button{flex:none;border:1px solid var(--line);background:var(--paper);border-radius:999px;padding:8px 16px;font-weight:600;font-size:14px}
+.chips button[aria-selected=true]{background:var(--accent);border-color:var(--accent);color:#fff}
+footer{margin:26px 0 36px;padding-top:14px;border-top:1px solid var(--line);color:var(--muted);font-size:12.5px}
+.hide{display:none!important}
+</style>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"}}</script>
+</head>
+<body>
+<div class="wrap">
+  <div class="top"><a class="brand" href="/"><img src="/logo.svg" alt=""><span>Vaade<b>3D</b></span></a><a class="back" href="./">← Enne ja pärast</a></div>
+  <h1>Maketina. <span>Pööra, suumi, täida.</span></h1>
+  <p class="lead">Sama ruum 3D-s: lohista pööramiseks, kerimine või näpuga suumimine. Vali paigutus ja ruum täitub.</p>
+  <div class="spaces" id="spaces" role="tablist" aria-label="Ruum"></div>
+  <div class="stage" id="stage"><span class="cap" id="cap"></span><span class="hint" id="hint"></span><div class="loading" id="loading">Laen…</div></div>
+  <div class="chips" id="chips" role="tablist" aria-label="Paigutus"></div>
+  <footer>Mudelid on tehisaru loodud fotodest (nano-banana + Tripo). Kohtade arvud on ligikaudsed.</footer>
+</div>
+<script type="module">
+import * as THREE from 'three';
+import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
+import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
+import {MeshoptDecoder} from 'three/addons/libs/meshopt_decoder.module.js';
+const Q=new URLSearchParams(location.search),TEST=Q.has('test'),$=s=>document.querySelector(s),D2R=Math.PI/180;
+const small=Math.min(innerWidth,innerHeight)<700;
+const cfg=await (await fetch(Q.get('cfg')||'diorama.json')).json();
+const SP=cfg.spaces;let si=0,ki=0;
+const stage=$('#stage');
+/* ---------- renderer: kaks stseeni -> kaks sihtmärki -> ristlahmumine ekraanil ---------- */
+const r=new THREE.WebGLRenderer({antialias:!small,preserveDrawingBuffer:TEST});r.setPixelRatio(Math.min(devicePixelRatio||1,small?1.5:2));
+r.shadowMap.enabled=true;r.shadowMap.type=THREE.PCFSoftShadowMap;r.toneMapping=THREE.ACESFilmicToneMapping;r.outputColorSpace=THREE.SRGBColorSpace;r.localClippingEnabled=true;
+stage.prepend(r.domElement);
+const mkRT=()=>new THREE.WebGLRenderTarget(4,4,{type:THREE.HalfFloatType,samples:small?0:4});
+const rtA=mkRT(),rtB=mkRT();
+const bgc=document.createElement('canvas');bgc.width=4;bgc.height=256;{const x=bgc.getContext('2d'),g=x.createLinearGradient(0,0,0,256);g.addColorStop(0,'#dde4ec');g.addColorStop(1,'#f3f0eb');x.fillStyle=g;x.fillRect(0,0,4,256);}
+const bg=new THREE.CanvasTexture(bgc);bg.colorSpace=THREE.SRGBColorSpace;
+function mkScene(){const s=new THREE.Scene();s.background=bg;s.add(new THREE.HemisphereLight('#ffffff','#c9c4bb',1.0));const sun=new THREE.DirectionalLight('#fff3e2',1.9);sun.castShadow=true;sun.shadow.mapSize.set(small?1024:2048,small?1024:2048);s.add(sun);s.userData.sun=sun;return s;}
+const sceneA=mkScene(),sceneB=mkScene();
+const quad=new THREE.Mesh(new THREE.PlaneGeometry(2,2),new THREE.ShaderMaterial({uniforms:{a:{value:rtA.texture},b:{value:rtB.texture},t:{value:0}},
+  vertexShader:'varying vec2 v;void main(){v=uv;gl_Position=vec4(position.xy,0.,1.);}',
+  fragmentShader:'uniform sampler2D a,b;uniform float t;varying vec2 v;void main(){vec4 c=mix(texture2D(a,v),texture2D(b,v),t);gl_FragColor=vec4(c.rgb,1.);\n#include <tonemapping_fragment>\n#include <colorspace_fragment>\n}',toneMapped:true,depthTest:false,depthWrite:false}));
+quad.frustumCulled=false;const qScene=new THREE.Scene(),qCam=new THREE.Camera();qScene.add(quad);
+const cam=new THREE.PerspectiveCamera(30,1,.05,200);
+/* ---------- seinte lõikamine: lähimad seinad peidetakse, kaamera suuna järgi ---------- */
+const CP={xp:new THREE.Plane(new THREE.Vector3(-1,0,0),1e6),xn:new THREE.Plane(new THREE.Vector3(1,0,0),1e6),zp:new THREE.Plane(new THREE.Vector3(0,0,-1),1e6),zn:new THREE.Plane(new THREE.Vector3(0,0,1),1e6)};
+const CLIPS=[CP.xp,CP.xn,CP.zp,CP.zn];
+function updateClip(foot,on){const off=1e6;CLIPS.forEach(p=>p.constant=off);if(!on||!foot||window.__noclip)return;
+  const dx=cam.position.x-ctrl.target.x,dz=cam.position.z-ctrl.target.z,hl=Math.hypot(dx,dz)||1,cx=dx/hl,cz=dz/hl;
+  const top=ctrl.getPolarAngle()<.38;if(top)return;                       // ülalt vaates seinad jäävad
+  const mx=foot.mx,mz=foot.mz;                                           // 0,5 m seina sees (mudeli ühikutes)
+  if(cx>.3)CP.xp.constant=foot.W/2-mx;if(cx<-.3)CP.xn.constant=foot.W/2-mx;
+  if(cz>.3)CP.zp.constant=foot.D/2-mz;if(cz<-.3)CP.zn.constant=foot.D/2-mz;}
+/* ---------- mudelite laadimine, joondus ja vahemälu ---------- */
+const GL=new GLTFLoader();GL.setMeshoptDecoder(MeshoptDecoder);
+const cache=new Map();let REF=null;
+function samples(m){const pts=[],v=new THREE.Vector3();m.traverse(o=>{if(o.isMesh){const p=o.geometry.attributes.position;for(let i=0;i<p.count;i+=29){v.fromBufferAttribute(p,i).applyMatrix4(o.matrixWorld);pts.push([v.x,v.y,v.z]);}}});return pts;}
+function minRect(pts){let best=0,ba=1e18;for(let d=0;d<90;d+=.5){const t=d*D2R,c=Math.cos(t),s=Math.sin(t);let x0=1e9,x1=-1e9,z0=1e9,z1=-1e9;for(const [x,,z] of pts){const u=x*c+z*s,w=-x*s+z*c;if(u<x0)x0=u;if(u>x1)x1=u;if(w<z0)z0=w;if(w>z1)z1=w;}const A=(x1-x0)*(z1-z0);if(A<ba){ba=A;best=t;}}return best;}
+function sigOf(m){const b=new THREE.Box3().setFromObject(m),c=b.getCenter(new THREE.Vector3()),s=b.getSize(new THREE.Vector3()),pts=samples(m),th=b.min.y+s.y*.55;let sx=0,sz=0,n=0;for(const [x,y,z] of pts)if(y>th){sx+=(x-c.x)/s.x;sz+=(z-c.z)/s.z;n++;}return [sx/(n||1),sz/(n||1),s.x,s.z];}
+async function getModel(item,align){
+  if(cache.has(item.glb))return cache.get(item.glb);
+  const p=new Promise(async res=>{const gl=await GL.loadAsync(item.glb);const root=new THREE.Group(),m=gl.scene;root.add(m);
+    m.updateMatrixWorld(true);let b=new THREE.Box3().setFromObject(m);m.position.sub(b.getCenter(new THREE.Vector3()));m.updateMatrixWorld(true);
+    if(align){m.rotation.y=minRect(samples(m));m.updateMatrixWorld(true);
+      // 90° valik: sama seina-/ekraanikaal kui võrdlusmudelil; samuti sama pikk telg
+      if(REF){let bestK=0,bs=-9;for(let k=0;k<4;k++){root.rotation.y=k*Math.PI/2;root.updateMatrixWorld(true);const sg=sigOf(root);const dot=sg[0]*REF.sig[0]+sg[1]*REF.sig[1];const ar=Math.min(sg[2]/sg[3],REF.sig[2]/REF.sig[3])/Math.max(sg[2]/sg[3],REF.sig[2]/REF.sig[3]);const sc=dot*.5+ar;if(sc>bs){bs=sc;bestK=k;}}
+        root.rotation.y=bestK*Math.PI/2;}
+      if(item.rot90!=null)root.rotation.y=item.rot90*Math.PI/2;root.updateMatrixWorld(true);}
+    b=new THREE.Box3().setFromObject(root);const c=b.getCenter(new THREE.Vector3()),s=b.getSize(new THREE.Vector3());
+    const wrap=new THREE.Group();wrap.add(root);root.position.set(-c.x,-b.min.y,-c.z);
+    if(align){if(!REF){wrap.updateMatrixWorld(true);REF={W:s.x,D:s.z,H:s.y,sig:sigOf(root)};}
+      wrap.scale.set(REF.W/s.x,REF.H/s.y,REF.D/s.z);wrap.position.set(item.dx||0,0,item.dz||0);}
+    wrap.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true;const ms=[].concat(o.material);ms.forEach(mt=>{mt.clippingPlanes=CLIPS;mt.clipShadows=true;mt.side=THREE.DoubleSide;mt.envMapIntensity=.6;});}});
+    wrap.updateMatrixWorld(true);const bb=new THREE.Box3().setFromObject(wrap);res({wrap,box:bb});});
+  cache.set(item.glb,p);return p;}
+/* ---------- vaade: kaamera, kontrollid ---------- */
+const ctrl=new OrbitControls(cam,r.domElement);ctrl.enableDamping=true;ctrl.dampingFactor=.08;ctrl.enablePan=false;ctrl.autoRotate=true;ctrl.autoRotateSpeed=.55;
+let touched=false;ctrl.addEventListener('start',()=>{touched=true;ctrl.autoRotate=false;$('#hint').style.opacity=0;});
+$('#hint').textContent=matchMedia('(pointer:coarse)').matches?'Lohista · suumi kahe sõrmega':'Lohista · kerimine suumib';setTimeout(()=>{$('#hint').style.opacity=0;},7000);
+let foot=null,curRoot=[null,null],spaceBox=null,sway=null;
+function frameModel(box,clip,rng){const s=box.getSize(new THREE.Vector3()),R=Math.max(s.x,s.y,s.z);
+  const sc=box.getCenter(new THREE.Vector3());ctrl.target.set(0,s.y*.18,0);
+  ctrl.minDistance=R*1.15;ctrl.maxDistance=R*3.2;ctrl.minPolarAngle=.03;ctrl.maxPolarAngle=Math.PI/2-.04;ctrl.minAzimuthAngle=rng?rng[0]*D2R:-Infinity;ctrl.maxAzimuthAngle=rng?rng[1]*D2R:Infinity;sway=rng?rng:null;ctrl.autoRotate=!rng&&!touched;
+  cam.position.set(Math.sin(.8)*Math.sin(1.0)*R*2.1,Math.cos(1.0)*R*2.1+s.y*.18,Math.cos(.8)*Math.sin(1.0)*R*2.1);cam.near=R*.02;cam.far=R*30;cam.updateProjectionMatrix();ctrl.update();
+  for(const sc2 of [sceneA,sceneB]){const sun=sc2.userData.sun;sun.position.set(R*1.1,R*1.7,R*.9);Object.assign(sun.shadow.camera,{left:-R,right:R,top:R,bottom:-R,near:.1,far:R*5});sun.shadow.bias=-.0006;sun.shadow.camera.updateProjectionMatrix();}
+  foot=clip?{W:s.x,D:s.z,mx:s.x*.036,mz:s.x*.036}:null;}
+/* ---------- vahetus ---------- */
+let showing=null,fade=null,t0=0;
+async function show(i,k,instant){const S=SP[i],it=S.items[k];$('#loading').style.opacity=1;$('#loading').classList.remove('hide');
+  const {wrap,box}=await getModel(it,S.align);$('#loading').style.opacity=0;setTimeout(()=>$('#loading').classList.add('hide'),400);
+  if(showing&&showing.wrap===wrap)return;
+  if(!showing||instant||spaceChanged){for(const sc of [sceneA,sceneB])sc.children.filter(o=>o.userData.model).forEach(o=>sc.remove(o));wrap.userData.model=true;sceneA.add(wrap);frameModel(box,S.clip,S.azRange);showing={wrap,box};fade=null;spaceChanged=false;quad.material.uniforms.t.value=0;}
+  else{ // uus mudel scene B-sse, ristlahmumine A -> B
+    const old=showing;if(fade)finishFade();wrap.userData.model=true;sceneB.add(wrap);fade={from:old,to:{wrap,box},t0:performance.now()};}
+  $('#cap').textContent=it.caption||it.label;}
+function finishFade(){if(!fade)return;sceneA.children.filter(o=>o.userData.model).forEach(o=>sceneA.remove(o));fade.to.wrap&&sceneB.remove(fade.to.wrap);sceneA.add(fade.to.wrap);showing=fade.to;fade=null;quad.material.uniforms.t.value=0;}
+let spaceChanged=false;
+function ui(){$('#spaces').innerHTML=SP.map((s,i)=>`<button role="tab" data-i="${i}" aria-selected="${i===si}">${s.t}</button>`).join('');
+  $('#chips').innerHTML=SP[si].items.map((s,i)=>`<button role="tab" data-i="${i}" aria-selected="${i===ki}">${s.label}</button>`).join('');}
+$('#spaces').onclick=e=>{const b=e.target.closest('button');if(!b||+b.dataset.i===si)return;si=+b.dataset.i;ki=0;spaceChanged=true;REF=SP[si].align?null:REF;ui();show(si,ki,true);};
+$('#chips').onclick=e=>{const b=e.target.closest('button');if(!b||+b.dataset.i===ki)return;ki=+b.dataset.i;ui();show(si,ki);};
+const idle=f=>window.requestIdleCallback?requestIdleCallback(f,{timeout:3500}):setTimeout(f,3500);idle(()=>{if(small||TEST)return;SP[si].items.forEach(it=>{if(!cache.has(it.glb))getModel(it,SP[si].align);});});
+/* ---------- silmus ---------- */
+function size(){const w=stage.clientWidth,h=stage.clientHeight,pr=r.getPixelRatio();r.setSize(w,h,false);rtA.setSize(w*pr,h*pr);rtB.setSize(w*pr,h*pr);cam.aspect=w/h;cam.updateProjectionMatrix();}
+new ResizeObserver(size).observe(stage);size();
+let vis=true;new IntersectionObserver(es=>{vis=es[0].isIntersecting;}).observe(stage);
+const FR={n:0,sum:0,last:performance.now()};
+function draw(){
+  if(fade){const p=Math.min(1,(performance.now()-fade.t0)/700),e=p*p*(3-2*p);quad.material.uniforms.t.value=e;if(p>=1)finishFade();}
+  updateClip(foot,!!foot);
+  if(fade){r.setRenderTarget(rtA);r.render(sceneA,cam);r.setRenderTarget(rtB);r.render(sceneB,cam);r.setRenderTarget(null);r.render(qScene,qCam);}
+  else r.render(sceneA,cam);}
+function swayStep(){if(!sway||touched||TEST)return;const o=cam.position.clone().sub(ctrl.target),r=Math.hypot(o.x,o.z),y=o.y,t=performance.now()/1000,mid=(sway[0]+sway[1])/2*D2R,amp=(sway[1]-sway[0])/2*D2R*.8,th=mid+amp*Math.sin(t*.22-1);cam.position.set(ctrl.target.x+Math.sin(th)*r,ctrl.target.y+y,ctrl.target.z+Math.cos(th)*r);}
+function loop(n){requestAnimationFrame(loop);if(!vis||document.hidden)return;swayStep();ctrl.update();const t=performance.now();draw();FR.n++;FR.sum+=t-FR.last;FR.last=t;}
+if(TEST){window.__d={view:(az,pol,k=2.1)=>{const s=showing.box.getSize(new THREE.Vector3()),R=Math.max(s.x,s.y,s.z),T=ctrl.target;cam.position.set(Math.sin(az)*Math.sin(pol)*R*k,Math.cos(pol)*R*k+T.y,Math.cos(az)*Math.sin(pol)*R*k);cam.lookAt(T);ctrl.update();},
+  show:async(i,k)=>{si=i;ki=k;ui();await show(i,k,true);draw();},preload:async(i,k)=>{await getModel(SP[i].items[k],SP[i].align);},
+  fadeTo:async(i,k,p)=>{const it=SP[i].items[k];const m=await getModel(it,SP[i].align);if(!fade||fade.to.wrap!==m.wrap){sceneB.children.filter(o=>o.userData.model).forEach(o=>sceneB.remove(o));m.wrap.userData.model=true;sceneB.add(m.wrap);fade={from:showing,to:m,t0:performance.now()+1e9};}
+    quad.material.uniforms.t.value=p;updateClip(foot,!!foot);r.setRenderTarget(rtA);r.render(sceneA,cam);r.setRenderTarget(rtB);r.render(sceneB,cam);r.setRenderTarget(null);r.render(qScene,qCam);},
+  commit:async(i,k)=>{if(fade){const w=fade.to;fade=null;sceneA.children.filter(o=>o.userData.model).forEach(o=>sceneA.remove(o));sceneB.remove(w.wrap);w.wrap.userData.model=true;sceneA.add(w.wrap);showing=w;si=i;ki=k;ui();quad.material.uniforms.t.value=0;draw();}},
+  draw,info:()=>({foot,cache:cache.size}),ready:true};ctrl.autoRotate=false;}
+else requestAnimationFrame(loop);
+ui();await show(si,ki,true);
+</script>
+</body>
+</html>

@@ -1,0 +1,48 @@
+{
+ "spaces": [
+  {
+   "k": "bb",
+   "t": "Saal",
+   "w": 1600,
+   "h": 893,
+   "depth": 0.5,
+   "items": [
+    {
+     "k": "blackbox-0-tyhi",
+     "label": "Tühi",
+     "img": "img/blackbox-0-tyhi.webp",
+     "depth": "img/blackbox-0-tyhi.depth.webp",
+     "desc": "Tühi saal."
+    },
+    {
+     "k": "blackbox-1-gala",
+     "label": "Gala",
+     "img": "img/blackbox-1-gala.webp",
+     "depth": "img/blackbox-1-gala.depth.webp",
+     "desc": "Ümarlauad, lava LED-ekraanidega, soe valgus."
+    },
+    {
+     "k": "blackbox-2-konverents",
+     "label": "Konverents",
+     "img": "img/blackbox-2-konverents.webp",
+     "depth": "img/blackbox-2-konverents.depth.webp",
+     "desc": "Teatrikujulised tooliread, lava ja ekraan."
+    },
+    {
+     "k": "blackbox-3-firmapidu",
+     "label": "Pidu",
+     "img": "img/blackbox-3-firmapidu.webp",
+     "depth": "img/blackbox-3-firmapidu.depth.webp",
+     "desc": "Kokteililauad, DJ, lounge, värviline valgus."
+    },
+    {
+     "k": "blackbox-4-kontsert",
+     "label": "Kontsert",
+     "img": "img/blackbox-4-kontsert.webp",
+     "depth": "img/blackbox-4-kontsert.depth.webp",
+     "desc": "Lava, LED-sein, kõlarid, tara."
+    }
+   ]
+  }
+ ]
+}

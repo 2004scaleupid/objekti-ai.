@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="et">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>3D-foto · Vaade3D</title>
+<link rel="icon" href="/logo.svg" type="image/svg+xml">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+:root{--bg:#EEEAE4;--paper:#F8F6F2;--ink:#16130F;--muted:#77706A;--line:#DDD7CE;--soft:#E7E2DA;--accent:#E5482D;--sans:"Inter Tight","Helvetica Neue",Arial,sans-serif;--mono:"JetBrains Mono",ui-monospace,Menlo,monospace;color-scheme:light}
+@media (prefers-color-scheme:dark){:root{--bg:#191715;--paper:#22201D;--ink:#F1ECE5;--muted:#A39B92;--line:#37322D;--soft:#2B2825;--accent:#F0603F;color-scheme:dark}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased}
+button{font:inherit;color:inherit;cursor:pointer}
+.wrap{max-width:1100px;margin:0 auto;padding:0 max(16px,env(safe-area-inset-left)) 0 max(16px,env(safe-area-inset-right))}
+.top{display:flex;align-items:center;justify-content:space-between;height:56px;border-bottom:1px solid var(--line)}
+.brand{display:flex;align-items:center;gap:8px;font-weight:800;font-size:17px;letter-spacing:-.02em;text-decoration:none;color:inherit}
+.brand img{width:22px;height:22px}.brand b{color:var(--accent)}
+.top a.back{font-size:13px;color:var(--muted);text-decoration:none}
+h1{font-size:clamp(26px,4.2vw,42px);line-height:1.05;letter-spacing:-.03em;margin:22px 0 8px;font-weight:800}h1 span{color:var(--accent)}
+.lead{margin:0 0 14px;color:var(--muted);max-width:62ch}
+.spaces{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:10px;max-width:420px}
+.spaces button{border:1px solid var(--line);background:var(--paper);border-radius:10px;padding:9px 0;font-weight:700}
+.spaces button[aria-selected=true]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.stage{position:relative;border-radius:12px;overflow:hidden;background:#111;border:1px solid var(--line);touch-action:pan-y;user-select:none;-webkit-user-select:none}
+.stage canvas{display:block;width:100%;height:100%}
+.hint{position:absolute;left:10px;bottom:10px;font-family:var(--mono);font-size:11px;letter-spacing:.05em;text-transform:uppercase;background:rgba(255,255,255,.88);color:#16130F;padding:4px 10px;border-radius:999px;pointer-events:none;transition:opacity .6s}
+#gyro{position:absolute;right:10px;bottom:10px;border:0;background:#fff;color:#16130F;border-radius:999px;padding:8px 14px;font-weight:700;font-size:13px;box-shadow:0 2px 10px rgba(0,0,0,.25)}
+.loading{position:absolute;inset:0;display:grid;place-items:center;color:#fff;font-family:var(--mono);font-size:12px;letter-spacing:.06em;text-transform:uppercase;background:#111;transition:opacity .4s}
+.chips{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;margin:12px 0 4px}.chips::-webkit-scrollbar{display:none}
+.chips button{flex:none;border:1px solid var(--line);background:var(--paper);border-radius:999px;padding:8px 16px;font-weight:600;font-size:14px}
+.chips button[aria-selected=true]{background:var(--accent);border-color:var(--accent);color:#fff}
+.desc{margin:6px 0 0;color:var(--muted);min-height:3em}
+footer{margin:28px 0 36px;padding-top:14px;border-top:1px solid var(--line);color:var(--muted);font-size:12.5px}
+.hide{display:none!important}
+</style>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js"}}</script>
+</head>
+<body>
+<div class="wrap">
+  <div class="top"><a class="brand" href="/"><img src="/logo.svg" alt=""><span>Vaade<b>3D</b></span></a><a class="back" href="./">← Enne ja pärast</a></div>
+  <h1>Liiguta pilti. <span>Täida ruum.</span></h1>
+  <p class="lead">Foto, mida saab liigutada: hiirega, sõrmega või telefoni kallutades. Vaheta paigutust ja ruum täitub.</p>
+  <div class="spaces" id="spaces" role="tablist" aria-label="Ruum"></div>
+  <div class="stage" id="stage"><div class="loading" id="loading">Laen…</div><span class="hint" id="hint"></span><button id="gyro" class="hide" type="button">Luba kallutamine</button></div>
+  <div class="chips" id="chips" role="tablist" aria-label="Paigutus"></div>
+  <p class="desc" id="desc"></p>
+  <footer>Sügavus arvutatud pildist (Depth Anything V2), pilt on tehisaru loodud tühjast fotost. Piltidel pole inimesi ega kaubamärke.</footer>
+</div>
+<script type="module">
+import * as THREE from 'three';
+const Q=new URLSearchParams(location.search),TEST=Q.has('test');
+const $=s=>document.querySelector(s);
+const clamp=(x,a,b)=>Math.min(b,Math.max(a,x)),D2R=Math.PI/180;
+const MAXY=12*D2R,MAXP=6*D2R;
+const cfg=await (await fetch(Q.get('cfg')||'sets.json')).json();
+const SP=cfg.spaces;let si=0,ki=0;
+const stage=$('#stage'),small=Math.min(innerWidth,innerHeight)<700;
+/* ---------- renderer ---------- */
+const r=new THREE.WebGLRenderer({antialias:!small,preserveDrawingBuffer:TEST});r.setPixelRatio(Math.min(devicePixelRatio||1,small?1.5:2));stage.prepend(r.domElement);
+r.setClearColor(Q.get('clear')?0xff00ff:0x111111);
+const scene=new THREE.Scene(),cam=new THREE.PerspectiveCamera(30,1,.05,50);
+/* ---------- kihid: kaks võrku (praegune + sisenev), ühine geomeetria ---------- */
+const SEG=small?[384,216]:[512,288];
+const VS=`uniform sampler2D dmap;uniform float uStr;uniform vec2 uTx;varying vec2 vUv;varying float vD;
+float dep(vec2 uv){return texture2D(dmap,uv).r;}
+void main(){vUv=uv;vec2 o=uTx*1.6;
+ float d=(dep(uv)*2.+dep(uv+vec2(o.x,0.))+dep(uv-vec2(o.x,0.))+dep(uv+vec2(0.,o.y))+dep(uv-vec2(0.,o.y)))/6.;
+ vD=d;vec3 p=position;p.z+=d*uStr;gl_Position=projectionMatrix*modelViewMatrix*vec4(p,1.);}`;
+const FS=`uniform sampler2D map;uniform float uOp;uniform vec2 uTx;varying vec2 vUv;varying float vD;
+void main(){vec4 c=texture2D(map,vUv);
+ float g=fwidth(vD)*60.;           // sügavuse hüpe: venitatud kolmnurgad pehmendatakse hägustatud värviga
+ if(g>.06){vec2 o=uTx*3.;vec4 b=(texture2D(map,vUv+o)+texture2D(map,vUv-o)+texture2D(map,vUv+vec2(o.x,-o.y))+texture2D(map,vUv+vec2(-o.x,o.y)))*.25;c=mix(c,b,smoothstep(.06,.5,g)*.6);}
+ gl_FragColor=vec4(c.rgb,uOp);
+ #include <colorspace_fragment>
+}`;
+const geo=new THREE.PlaneGeometry(1,1,SEG[0],SEG[1]);
+function layer(order){const m=new THREE.ShaderMaterial({uniforms:{map:{value:null},dmap:{value:null},uStr:{value:.3},uOp:{value:1},uTx:{value:new THREE.Vector2(1/768,1/432)}},vertexShader:VS,fragmentShader:FS,transparent:order>0,depthWrite:order===0,depthTest:order===0,extensions:{derivatives:true}});
+  const me=new THREE.Mesh(geo,m);me.renderOrder=order;me.frustumCulled=false;scene.add(me);return me;}
+const A=layer(0),B=layer(1);B.visible=false;
+const TL=new THREE.TextureLoader(),cache=new Map();
+function tex(url,srgb){if(!cache.has(url))cache.set(url,new Promise(res=>TL.load(url,t=>{t.colorSpace=srgb?THREE.SRGBColorSpace:THREE.NoColorSpace;t.generateMipmaps=true;t.minFilter=THREE.LinearMipmapLinearFilter;t.anisotropy=4;t.wrapS=t.wrapT=THREE.ClampToEdgeWrapping;res(t);})));return cache.get(url);}
+async function load(i,k){const S=SP[i],it=S.items[k];const [m,d]=await Promise.all([tex(it.img,true),tex(it.depth,false)]);return {m,d,S};}
+function apply(mesh,L){const u=mesh.material.uniforms;u.map.value=L.m;u.dmap.value=L.d;u.uStr.value=L.S.depth??.3;u.uTx.value.set(1/L.d.image.width,1/L.d.image.height);}
+/* ---------- raam ja kaamera ---------- */
+let aspect=16/9,dist=1,ov=1.24;
+function size(){const w=stage.clientWidth,h=stage.clientHeight;r.setSize(w,h,false);cam.aspect=w/h;
+  // tasand katab vaatevälja ka äärmuslikul kaldel (kuni ±12°/±6° ja sügavusnihe); lisaks kerge sisse suumimine
+  const planeH=2/Math.max(1,(w/h)/aspect)*1/1;const fit=Math.max(1,(w/h)/aspect);
+  cam.fov=30;cam.updateProjectionMatrix();dist=1/Math.tan(cam.fov*D2R/2)*(1/ov);
+  const sy=1,sx=aspect;A.scale.set(sx*2,2,1);B.scale.set(sx*2,2,1);}
+function layout(){const S=SP[si];aspect=S.w/S.h;stage.style.aspectRatio=S.w+'/'+S.h;stage.style.width=`min(100%,max(320px,calc((100svh - 300px) * ${aspect})))`;size();}
+/* ---------- liikumine: hiir / lohistamine / güro / tühikäigu kõikumine ---------- */
+let tgt={y:0,p:0},cur={y:0,p:0},drag=null,last=performance.now(),idleAt=0,gy={y:0,p:0,on:false,b0:null,g0:null};
+const poke=()=>{idleAt=performance.now();};
+stage.addEventListener('pointermove',e=>{if(e.pointerType==='mouse'){const b=stage.getBoundingClientRect();tgt.y=clamp(((e.clientX-b.left)/b.width-.5)*2,-1,1)*MAXY;tgt.p=clamp(-((e.clientY-b.top)/b.height-.5)*2,-1,1)*MAXP;poke();}
+  else if(drag){tgt.y=clamp(drag.y+(e.clientX-drag.x)/stage.clientWidth*2*MAXY*1.4,-MAXY,MAXY);tgt.p=clamp(drag.p-(e.clientY-drag.cy)/stage.clientHeight*2*MAXP*1.4,-MAXP,MAXP);poke();}});
+stage.addEventListener('pointerdown',e=>{if(e.pointerType!=='mouse'){drag={x:e.clientX,cy:e.clientY,y:tgt.y,p:tgt.p};stage.setPointerCapture(e.pointerId);poke();}});
+['pointerup','pointercancel'].forEach(t=>stage.addEventListener(t,()=>{drag=null;}));
+function onOrient(e){if(e.gamma==null)return;if(gy.g0==null){gy.g0=e.gamma;gy.b0=e.beta;}
+  gy.y=clamp((e.gamma-gy.g0)/20,-1,1)*MAXY;gy.p=clamp(-(e.beta-gy.b0)/14,-1,1)*MAXP;gy.on=true;poke();}
+async function enableGyro(){try{if(typeof DeviceOrientationEvent!=='undefined'&&typeof DeviceOrientationEvent.requestPermission==='function'){const s=await DeviceOrientationEvent.requestPermission();if(s!=='granted')return;}
+  addEventListener('deviceorientation',onOrient);$('#gyro').classList.add('hide');}catch(e){}}
+$('#gyro').onclick=enableGyro;
+if(matchMedia('(pointer:coarse)').matches&&typeof DeviceOrientationEvent!=='undefined'){
+  if(typeof DeviceOrientationEvent.requestPermission==='function')$('#gyro').classList.remove('hide');else addEventListener('deviceorientation',onOrient);}
+$('#hint').textContent=matchMedia('(pointer:coarse)').matches?'Lohista või kalluta telefoni':'Liiguta hiirt';
+setTimeout(()=>{$('#hint').style.opacity=0;},6000);
+/* ---------- vahetus: sama kaamera, pilt hajub üle ---------- */
+let fade=null,token=0;
+async function show(i,k,instant){const t=++token;const L=await load(i,k);if(t!==token)return;
+  if(instant||!A.material.uniforms.map.value){apply(A,L);B.visible=false;fade=null;$('#loading').style.opacity=0;setTimeout(()=>$('#loading').classList.add('hide'),400);return;}
+  apply(B,L);B.material.uniforms.uOp.value=0;B.visible=true;fade={t0:performance.now(),L};}
+function finishFade(){apply(A,fade.L);B.visible=false;fade=null;}
+/* ---------- kasutajaliides ---------- */
+function ui(){$('#spaces').innerHTML=SP.map((s,i)=>`<button role="tab" data-i="${i}" aria-selected="${i===si}">${s.t}</button>`).join('');
+  $('#chips').innerHTML=SP[si].items.map((s,i)=>`<button role="tab" data-i="${i}" aria-selected="${i===ki}">${s.label}</button>`).join('');
+  $('#desc').textContent=SP[si].items[ki].desc||'';}
+$('#spaces').onclick=e=>{const b=e.target.closest('button');if(!b)return;si=+b.dataset.i;ki=0;layout();ui();show(si,ki,true);};
+$('#chips').onclick=e=>{const b=e.target.closest('button');if(!b)return;ki=+b.dataset.i;ui();show(si,ki);};
+/* ---------- silmus ---------- */
+let vis=true;new IntersectionObserver(es=>{vis=es[0].isIntersecting;}).observe(stage);new ResizeObserver(size).observe(stage);
+function frame(now){const dt=Math.min(.05,(now-last)/1000);last=now;
+  if(fade){const p=clamp((now-fade.t0)/900,0,1),e=p*p*(3-2*p);B.material.uniforms.uOp.value=e;if(p>=1)finishFade();}
+  const idle=(now-idleAt)>2500&&!gy.on;
+  let ty=tgt.y+gy.y,tp=tgt.p+gy.p;
+  if(idle){const t=now/1000;ty=MAXY*.33*Math.sin(t*.55);tp=MAXP*.3*Math.sin(t*.37+1);}
+  const k=1-Math.pow(.0015,dt);cur.y+=(clamp(ty,-MAXY,MAXY)-cur.y)*k;cur.p+=(clamp(tp,-MAXP,MAXP)-cur.p)*k;
+  draw();}
+function draw(){const cy=Math.cos(cur.p);cam.position.set(Math.sin(cur.y)*cy*dist,Math.sin(cur.p)*dist,Math.cos(cur.y)*cy*dist);cam.lookAt(0,0,.05);r.render(scene,cam);}
+if(TEST){window.__v3={setPose:(y,p)=>{cur.y=y*D2R;cur.p=p*D2R;draw();},show:async(i,k)=>{si=i;ki=k;layout();ui();await show(i,k,true);draw();},fadeTo:async(i,k,p)=>{const L=await load(i,k);apply(B,L);B.material.uniforms.uOp.value=p;B.visible=p>0;draw();},commit:async(i,k)=>{si=i;ki=k;ui();apply(A,await load(i,k));B.visible=false;draw();},ready:true};}
+else requestAnimationFrame(function loop(n){requestAnimationFrame(loop);if(vis&&!document.hidden)frame(n);});
+layout();ui();await show(si,ki,true);
+</script>
+</body>
+</html>

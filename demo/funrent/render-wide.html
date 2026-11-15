@@ -1,0 +1,51 @@
+<!doctype html><html lang="et"><head><meta charset="utf-8"><title>Juhtrender laiale fotole (sisetööriist)</title>
+<style>body{margin:0;background:#222}#v{width:1344px;height:576px;position:absolute;left:0;top:0;opacity:0}</style></head><body>
+<!-- Kaamera: DLT kalibreering LOD2 hoone 6 nurgast site.jpg-l (viga < 0,3 px), laiendatud paremale (site-wide.jpg). -->
+<div id="v"></div><canvas id="out" width="3168" height="1344"></canvas>
+<script src="../../vendor/three.min.js"></script><script src="../../vendor/OrbitControls.js"></script>
+<script src="../../js/eventplan.js"></script><script src="../../js/eventplan-3d.js"></script>
+<script>
+window.renderV=async(v)=>{
+  const C=await fetch('site/cam-wide.json').then(r=>r.json()),D=await fetch(`out/${v}-layout.json`).then(r=>r.json()),L=D.layout,o=L.origin||{x:0,y:0};
+  const cam={pos:[C.pos[0]-o.x,C.pos[1],C.pos[2]-o.y],fw:C.fw,up:C.up,fov:C.fov};
+  const box=document.getElementById('v');box.innerHTML='';const V=EventPlan.view3d(box,L,{photo:true,cam});V.setLabels(false);
+  await new Promise(r=>setTimeout(r,500));
+  const W=3168,H=1344,r=V.renderer,k=V.camera;r.setPixelRatio(1);r.setSize(W,H,false);k.aspect=C.view.fullW/C.view.fullH;
+  k.setViewOffset(C.view.fullW,C.view.fullH,C.view.x,C.view.y,C.view.w,C.view.h);k.updateProjectionMatrix();r.render(V.scene,k);
+  const P=(x,z)=>{const q=new THREE.Vector3(x,0,z).project(k);return [(q.x+1)/2*W,(1-q.y)/2*H];};
+  const area=[[0,0],[11.55,0],[11.55,8.65],[0,8.65]].map(([x,z])=>P(x-o.x,z-o.y)),tent=[[0,0],[L.room.L,0],[L.room.L,L.room.W],[0,L.room.W]].map(([x,z])=>P(x,z));
+  const im=new Image();im.src=r.domElement.toDataURL('image/png');await im.decode();
+  const ph=new Image();ph.src='site-wide.jpg';await ph.decode();
+  const c=document.getElementById('out'),g=c.getContext('2d');g.drawImage(ph,0,0,W,H);g.drawImage(im,0,0,W,H);
+  const P3=(x,y,z)=>{const q=new THREE.Vector3(x,y,z).project(k);return [(q.x+1)/2*W,(1-q.y)/2*H];};
+  const items=L.items.concat(L.yard?L.yard.items:[]).map(it=>{const nm={stage:'Lava',bar:'Baarilett',catering:'Puhvetlaud',standing:'Püstilauad',seating:'Lauad'}[it.kind]||it.name;
+    const sub=it.kind==='seating'?(it.tables[0].shape==='round'?`${it.tables.length} × Ø${EventPlan.fmt(it.tables[0].d)} m · ${it.seats} kohta`:`${EventPlan.fmt(Math.max(it.tables[0].w,it.tables[0].d))} × 0,76 m · ${it.seats} kohta`):it.kind==='standing'?`${it.tables.length} tk · ${it.guests} külalist`:`${EventPlan.fmt(Math.max(it.w,it.d))} × ${EventPlan.fmt(Math.min(it.w,it.d))} m`;
+    return {t:nm,s:sub,p:P3(it.x+it.w/2,it.kind==='stage'?2.2:1.9,it.y+it.d/2)};});
+  V.dispose();return {area,tent,room:L.room,items,name:L.tent.name,seats:L.seats,guests:L.spec.guests,parcel:D.parcel,title:D.title};
+};
+window.overlay=async(v,m)=>{
+  await document.fonts.load('600 40px "Inter Tight"');const im=new Image();im.src=`out/${v}-image-ai.jpg`;await im.decode();
+  const W=3168,H=1344,FB=110,c=document.getElementById('out');c.height=H+FB;const g=c.getContext('2d');g.drawImage(im,0,0,W,H);
+  const F=(w,s)=>`${w} ${s}px "Inter Tight", Arial`,fm=v=>EventPlan.fmt(v,2).replace(/^(\d+)$/,'$1,00');
+  const f2=v=>(+v).toFixed(2).replace('.',',');
+  g.save();g.setLineDash([22,14]);g.lineWidth=4;g.strokeStyle='rgba(255,255,255,.85)';g.beginPath();m.area.forEach((p,i)=>i?g.lineTo(...p):g.moveTo(...p));g.closePath();g.stroke();g.restore();
+  const dim=(a,b,txt,side)=>{const dx=b[0]-a[0],dy=b[1]-a[1],L=Math.hypot(dx,dy),nx=-dy/L*side,ny=dx/L*side,o=60;const A=[a[0]+nx*o,a[1]+ny*o],B=[b[0]+nx*o,b[1]+ny*o];
+    g.strokeStyle='#fff';g.lineWidth=6;g.shadowColor='rgba(0,0,0,.5)';g.shadowBlur=8;g.beginPath();g.moveTo(...A);g.lineTo(...B);g.stroke();
+    const hd=(P,Q)=>{const ux=(Q[0]-P[0])/L,uy=(Q[1]-P[1])/L;g.beginPath();g.moveTo(...P);g.lineTo(P[0]+ux*34-uy*17,P[1]+uy*34+ux*17);g.moveTo(...P);g.lineTo(P[0]+ux*34+uy*17,P[1]+uy*34-ux*17);g.stroke();};hd(A,B);hd(B,A);
+    g.lineWidth=3;for(const P of [a,b]){g.beginPath();g.moveTo(P[0]+nx*14,P[1]+ny*14);g.lineTo(P[0]+nx*(o+18),P[1]+ny*(o+18));g.stroke();}
+    g.shadowBlur=0;const mm=[(A[0]+B[0])/2+nx*48,(A[1]+B[1])/2+ny*48];g.font=F(700,44);const tw=g.measureText(txt).width+44;g.fillStyle='#fff';g.beginPath();g.roundRect(mm[0]-tw/2,mm[1]-34,tw,68,16);g.fill();g.fillStyle='#16130F';g.textAlign='center';g.textBaseline='middle';g.fillText(txt,mm[0],mm[1]+2);g.textAlign='left';};
+  const T=m.tent;dim(T[3],T[2],f2(m.room.L)+' m',1);dim(T[2],T[1],f2(m.room.W)+' m',1);
+  const keep=[];for(const it of [{t:'Telk',s:`${f2(m.room.W)} × ${f2(m.room.L)} m`,p:[(T[0][0]+T[2][0])/2,Math.min(...T.map(q=>q[1]))-330]}].concat(m.items)){
+    let [x,y]=it.p;for(let k=0;k<6&&keep.some(q=>Math.abs(q[0]-x)<330&&Math.abs(q[1]-y)<120);k++)y-=120;keep.push([x,y]);
+    g.font=F(700,38);const w1=g.measureText(it.t).width;g.font=F(500,32);const w2=g.measureText(it.s).width,w=Math.max(w1,w2)+48,h=104;
+    g.fillStyle='rgba(20,52,40,.93)';g.strokeStyle='rgba(255,255,255,.9)';g.lineWidth=3;g.beginPath();g.roundRect(x-w/2,y-h,w,h,16);g.fill();g.stroke();
+    g.beginPath();g.moveTo(x,y);g.lineTo(x,it.p[1]+30);g.stroke();g.fillStyle='#fff';g.beginPath();g.arc(x,it.p[1]+34,8,0,7);g.fill();
+    g.textAlign='center';g.font=F(700,38);g.fillText(it.t,x,y-60);g.font=F(500,32);g.fillStyle='#e3efe8';g.fillText(it.s,x,y-20);g.textAlign='left';}
+  const info=[['Aadress','Jõe tn 4, Kostivere'],['Vaba muru','11,55 × 8,65 m (Maa-amet)'],['Telk',m.name.replace(/^Moodultelk \d+ m /,'moodultelk ')],[m.seats?'Istekohti':'Külalisi',String(m.seats||m.guests)],['Vahekäigud','≥ 1,00 m']];
+  const pad=36,lh=60,bw=880,bh=pad*2+info.length*lh+(m.parcel?70:0);g.fillStyle='rgba(16,44,34,.88)';g.beginPath();g.roundRect(50,50,bw,bh,28);g.fill();
+  info.forEach(([k,v],i)=>{g.font=F(500,36);g.fillStyle='#bfd7c9';g.fillText(k,50+pad,50+pad+40+i*lh);g.font=F(700,36);g.fillStyle='#fff';g.fillText(v,50+pad+270,50+pad+40+i*lh);});
+  if(m.parcel){g.font=F(700,32);g.fillStyle='#ffb4a3';g.fillText('⚠ Osa alast on valla maa: vaja kooskõlastust',50+pad,50+pad+40+info.length*lh+16);}
+  g.fillStyle='#16130F';g.fillRect(0,H,W,FB);g.font=F(600,42);g.fillStyle='#fff';g.fillText('Pilt on illustratiivne, täpsed mõõdud plaanil.',50,H+68);
+  g.font=F(500,32);g.fillStyle='#bdb5ab';g.textAlign='right';g.fillText('Sildid ja mõõdud: Vaade3D (kood, kalibreeritud kaamera) · Funrendi tooted',W-50,H+66);g.textAlign='left';
+  return c.toDataURL('image/jpeg',.86);};
+</script></body></html>

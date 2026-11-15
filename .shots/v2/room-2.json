@@ -1,0 +1,1 @@
+{"room":{"w":3,"d":4,"h":2.5},"est":true,"floor":{"color":"#b9a789","tile":2},"back":{},"walls":{"back":"#ecebe7","left":"#ecebe7","right":"#ecebe7","ceiling":"#f4f3f0"},"openings":[],"items":[{"key":"bed","name":"bed","size":{"w":1.6,"d":2,"h":1},"pos":{"x":1.5,"z":1.2},"color":"#888888","rot":0}]}
