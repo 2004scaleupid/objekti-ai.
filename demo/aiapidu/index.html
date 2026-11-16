@@ -1,0 +1,52 @@
+<!doctype html><html lang="et"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex"><link rel="icon" href="/logo.svg"><title>Aiapidu 12 külalisele · Vaade3D × Funrent</title>
+<meta name="description" content="Kolm paigutust Funrendi telgi ja mööbliga: 3D-vaade ja 2D plaan päris mõõtudes.">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@500;600;700;800&display=swap">
+<style>
+:root{--ink:#16130F;--mut:#6f685f;--line:#e4dfd6;--acc:#2F6B4F;--paper:#FBFAF7}
+*{box-sizing:border-box}html,body{margin:0;background:var(--paper);color:var(--ink);font:15px/1.5 "Inter Tight",Arial,sans-serif;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1160px;margin:0 auto;padding:36px 20px 48px}
+.top{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:26px}.brand{font-weight:800;letter-spacing:-.01em}.brand span{color:var(--mut);font-weight:600}
+.tag{display:inline-block;background:#e8efe9;color:var(--acc);border-radius:999px;padding:4px 10px;font-weight:700;font-size:12.5px}
+h1{font-size:clamp(28px,4.4vw,44px);line-height:1.08;margin:12px 0 10px;letter-spacing:-.02em}.lead{color:var(--mut);max-width:640px;margin:0 0 6px;font-size:16px}
+.facts{display:flex;flex-wrap:wrap;gap:8px;margin:18px 0 28px}.facts span{background:#fff;border:1px solid var(--line);border-radius:10px;padding:6px 10px;font-weight:600;font-size:13.5px}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+.card{background:#fff;border:1px solid var(--line);border-radius:18px;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 1px 2px #0000000a}
+.card img{width:100%;height:auto;aspect-ratio:16/10;object-fit:cover;display:block;background:#eee}
+.card .b{padding:16px 16px 18px;display:flex;flex-direction:column;gap:8px;flex:1}.card h2{margin:0;font-size:19px;letter-spacing:-.01em}.card h2 em{font-style:normal;color:var(--acc)}
+.card ul{margin:0;padding:0;list-style:none;color:var(--mut);font-size:14px}.card li{padding:2px 0}.card li b{color:var(--ink);font-weight:600}
+.btns{display:flex;gap:8px;margin-top:auto;padding-top:8px;flex-wrap:wrap}
+.btn{flex:1;text-align:center;text-decoration:none;border-radius:12px;padding:11px 12px;font-weight:700;font-size:14px;white-space:nowrap}.btn.p{background:var(--acc);color:#fff}.btn.s{background:#eef1ed;color:var(--ink)}
+.note{margin-top:30px;color:var(--mut);font-size:13px;border-top:1px solid var(--line);padding-top:16px;display:flex;flex-wrap:wrap;gap:6px 18px}.note a{color:var(--acc)}
+.unv{display:inline-block;background:#fdf0d5;color:#8a5a00;border:1px solid #e8c37a;border-radius:6px;padding:0 6px;font-size:11.5px;font-weight:700}
+@media (max-width:900px){.grid{grid-template-columns:1fr 1fr}}
+@media (max-width:600px){.wrap{padding:22px 16px 36px}.grid{grid-template-columns:1fr}.lead{font-size:15px}}
+</style></head><body><div class="wrap">
+<div class="top"><div class="brand">Vaade3D <span>× Funrent</span></div><span class="tag">Demo</span></div>
+<h1>Aiapidu 12 külalisele — kolm paigutust teie hoovis</h1>
+<p class="lead">Iga versioon on arvutatud Funrendi päris toodetest ja mõõtudest. Vaadake 3D-s ringi, klõpsake esemel mõõtude nägemiseks või laadige alla 2D plaan.</p>
+<div class="facts"><span>Ala 10 × 7 m</span><span>12 külalist, üks pikk laud</span><span>Lava 4 × 3 m</span><span>Tantsupõrand 2 × 2 m</span><span>Catering</span></div>
+<div class="grid" id="g"></div>
+<div class="note"><span>Mõõdud: Funrendi tootelehed (funrent.ee), kontrollitud 16.11.2026. Kinnitamata mõõdud on märgitud <span class="unv">kontrollimata</span>.</span><span>Pildid on illustratsioonid; täpsed mõõdud on 3D-s ja 2D plaanil.</span></div>
+</div>
+<script>
+// kaardid paigutusest ja kataloogist (sama allikas mis 3D ja 2D plaan)
+(async () => {
+  const cat = await fetch('brief/lib/funrent.json').then(r => r.json()), P = id => cat.products.find(p => p.id === id), f = v => String(Math.round(v * 100) / 100).replace('.', ',');
+  const unv = p => p && (p.source !== 'funrent.ee' || (p.std || []).some(k => ['w', 'd', 'h', 'sizes', 'sideH', 'ridgeH'].includes(k)));
+  const T = { A: 'Kaarkatusega telk', B: 'Kaarkatusega telk', C: 'Stretch-telk' };
+  let html = '';
+  for (const v of ['A', 'B', 'C']) {
+    const L = (await fetch(`brief/${v}-layout.json`).then(r => r.json())).layout, t = L.tent, tp = P(t.product), tb = L.items.find(i => i.kind === 'seating').tables[0], tab = P(tb.product), ch = P(L.rules.chair);
+    const n = L.items.find(i => i.kind === 'seating').tables.reduce((s, x) => s + x.chairs.length, 0);
+    html += `<article class="card"><img src="brief/${v}-card.jpg" alt="Paigutus ${v} hoovis" loading="lazy" width="900" height="506"><div class="b">
+      <h2><em>${v}</em> · ${T[v]} ${f(t.W)} × ${f(t.L)} m</h2>
+      <ul><li><b>Telk:</b> sein ${f(t.sideH)} m, hari ${f(t.ridgeH)} m ${unv(tp) ? '<span class="unv">kontrollimata</span>' : ''}</li>
+      <li><b>Laud:</b> ${L.items.find(i => i.kind === 'seating').tables.reduce((s, x) => s + x.nTab, 0)} × ${f(tab.spec.w * 100)} × ${f(tab.spec.d * 100)} cm, ${n} kohta</li>
+      <li><b>Toolid:</b> ${ch.name} ${unv(ch) ? '<span class="unv">kontrollimata</span>' : ''}</li>
+      <li><b>Kontroll:</b> ${L.checks.every(c => c.ok) ? 'kõik tingimused täidetud ✓' : 'vajab parandust'}</li></ul>
+      <div class="btns"><a class="btn p" href="brief/?v=${v}">Vaata 3D-s</a><a class="btn s" href="brief/${v}-plan.pdf" target="_blank" rel="noopener">2D plaan (PDF)</a></div></div></article>`;
+  }
+  document.getElementById('g').innerHTML = html;
+})();
+</script></body></html>

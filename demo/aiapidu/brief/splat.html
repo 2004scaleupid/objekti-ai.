@@ -1,0 +1,53 @@
+<!doctype html><html lang="et"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex"><title>Foto-3D (splat) · Aiapidu A</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@500;600;700&display=swap">
+<style>
+*{box-sizing:border-box}html,body{margin:0;height:100%;overflow:hidden;background:#1d2420;font:14px "Inter Tight",Arial,sans-serif;color:#16130F}
+#st{position:fixed;inset:0;touch-action:none}#st canvas{display:block;width:100%!important;height:100%!important}
+#tags{position:fixed;inset:0;pointer-events:none}.tg{position:absolute;transform:translate(-50%,-50%);white-space:nowrap;font:700 12px "Inter Tight",Arial;color:#e53935;background:#fffffff2;border:1.5px solid #e53935;border-radius:6px;padding:2px 6px}
+.bar{position:fixed;left:12px;right:12px;top:calc(10px + env(safe-area-inset-top));display:flex;gap:8px;flex-wrap:wrap;align-items:center;pointer-events:none}.bar>*{pointer-events:auto}
+body.embed .bar{top:calc(62px + env(safe-area-inset-top))}@media (max-width:600px){body.embed .bar{top:calc(104px + env(safe-area-inset-top))}}
+.seg{display:flex;background:#fffffff0;border-radius:12px;padding:3px;box-shadow:0 2px 8px #0003}.seg button{border:0;background:none;border-radius:9px;padding:7px 11px;font:700 13px "Inter Tight";color:#6f685f;cursor:pointer}.seg button[aria-pressed=true]{background:#2F6B4F;color:#fff}
+.pill{background:#fffffff0;border-radius:12px;padding:7px 12px;box-shadow:0 2px 8px #0003;font-size:12.5px}
+#hint{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(14px + env(safe-area-inset-bottom));background:#16130fd9;color:#fff;border-radius:999px;padding:6px 14px;font-size:12.5px;pointer-events:none;max-width:92vw;text-align:center}
+#load{position:fixed;inset:0;display:grid;place-items:center;color:#cfd8d2;font-weight:700}
+@media (max-width:600px){.pill{font-size:11.5px}.tg{font-size:11px}}
+</style>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/","@sparkjsdev/spark":"https://cdn.jsdelivr.net/npm/@sparkjsdev/spark@2.3.1/dist/spark.module.js"}}</script>
+</head><body><div id="st"></div><div id="tags"></div><div id="load">Laen Foto-3D-d…</div>
+<div class="bar"><div class="seg"><button id="dimB" aria-pressed="true">Mõõdud</button><button id="homeB">Algvaade</button></div><div class="pill" id="lab"></div></div>
+<div id="hint">Lohista = tiirle · rull/näpistus = suumi · AI-video põhjal, ligikaudne</div>
+<script type="module">
+import * as THREE from 'three'; import { OrbitControls } from 'three/addons/controls/OrbitControls.js'; import { SparkRenderer, SplatMesh } from '@sparkjsdev/spark';
+const $ = id => document.getElementById(id); if (new URLSearchParams(location.search).has('embed')) document.body.classList.add('embed');
+const cfg = await (await fetch('splat-A.json')).json(); // {url, matrix (splat -> maailm, m), home:{pos,target}, tent:{FL,FR,LEN,DEP,EV,RI}, note}
+const r = new THREE.WebGLRenderer({ antialias: false }); r.setPixelRatio(Math.min(devicePixelRatio || 1, 2)); $('st').appendChild(r.domElement);
+const sc = new THREE.Scene(); sc.background = new THREE.Color('#bcd3e6'); sc.add(new SparkRenderer({ renderer: r }));
+const sp = new SplatMesh({ url: cfg.url }); sp.matrixAutoUpdate = false; sp.matrix.fromArray(cfg.matrix); sc.add(sp);
+// maailm: X paremale, Y üles, -Z edasi (sama mis foto3d.html: P(X,Fw,y) = (X, y, -Fw))
+const P = (X, Fw, y = 0) => new THREE.Vector3(X, y, -Fw), t = cfg.tent, dx = [(t.FR[0] - t.FL[0]) / t.LEN, (t.FR[1] - t.FL[1]) / t.LEN], n = [-dx[1], dx[0]]; // n: telgi sügavussuund kaamerast eemale
+const T = (s, u, y = 0) => P(t.FL[0] + dx[0] * s + n[0] * u, t.FL[1] + dx[1] * s + n[1] * u, y);
+const cam = new THREE.PerspectiveCamera(50, 1, .05, 400), ctl = new OrbitControls(cam, r.domElement);
+const home = () => { cam.position.fromArray(cfg.home.pos); ctl.target.fromArray(cfg.home.target); ctl.update(); };
+const ob = cfg.orbit, m5 = .09; // tiirlemine ainult video kaamerate kaarel (+5°), mujal splat laguneb
+ctl.enableDamping = true; ctl.enablePan = false; ctl.minAzimuthAngle = ob.azMin - m5; ctl.maxAzimuthAngle = ob.azMax + m5; ctl.minPolarAngle = 1.42; ctl.maxPolarAngle = 1.56; ctl.minDistance = ob.dMin; ctl.maxDistance = ob.dMax; ctl.rotateSpeed = .5; home();
+// mõõdud: telgi põhi, sein, hari
+const tags = []; let dimOn = true; const dg = new THREE.Group(); sc.add(dg); const lm = new THREE.LineBasicMaterial({ color: '#e53935', depthTest: false, transparent: true });
+const line = pts => { const l = new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), lm); l.renderOrder = 9; dg.add(l); };
+function dim(a, b, txt) { line([a, b]); const e = document.createElement('div'); e.className = 'tg'; e.textContent = txt; $('tags').appendChild(e); tags.push({ e, p: a.clone().add(b).multiplyScalar(.5) }); }
+const f = v => v.toFixed(2).replace(/0$/, '').replace('.', ',');
+line([T(0, 0, .02), T(t.LEN, 0, .02), T(t.LEN, t.DEP, .02), T(0, t.DEP, .02), T(0, 0, .02)]);
+dim(T(0, -.6, .02), T(t.LEN, -.6, .02), '≈ ' + f(t.LEN) + ' m'); dim(T(t.LEN + .6, 0, .02), T(t.LEN + .6, t.DEP, .02), '≈ ' + f(t.DEP) + ' m');
+dim(T(0, 0), T(0, 0, t.EV), 'sein ≈ ' + f(t.EV) + ' m'); dim(T(t.LEN, t.DEP / 2), T(t.LEN, t.DEP / 2, t.RI), 'hari ≈ ' + f(t.RI) + ' m');
+$('lab').textContent = cfg.note;
+let BX = { t: 0, h: innerHeight };
+const fit = () => { const w = innerWidth, port = w / innerHeight < 1, h = port ? Math.min(innerHeight, w / 1.1) : innerHeight, t = (innerHeight - h) / 2; BX = { t, h }; // telefonis püstiselt: riba, mitte väga lai vaatenurk
+  for (const id of ['st', 'tags']) { $(id).style.top = t + 'px'; $(id).style.bottom = 'auto'; $(id).style.height = h + 'px'; }
+  r.setSize(w, h, false); cam.aspect = w / h; cam.fov = port ? 58 : (cfg.fov || 50); cam.updateProjectionMatrix(); }; addEventListener('resize', fit); fit();
+function place() { const v = new THREE.Vector3(); for (const g of tags) { v.copy(g.p).project(cam); const ok = dimOn && v.z < 1 && Math.abs(v.x) < 1.1; g.e.style.display = ok ? '' : 'none'; if (ok) { const hw = g.e.offsetWidth / 2 + 4; g.e.style.left = Math.min(innerWidth - hw, Math.max(hw, (v.x + 1) / 2 * innerWidth)) + 'px'; g.e.style.top = (1 - v.y) / 2 * BX.h + 'px'; } } }
+$('dimB').onclick = () => { dimOn = !dimOn; $('dimB').setAttribute('aria-pressed', dimOn); dg.visible = dimOn; };
+$('homeB').onclick = home;
+r.setAnimationLoop(() => { ctl.update(); r.render(sc, cam); place(); });
+sp.initialized?.then?.(() => $('load').remove()); setTimeout(() => $('load')?.remove(), 8000);
+window.__s = { cam, ctl, home, sp };
+</script></body></html>
