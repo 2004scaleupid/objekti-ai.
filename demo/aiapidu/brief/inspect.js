@@ -79,7 +79,7 @@ export function init(c) {
     else if (it && it.kind === 'dance') { pid = 'dance'; title = it.name; dims = `${f(it.w)} × ${m(it.d)}`; foot = dims; qty = `${Math.ceil(it.w * it.d - 1e-6)} plaati 1 × 1 m`; }
     else if (it) { const i = pinfo(it.product); title = it.name; dims = SZ.label(i); foot = `${f(it.w)} × ${m(it.d + (it.kind === 'bar' ? R.barWork : R.serviceZone))} (${it.kind === 'bar' ? 'tööala' : 'teenindusala'} ${m(it.kind === 'bar' ? R.barWork : R.serviceZone)})`; qty = `${it.n || 1} tk`; }
     const i = pinfo(pid); kv('Mõõdud', dims); kv('Põhi koos vaba ruumiga', foot); kv('Kogus', qty);
-    if (i) kv('Toode', `${i.url ? `<a href="${i.url}" target="_blank" rel="noopener">${esc(i.name)}</a>` : esc(i.name)}`), kv('Allikas', i.unverified ? `STD <span class="unv">kontrollimata</span>` : `funrent.ee · ${i.checked}`);
+    if (i) kv('Toode', esc(i.name)), kv('Allikas', i.unverified ? `STD <span class="unv">kontrollimata</span>` : `tooteleht · ${i.checked}`);
     const alt = p.kind === 'table' ? CAT.products.filter(q => q.spec.kind === 'table' && q.spec.shape === (i.round ? 'round' : 'rect') && q.id !== pid) : [];
     $('cardB').innerHTML = `<h3>${esc(title)} ${i && i.unverified ? '<span class="unv">kontrollimata</span>' : ''}</h3>${rows.join('')}${i && i.note ? `<div class="sub" style="margin-top:6px;color:#6f685f;font-size:12px">${esc(i.note)}</div>` : ''}
       <button class="bt" id="showD">Näita mõõte</button>${alt.length ? `<select id="swap" class="bt g"><option value="">Vaheta laud…</option>${alt.map(q => `<option value="${q.id}">${esc(q.name)}</option>`).join('')}</select>` : ''}`;
@@ -107,7 +107,7 @@ export function init(c) {
     const inArea = L.tent && A ? L.tent.L + 2 * L.tent.margin <= Math.max(A.l, A.w) + 1e-6 && L.tent.W + 2 * L.tent.margin <= Math.min(A.l, A.w) + 1e-6 : true;
     rows.push({ ok: inArea && okC('overlap', 'zonewall'), t: `Kõik ala sees: telk ${f(L.tent.W)} × ${m(L.tent.L)} alal ${f(Math.min(A.l, A.w))} × ${m(Math.max(A.l, A.w))}, midagi ei kattu`, codes: ['overlap'] });
     if (L.tent) { const tp = SZ.product(CAT, L.tent.product), s = tp.spec, sizes = (s.sizes || []).concat(s.l ? [...Array(Math.floor((s.l.to - s.l.from) / s.l.step) + 1)].map((_, k) => [s.w, s.l.from + k * s.l.step]) : []);
-      const real = sizes.some(z => Math.abs(Math.min(...z) - L.tent.W) < .01 && Math.abs(Math.max(...z) - L.tent.L) < .01); rows.push({ ok: real, t: `Telk on Funrendi suurus: ${tp.name} ${f(L.tent.W)} × ${m(L.tent.L)}`, sub: real ? '' : 'sellist suurust kataloogis ei ole' }); }
+      const real = sizes.some(z => Math.abs(Math.min(...z) - L.tent.W) < .01 && Math.abs(Math.max(...z) - L.tent.L) < .01); rows.push({ ok: real, t: `Telk on kataloogi suurus: ${tp.name} ${f(L.tent.W)} × ${m(L.tent.L)}`, sub: real ? '' : 'sellist suurust kataloogis ei ole' }); }
     for (const F of c.features || []) if (F.dist != null) rows.push({ info: 1, t: `Kaugus: telk → ${F.name.toLowerCase()} ${m(F.dist)}`, sub: F.note || '' });
     const unv = (L.bom || []).filter(b => b.unverified); if (unv.length) rows.push({ info: 1, warn: 1, t: `Mõõt kontrollimata (STD): ${unv.map(b => b.name).join(', ')}` });
     return { rows, tentF, occ, free, area: A.l * A.w, need };

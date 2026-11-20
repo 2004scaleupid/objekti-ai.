@@ -161,7 +161,7 @@ function legendHtml(L) {
   return `<ul class="eplg">${kinds.map(k => `<li><i style="${sw(k)}"></i>${KIND[k] || k}</li>`).join('')}<li><i style="background:repeating-linear-gradient(45deg,#c9c2b6 0 1.5px,transparent 1.5px 5px)"></i>Vaba ala (lava ees, teenindus)</li><li><i style="background:repeating-linear-gradient(-45deg,#5aa06a 0 1.5px,transparent 1.5px 5px)"></i>Sissepääs, hoia vaba</li><li><i style="border:2px solid #2b6cb0;background:none"></i>Kaugus (m)</li>${unv(L)}${(L.bad || []).length ? '<li><i style="background:#e5482d"></i>Reegel ei pea</li>' : ''}</ul>`;
 }
 function checksHtml(L) { return `<ul class="epck">${L.checks.map(c => `<li class="${c.ok ? 'ok' : 'no'}">${c.ok ? '✓' : '✗'} ${esc(c.text)}</li>`).join('')}</ul>`; }
-function bomHtml(L) { return `<table class="epbom"><thead><tr><th>Toode</th><th>Kogus</th></tr></thead><tbody>${L.bom.map(b => `<tr><td>${esc(b.name)}${b.unverified ? ' <small class="unv" title="Mõõt pole funrent.ee tootelehelt kinnitatud (STD)">kontrollimata</small>' : ''}</td><td>${b.qty}</td></tr>`).join('')}</tbody></table>`; }
+function bomHtml(L) { return `<table class="epbom"><thead><tr><th>Toode</th><th>Kogus</th></tr></thead><tbody>${L.bom.map(b => `<tr><td>${esc(b.name)}${b.unverified ? ' <small class="unv" title="Mõõt pole tootelehelt kinnitatud (STD)">kontrollimata</small>' : ''}</td><td>${b.qty}</td></tr>`).join('')}</tbody></table>`; }
 
 const API = { svg, legendHtml, checksHtml, bomHtml };
 if (typeof module !== 'undefined' && module.exports) module.exports = API; else { G.EventPlan = G.EventPlan || {}; Object.assign(G.EventPlan, { svg: API }); }

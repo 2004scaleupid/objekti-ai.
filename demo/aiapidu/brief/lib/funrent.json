@@ -21,7 +21,7 @@
      "spec":{"kind":"tent","type":"modular","w":20,"l":{"from":5,"to":70,"step":5},"sideH":3.0,"ridgeH":6.0,"bay":5,"doorW":4},"std":["doorW"]},
     {"id":"tent-stretch","name":"Stretch telk","category":"Telgid","source":"funrent.ee","checked":"2026-11-16","url":"https://funrent.ee/toode/stretch-telk-65-x-10-m/","urls":{"6.5x10":"https://funrent.ee/toode/stretch-telk-65-x-10-m/","10x15":"https://funrent.ee/toode/stretch-telgi-rent-10-x-15-m/"},"note":"Suurused lehelt; serva ja tipu kõrgust lehel ei ole.",
      "spec":{"kind":"tent","type":"stretch","sizes":[[6.5,10],[10,15]],"sideH":2.2,"ridgeH":4.3,"doorW":3},"std":["sideH","ridgeH","doorW"]},
-    {"id":"tent-flex","name":"Flex telk","category":"Telgid","source":"STD","checked":"2026-11-16","url":null,"note":"Funrendi renditelkide hulgas ei leitud (2026-11-16). Suurused vanast kataloogist.",
+    {"id":"tent-flex","name":"Flex telk","category":"Telgid","source":"STD","checked":"2026-11-16","url":null,"note":"Rendifirma telkide hulgas ei leitud (2026-11-16). Suurused vanast kataloogist.",
      "spec":{"kind":"tent","type":"stretch","sizes":[[5,6.5],[6.5,10],[10,12],[10,15],[15,20]],"sideH":2.2,"ridgeH":4.3,"doorW":3},"std":["sizes","sideH","ridgeH","doorW"]},
     {"id":"tent-popup","name":"Pop-up telk","category":"Telgid","source":"funrent.ee","checked":"2026-11-16","url":"https://funrent.ee/toode/pop-up-telk-easy-up-telgi-rent-3x3m/","note":"Suurused 2×2 … 4×8 m lehtedelt; kõrgust lehtedel ei ole.",
      "spec":{"kind":"tent","type":"popup","sizes":[[2,2],[3,3],[3,4.5],[4,4],[3,6],[4,6],[4,8]],"sideH":2.1,"ridgeH":3.2,"doorW":2},"std":["sideH","ridgeH","doorW"]},
@@ -54,7 +54,7 @@
     {"id":"led-bar","name":"LED baarilett","category":"Baar ja toitlustus","source":"funrent.ee","checked":"2026-11-16","url":"https://funrent.ee/toode/led-baarilett/","note":"Tavamoodul 90 × 80 × 110 cm.","spec":{"kind":"bar","w":0.9,"d":0.8,"h":1.1}},
     {"id":"cater183","name":"Toitlustuslaud (laud 183 × 76 × h74 cm)","category":"Baar ja toitlustus","source":"funrent.ee","checked":"2026-11-16","url":"https://funrent.ee/toode/kokkupandav-laud-183-x-76-x-h74-cm/","note":"Toitlustuseks kasutatakse kandilist lauda 183 × 76.","spec":{"kind":"catering","w":1.83,"d":0.76,"h":0.74}},
 
-    {"id":"wc","name":"WC kabiin","category":"WC","source":"STD","checked":"2026-11-16","url":null,"note":"Funrendi renditoodete hulgas tavalist WC kabiini ei leitud.","spec":{"kind":"wc","w":1.2,"d":1.2,"h":2.3},"std":["w","d","h"]},
+    {"id":"wc","name":"WC kabiin","category":"WC","source":"STD","checked":"2026-11-16","url":null,"note":"Rendifirma toodete hulgas tavalist WC kabiini ei leitud.","spec":{"kind":"wc","w":1.2,"d":1.2,"h":2.3},"std":["w","d","h"]},
     {"id":"wc-trailer","name":"VIP WC-välitualett","category":"WC","source":"STD","checked":"2026-11-16","url":"https://funrent.ee/toode/vip-wc-rent/","note":"Tootelehel (4 kabiini, 2 tualettruumi) mõõte ei ole.","spec":{"kind":"wc","w":6,"d":2.5,"h":2.8},"std":["w","d","h"]},
     {"id":"fence","name":"Piirdeaed jalgadel","category":"Piirded","source":"funrent.ee","checked":"2026-11-16","url":"https://funrent.ee/toode/piirdeaed/","note":"Lehel: h1,1 × 2,1 m. Jalgade sügavust lehel ei ole.","spec":{"kind":"fence","w":2.1,"d":0.6,"h":1.1},"std":["d"]},
     {"id":"fence-wood","name":"Puidust moodulaed","category":"Piirded","source":"funrent.ee","checked":"2026-11-16","url":"https://funrent.ee/toode/puidust-moodulaed/","note":"Moodul 2,5 m lai, 1 m kõrge.","spec":{"kind":"fence","w":2.5,"d":0.5,"h":1.0},"std":["d"]},
