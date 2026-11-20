@@ -23,7 +23,7 @@
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/","@sparkjsdev/spark":"https://cdn.jsdelivr.net/npm/@sparkjsdev/spark@2.3.1/dist/spark.module.js"}}</script>
 </head><body><div id="st"></div><div id="plan"><img id="planImg" alt="2D plaan"></div><div id="pic"><img id="picImg" alt="Pilt paigutusest hoovis"></div><iframe id="f3d" title="Foto-3D (Gaussian splat, A)" style="position:fixed;inset:0;width:100%;height:100%;border:0;display:none;background:#1d2420"></iframe><div id="tags"></div><div id="load"><span>Laen 3D-d…</span><div class="lb"><i id="lbar"></i></div></div>
 <div class="bar"><a class="back" href="../" aria-label="Kõik versioonid">‹</a><div class="seg" id="ver"><button data-v="A" aria-pressed="true">A</button><button data-v="B">B</button><button data-v="C">C</button></div>
-<div class="seg"><button id="dimB" aria-pressed="true">Mõõdud</button></div><div class="seg" id="vw"><button data-w="pic">Pilt</button><button data-w="2d">2D</button><button data-w="3d" aria-pressed="true">Täpne 3D</button><button data-w="f3d">Foto-3D</button></div><div class="pill" id="lab"></div></div>
+<div class="seg"><button id="dimB" aria-pressed="true">Mõõdud</button></div><div class="seg" id="vw"><button data-w="pic">Pilt</button><button data-w="2d">2D</button><button data-w="3d" aria-pressed="true">Täpne 3D</button></div><div class="pill" id="lab"></div></div>
 <div id="hint">Lohista = pööra · rull/näpistus = suumi · klõps esemel = mõõdud</div>
 <div class="tools" id="tools"></div>
 <script type="module">
@@ -157,26 +157,9 @@ function placeTags() { const v = new THREE.Vector3(), taken = []; for (const t o
   if (v.z > 1 || taken.some(q => Math.abs(q.x - x) < (q.w + w) / 2 + 3 && Math.abs(q.y - y) < 20)) { t.e.style.display = 'none'; continue; } t.e.style.display = ''; t.e.style.left = x + 'px'; t.e.style.top = y + 'px'; taken.push({ x, y, w }); } }
 // kaamera: nagu kasutaja foto sõiduteelt (idast, maja vasakul), kõrgemalt
 const T0 = new THREE.Vector3(AREA.X0 - 3.5, .8, AREA.Z0 + 5); // pilt on samuti majast vasakul-taga
-let home = () => { stopModes(); const asp = innerWidth / innerHeight, d = 19 * Math.max(1, Math.pow(1.5 / Math.max(.45, asp), .38)); ctl.target.copy(T0); if (asp < 1) cam.position.set(T0.x + 19, 8.8, T0.z + 10.5); else cam.position.set(T0.x + d * .74, Math.min(6.2, d * .3), T0.z + d * .6); ctl.update(); need(); }; // 3/4 vaade telgile ja hoovile
+let home = () => { const asp = innerWidth / innerHeight, d = 19 * Math.max(1, Math.pow(1.5 / Math.max(.45, asp), .38)); ctl.target.copy(T0); if (asp < 1) cam.position.set(T0.x + 19, 8.8, T0.z + 10.5); else cam.position.set(T0.x + d * .74, Math.min(6.2, d * .3), T0.z + d * .6); ctl.update(); need(); }; // 3/4 vaade telgile ja hoovile
 // sihtpunkt jääb ala lähedale (ei saa tühjusesse lohistada)
 ctl.addEventListener('change', () => { const t = ctl.target, c0 = SITE ? new THREE.Vector3(...SITE.home.target) : T0; t.x = Math.max(c0.x - 9, Math.min(c0.x + 9, t.x)); t.z = Math.max(c0.z - 9, Math.min(c0.z + 9, t.z)); t.y = Math.max(.2, Math.min(3, t.y)); });
-// Pealtvaade ja Jaluta
-const walk = { on: false, yaw: 0, pitch: 0, keys: {}, look: null };
-function stopModes() { if (walk.on) setWalk(false); if (topOn) setTop(false); }
-let topOn = false;
-function setTop(on) { topOn = on; $('tTop').setAttribute('aria-pressed', on); ctl.enableRotate = !on; if (on) { if (walk.on) setWalk(false); const c0 = ctl.target.clone(); cam.position.set(c0.x, 24, c0.z + .01); ctl.update(); } need(); }
-function setWalk(on) { walk.on = on; $('tWalk').setAttribute('aria-pressed', on); $('wpad').style.display = on && (matchMedia('(pointer:coarse)').matches || innerWidth < 700) ? 'grid' : 'none'; ctl.enabled = !on;
-  if (on) { if (topOn) setTop(false); const lg = party.children.find(q => q.userData.lay), L = LAY[curV], s = lg.localToWorld(new THREE.Vector3(L.room.L / 2, 1.65, .5)), c = lg.localToWorld(new THREE.Vector3(L.room.L / 2, 1.4, L.room.W / 2)); walk.lg = lg; walk.room = L.room; // telgi sees, esikülje juures
-    cam.position.copy(s); walk.yaw = Math.atan2(-(c.x - s.x), -(c.z - s.z)); walk.pitch = -.05; cam.rotation.set(walk.pitch, walk.yaw, 0, 'YXZ'); $('hint').textContent = 'Lohista = vaata ringi · WASD / nooled = kõnni'; }
-  else { $('hint').textContent = 'Lohista = pööra · rull/näpistus = suumi · klõps esemel = mõõdud'; home(); } need(); }
-addEventListener('keydown', e => { walk.keys[e.key.toLowerCase()] = 1; }); addEventListener('keyup', e => { walk.keys[e.key.toLowerCase()] = 0; });
-r.domElement.addEventListener('pointerdown', e => { if (walk.on) walk.look = [e.clientX, e.clientY]; });
-addEventListener('pointerup', () => { walk.look = null; });
-r.domElement.addEventListener('pointermove', e => { if (!walk.on || !walk.look) return; walk.yaw -= (e.clientX - walk.look[0]) * .005; walk.pitch = Math.max(-1, Math.min(.8, walk.pitch - (e.clientY - walk.look[1]) * .004)); walk.look = [e.clientX, e.clientY]; cam.rotation.set(walk.pitch, walk.yaw, 0, 'YXZ'); need(); });
-document.querySelectorAll('#wpad button').forEach(b => { const k = { f: 'w', b: 's', l: 'a', r: 'd' }[b.dataset.k]; b.onpointerdown = e => { e.preventDefault(); walk.keys[k] = 1; }; b.onpointerup = b.onpointerleave = () => { walk.keys[k] = 0; }; });
-let lastT = performance.now();
-function walkStep() { const t = performance.now(), dt = Math.min(.05, (t - lastT) / 1000); lastT = t; if (!walk.on) return; const k = walk.keys, f = (k.w || k.arrowup ? 1 : 0) - (k.s || k.arrowdown ? 1 : 0), sd = (k.d || k.arrowright ? 1 : 0) - (k.a || k.arrowleft ? 1 : 0); if (!f && !sd) return;
-  const sp = 1.6 * dt; cam.position.x += (-Math.sin(walk.yaw) * f + Math.cos(walk.yaw) * sd) * sp; cam.position.z += (-Math.cos(walk.yaw) * f - Math.sin(walk.yaw) * sd) * sp; const q = walk.lg.worldToLocal(cam.position.clone()), m = .45; q.x = Math.max(m, Math.min(walk.room.L - m, q.x)); q.z = Math.max(m, Math.min(walk.room.W - m, q.z)); q.y = 1.65; cam.position.copy(walk.lg.localToWorld(q)); need(); } // ei kõnni läbi telgi seinte
 // telgi seinad kaamera ees läbipaistvaks, et sisu oleks näha
 function tentFade() { if (!tentG) return; const k = cam.position.y > 9 ? .3 : 1; tentG.traverse(q => { if (q.isMesh && q.userData.roof) { q.material.opacity = k; q.material.depthWrite = k === 1; } }); } // ülevalt vaadates katus läbipaistev, muidu nagu pildil
 let dirty = true; const need = () => { dirty = true; }; ctl.addEventListener('change', need);
@@ -184,7 +167,7 @@ const fitSize = () => { r.setSize(innerWidth, innerHeight, false); cam.aspect = 
 $('ver').onclick = e => { const b = e.target.closest('button'); if (b) build(b.dataset.v); };
 $('dimB').onclick = () => { dimOn = !dimOn; $('dimB').setAttribute('aria-pressed', dimOn); dimG.visible = dimOn; picSrc(); need(); };
 $('vw').onclick = e => { const b = e.target.closest('button'); if (!b) return; const w = b.dataset.w; [...$('vw').children].forEach(x => x.setAttribute('aria-pressed', x === b)); $('plan').style.display = w === '2d' ? 'block' : 'none'; $('pic').style.display = w === 'pic' ? 'block' : 'none'; $('tags').style.display = $('hint').style.display = w === '3d' ? '' : 'none'; const f = $('f3d'); if (w === 'f3d' && !f.src && !SITE) f.src = 'splat.html?embed=1'; f.style.display = w === 'f3d' ? 'block' : 'none'; $('lab').style.display = w === 'f3d' ? 'none' : ''; };
-(function loop() { requestAnimationFrame(loop); if (CAL) return; walkStep(); if (!walk.on) ctl.update(); if (!dirty) return; dirty = false; hideBk(); tentFade(); r.render(sc, cam); placeTags(); })();
+(function loop() { requestAnimationFrame(loop); if (CAL) return; ctl.update(); if (!dirty) return; dirty = false; hideBk(); tentFade(); r.render(sc, cam); placeTags(); })();
 window.__b = { cam, ctl, need, build, home: () => home(), party: () => party };
 if (CAL) { sc.children.filter(o => o !== party && o.type !== 'HemisphereLight' && o !== sun && o !== sun.target).forEach(o => o.visible = false); sc.background = null; sc.fog = null; r.setClearColor(0, 0);
   const gnd = new THREE.Mesh(new THREE.PlaneGeometry(80, 80).rotateX(-Math.PI / 2), new THREE.ShadowMaterial({ opacity: .35 })); gnd.receiveShadow = true; sc.add(gnd); sun.target.position.set(CAL.area.X0 + 5, 0, -CAL.area.F0 - 3.5); sun.position.set(CAL.area.X0 - 9, 20, -CAL.area.F0 - 12);
@@ -196,7 +179,7 @@ if (SITE) { const { SparkRenderer, SplatMesh } = await import('@sparkjsdev/spark
   const t = new THREE.Vector3(...SITE.home.target); sun.target.position.copy(t); sun.position.copy(t).add(new THREE.Vector3(-9, 20, -12));
   for (const id of ['pic']) document.querySelector(`[data-w="${id}"]`).style.display = 'none';
   home = () => { cam.position.fromArray(SITE.home.pos); ctl.target.fromArray(SITE.home.target); ctl.maxDistance = 60; ctl.update(); need(); };
-  const keepV = () => { const f = document.querySelector('[data-w="f3d"]').getAttribute('aria-pressed') === 'true'; party.visible = !f; sc.children.forEach(o => { if (o.userData.keep) o.visible = !f; }); if (dimG) dimG.visible = !f && dimOn; need(); };
+  const keepV = () => { const f = document.querySelector('[data-w="f3d"]')?.getAttribute('aria-pressed') === 'true'; party.visible = !f; sc.children.forEach(o => { if (o.userData.keep) o.visible = !f; }); if (dimG) dimG.visible = !f && dimOn; need(); };
   $('vw').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; if (b.dataset.w === 'f3d') { $('f3d').style.display = 'none'; $('hint').style.display = ''; } keepV(); });
   (function spin() { requestAnimationFrame(spin); need(); })(); // splat laeb ja sorteerib järk-järgult: joonista pidevalt
 }
