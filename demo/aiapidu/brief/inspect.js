@@ -1,4 +1,4 @@
-// Vaataja lisad: toote kaart (klõps), mõõtude tasemed, tingimuste paneel, vaba pinna näit, lohistamine. Mõõdud ainult kataloogist (SZ), kontroll lahendajast (EP.validate).
+// Vaataja lisad: toote kaart (klõps), mõõtude tasemed, tingimuste paneel, vaba pinna näit. Mõõdud ainult kataloogist (SZ), kontroll lahendajast (EP.validate).
 export function init(c) {
   const { THREE, sc, cam, r, ctl, need, CAT, SZ, EP, EPS, LAY } = c, $ = id => document.getElementById(id), f = SZ.fmt, m = v => f(v) + ' m', m2 = v => f(v) + ' m²';
   const esc = s => String(s).replace(/[&<>"]/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[ch]));
@@ -55,14 +55,9 @@ export function init(c) {
     for (const [a1, a2] of SA) for (const [b1, b2] of SB) for (const [p, q1, q2, rev] of [[a1, b1, b2, 0], [a2, b1, b2, 0], [b1, a1, a2, 1], [b2, a1, a2, 1]]) { const qq = segPt(p, q1, q2), d = Math.hypot(p[0] - qq[0], p[1] - qq[1]); if (d < best.d) best = rev ? { d, a: qq, b: p } : { d, a: p, b: qq }; }
     return best; }
   // ---------- toote kaart ----------
-  const ray = new THREE.Raycaster(); let down = null, drag = null;
-  r.domElement.addEventListener('pointerdown', e => { down = { x: e.clientX, y: e.clientY }; const h = hit(e); if (h && h.pick.id && h.pick.kind !== 'tent') { drag = { h, start: ground(e), last: null, moved: false }; } });
-  addEventListener('pointermove', e => { if (!drag || !down) return; if (!drag.moved && Math.hypot(e.clientX - down.x, e.clientY - down.y) < 6) return;
-    if (!drag.moved) { drag.moved = true; ctl.enabled = false; } const g = ground(e); if (!g || !drag.start) return;
-    const a = lg().worldToLocal(drag.start.clone()), b = lg().worldToLocal(g.clone()), dx = b.x - a.x, dy = b.z - a.z, step = .05, qx = Math.round(dx / step) * step, qy = Math.round(dy / step) * step;
-    const prev = drag.last || [0, 0]; if (qx === prev[0] && qy === prev[1]) return; EP.moveItem(L, { id: drag.h.pick.id, t: drag.h.pick.t }, qx - prev[0], qy - prev[1]); drag.last = [qx, qy];
-    drag.h.obj.position.x += qx - prev[0]; drag.h.obj.position.z += qy - prev[1]; EP.finish(L); renderReq(); need(); });
-  addEventListener('pointerup', e => { const d = down; down = null; if (drag && drag.moved) { ctl.enabled = true; drag = null; c.rebuild(v); return; } drag = null;
+  const ray = new THREE.Raycaster(); let down = null;
+  r.domElement.addEventListener('pointerdown', e => { down = { x: e.clientX, y: e.clientY }; });
+  addEventListener('pointerup', e => { const d = down; down = null;
     if (!d || e.target !== r.domElement || Math.hypot(e.clientX - d.x, e.clientY - d.y) > 5) return; const h = hit(e); if (h) openCard(h.pick); });
   function hit(e) { const rc = r.domElement.getBoundingClientRect(); ray.setFromCamera(new THREE.Vector2((e.clientX - rc.left) / rc.width * 2 - 1, -(e.clientY - rc.top) / rc.height * 2 + 1), cam);
     let tent = null; for (const x of ray.intersectObjects(c.party().children, true)) { let o = x.object; while (o && !o.userData.pick) o = o.parent; if (!o) continue; if (o.userData.pick.kind === 'tent') { tent = tent || { pick: o.userData.pick, obj: o }; continue; } return { pick: o.userData.pick, obj: o }; } return tent; } // telgi sees olev ese enne telgi seina
